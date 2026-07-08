@@ -51,11 +51,45 @@ export function Hero() {
         <div className="w-full max-w-2xl">
           <div className="flex flex-wrap items-center gap-2">
             <Chip tone="emerald">
-              <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-emerald-300" />
+              <svg
+                aria-hidden="true"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                className="h-3.5 w-3.5 text-emerald-200"
+              >
+                <path
+                  d="M12 3c3 3 4.5 6 4.5 8.5A4.5 4.5 0 0 1 12 16a4.5 4.5 0 0 1-4.5-4.5C7.5 9 9 6 12 3Z"
+                  strokeLinejoin="round"
+                />
+                <path
+                  d="M12 16v5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
               100% təzə məhsul
             </Chip>
             <Chip tone="blue">
-              <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-sky-300" />
+              <svg
+                aria-hidden="true"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                className="h-3.5 w-3.5 text-sky-200"
+              >
+                <path
+                  d="M12 3 4 7v6c0 5 4.2 8.8 8 8 3.8-.8 8-4.6 8-8V7l-8-4Z"
+                  strokeLinejoin="round"
+                />
+                <path
+                  d="m8.5 12 2.2 2.2L15.8 9"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
               Təsdiqlənmiş fermerlər
             </Chip>
           </div>
