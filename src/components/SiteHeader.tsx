@@ -40,18 +40,18 @@ export function SiteHeader() {
 
         <nav className="hidden items-center gap-6 text-sm font-medium text-white/90 md:flex">
           <Link className="hover:text-white" href="/shop">
-            Shop
+            Mağaza
           </Link>
           <Link className="hover:text-white" href="/farmers">
-            Farmers
+            Fermerlər
           </Link>
           <Link className="hover:text-white" href="/about">
-            About
+            Haqqımızda
           </Link>
         </nav>
 
         <div className="flex items-center gap-2">
-          <Link href="/search" aria-label="Search">
+          <Link href="/search" aria-label="Axtarış">
             <Icon>
               <svg
                 viewBox="0 0 24 24"
@@ -65,7 +65,7 @@ export function SiteHeader() {
               </svg>
             </Icon>
           </Link>
-          <Link href="/cart" aria-label="Cart">
+          <Link href="/cart" aria-label="Səbət">
             <Icon>
               <svg
                 viewBox="0 0 24 24"
@@ -88,7 +88,7 @@ export function SiteHeader() {
             href="/signin"
             className="ml-1 inline-flex items-center rounded-full bg-white px-4 py-2 text-sm font-semibold text-zinc-950 shadow-sm ring-1 ring-white/20 transition hover:bg-white/90"
           >
-            Sign in
+            Daxil ol
           </Link>
         </div>
       </div>

@@ -52,23 +52,23 @@ export function Hero() {
           <div className="flex flex-wrap items-center gap-2">
             <Chip tone="emerald">
               <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-emerald-300" />
-              100% Farm-Fresh
+              100% təzə məhsul
             </Chip>
             <Chip tone="blue">
               <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-sky-300" />
-              Verified Farmers
+              Təsdiqlənmiş fermerlər
             </Chip>
           </div>
 
           <h1 className="mt-5 text-4xl font-semibold leading-tight tracking-tight text-white drop-shadow-sm sm:text-5xl">
-            From the Farm,
+            Fermerdən,
             <br />
-            <span className="text-emerald-300">to Your Table.</span>
+            <span className="text-emerald-300">birbaşa süfrənizə.</span>
           </h1>
 
           <p className="mt-4 max-w-xl text-sm leading-6 text-white/80 sm:text-base">
-            Discover seasonal produce directly from local farmers. Support your
-            community while eating better.
+            Mövsümi məhsulları birbaşa yerli fermerlərdən kəşf edin. Daha sağlam
+            qidalanaraq icmanızı dəstəkləyin.
           </p>
 
           <div className="mt-6 flex w-full max-w-xl items-center gap-2 rounded-2xl bg-white/10 p-2 ring-1 ring-white/15 backdrop-blur-md">
@@ -85,8 +85,8 @@ export function Hero() {
                 <path d="M16.5 16.5 21 21" strokeLinecap="round" />
               </svg>
               <input
-                aria-label="Search products"
-                placeholder="Search for tomatoes, honey, herbs…"
+                aria-label="Məhsul axtar"
+                placeholder="Pomidor, bal, göyərti… axtarın"
                 className="w-full bg-transparent text-sm text-zinc-900 placeholder:text-zinc-500 focus:outline-none"
               />
             </div>
@@ -94,7 +94,7 @@ export function Hero() {
               href="/search"
               className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-500 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-400"
             >
-              Search
+              Axtar
               <svg
                 aria-hidden="true"
                 viewBox="0 0 24 24"
@@ -118,9 +118,9 @@ export function Hero() {
           </div>
 
           <div className="mt-8 grid grid-cols-3 gap-6">
-            <Stat value="200+" label="Local Farmers" />
-            <Stat value="1,400+" label="Fresh Products" />
-            <Stat value="15K+" label="Happy Customers" />
+            <Stat value="200+" label="Yerli fermer" />
+            <Stat value="1,400+" label="Təzə məhsul" />
+            <Stat value="15K+" label="Məmnun müştəri" />
           </div>
         </div>
       </div>
