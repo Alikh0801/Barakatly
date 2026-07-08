@@ -2,7 +2,7 @@ import Link from "next/link";
 
 const PRODUCTS = [
   {
-    name: "Heirloom pomidor",
+    name: "Pomidor",
     farm: "Green Valley Farm",
     price: "$4.50",
     unit: "/kq",
@@ -11,7 +11,7 @@ const PRODUCTS = [
       "https://images.unsplash.com/photo-1546470427-e26264be0b5a?auto=format&fit=crop&w=1200&q=80",
   },
   {
-    name: "Vəhşi kəklikotu balı",
+    name: "Kəklikotu balı",
     farm: "Mountain Herbs Garden",
     price: "$18.00",
     unit: "/500qr",
@@ -29,7 +29,7 @@ const PRODUCTS = [
       "https://images.unsplash.com/photo-1464965911861-746a04b4bca6?auto=format&fit=crop&w=1200&q=80",
   },
   {
-    name: "Livan nanəsi",
+    name: "Tərəvəzlər",
     farm: "Mountain Herbs Garden",
     price: "$2.50",
     unit: "/dəstə",
