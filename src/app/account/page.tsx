@@ -14,7 +14,7 @@ export default async function AccountPage() {
   }
 
   return (
-    <div className="flex min-h-full flex-col bg-[#faf9f5]">
+    <div className="flex min-h-screen min-h-dvh flex-col bg-[#faf9f5]">
       <header className="border-b border-zinc-200 bg-white">
         <div className="mx-auto flex w-full max-w-6xl items-center justify-between px-4 py-4 md:px-6">
           <Link
