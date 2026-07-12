@@ -47,7 +47,7 @@ export function Hero() {
       <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/45 to-black/10" />
       <div className="absolute inset-0 bg-black/15" />
 
-      <div className="relative mx-auto flex min-h-screen min-h-dvh w-full max-w-6xl flex-col justify-center px-4 py-16 pt-20 md:justify-end md:px-6 md:pb-16 md:pt-32">
+      <div className="relative mx-auto flex min-h-screen min-h-dvh w-full max-w-6xl flex-col justify-center px-4 py-16 md:px-6">
         <div className="w-full max-w-2xl">
           <div className="flex flex-wrap items-center gap-2">
             <Chip tone="emerald">
