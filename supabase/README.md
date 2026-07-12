@@ -77,3 +77,33 @@ src/proxy.ts    # Next.js 16 proxy (auth session)
 ## Next step
 
 After migrations are applied, continue with **Auth flows** (customer registration).
+
+## Auth (email)
+
+Customer auth pages:
+
+- `/signup` — email + password registration
+- `/signin` — login
+- `/account` — basic profile page (protected)
+- `/auth/callback` — email confirmation redirect
+- `/auth/signout` — logout (POST)
+
+### Supabase Auth settings
+
+In **Authentication → Providers**, enable **Email** only for now.
+
+For local development, you can disable email confirmation in:
+**Authentication → Providers → Email → Confirm email** (optional for testing).
+
+Set redirect URL in **Authentication → URL Configuration**:
+- Site URL: `http://localhost:3000` (or your Vercel URL)
+- Redirect URLs: `http://localhost:3000/auth/callback`
+
+### Promote first admin
+
+```sql
+update public.profiles
+set role = 'admin'
+where email = 'your-email@example.com';
+```
+
