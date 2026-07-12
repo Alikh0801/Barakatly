@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { AuthNav } from "@/components/AuthNav";
 
 function Icon({
   children,
@@ -84,12 +85,7 @@ export function SiteHeader() {
               </svg>
             </Icon>
           </Link>
-          <Link
-            href="/signin"
-            className="ml-1 inline-flex items-center rounded-full bg-white px-4 py-2 text-sm font-semibold text-zinc-950 shadow-sm ring-1 ring-white/20 transition hover:bg-white/90"
-          >
-            Daxil ol
-          </Link>
+          <AuthNav />
         </div>
       </div>
     </header>
