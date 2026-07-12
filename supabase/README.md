@@ -107,8 +107,28 @@ Important:
 - `.env.local` must have exactly: `NEXT_PUBLIC_APP_URL=http://localhost:3000` (no trailing slash, no extra URLs).
 - After email confirmation, users are redirected to `/auth/callback` and logged in on the homepage.
 
-For production, also add your Vercel URL:
-- `https://your-app.vercel.app/auth/callback`
+## Vercel deploy
+
+In **Vercel → Settings → Environment Variables** (Production):
+
+```env
+NEXT_PUBLIC_SUPABASE_URL=https://xxxx.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJ...
+SUPABASE_SERVICE_ROLE_KEY=eyJ...
+NEXT_PUBLIC_APP_URL=https://barakatly.vercel.app
+```
+
+If `NEXT_PUBLIC_APP_URL` is missing, the app auto-detects the Vercel URL at runtime.
+
+In **Supabase → Authentication → URL Configuration**:
+
+| Field | Value |
+|---|---|
+| Site URL | `https://barakatly.vercel.app` |
+| Redirect URLs | `https://barakatly.vercel.app/auth/callback` |
+| | `http://localhost:3000/auth/callback` |
+
+After changing env vars, **redeploy** on Vercel.
 
 ### Promote first admin
 
