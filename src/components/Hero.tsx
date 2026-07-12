@@ -35,7 +35,7 @@ function Stat({ value, label }: { value: string; label: string }) {
 
 export function Hero() {
   return (
-    <section className="relative isolate overflow-hidden">
+    <section className="relative isolate min-h-screen min-h-dvh overflow-hidden">
       <div
         className="absolute inset-0 bg-cover bg-center"
         style={{
@@ -47,7 +47,7 @@ export function Hero() {
       <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/45 to-black/10" />
       <div className="absolute inset-0 bg-black/15" />
 
-      <div className="relative mx-auto flex min-h-[74vh] w-full max-w-6xl items-end px-4 pb-12 pt-28 md:min-h-[82vh] md:px-6 md:pb-16 md:pt-32">
+      <div className="relative mx-auto flex min-h-screen min-h-dvh w-full max-w-6xl items-end px-4 pb-12 pt-28 md:px-6 md:pb-16 md:pt-32">
         <div className="w-full max-w-2xl">
           <div className="flex flex-wrap items-center gap-2">
             <Chip tone="emerald">
