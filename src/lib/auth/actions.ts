@@ -2,6 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
+import { getAuthCallbackUrl } from "@/lib/auth/urls";
 
 export type AuthActionState = {
   error?: string;
@@ -65,7 +66,6 @@ export async function signUp(
   }
 
   const supabase = await createClient();
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
 
   const { data, error } = await supabase.auth.signUp({
     email,
@@ -75,7 +75,7 @@ export async function signUp(
         full_name: fullName,
         role: "customer",
       },
-      emailRedirectTo: `${appUrl}/auth/callback`,
+      emailRedirectTo: getAuthCallbackUrl(),
     },
   });
 

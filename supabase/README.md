@@ -96,8 +96,19 @@ For local development, you can disable email confirmation in:
 **Authentication → Providers → Email → Confirm email** (optional for testing).
 
 Set redirect URL in **Authentication → URL Configuration**:
-- Site URL: `http://localhost:3000` (or your Vercel URL)
-- Redirect URLs: `http://localhost:3000/auth/callback`
+
+| Field | Value |
+|---|---|
+| **Site URL** | `http://localhost:3000` |
+| **Redirect URLs** | `http://localhost:3000/auth/callback` |
+
+Important:
+- Add **one URL per line** — do not paste multiple URLs with spaces.
+- `.env.local` must have exactly: `NEXT_PUBLIC_APP_URL=http://localhost:3000` (no trailing slash, no extra URLs).
+- After email confirmation, users are redirected to `/auth/callback` and logged in on the homepage.
+
+For production, also add your Vercel URL:
+- `https://your-app.vercel.app/auth/callback`
 
 ### Promote first admin
 
