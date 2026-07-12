@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useActionState } from "react";
 import { signIn, type AuthActionState } from "@/lib/auth/actions";
+import { PasswordInput } from "@/components/auth/PasswordInput";
 
 const initialState: AuthActionState = {};
 
@@ -26,23 +27,12 @@ export function SignInForm() {
         />
       </div>
 
-      <div>
-        <label
-          htmlFor="password"
-          className="block text-sm font-medium text-zinc-700"
-        >
-          Şifrə
-        </label>
-        <input
-          id="password"
-          name="password"
-          type="password"
-          autoComplete="current-password"
-          required
-          className="mt-1 w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-900 outline-none ring-emerald-500 focus:ring-2"
-          placeholder="••••••••"
-        />
-      </div>
+      <PasswordInput
+        id="password"
+        name="password"
+        label="Şifrə"
+        autoComplete="current-password"
+      />
 
       {state.error ? (
         <p className="rounded-xl bg-rose-50 px-3 py-2 text-sm text-rose-700 ring-1 ring-rose-200">
