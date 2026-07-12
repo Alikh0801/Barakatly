@@ -5,7 +5,14 @@ export const metadata = {
   title: "Daxil ol — BARAKATLY",
 };
 
-export default function SignInPage() {
+export default async function SignInPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ error?: string; message?: string }>;
+}) {
+  const params = await searchParams;
+  const linkExpired = params.error === "auth" && params.message === "link-expired";
+
   return (
     <div className="w-full max-w-md rounded-3xl bg-white p-8 shadow-sm ring-1 ring-zinc-200">
       <div className="text-center">
@@ -16,6 +23,16 @@ export default function SignInPage() {
           Hesabınıza daxil olun və sifarişlərinizi idarə edin
         </p>
       </div>
+
+      {linkExpired ? (
+        <p className="mt-6 rounded-xl bg-amber-50 px-3 py-2 text-sm text-amber-800 ring-1 ring-amber-200">
+          Təsdiq linkinin vaxtı bitib və ya artıq istifadə olunub. Yenidən{" "}
+          <Link href="/signup" className="font-semibold underline">
+            qeydiyyatdan keçin
+          </Link>
+          .
+        </p>
+      ) : null}
 
       <div className="mt-8">
         <SignInForm />
