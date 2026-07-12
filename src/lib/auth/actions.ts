@@ -92,13 +92,18 @@ export async function signUp(
   const fullName = String(formData.get("full_name") ?? "").trim();
   const email = String(formData.get("email") ?? "").trim();
   const password = String(formData.get("password") ?? "");
+  const passwordConfirm = String(formData.get("password_confirm") ?? "");
 
-  if (!fullName || !email || !password) {
+  if (!fullName || !email || !password || !passwordConfirm) {
     return { error: "Bütün sahələr mütləqdir." };
   }
 
   if (password.length < 6) {
     return { error: "Şifrə ən azı 6 simvol olmalıdır." };
+  }
+
+  if (password !== passwordConfirm) {
+    return { error: "Şifrələr uyğun gəlmir." };
   }
 
   const supabase = await createClient();

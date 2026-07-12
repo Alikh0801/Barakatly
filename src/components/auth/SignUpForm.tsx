@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useActionState } from "react";
 import { signUp, type AuthActionState } from "@/lib/auth/actions";
+import { PasswordInput } from "@/components/auth/PasswordInput";
 
 const initialState: AuthActionState = {};
 
@@ -44,24 +45,23 @@ export function SignUpForm() {
         />
       </div>
 
-      <div>
-        <label
-          htmlFor="password"
-          className="block text-sm font-medium text-zinc-700"
-        >
-          Şifrə
-        </label>
-        <input
-          id="password"
-          name="password"
-          type="password"
-          autoComplete="new-password"
-          required
-          minLength={6}
-          className="mt-1 w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-900 outline-none ring-emerald-500 focus:ring-2"
-          placeholder="Ən azı 6 simvol"
-        />
-      </div>
+      <PasswordInput
+        id="password"
+        name="password"
+        label="Şifrə"
+        autoComplete="new-password"
+        placeholder="Ən azı 6 simvol"
+        minLength={6}
+      />
+
+      <PasswordInput
+        id="password_confirm"
+        name="password_confirm"
+        label="Şifrəni təkrar yazın"
+        autoComplete="new-password"
+        placeholder="Şifrəni yenidən daxil edin"
+        minLength={6}
+      />
 
       {state.error ? (
         <p className="rounded-xl bg-rose-50 px-3 py-2 text-sm text-rose-700 ring-1 ring-rose-200">
