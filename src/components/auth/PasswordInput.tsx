@@ -72,7 +72,7 @@ export function PasswordInput({
           autoComplete={autoComplete}
           required={required}
           minLength={minLength}
-          className="w-full rounded-xl border border-zinc-200 bg-white py-2 pl-3 pr-10 text-sm text-zinc-900 outline-none ring-emerald-500 focus:ring-2"
+          className="w-full rounded-xl border border-zinc-200 bg-white py-2.5 pl-3 pr-10 text-base text-zinc-900 outline-none ring-emerald-500 focus:ring-2 touch-manipulation"
           placeholder={placeholder}
         />
         <button
