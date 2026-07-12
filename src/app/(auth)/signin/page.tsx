@@ -14,7 +14,7 @@ export default async function SignInPage({
   const linkExpired = params.error === "auth" && params.message === "link-expired";
 
   return (
-    <div className="w-full max-w-md rounded-3xl bg-white p-8 shadow-sm ring-1 ring-zinc-200">
+    <div className="w-full max-w-md rounded-3xl bg-white p-5 shadow-sm ring-1 ring-zinc-200 sm:p-8">
       <div className="text-center">
         <h1 className="text-2xl font-semibold tracking-tight text-zinc-900">
           Daxil ol
@@ -25,7 +25,7 @@ export default async function SignInPage({
       </div>
 
       {linkExpired ? (
-        <p className="mt-6 rounded-xl bg-amber-50 px-3 py-2 text-sm text-amber-800 ring-1 ring-amber-200">
+        <p className="mt-4 rounded-xl bg-amber-50 px-3 py-2 text-sm text-amber-800 ring-1 ring-amber-200">
           Təsdiq linkinin vaxtı bitib və ya artıq istifadə olunub. Yenidən{" "}
           <Link href="/signup" className="font-semibold underline">
             qeydiyyatdan keçin
@@ -34,11 +34,11 @@ export default async function SignInPage({
         </p>
       ) : null}
 
-      <div className="mt-8">
+      <div className={linkExpired ? "mt-5" : "mt-6"}>
         <SignInForm />
       </div>
 
-      <p className="mt-6 text-center text-xs text-zinc-500">
+      <p className="mt-4 text-center text-xs text-zinc-500">
         Fermersiniz?{" "}
         <Link href="/farmer/signup" className="text-emerald-700 hover:underline">
           Fermer qeydiyyatı

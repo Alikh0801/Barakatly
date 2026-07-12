@@ -22,7 +22,7 @@ export function SignInForm() {
           type="email"
           autoComplete="email"
           required
-          className="mt-1 w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-900 outline-none ring-emerald-500 focus:ring-2"
+          className="mt-1 w-full rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-base text-zinc-900 outline-none ring-emerald-500 focus:ring-2 touch-manipulation"
           placeholder="siz@email.com"
         />
       </div>
