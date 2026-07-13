@@ -10,19 +10,18 @@ export const metadata = {
 };
 
 export default async function CheckoutPage() {
-  const profile = await getProfile();
+  const [profile, banks] = await Promise.all([getProfile(), getActiveBanks()]);
 
   if (!profile) {
     redirect("/signin?next=/checkout");
   }
-
-  const banks = await getActiveBanks();
 
   return (
     <SolidPageShell>
       <div className="mx-auto w-full max-w-6xl px-4 py-10 md:px-6 md:py-12">
         <Link
           href="/cart"
+          prefetch
           className="text-sm font-medium text-emerald-700 hover:underline"
         >
           ← Səbətə qayıt

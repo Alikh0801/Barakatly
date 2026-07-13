@@ -19,7 +19,7 @@ export function CartNav({
       : "relative inline-flex h-9 w-9 items-center justify-center rounded-full bg-zinc-100 text-zinc-700 ring-1 ring-zinc-200 transition hover:bg-zinc-200";
 
   return (
-    <Link href="/cart" aria-label="Səbət" className={iconWrap}>
+    <Link href="/cart" prefetch aria-label="Səbət" className={iconWrap}>
       <svg
         viewBox="0 0 24 24"
         fill="none"

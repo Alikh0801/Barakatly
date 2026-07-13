@@ -1,8 +1,10 @@
+import { unstable_cache } from "next/cache";
+import { createPublicClient } from "@/lib/supabase/public";
 import { createClient } from "@/lib/supabase/server";
 import type { Bank, Order, OrderItem, Payment } from "@/types";
 
-export async function getActiveBanks(): Promise<Bank[]> {
-  const supabase = await createClient();
+async function fetchActiveBanks(): Promise<Bank[]> {
+  const supabase = createPublicClient();
   const { data, error } = await supabase
     .from("banks")
     .select("*")
@@ -17,6 +19,12 @@ export async function getActiveBanks(): Promise<Bank[]> {
   return data ?? [];
 }
 
+export const getActiveBanks = unstable_cache(
+  fetchActiveBanks,
+  ["active-banks"],
+  { revalidate: 300 }
+);
+
 export type OrderListItem = Order & {
   payments: Pick<Payment, "status">[] | null;
 };
@@ -24,9 +32,10 @@ export type OrderListItem = Order & {
 export async function getCustomerOrders(): Promise<OrderListItem[]> {
   const supabase = await createClient();
   const {
-    data: { user },
-  } = await supabase.auth.getUser();
+    data: { session },
+  } = await supabase.auth.getSession();
 
+  const user = session?.user;
   if (!user) return [];
 
   const { data, error } = await supabase
@@ -51,9 +60,10 @@ export type OrderDetail = Order & {
 export async function getOrderById(id: string): Promise<OrderDetail | null> {
   const supabase = await createClient();
   const {
-    data: { user },
-  } = await supabase.auth.getUser();
+    data: { session },
+  } = await supabase.auth.getSession();
 
+  const user = session?.user;
   if (!user) return null;
 
   const { data, error } = await supabase

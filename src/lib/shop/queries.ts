@@ -1,4 +1,5 @@
-import { createClient } from "@/lib/supabase/server";
+import { unstable_cache } from "next/cache";
+import { createPublicClient } from "@/lib/supabase/public";
 import type { CategoryItem, ProductDetail, ProductListItem } from "@/types/shop";
 
 const productSelect = `
@@ -26,8 +27,8 @@ const productSelect = `
   )
 `;
 
-export async function getCategories(): Promise<CategoryItem[]> {
-  const supabase = await createClient();
+async function fetchCategories(): Promise<CategoryItem[]> {
+  const supabase = createPublicClient();
   const { data, error } = await supabase
     .from("categories")
     .select("id, slug, name_az, icon")
@@ -41,8 +42,8 @@ export async function getCategories(): Promise<CategoryItem[]> {
   return data ?? [];
 }
 
-export async function getProducts(categorySlug?: string): Promise<ProductListItem[]> {
-  const supabase = await createClient();
+async function fetchProducts(categorySlug?: string): Promise<ProductListItem[]> {
+  const supabase = createPublicClient();
 
   let categoryId: string | null = null;
   if (categorySlug) {
@@ -77,8 +78,8 @@ export async function getProducts(categorySlug?: string): Promise<ProductListIte
   return (data ?? []) as ProductListItem[];
 }
 
-export async function getProductById(id: string): Promise<ProductDetail | null> {
-  const supabase = await createClient();
+async function fetchProductById(id: string): Promise<ProductDetail | null> {
+  const supabase = createPublicClient();
   const { data, error } = await supabase
     .from("products")
     .select(productSelect)
@@ -92,4 +93,24 @@ export async function getProductById(id: string): Promise<ProductDetail | null> 
   }
 
   return data as ProductDetail;
+}
+
+export const getCategories = unstable_cache(fetchCategories, ["shop-categories"], {
+  revalidate: 300,
+});
+
+export function getProducts(categorySlug?: string) {
+  return unstable_cache(
+    async () => fetchProducts(categorySlug),
+    ["shop-products", categorySlug ?? "all"],
+    { revalidate: 60 }
+  )();
+}
+
+export function getProductById(id: string) {
+  return unstable_cache(
+    async () => fetchProductById(id),
+    ["shop-product", id],
+    { revalidate: 60 }
+  )();
 }

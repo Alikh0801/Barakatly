@@ -87,6 +87,7 @@ export function FreshThisWeekSection() {
           </div>
           <Link
             href="/shop"
+            prefetch
             className="hidden items-center gap-2 rounded-full bg-emerald-50 px-4 py-2 text-sm font-semibold text-emerald-700 ring-1 ring-emerald-200 transition hover:bg-emerald-100 sm:inline-flex"
           >
             Hamısına bax
@@ -99,6 +100,7 @@ export function FreshThisWeekSection() {
             <Link
               key={p.name}
               href="/shop"
+            prefetch
               className="group overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-zinc-200 transition hover:shadow-md"
             >
               <div className="relative overflow-hidden">
@@ -154,6 +156,7 @@ export function FreshThisWeekSection() {
         <div className="mt-8 sm:hidden">
           <Link
             href="/shop"
+            prefetch
             className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-emerald-50 px-4 py-2 text-sm font-semibold text-emerald-700 ring-1 ring-emerald-200 transition hover:bg-emerald-100"
           >
             Hamısına bax

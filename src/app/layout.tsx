@@ -1,5 +1,8 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { Suspense } from "react";
+import { NavigationProgress } from "@/components/navigation/NavigationProgress";
+import { RoutePrefetcher } from "@/components/navigation/RoutePrefetcher";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -27,7 +30,13 @@ export default function RootLayout({
       lang="az"
       className={`${geistSans.variable} ${geistMono.variable} h-full min-h-screen antialiased`}
     >
-      <body className="min-h-screen flex flex-col bg-white">{children}</body>
+      <body className="min-h-screen flex flex-col bg-white">
+        <Suspense fallback={null}>
+          <NavigationProgress />
+        </Suspense>
+        <RoutePrefetcher />
+        {children}
+      </body>
     </html>
   );
 }

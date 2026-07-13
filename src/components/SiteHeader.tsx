@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { AuthNav } from "@/components/AuthNav";
 import { CartNav } from "@/components/CartNav";
+import { NavLink } from "@/components/navigation/NavLink";
 import { AuthNavSkeleton } from "@/components/skeletons";
 
 function Icon({
@@ -50,6 +51,7 @@ export function SiteHeader({
       <div className="mx-auto flex w-full max-w-6xl items-center justify-between px-4 py-4 md:px-6">
         <Link
           href="/"
+          prefetch
           className={`inline-flex items-center gap-2 font-semibold tracking-tight ${logoText}`}
         >
           <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-emerald-500/90 ring-1 ring-emerald-300/40">
@@ -61,19 +63,19 @@ export function SiteHeader({
         </Link>
 
         <nav className="hidden items-center gap-6 text-sm font-medium md:flex">
-          <Link className={navText} href="/shop">
+          <NavLink className={navText} href="/shop">
             Mağaza
-          </Link>
-          <Link className={navText} href="/farmers">
+          </NavLink>
+          <NavLink className={navText} href="/farmers">
             Fermerlər
-          </Link>
-          <Link className={navText} href="/about">
+          </NavLink>
+          <NavLink className={navText} href="/about">
             Haqqımızda
-          </Link>
+          </NavLink>
         </nav>
 
         <div className="flex items-center gap-2">
-          <Link href="/shop" aria-label="Axtarış">
+          <NavLink href="/shop" aria-label="Axtarış">
             <Icon className={iconClass}>
               <svg
                 viewBox="0 0 24 24"
@@ -86,7 +88,7 @@ export function SiteHeader({
                 <path d="M16.5 16.5 21 21" strokeLinecap="round" />
               </svg>
             </Icon>
-          </Link>
+          </NavLink>
           <CartNav variant={variant} />
           <Suspense fallback={<AuthNavSkeleton variant={variant} />}>
             <AuthNav variant={variant} />

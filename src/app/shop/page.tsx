@@ -1,10 +1,26 @@
-import { CategoryFilter } from "@/components/shop/CategoryFilter";
-import { ProductCard } from "@/components/shop/ProductCard";
-import { getCategories, getProducts } from "@/lib/shop/queries";
+import { Suspense } from "react";
+import { ShopContent } from "@/components/shop/ShopContent";
+import {
+  CategoryFilterSkeleton,
+  ProductGridSkeleton,
+} from "@/components/skeletons";
 
 export const metadata = {
   title: "Mağaza — BARAKATLY",
 };
+
+function ShopDataSkeleton() {
+  return (
+    <>
+      <div className="mt-8">
+        <CategoryFilterSkeleton />
+      </div>
+      <div className="mt-8">
+        <ProductGridSkeleton />
+      </div>
+    </>
+  );
+}
 
 export default async function ShopPage({
   searchParams,
@@ -12,14 +28,6 @@ export default async function ShopPage({
   searchParams: Promise<{ category?: string }>;
 }) {
   const params = await searchParams;
-  const categorySlug = params.category;
-
-  const [categories, products] = await Promise.all([
-    getCategories(),
-    getProducts(categorySlug),
-  ]);
-
-  const activeCategory = categories.find((c) => c.slug === categorySlug);
 
   return (
     <div className="mx-auto w-full max-w-6xl px-4 py-10 md:px-6 md:py-12">
@@ -32,36 +40,9 @@ export default async function ShopPage({
         </p>
       </div>
 
-      <div className="mt-8">
-        <CategoryFilter categories={categories} activeSlug={categorySlug} />
-      </div>
-
-      {activeCategory ? (
-        <p className="mt-6 text-sm text-zinc-600">
-          Kateqoriya: <span className="font-medium">{activeCategory.name_az}</span>
-        </p>
-      ) : null}
-
-      {products.length > 0 ? (
-        <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {products.map((product) => (
-            <ProductCard key={product.id} product={product} />
-          ))}
-        </div>
-      ) : (
-        <div className="mt-10 rounded-3xl bg-white p-10 text-center shadow-sm ring-1 ring-zinc-200">
-          <p className="text-lg font-medium text-zinc-900">
-            Hazırda məhsul tapılmadı
-          </p>
-          <p className="mt-2 text-sm text-zinc-500">
-            Supabase-də demo məhsulları yükləmək üçün{" "}
-            <code className="rounded bg-zinc-100 px-1">
-              004_demo_products.sql
-            </code>{" "}
-            migration-ını işlədin.
-          </p>
-        </div>
-      )}
+      <Suspense fallback={<ShopDataSkeleton />}>
+        <ShopContent categorySlug={params.category} />
+      </Suspense>
     </div>
   );
 }

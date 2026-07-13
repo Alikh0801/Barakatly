@@ -15,7 +15,7 @@ export function ProductCard({ product }: { product: ProductListItem }) {
 
   return (
     <article className="group overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-zinc-200 transition hover:shadow-md">
-      <Link href={`/shop/${product.id}`} className="block">
+      <Link href={`/shop/${product.id}`} prefetch className="block">
         <div className="relative overflow-hidden">
           <ImageWithSkeleton
             src={
@@ -30,7 +30,7 @@ export function ProductCard({ product }: { product: ProductListItem }) {
       </Link>
 
       <div className="p-4">
-        <Link href={`/shop/${product.id}`}>
+        <Link href={`/shop/${product.id}`} prefetch>
           <div className="text-sm font-semibold text-zinc-900">{product.title}</div>
         </Link>
         <div className="mt-1 text-xs text-zinc-500">

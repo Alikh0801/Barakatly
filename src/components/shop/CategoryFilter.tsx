@@ -12,6 +12,7 @@ export function CategoryFilter({
     <div className="flex flex-wrap gap-2">
       <Link
         href="/shop"
+        prefetch
         className={[
           "inline-flex items-center rounded-full px-4 py-2 text-sm font-medium ring-1 transition",
           !activeSlug
@@ -25,6 +26,7 @@ export function CategoryFilter({
         <Link
           key={category.id}
           href={`/shop?category=${category.slug}`}
+          prefetch
           className={[
             "inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-medium ring-1 transition",
             activeSlug === category.slug

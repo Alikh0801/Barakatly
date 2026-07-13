@@ -39,6 +39,7 @@ export default async function ProductDetailPage({
     <div className="mx-auto w-full max-w-6xl px-4 py-10 md:px-6 md:py-12">
       <Link
         href="/shop"
+        prefetch
         className="text-sm font-medium text-emerald-700 hover:underline"
       >
         ← Mağazaya qayıt
