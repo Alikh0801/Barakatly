@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AddToCartButtonLarge } from "@/components/shop/AddToCartButton";
+import { ProductDetailImage } from "@/components/shop/ProductDetailImage";
 import { getProductById } from "@/lib/shop/queries";
 import {
   formatPrice,
@@ -45,14 +46,12 @@ export default async function ProductDetailPage({
 
       <div className="mt-8 grid gap-10 lg:grid-cols-2">
         <div className="overflow-hidden rounded-3xl bg-white shadow-sm ring-1 ring-zinc-200">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
+          <ProductDetailImage
             src={
               imageUrl ??
               "https://images.unsplash.com/photo-1540420773420-3366772f4999?auto=format&fit=crop&w=1200&q=80"
             }
             alt={product.title}
-            className="h-full max-h-[520px] w-full object-cover"
           />
         </div>
 

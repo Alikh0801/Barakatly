@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ImageWithSkeleton } from "@/components/ui/ImageWithSkeleton";
 
 const PRODUCTS = [
   {
@@ -113,11 +114,11 @@ export function FreshThisWeekSection() {
                 >
                   ♡
                 </button>
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
+                <ImageWithSkeleton
                   src={p.image}
                   alt=""
                   className="h-44 w-full object-cover transition duration-500 group-hover:scale-[1.03]"
+                  skeletonClassName="rounded-none"
                 />
               </div>
 

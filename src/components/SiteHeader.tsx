@@ -1,6 +1,8 @@
 import Link from "next/link";
+import { Suspense } from "react";
 import { AuthNav } from "@/components/AuthNav";
 import { CartNav } from "@/components/CartNav";
+import { AuthNavSkeleton } from "@/components/skeletons";
 
 function Icon({
   children,
@@ -86,7 +88,9 @@ export function SiteHeader({
             </Icon>
           </Link>
           <CartNav variant={variant} />
-          <AuthNav variant={variant} />
+          <Suspense fallback={<AuthNavSkeleton variant={variant} />}>
+            <AuthNav variant={variant} />
+          </Suspense>
         </div>
       </div>
     </header>

@@ -6,6 +6,9 @@ import { placeOrder, type PlaceOrderState } from "@/lib/checkout/actions";
 import { DELIVERY_FEE } from "@/lib/checkout/constants";
 import { formatPrice, formatUnit } from "@/lib/shop/format";
 import { useCartStore } from "@/store/cart";
+import { useCartHydrated } from "@/hooks/useCartHydrated";
+import { CheckoutSkeleton } from "@/components/skeletons";
+import { Spinner } from "@/components/ui/Spinner";
 import type { Bank } from "@/types";
 
 const initialState: PlaceOrderState = {};
@@ -18,6 +21,7 @@ export function CheckoutForm({
   defaultPhone?: string | null;
 }) {
   const router = useRouter();
+  const hydrated = useCartHydrated();
   const items = useCartStore((s) => s.items);
   const subtotal = useCartStore((s) => s.subtotal());
   const clearCart = useCartStore((s) => s.clearCart);
@@ -37,6 +41,10 @@ export function CheckoutForm({
       router.replace(`/orders/${state.orderId}?success=1`);
     }
   }, [state.orderId, clearCart, router]);
+
+  if (!hydrated) {
+    return <CheckoutSkeleton />;
+  }
 
   if (items.length === 0) {
     return (
@@ -201,9 +209,16 @@ export function CheckoutForm({
           <button
             type="submit"
             disabled={pending}
-            className="mt-6 inline-flex w-full items-center justify-center rounded-xl bg-emerald-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-70"
+            className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-70"
           >
-            {pending ? "Göndərilir..." : "Sifarişi təsdiqlə"}
+            {pending ? (
+              <>
+                <Spinner className="h-4 w-4" />
+                Göndərilir...
+              </>
+            ) : (
+              "Sifarişi təsdiqlə"
+            )}
           </button>
         </div>
       </aside>

@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { SiteFooter } from "@/components/SiteFooter";
-import { SiteHeader } from "@/components/SiteHeader";
+import { SolidPageShell } from "@/components/layout/SolidPageShell";
 import {
   getOrderStatusLabel,
   getPaymentStatusLabel,
@@ -31,10 +30,8 @@ export default async function OrdersPage() {
   const orders = await getCustomerOrders();
 
   return (
-    <div className="flex min-h-screen flex-col bg-[#faf9f5]">
-      <SiteHeader variant="solid" />
-      <main className="flex-1">
-        <div className="mx-auto w-full max-w-6xl px-4 py-10 md:px-6 md:py-12">
+    <SolidPageShell>
+      <div className="mx-auto w-full max-w-6xl px-4 py-10 md:px-6 md:py-12">
           <h1 className="text-3xl font-semibold tracking-tight text-zinc-900">
             Sifarişlərim
           </h1>
@@ -97,8 +94,6 @@ export default async function OrdersPage() {
             </div>
           )}
         </div>
-      </main>
-      <SiteFooter />
-    </div>
+    </SolidPageShell>
   );
 }

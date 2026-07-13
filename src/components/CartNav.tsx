@@ -2,12 +2,15 @@
 
 import Link from "next/link";
 import { useCartStore } from "@/store/cart";
+import { useCartHydrated } from "@/hooks/useCartHydrated";
+import { Skeleton } from "@/components/ui/Skeleton";
 
 export function CartNav({
   variant = "hero",
 }: {
   variant?: "hero" | "solid";
 }) {
+  const hydrated = useCartHydrated();
   const totalItems = useCartStore((s) => s.totalItems());
 
   const iconWrap =
@@ -32,11 +35,15 @@ export function CartNav({
         <path d="M9.5 21a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z" />
         <path d="M17.5 21a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z" />
       </svg>
-      {totalItems > 0 ? (
-        <span className="absolute -right-1 -top-1 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-emerald-600 px-1 text-[10px] font-semibold text-white">
-          {totalItems > 9 ? "9+" : totalItems}
-        </span>
-      ) : null}
+      {hydrated ? (
+        totalItems > 0 ? (
+          <span className="absolute -right-1 -top-1 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-emerald-600 px-1 text-[10px] font-semibold text-white">
+            {totalItems > 9 ? "9+" : totalItems}
+          </span>
+        ) : null
+      ) : (
+        <Skeleton className="absolute -right-1 -top-1 h-4 w-4 rounded-full" />
+      )}
     </Link>
   );
 }

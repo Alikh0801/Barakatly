@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ImageWithSkeleton } from "@/components/ui/ImageWithSkeleton";
 
 const FARMERS = [
   {
@@ -74,11 +75,11 @@ export function MeetOurFarmersSection() {
               className="group overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-zinc-200 transition hover:shadow-md"
             >
               <div className="relative h-36 overflow-hidden">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
+                <ImageWithSkeleton
                   src={f.image}
                   alt=""
                   className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.03]"
+                  skeletonClassName="rounded-none"
                 />
                 {f.verified ? (
                   <div className="absolute right-3 top-3 inline-flex items-center gap-1 rounded-full bg-white/90 px-2 py-1 text-[11px] font-medium text-emerald-700 ring-1 ring-emerald-200">

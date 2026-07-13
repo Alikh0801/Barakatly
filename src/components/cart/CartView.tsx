@@ -2,10 +2,14 @@
 
 import Link from "next/link";
 import { useCartStore } from "@/store/cart";
+import { useCartHydrated } from "@/hooks/useCartHydrated";
 import { formatPrice } from "@/lib/shop/format";
 import { DELIVERY_FEE } from "@/lib/checkout/constants";
+import { CartSkeleton } from "@/components/skeletons";
+import { ImageWithSkeleton } from "@/components/ui/ImageWithSkeleton";
 
 export function CartView() {
+  const hydrated = useCartHydrated();
   const items = useCartStore((s) => s.items);
   const subtotal = useCartStore((s) => s.subtotal());
   const updateQuantity = useCartStore((s) => s.updateQuantity);
@@ -13,6 +17,10 @@ export function CartView() {
   const clearCart = useCartStore((s) => s.clearCart);
 
   const total = subtotal + (items.length > 0 ? DELIVERY_FEE : 0);
+
+  if (!hydrated) {
+    return <CartSkeleton />;
+  }
 
   if (items.length === 0) {
     return (
@@ -41,11 +49,11 @@ export function CartView() {
           >
             <div className="h-20 w-20 shrink-0 overflow-hidden rounded-xl bg-zinc-100">
               {item.imageUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
+                <ImageWithSkeleton
                   src={item.imageUrl}
                   alt={item.title}
                   className="h-full w-full object-cover"
+                  skeletonClassName="rounded-xl"
                 />
               ) : null}
             </div>

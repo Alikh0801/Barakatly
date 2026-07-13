@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useActionState } from "react";
 import { signUp, type AuthActionState } from "@/lib/auth/actions";
 import { PasswordInput } from "@/components/auth/PasswordInput";
+import { Spinner } from "@/components/ui/Spinner";
 
 const initialState: AuthActionState = {};
 
@@ -78,9 +79,16 @@ export function SignUpForm() {
       <button
         type="submit"
         disabled={pending}
-        className="inline-flex w-full items-center justify-center rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-70"
+        className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-70"
       >
-        {pending ? "Qeydiyyat edilir..." : "Qeydiyyatdan keç"}
+        {pending ? (
+          <>
+            <Spinner className="h-4 w-4" />
+            Qeydiyyat edilir...
+          </>
+        ) : (
+          "Qeydiyyatdan keç"
+        )}
       </button>
 
       <p className="text-center text-sm text-zinc-600">
