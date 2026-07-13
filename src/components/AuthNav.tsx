@@ -17,14 +17,23 @@ function getInitials(name: string | null | undefined, email: string | null | und
   return "??";
 }
 
-export async function AuthNav() {
+export async function AuthNav({
+  variant = "hero",
+}: {
+  variant?: "hero" | "solid";
+}) {
   const profile = await getProfile();
+  const isHero = variant === "hero";
 
   if (!profile) {
     return (
       <Link
         href="/signin"
-        className="ml-1 inline-flex items-center rounded-full bg-white px-4 py-2 text-sm font-semibold text-zinc-950 shadow-sm ring-1 ring-white/20 transition hover:bg-white/90"
+        className={
+          isHero
+            ? "ml-1 inline-flex items-center rounded-full bg-white px-4 py-2 text-sm font-semibold text-zinc-950 shadow-sm ring-1 ring-white/20 transition hover:bg-white/90"
+            : "ml-1 inline-flex items-center rounded-full bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-500"
+        }
       >
         Daxil ol
       </Link>
@@ -38,7 +47,11 @@ export async function AuthNav() {
     <div className="ml-1 flex items-center gap-2">
       <Link
         href="/account"
-        className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1.5 text-sm font-medium text-white ring-1 ring-white/15 backdrop-blur-sm transition hover:bg-white/15"
+        className={
+          isHero
+            ? "inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1.5 text-sm font-medium text-white ring-1 ring-white/15 backdrop-blur-sm transition hover:bg-white/15"
+            : "inline-flex items-center gap-2 rounded-full bg-zinc-100 px-3 py-1.5 text-sm font-medium text-zinc-800 ring-1 ring-zinc-200 transition hover:bg-zinc-200"
+        }
         title={displayName}
       >
         <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-emerald-500 text-xs font-semibold text-white">
@@ -51,7 +64,11 @@ export async function AuthNav() {
       <form action="/auth/signout" method="post">
         <button
           type="submit"
-          className="inline-flex items-center rounded-full bg-white px-3 py-2 text-sm font-semibold text-zinc-950 shadow-sm ring-1 ring-white/20 transition hover:bg-white/90"
+          className={
+            isHero
+              ? "inline-flex items-center rounded-full bg-white px-3 py-2 text-sm font-semibold text-zinc-950 shadow-sm ring-1 ring-white/20 transition hover:bg-white/90"
+              : "inline-flex items-center rounded-full bg-white px-3 py-2 text-sm font-semibold text-zinc-700 ring-1 ring-zinc-200 transition hover:bg-zinc-50"
+          }
         >
           Çıxış
         </button>

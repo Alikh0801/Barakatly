@@ -16,3 +16,10 @@ export type {
   OrderItem,
   Notification,
 } from "./database";
+
+export type {
+  ProductImage,
+  ProductListItem,
+  ProductDetail,
+  CategoryItem,
+} from "./shop";
