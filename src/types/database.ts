@@ -290,6 +290,93 @@ export interface Database {
         };
         Relationships: [];
       };
+      order_status_events: {
+        Row: {
+          id: string;
+          order_id: string;
+          order_item_id: string | null;
+          status: string;
+          changed_by: string | null;
+          note: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          order_id: string;
+          order_item_id?: string | null;
+          status: string;
+          changed_by?: string | null;
+          note?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          order_id?: string;
+          order_item_id?: string | null;
+          status?: string;
+          changed_by?: string | null;
+          note?: string | null;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+      banks: {
+        Row: {
+          id: string;
+          name: string;
+          pan_number: string;
+          is_active: boolean;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          name: string;
+          pan_number: string;
+          is_active?: boolean;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          name?: string;
+          pan_number?: string;
+          is_active?: boolean;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+      payments: {
+        Row: {
+          id: string;
+          order_id: string;
+          bank_id: string;
+          receipt_url: string | null;
+          status: PaymentStatus;
+          confirmed_by: string | null;
+          confirmed_at: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          order_id: string;
+          bank_id: string;
+          receipt_url?: string | null;
+          status?: PaymentStatus;
+          confirmed_by?: string | null;
+          confirmed_at?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          order_id?: string;
+          bank_id?: string;
+          receipt_url?: string | null;
+          status?: PaymentStatus;
+          confirmed_by?: string | null;
+          confirmed_at?: string | null;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
       notifications: {
         Row: {
           id: string;
@@ -355,4 +442,6 @@ export type Category = Database["public"]["Tables"]["categories"]["Row"];
 export type Product = Database["public"]["Tables"]["products"]["Row"];
 export type Order = Database["public"]["Tables"]["orders"]["Row"];
 export type OrderItem = Database["public"]["Tables"]["order_items"]["Row"];
+export type Bank = Database["public"]["Tables"]["banks"]["Row"];
+export type Payment = Database["public"]["Tables"]["payments"]["Row"];
 export type Notification = Database["public"]["Tables"]["notifications"]["Row"];

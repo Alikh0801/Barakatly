@@ -3,8 +3,7 @@
 import Link from "next/link";
 import { useCartStore } from "@/store/cart";
 import { formatPrice } from "@/lib/shop/format";
-
-const DELIVERY_FEE = 5;
+import { DELIVERY_FEE } from "@/lib/checkout/constants";
 
 export function CartView() {
   const items = useCartStore((s) => s.items);
@@ -131,13 +130,12 @@ export function CartView() {
           </div>
         </div>
 
-        <button
-          type="button"
-          disabled
-          className="mt-6 inline-flex w-full items-center justify-center rounded-xl bg-emerald-600 px-4 py-3 text-sm font-semibold text-white opacity-60"
+        <Link
+          href="/checkout"
+          className="mt-6 inline-flex w-full items-center justify-center rounded-xl bg-emerald-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-emerald-500"
         >
-          Ödəniş (tezliklə)
-        </button>
+          Ödənişə keç
+        </Link>
       </aside>
     </div>
   );

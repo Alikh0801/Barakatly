@@ -67,6 +67,7 @@ export async function signIn(
 
   const email = String(formData.get("email") ?? "").trim();
   const password = String(formData.get("password") ?? "");
+  const next = String(formData.get("next") ?? "").trim();
 
   if (!email || !password) {
     return { error: "Email və şifrə mütləqdir." };
@@ -79,7 +80,9 @@ export async function signIn(
     return { error: translateAuthError(error.message) };
   }
 
-  redirect("/");
+  const safeNext =
+    next.startsWith("/") && !next.startsWith("//") ? next : "/";
+  redirect(safeNext);
 }
 
 export async function signUp(

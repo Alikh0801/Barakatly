@@ -14,6 +14,8 @@ export type {
   Product,
   Order,
   OrderItem,
+  Bank,
+  Payment,
   Notification,
 } from "./database";
 

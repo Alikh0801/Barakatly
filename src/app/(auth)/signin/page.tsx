@@ -8,10 +8,11 @@ export const metadata = {
 export default async function SignInPage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string; message?: string }>;
+  searchParams: Promise<{ error?: string; message?: string; next?: string }>;
 }) {
   const params = await searchParams;
   const linkExpired = params.error === "auth" && params.message === "link-expired";
+  const next = params.next?.startsWith("/") ? params.next : undefined;
 
   return (
     <div className="w-full max-w-md rounded-3xl bg-white p-5 shadow-sm ring-1 ring-zinc-200 sm:p-8">
@@ -35,7 +36,7 @@ export default async function SignInPage({
       ) : null}
 
       <div className={linkExpired ? "mt-5" : "mt-6"}>
-        <SignInForm />
+        <SignInForm next={next} />
       </div>
 
       <p className="mt-4 text-center text-xs text-zinc-500">
