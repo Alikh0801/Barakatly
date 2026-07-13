@@ -71,18 +71,18 @@ export function CartView() {
               </div>
 
               <div className="mt-auto flex items-center justify-between pt-3">
-                <div className="inline-flex items-center rounded-full bg-zinc-100 ring-1 ring-zinc-200">
+                <div className="inline-flex items-center rounded-full bg-zinc-100 text-zinc-900 ring-1 ring-zinc-200">
                   <button
                     type="button"
                     onClick={() =>
                       updateQuantity(item.productId, item.quantity - 1)
                     }
-                    className="px-3 py-1 text-sm"
+                    className="px-3 py-1 text-sm font-medium text-zinc-900 hover:text-emerald-700"
                     aria-label="Miqdarı azalt"
                   >
                     −
                   </button>
-                  <span className="min-w-8 text-center text-sm font-medium">
+                  <span className="min-w-8 text-center text-sm font-semibold text-zinc-900">
                     {item.quantity}
                   </span>
                   <button
@@ -90,7 +90,7 @@ export function CartView() {
                     onClick={() =>
                       updateQuantity(item.productId, item.quantity + 1)
                     }
-                    className="px-3 py-1 text-sm"
+                    className="px-3 py-1 text-sm font-medium text-zinc-900 hover:text-emerald-700"
                     aria-label="Miqdarı artır"
                   >
                     +
@@ -116,15 +116,17 @@ export function CartView() {
       <aside className="h-fit rounded-3xl bg-white p-6 shadow-sm ring-1 ring-zinc-200">
         <h2 className="text-lg font-semibold text-zinc-900">Sifariş xülasəsi</h2>
         <div className="mt-4 space-y-3 text-sm">
-          <div className="flex justify-between">
-            <span className="text-zinc-500">Məhsullar</span>
-            <span>{formatPrice(subtotal)}</span>
+          <div className="flex justify-between text-zinc-700">
+            <span>Məhsullar</span>
+            <span className="font-medium text-zinc-900">{formatPrice(subtotal)}</span>
           </div>
-          <div className="flex justify-between">
-            <span className="text-zinc-500">Çatdırılma</span>
-            <span>{formatPrice(DELIVERY_FEE)}</span>
+          <div className="flex justify-between text-zinc-700">
+            <span>Çatdırılma</span>
+            <span className="font-medium text-zinc-900">
+              {formatPrice(DELIVERY_FEE)}
+            </span>
           </div>
-          <div className="border-t border-zinc-200 pt-3 flex justify-between font-semibold">
+          <div className="flex justify-between border-t border-zinc-200 pt-3 font-semibold text-zinc-900">
             <span>Cəmi</span>
             <span>{formatPrice(total)}</span>
           </div>

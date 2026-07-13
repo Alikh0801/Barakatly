@@ -174,15 +174,19 @@ export function CheckoutForm({
             ))}
           </div>
           <div className="mt-4 space-y-2 border-t border-zinc-200 pt-4 text-sm">
-            <div className="flex justify-between">
-              <span className="text-zinc-500">Məhsullar</span>
-              <span>{formatPrice(subtotal)}</span>
+            <div className="flex justify-between text-zinc-700">
+              <span>Məhsullar</span>
+              <span className="font-medium text-zinc-900">
+                {formatPrice(subtotal)}
+              </span>
             </div>
-            <div className="flex justify-between">
-              <span className="text-zinc-500">Çatdırılma</span>
-              <span>{formatPrice(DELIVERY_FEE)}</span>
+            <div className="flex justify-between text-zinc-700">
+              <span>Çatdırılma</span>
+              <span className="font-medium text-zinc-900">
+                {formatPrice(DELIVERY_FEE)}
+              </span>
             </div>
-            <div className="flex justify-between border-t border-zinc-200 pt-3 font-semibold">
+            <div className="flex justify-between border-t border-zinc-200 pt-3 font-semibold text-zinc-900">
               <span>Cəmi</span>
               <span>{formatPrice(total)}</span>
             </div>

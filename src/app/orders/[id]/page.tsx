@@ -153,15 +153,19 @@ export default async function OrderDetailPage({
               <div className="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-zinc-200">
                 <h2 className="text-lg font-semibold text-zinc-900">Xülasə</h2>
                 <div className="mt-4 space-y-2 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-zinc-500">Məhsullar</span>
-                    <span>{formatPrice(order.subtotal)}</span>
+                  <div className="flex justify-between text-zinc-700">
+                    <span>Məhsullar</span>
+                    <span className="font-medium text-zinc-900">
+                      {formatPrice(order.subtotal)}
+                    </span>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-zinc-500">Çatdırılma</span>
-                    <span>{formatPrice(order.delivery_fee)}</span>
+                  <div className="flex justify-between text-zinc-700">
+                    <span>Çatdırılma</span>
+                    <span className="font-medium text-zinc-900">
+                      {formatPrice(order.delivery_fee)}
+                    </span>
                   </div>
-                  <div className="flex justify-between border-t border-zinc-200 pt-3 font-semibold">
+                  <div className="flex justify-between border-t border-zinc-200 pt-3 font-semibold text-zinc-900">
                     <span>Cəmi</span>
                     <span>{formatPrice(order.total_amount)}</span>
                   </div>
