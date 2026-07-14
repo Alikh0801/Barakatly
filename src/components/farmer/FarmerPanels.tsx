@@ -374,9 +374,6 @@ export function FarmerProductForm({
           }}
           className="mt-1 block w-full rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-sm text-zinc-900 file:mr-3 file:rounded-lg file:border-0 file:bg-emerald-50 file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-emerald-800"
         />
-        <p className="mt-1 text-xs text-zinc-500">
-          JPEG, PNG və ya WebP — maksimum 5 MB
-        </p>
         {previewUrl ? (
           <div className="mt-3 overflow-hidden rounded-2xl ring-1 ring-zinc-200">
             {/* eslint-disable-next-line @next/next/no-img-element */}
