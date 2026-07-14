@@ -8,12 +8,18 @@ import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
 import { WhyChooseSection } from "@/components/WhyChooseSection";
 
-export default function Home() {
+export default async function Home({
+  searchParams,
+}: {
+  searchParams: Promise<{ category?: string }>;
+}) {
+  const params = await searchParams;
+
   return (
     <div className="flex min-h-full flex-col">
       <SiteHeader />
       <Hero />
-      <CategorySection />
+      <CategorySection categorySlug={params.category} />
       <MeetOurFarmersSection />
       <FreshThisWeekSection />
       <WhyChooseSection />
