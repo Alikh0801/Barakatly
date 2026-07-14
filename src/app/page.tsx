@@ -3,7 +3,6 @@ import { Hero } from "@/components/Hero";
 import { CategorySection } from "@/components/CategorySection";
 import { FaqSection } from "@/components/FaqSection";
 import { FreshThisWeekSection } from "@/components/FreshThisWeekSection";
-import { MeetOurFarmersSection } from "@/components/MeetOurFarmersSection";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
 import { WhyChooseSection } from "@/components/WhyChooseSection";
@@ -20,7 +19,6 @@ export default async function Home({
       <SiteHeader />
       <Hero />
       <CategorySection categorySlug={params.category} />
-      <MeetOurFarmersSection />
       <FreshThisWeekSection />
       <WhyChooseSection />
       <FaqSection />
