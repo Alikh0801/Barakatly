@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useEffect, useState } from "react";
 import Link from "next/link";
 import { PasswordInput } from "@/components/auth/PasswordInput";
 import { Spinner } from "@/components/ui/Spinner";
@@ -236,10 +236,22 @@ export function FarmerProductForm({
 }) {
   const action = product ? updateProduct : createProduct;
   const [state, formAction, pending] = useActionState(action, initialState);
-  const imageUrl = product?.product_images?.[0]?.url ?? "";
+  const existingImageUrl = product?.product_images?.[0]?.url ?? "";
+  const [previewUrl, setPreviewUrl] = useState(existingImageUrl);
+
+  useEffect(() => {
+    return () => {
+      if (previewUrl.startsWith("blob:")) {
+        URL.revokeObjectURL(previewUrl);
+      }
+    };
+  }, [previewUrl]);
 
   return (
-    <form action={formAction} className="space-y-4 rounded-3xl bg-white p-6 shadow-sm ring-1 ring-zinc-200">
+    <form
+      action={formAction}
+      className="space-y-4 rounded-3xl bg-white p-6 shadow-sm ring-1 ring-zinc-200"
+    >
       {product ? <input type="hidden" name="product_id" value={product.id} /> : null}
       <div>
         <label htmlFor="title" className="block text-sm font-medium text-zinc-700">
@@ -339,17 +351,42 @@ export function FarmerProductForm({
         </div>
       </div>
       <div>
-        <label htmlFor="image_url" className="block text-sm font-medium text-zinc-700">
-          Şəkil URL
+        <label htmlFor="image" className="block text-sm font-medium text-zinc-700">
+          Məhsul şəkli {product ? "(istəyə bağlı yeniləyin)" : "*"}
         </label>
         <input
-          id="image_url"
-          name="image_url"
-          type="url"
-          defaultValue={imageUrl}
-          placeholder="https://..."
-          className="mt-1 w-full rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-base text-zinc-900"
+          id="image"
+          name="image"
+          type="file"
+          accept="image/jpeg,image/png,image/webp"
+          required={!product}
+          onChange={(event) => {
+            const file = event.target.files?.[0];
+            if (!file) {
+              setPreviewUrl(existingImageUrl);
+              return;
+            }
+            const nextUrl = URL.createObjectURL(file);
+            setPreviewUrl((current) => {
+              if (current.startsWith("blob:")) URL.revokeObjectURL(current);
+              return nextUrl;
+            });
+          }}
+          className="mt-1 block w-full rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-sm text-zinc-900 file:mr-3 file:rounded-lg file:border-0 file:bg-emerald-50 file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-emerald-800"
         />
+        <p className="mt-1 text-xs text-zinc-500">
+          JPEG, PNG və ya WebP — maksimum 5 MB
+        </p>
+        {previewUrl ? (
+          <div className="mt-3 overflow-hidden rounded-2xl ring-1 ring-zinc-200">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={previewUrl}
+              alt="Məhsul şəkli önbaxışı"
+              className="h-48 w-full object-cover"
+            />
+          </div>
+        ) : null}
       </div>
 
       {state.error ? (

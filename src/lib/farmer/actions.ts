@@ -6,6 +6,7 @@ import { getAuthCallbackUrl, getSupabaseEnvError } from "@/lib/auth/urls";
 import { getProfile } from "@/lib/auth/session";
 import { requireApprovedFarmer } from "@/lib/farmer/auth";
 import { ensureFarmerRecord } from "@/lib/farmer/ensure";
+import { uploadProductImage } from "@/lib/farmer/image-upload";
 import {
   FARMER_ITEM_STATUS_TRANSITIONS,
   getOrderItemStatusLabel,
@@ -144,7 +145,7 @@ export async function createProduct(
   _prev: FarmerActionState,
   formData: FormData
 ): Promise<FarmerActionState> {
-  const { farmer } = await requireApprovedFarmer();
+  const { farmer, profile } = await requireApprovedFarmer();
 
   const title = String(formData.get("title") ?? "").trim();
   const description = String(formData.get("description") ?? "").trim();
@@ -152,7 +153,7 @@ export async function createProduct(
   const unitType = String(formData.get("unit_type") ?? "").trim() as UnitType;
   const farmerPrice = Number(formData.get("farmer_price") ?? 0);
   const quantity = Number(formData.get("quantity_available") ?? 0);
-  const imageUrl = String(formData.get("image_url") ?? "").trim();
+  const image = formData.get("image");
 
   if (!title || !description || !categoryId || !unitType) {
     return { error: "Bütün sahələr mütləqdir." };
@@ -164,6 +165,10 @@ export async function createProduct(
 
   if (!(farmerPrice > 0) || !(quantity >= 0)) {
     return { error: "Qiymət və miqdar düzgün deyil." };
+  }
+
+  if (!(image instanceof File) || image.size === 0) {
+    return { error: "Məhsul şəklini cihazınızdan seçin." };
   }
 
   const supabase = await createClient();
@@ -188,12 +193,28 @@ export async function createProduct(
     return { error: "Məhsul yaradıla bilmədi." };
   }
 
-  if (imageUrl) {
-    await supabase.from("product_images").insert({
-      product_id: product.id,
-      url: imageUrl,
-      sort_order: 0,
-    });
+  const uploaded = await uploadProductImage(
+    supabase,
+    profile.id,
+    product.id,
+    image,
+  );
+
+  if ("error" in uploaded) {
+    await supabase.from("products").delete().eq("id", product.id);
+    return { error: uploaded.error };
+  }
+
+  const { error: imageError } = await supabase.from("product_images").insert({
+    product_id: product.id,
+    url: uploaded.url,
+    sort_order: 0,
+  });
+
+  if (imageError) {
+    console.error("[farmer.createProduct.image]", imageError.message);
+    await supabase.from("products").delete().eq("id", product.id);
+    return { error: "Şəkil saxlanılmadı. Yenidən cəhd edin." };
   }
 
   revalidatePath("/farmer/products");
@@ -205,7 +226,7 @@ export async function updateProduct(
   _prev: FarmerActionState,
   formData: FormData
 ): Promise<FarmerActionState> {
-  const { farmer } = await requireApprovedFarmer();
+  const { farmer, profile } = await requireApprovedFarmer();
   const productId = String(formData.get("product_id") ?? "").trim();
 
   const title = String(formData.get("title") ?? "").trim();
@@ -214,7 +235,7 @@ export async function updateProduct(
   const unitType = String(formData.get("unit_type") ?? "").trim() as UnitType;
   const farmerPrice = Number(formData.get("farmer_price") ?? 0);
   const quantity = Number(formData.get("quantity_available") ?? 0);
-  const imageUrl = String(formData.get("image_url") ?? "").trim();
+  const image = formData.get("image");
 
   if (!productId || !title || !description || !categoryId || !unitType) {
     return { error: "Bütün sahələr mütləqdir." };
@@ -242,13 +263,29 @@ export async function updateProduct(
     return { error: "Məhsul yenilənmədi." };
   }
 
-  if (imageUrl) {
+  if (image instanceof File && image.size > 0) {
+    const uploaded = await uploadProductImage(
+      supabase,
+      profile.id,
+      productId,
+      image,
+    );
+
+    if ("error" in uploaded) {
+      return { error: uploaded.error };
+    }
+
     await supabase.from("product_images").delete().eq("product_id", productId);
-    await supabase.from("product_images").insert({
+    const { error: imageError } = await supabase.from("product_images").insert({
       product_id: productId,
-      url: imageUrl,
+      url: uploaded.url,
       sort_order: 0,
     });
+
+    if (imageError) {
+      console.error("[farmer.updateProduct.image]", imageError.message);
+      return { error: "Şəkil yenilənmədi." };
+    }
   }
 
   revalidatePath("/farmer/products");
