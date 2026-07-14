@@ -214,7 +214,7 @@ export default function NotFound() {
               Səhifə tapılmadı
             </h1>
             <p className="mx-auto mt-4 max-w-xl text-base leading-7 text-zinc-600">
-              Axtardığınız ünvan mövcud deyil və ya hələ dərc olunmayıb.
+              Axtardığınız ünvan mövcud deyil və ya inkişaf mərhələsindədir.
               Ana səhifəyə qayıda və ya mağazadan alış-verişə davam edə
               bilərsiniz.
             </p>
