@@ -75,7 +75,7 @@ async function fetchProducts(categorySlug?: string): Promise<ProductListItem[]> 
     return [];
   }
 
-  return (data ?? []) as ProductListItem[];
+  return (data ?? []) as unknown as ProductListItem[];
 }
 
 async function fetchProductById(id: string): Promise<ProductDetail | null> {
@@ -92,7 +92,7 @@ async function fetchProductById(id: string): Promise<ProductDetail | null> {
     return null;
   }
 
-  return data as ProductDetail;
+  return data as unknown as ProductDetail;
 }
 
 export const getCategories = unstable_cache(fetchCategories, ["shop-categories"], {

@@ -28,6 +28,15 @@ export default async function AdminLayout({
             <Link href="/admin/orders" className="text-zinc-600 hover:text-zinc-900">
               Sifarişlər
             </Link>
+            <Link href="/admin/farmers" className="text-zinc-600 hover:text-zinc-900">
+              Fermerlər
+            </Link>
+            <Link href="/admin/products" className="text-zinc-600 hover:text-zinc-900">
+              Məhsullar
+            </Link>
+            <Link href="/admin/couriers" className="text-zinc-600 hover:text-zinc-900">
+              Kuryerlər
+            </Link>
             <Link href="/" className="text-zinc-600 hover:text-zinc-900">
               Sayt
             </Link>

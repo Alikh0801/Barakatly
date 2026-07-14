@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import type { Bank, Order, Payment } from "@/types";
+import type { Bank, Courier, Farmer, Order, Payment, Product } from "@/types";
 
 export type AdminPendingPayment = Payment & {
   banks: Pick<Bank, "name" | "pan_number"> | null;
@@ -70,4 +70,73 @@ export async function getAdminOrders(): Promise<AdminOrderListItem[]> {
   }
 
   return (data ?? []) as unknown as AdminOrderListItem[];
+}
+
+export type AdminFarmer = Farmer & {
+  profiles: {
+    full_name: string | null;
+    email: string | null;
+    phone: string | null;
+  } | null;
+};
+
+export async function getAdminFarmers(): Promise<AdminFarmer[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("farmers")
+    .select("*, profiles:profile_id (full_name, email, phone)")
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    console.error("[admin.getAdminFarmers]", error.message);
+    return [];
+  }
+
+  return (data ?? []) as unknown as AdminFarmer[];
+}
+
+export type AdminProduct = Product & {
+  farmers: Pick<Farmer, "farm_name"> | null;
+  categories: { name_az: string } | null;
+};
+
+export async function getAdminPendingProducts(): Promise<AdminProduct[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("products")
+    .select(
+      `
+      *,
+      farmers (farm_name),
+      categories:category_id (name_az)
+    `
+    )
+    .eq("status", "pending")
+    .order("created_at", { ascending: true });
+
+  if (error) {
+    console.error("[admin.getAdminPendingProducts]", error.message);
+    return [];
+  }
+
+  return (data ?? []) as unknown as AdminProduct[];
+}
+
+export type AdminCourier = Courier & {
+  profiles: { full_name: string | null; email: string | null } | null;
+};
+
+export async function getAdminCouriers(): Promise<AdminCourier[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("couriers")
+    .select("*, profiles:profile_id (full_name, email)")
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    console.error("[admin.getAdminCouriers]", error.message);
+    return [];
+  }
+
+  return (data ?? []) as unknown as AdminCourier[];
 }

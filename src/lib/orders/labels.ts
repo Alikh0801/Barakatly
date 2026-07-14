@@ -28,6 +28,59 @@ export const ADMIN_STATUS_TRANSITIONS: Record<
   cancelled: [],
 };
 
+export const FARMER_ITEM_STATUS_TRANSITIONS: Record<
+  OrderItemStatus,
+  OrderItemStatus[]
+> = {
+  new: ["accepted"],
+  accepted: ["preparing"],
+  preparing: ["ready"],
+  ready: [],
+  picked_up: [],
+  delivered: [],
+};
+
+export const COURIER_ORDER_STATUS_TRANSITIONS: Record<
+  OrderStatus,
+  OrderStatus[]
+> = {
+  awaiting_confirmation: [],
+  confirmed: [],
+  farmer_accepted: [],
+  preparing: ["picked_up"],
+  picked_up: ["delivered"],
+  delivered: [],
+  cancelled: [],
+};
+
+export function getFarmerStatusLabel(status: string): string {
+  switch (status) {
+    case "pending":
+      return "Gözləyir";
+    case "approved":
+      return "Təsdiqləndi";
+    case "rejected":
+      return "Rədd edildi";
+    case "suspended":
+      return "Dayandırılıb";
+    default:
+      return status;
+  }
+}
+
+export function getProductStatusLabel(status: string): string {
+  switch (status) {
+    case "pending":
+      return "Gözləyir";
+    case "approved":
+      return "Təsdiqləndi";
+    case "rejected":
+      return "Rədd edildi";
+    default:
+      return status;
+  }
+}
+
 export function getOrderItemStatusLabel(status: OrderItemStatus): string {
   switch (status) {
     case "new":

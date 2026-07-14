@@ -119,6 +119,27 @@ export interface Database {
         };
         Relationships: [];
       };
+      couriers: {
+        Row: {
+          id: string;
+          profile_id: string;
+          is_active: boolean;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          profile_id: string;
+          is_active?: boolean;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          profile_id?: string;
+          is_active?: boolean;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
       categories: {
         Row: {
           id: string;
@@ -191,6 +212,30 @@ export interface Database {
           status?: ProductStatus;
           created_at?: string;
           updated_at?: string;
+        };
+        Relationships: [];
+      };
+      product_images: {
+        Row: {
+          id: string;
+          product_id: string;
+          url: string;
+          sort_order: number;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          product_id: string;
+          url: string;
+          sort_order?: number;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          product_id?: string;
+          url?: string;
+          sort_order?: number;
+          created_at?: string;
         };
         Relationships: [];
       };
@@ -438,6 +483,7 @@ export interface Database {
 
 export type Profile = Database["public"]["Tables"]["profiles"]["Row"];
 export type Farmer = Database["public"]["Tables"]["farmers"]["Row"];
+export type Courier = Database["public"]["Tables"]["couriers"]["Row"];
 export type Category = Database["public"]["Tables"]["categories"]["Row"];
 export type Product = Database["public"]["Tables"]["products"]["Row"];
 export type Order = Database["public"]["Tables"]["orders"]["Row"];

@@ -67,7 +67,15 @@ export default async function AccountPage() {
               Rol
             </div>
             <div className="mt-1 text-sm capitalize text-zinc-900">
-              {profile.role === "customer" ? "Müştəri" : profile.role}
+              {profile.role === "customer"
+                ? "Müştəri"
+                : profile.role === "farmer"
+                  ? "Fermer"
+                  : profile.role === "courier"
+                    ? "Kuryer"
+                    : profile.role === "admin"
+                      ? "Admin"
+                      : profile.role}
             </div>
           </div>
         </div>
@@ -87,6 +95,24 @@ export default async function AccountPage() {
           >
             Bildirişlər
           </Link>
+          {profile.role === "farmer" ? (
+            <Link
+              href="/farmer"
+              prefetch
+              className="inline-flex items-center rounded-full bg-emerald-700 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-600"
+            >
+              Fermer panel
+            </Link>
+          ) : null}
+          {profile.role === "courier" ? (
+            <Link
+              href="/courier"
+              prefetch
+              className="inline-flex items-center rounded-full bg-sky-700 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-sky-600"
+            >
+              Kuryer panel
+            </Link>
+          ) : null}
           {profile.role === "admin" ? (
             <Link
               href="/admin"

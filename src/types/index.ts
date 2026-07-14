@@ -10,6 +10,7 @@ export type {
   Database,
   Profile,
   Farmer,
+  Courier,
   Category,
   Product,
   Order,

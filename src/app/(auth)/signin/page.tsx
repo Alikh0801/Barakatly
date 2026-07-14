@@ -43,8 +43,7 @@ export default async function SignInPage({
         Fermersiniz?{" "}
         <Link href="/farmer/signup" className="text-emerald-700 hover:underline">
           Fermer qeydiyyatı
-        </Link>{" "}
-        (tezliklə)
+        </Link>
       </p>
     </div>
   );
