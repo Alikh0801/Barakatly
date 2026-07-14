@@ -1,6 +1,6 @@
 import { PublicShell } from "@/components/layout/PublicShell";
 
-export default function ShopLayout({
+export default function AboutLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
