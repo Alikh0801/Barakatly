@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { Metadata } from "next";
+import { VerifiedIcon } from "@/components/ui/VerifiedIcon";
 import { getPublicFarmers } from "@/lib/farmers/queries";
 
 export const metadata: Metadata = {
@@ -64,11 +65,7 @@ export default async function FarmersPage() {
                   <h2 className="text-lg font-semibold text-zinc-900">
                     {farmer.farm_name}
                   </h2>
-                  {farmer.verified_at ? (
-                    <span className="text-xs font-medium text-emerald-700">
-                      Təsdiqlənmiş
-                    </span>
-                  ) : null}
+                  {farmer.verified_at ? <VerifiedIcon /> : null}
                 </div>
                 {farmer.location_text ? (
                   <p className="mt-1 text-sm text-zinc-600">

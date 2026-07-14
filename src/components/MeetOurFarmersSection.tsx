@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ImageWithSkeleton } from "@/components/ui/ImageWithSkeleton";
+import { VerifiedIcon } from "@/components/ui/VerifiedIcon";
 
 const FARMERS = [
   {
@@ -82,8 +83,8 @@ export function MeetOurFarmersSection() {
                   skeletonClassName="rounded-none"
                 />
                 {f.verified ? (
-                  <div className="absolute right-3 top-3 inline-flex items-center gap-1 rounded-full bg-white/90 px-2 py-1 text-[11px] font-medium text-emerald-700 ring-1 ring-emerald-200">
-                    <span aria-hidden="true">✓</span> Təsdiqlənmiş
+                  <div className="absolute right-3 top-3 inline-flex h-8 w-8 items-center justify-center rounded-full bg-white/95 shadow-sm ring-1 ring-emerald-100">
+                    <VerifiedIcon className="h-5 w-5" />
                   </div>
                 ) : null}
               </div>
