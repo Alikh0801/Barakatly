@@ -149,15 +149,15 @@ function ClockIcon({ className }: { className?: string }) {
 
 const STATUS_ITEMS = [
   {
-    label: "İnkişaf davam edir",
+    label: "Səhifə aktiv deyil",
     icon: BarrierIcon,
   },
   {
-    label: "Yeniliklər hazırlanır",
+    label: "Hazırlanma mərhələsində",
     icon: WrenchIcon,
   },
   {
-    label: "Tezliklə buradayıq",
+    label: "Tezliklə əlçatan olacaq",
     icon: ClockIcon,
   },
 ] as const;
@@ -211,11 +211,11 @@ export default function NotFound() {
               404
             </p>
             <h1 className="mt-3 text-3xl font-semibold tracking-tight text-zinc-900 md:text-4xl">
-              Bu səhifə tikinti mərhələsindədir
+              Səhifə tapılmadı
             </h1>
             <p className="mx-auto mt-4 max-w-xl text-base leading-7 text-zinc-600">
-              Üzərində işləyirik — komandamız bu hissəni hazırlayır. Tezliklə
-              buranı da açacağıq. Bu arada mövcud səhifələrdən davam edə
+              Axtardığınız ünvan mövcud deyil və ya hələ dərc olunmayıb.
+              Ana səhifəyə qayıda və ya mağazadan alış-verişə davam edə
               bilərsiniz.
             </p>
           </div>
