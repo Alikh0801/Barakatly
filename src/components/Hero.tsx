@@ -24,15 +24,6 @@ function Chip({
   );
 }
 
-function Stat({ value, label }: { value: string; label: string }) {
-  return (
-    <div className="flex items-baseline gap-2">
-      <span className="text-lg font-semibold text-white">{value}</span>
-      <span className="text-xs text-white/70">{label}</span>
-    </div>
-  );
-}
-
 export function Hero() {
   return (
     <section className="relative isolate min-h-screen min-h-dvh overflow-hidden">
@@ -40,7 +31,6 @@ export function Hero() {
         className="absolute inset-0 bg-cover bg-center"
         style={{
           backgroundImage:
-            // Remote image keeps repo text-only (no binary assets).
             "url(https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=2400&q=80)",
         }}
       />
@@ -105,60 +95,22 @@ export function Hero() {
             qidalanaraq icmanızı dəstəkləyin.
           </p>
 
-          <div className="mt-6 flex w-full max-w-xl items-center gap-2 rounded-2xl bg-white/10 p-2 ring-1 ring-white/15 backdrop-blur-md">
-            <div className="flex flex-1 items-center gap-2 rounded-xl bg-white/95 px-3 py-2">
-              <svg
-                aria-hidden="true"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                className="h-4 w-4 text-zinc-500"
-              >
-                <path d="M10.5 18a7.5 7.5 0 1 1 0-15 7.5 7.5 0 0 1 0 15Z" />
-                <path d="M16.5 16.5 21 21" strokeLinecap="round" />
-              </svg>
-              <input
-                aria-label="Məhsul axtar"
-                placeholder="Pomidor, bal, göyərti… axtarın"
-                className="w-full bg-transparent text-sm text-zinc-900 placeholder:text-zinc-500 focus:outline-none"
-              />
-            </div>
+          <div className="mt-6 flex flex-wrap gap-3">
             <Link
-              href="/search"
-              className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-500 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-400"
+              href="/shop"
+              className="inline-flex h-11 items-center justify-center rounded-xl bg-emerald-500 px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-400"
             >
-              Axtar
-              <svg
-                aria-hidden="true"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                className="h-4 w-4"
-              >
-                <path
-                  d="M5 12h12"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-                <path
-                  d="m13 6 6 6-6 6"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
+              Mağazaya bax
             </Link>
-          </div>
-
-          <div className="mt-8 grid grid-cols-3 gap-6">
-            <Stat value="200+" label="Yerli fermer" />
-            <Stat value="1,400+" label="Təzə məhsul" />
-            <Stat value="15K+" label="Məmnun müştəri" />
+            <Link
+              href="/farmers/apply"
+              className="inline-flex h-11 items-center justify-center rounded-xl bg-white/10 px-5 text-sm font-semibold text-white ring-1 ring-white/20 backdrop-blur-sm transition hover:bg-white/15"
+            >
+              Fermer ol
+            </Link>
           </div>
         </div>
       </div>
     </section>
   );
 }
-

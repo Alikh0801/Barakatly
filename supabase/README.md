@@ -18,8 +18,11 @@ In the Supabase dashboard, open **SQL Editor** and run these files **in order**:
 
 1. `supabase/migrations/001_initial_schema.sql`
 2. `supabase/migrations/002_rls_policies.sql`
-3. `supabase/migrations/003_seed.sql`
-4. `supabase/migrations/004_demo_products.sql` — demo fermerlər və 8 məhsul (mağaza üçün)
+3. `supabase/migrations/003_seed.sql` — kateqoriyalar və banklar
+4. `supabase/migrations/004_demo_products.sql` — no-op (köhnə demo seed ləğv olunub)
+5. `supabase/migrations/005_remove_demo_catalog.sql` — mövcud demo məhsul/fermerləri silir
+
+Məhsul və şəkilləri fermerlər özləri əlavə edir; demo kataloq yoxdur.
 
 ## 3. Configure Auth providers
 

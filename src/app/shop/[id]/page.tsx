@@ -47,13 +47,7 @@ export default async function ProductDetailPage({
 
       <div className="mt-8 grid gap-10 lg:grid-cols-2">
         <div className="overflow-hidden rounded-3xl bg-white shadow-sm ring-1 ring-zinc-200">
-          <ProductDetailImage
-            src={
-              imageUrl ??
-              "https://images.unsplash.com/photo-1540420773420-3366772f4999?auto=format&fit=crop&w=1200&q=80"
-            }
-            alt={product.title}
-          />
+          <ProductDetailImage src={imageUrl} alt={product.title} />
         </div>
 
         <div>

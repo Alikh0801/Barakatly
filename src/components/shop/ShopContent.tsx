@@ -36,14 +36,10 @@ export async function ShopContent({
       ) : (
         <div className="mt-10 rounded-3xl bg-white p-10 text-center shadow-sm ring-1 ring-zinc-200">
           <p className="text-lg font-medium text-zinc-900">
-            Hazırda məhsul tapılmadı
+            Hazırda məhsul yoxdur
           </p>
-          <p className="mt-2 text-sm text-zinc-500">
-            Supabase-də demo məhsulları yükləmək üçün{" "}
-            <code className="rounded bg-zinc-100 px-1">
-              004_demo_products.sql
-            </code>{" "}
-            migration-ını işlədin.
+          <p className="mt-2 text-sm text-zinc-600">
+            Fermerlər məhsul əlavə etdikcə burada görünəcək.
           </p>
         </div>
       )}

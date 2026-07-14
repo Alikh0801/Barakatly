@@ -6,7 +6,6 @@ import { FreshThisWeekSection } from "@/components/FreshThisWeekSection";
 import { MeetOurFarmersSection } from "@/components/MeetOurFarmersSection";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
-import { WhatCustomersSaySection } from "@/components/WhatCustomersSaySection";
 import { WhyChooseSection } from "@/components/WhyChooseSection";
 
 export default function Home() {
@@ -18,7 +17,6 @@ export default function Home() {
       <MeetOurFarmersSection />
       <FreshThisWeekSection />
       <WhyChooseSection />
-      <WhatCustomersSaySection />
       <FaqSection />
       <AreYouAFarmerSection />
       <SiteFooter />

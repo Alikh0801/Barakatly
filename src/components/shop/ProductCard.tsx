@@ -8,6 +8,7 @@ import {
 } from "@/lib/shop/format";
 import { AddToCartButton } from "@/components/shop/AddToCartButton";
 import { ImageWithSkeleton } from "@/components/ui/ImageWithSkeleton";
+import { ProductImagePlaceholder } from "@/components/shop/ProductImagePlaceholder";
 
 export function ProductCard({ product }: { product: ProductListItem }) {
   const imageUrl = getProductImageUrl(product.product_images);
@@ -17,15 +18,16 @@ export function ProductCard({ product }: { product: ProductListItem }) {
     <article className="group overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-zinc-200 transition hover:shadow-md">
       <Link href={`/shop/${product.id}`} prefetch className="block">
         <div className="relative overflow-hidden">
-          <ImageWithSkeleton
-            src={
-              imageUrl ??
-              "https://images.unsplash.com/photo-1540420773420-3366772f4999?auto=format&fit=crop&w=800&q=80"
-            }
-            alt={product.title}
-            className="h-44 w-full object-cover transition duration-500 group-hover:scale-[1.03]"
-            skeletonClassName="rounded-none"
-          />
+          {imageUrl ? (
+            <ImageWithSkeleton
+              src={imageUrl}
+              alt={product.title}
+              className="h-44 w-full object-cover transition duration-500 group-hover:scale-[1.03]"
+              skeletonClassName="rounded-none"
+            />
+          ) : (
+            <ProductImagePlaceholder />
+          )}
         </div>
       </Link>
 
