@@ -1,26 +1,4 @@
 import { Skeleton } from "@/components/ui/Skeleton";
-import { ProductCardSkeleton } from "@/components/skeletons/ShopSkeleton";
-
-export function FreshProductsSkeleton() {
-  return (
-    <section className="bg-white">
-      <div className="mx-auto w-full max-w-6xl px-4 py-14 md:px-6 md:py-16">
-        <div className="flex items-start justify-between gap-6">
-          <div className="space-y-2">
-            <Skeleton className="h-8 w-40" />
-            <Skeleton className="h-4 w-56" />
-          </div>
-          <Skeleton className="hidden h-10 w-32 rounded-full sm:block" />
-        </div>
-        <div className="mt-10 grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-          {Array.from({ length: 4 }).map((_, index) => (
-            <ProductCardSkeleton key={index} />
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
 
 export function HeroSkeleton() {
   return (
@@ -81,7 +59,7 @@ export function HomePageSkeleton() {
         </div>
       </div>
       <HeroSkeleton />
-      <section className="bg-[#faf9f5]">
+      <section className="bg-white">
         <div className="mx-auto w-full max-w-6xl px-4 py-14 md:px-6 md:py-16">
           <SectionHeaderSkeleton />
           <div className="mt-10">
@@ -89,7 +67,6 @@ export function HomePageSkeleton() {
           </div>
         </div>
       </section>
-      <FreshProductsSkeleton />
     </div>
   );
 }

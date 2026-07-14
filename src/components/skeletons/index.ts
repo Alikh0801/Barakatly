@@ -11,7 +11,6 @@ export {
 } from "./CheckoutSkeleton";
 export {
   CategoryGridSkeleton,
-  FreshProductsSkeleton,
   HeroSkeleton,
   HomePageSkeleton,
   SectionHeaderSkeleton,
