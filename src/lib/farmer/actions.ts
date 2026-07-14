@@ -3,7 +3,9 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getAuthCallbackUrl, getSupabaseEnvError } from "@/lib/auth/urls";
+import { getProfile } from "@/lib/auth/session";
 import { requireApprovedFarmer } from "@/lib/farmer/auth";
+import { ensureFarmerRecord } from "@/lib/farmer/ensure";
 import {
   FARMER_ITEM_STATUS_TRANSITIONS,
   getOrderItemStatusLabel,
@@ -101,6 +103,40 @@ export async function signUpFarmer(
     };
   }
 
+  redirect("/farmer");
+}
+
+/** Completes farm profile for an already authenticated farmer (no new auth user). */
+export async function completeFarmerProfile(
+  _prev: FarmerActionState,
+  formData: FormData
+): Promise<FarmerActionState> {
+  const profile = await getProfile();
+  if (!profile) {
+    return { error: "Əvvəlcə daxil olun." };
+  }
+
+  const farmName = String(formData.get("farm_name") ?? "").trim();
+  const description = String(formData.get("description") ?? "").trim();
+  const locationText = String(formData.get("location_text") ?? "").trim();
+  const phone = String(formData.get("phone") ?? "").trim();
+
+  if (!farmName) {
+    return { error: "Təsərrüfat adı mütləqdir." };
+  }
+
+  const farmer = await ensureFarmerRecord(profile.id, {
+    farmName,
+    description,
+    locationText,
+    phone,
+  });
+
+  if (!farmer) {
+    return { error: "Fermer profili yaradıla bilmədi. Yenidən cəhd edin." };
+  }
+
+  revalidatePath("/farmer");
   redirect("/farmer");
 }
 

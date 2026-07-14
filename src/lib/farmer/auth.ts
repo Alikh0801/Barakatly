@@ -16,24 +16,35 @@ export async function requireFarmer(): Promise<FarmerContext> {
     redirect("/signin?next=/farmer");
   }
 
-  if (profile.role !== "farmer" && profile.role !== "admin") {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  const metaRole = user?.user_metadata?.role;
+  const isFarmer =
+    profile.role === "farmer" ||
+    profile.role === "admin" ||
+    metaRole === "farmer";
+
+  if (!isFarmer) {
     redirect("/account");
   }
 
-  const supabase = await createClient();
-  const { data: existing } = await supabase
-    .from("farmers")
-    .select("*")
-    .eq("profile_id", profile.id)
-    .maybeSingle();
-
-  const farmer = existing ?? (await ensureFarmerRecord(profile.id));
+  // Rebuild farmers row after email confirmation / deferred signup insert.
+  const farmer = await ensureFarmerRecord(profile.id);
 
   if (!farmer) {
     redirect("/farmer/signup");
   }
 
-  return { profile, farmer };
+  return {
+    profile: {
+      ...profile,
+      role: profile.role === "admin" ? "admin" : "farmer",
+    },
+    farmer,
+  };
 }
 
 export async function requireApprovedFarmer(): Promise<FarmerContext> {

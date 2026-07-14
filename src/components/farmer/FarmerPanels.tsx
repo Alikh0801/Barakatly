@@ -5,6 +5,7 @@ import Link from "next/link";
 import { PasswordInput } from "@/components/auth/PasswordInput";
 import { Spinner } from "@/components/ui/Spinner";
 import {
+  completeFarmerProfile,
   createProduct,
   signUpFarmer,
   updateOrderItemStatus,
@@ -127,6 +128,88 @@ export function FarmerSignUpForm() {
       >
         {pending ? <Spinner className="h-4 w-4" /> : null}
         Fermer kimi qeydiyyat
+      </button>
+    </form>
+  );
+}
+
+export function CompleteFarmerProfileForm({
+  defaultFarmName = "",
+  defaultPhone = "",
+}: {
+  defaultFarmName?: string;
+  defaultPhone?: string;
+}) {
+  const [state, action, pending] = useActionState(
+    completeFarmerProfile,
+    initialState,
+  );
+
+  return (
+    <form action={action} className="space-y-4">
+      <p className="rounded-xl bg-emerald-50 px-3 py-2 text-sm text-emerald-800 ring-1 ring-emerald-200">
+        Hesabınız aktivdir. Təsərrüfat məlumatlarını tamamlayın — sonra fermer
+        paneli açılacaq.
+      </p>
+      <div>
+        <label htmlFor="farm_name" className="block text-sm font-medium text-zinc-700">
+          Təsərrüfat adı *
+        </label>
+        <input
+          id="farm_name"
+          name="farm_name"
+          required
+          defaultValue={defaultFarmName}
+          className="mt-1 w-full rounded-xl border border-zinc-200 px-3 py-2.5 text-base text-zinc-900 outline-none ring-emerald-500 focus:ring-2"
+        />
+      </div>
+      <div>
+        <label htmlFor="phone" className="block text-sm font-medium text-zinc-700">
+          Telefon
+        </label>
+        <input
+          id="phone"
+          name="phone"
+          type="tel"
+          defaultValue={defaultPhone}
+          className="mt-1 w-full rounded-xl border border-zinc-200 px-3 py-2.5 text-base text-zinc-900 outline-none ring-emerald-500 focus:ring-2"
+        />
+      </div>
+      <div>
+        <label htmlFor="location_text" className="block text-sm font-medium text-zinc-700">
+          Yerləşmə
+        </label>
+        <input
+          id="location_text"
+          name="location_text"
+          className="mt-1 w-full rounded-xl border border-zinc-200 px-3 py-2.5 text-base text-zinc-900 outline-none ring-emerald-500 focus:ring-2"
+        />
+      </div>
+      <div>
+        <label htmlFor="description" className="block text-sm font-medium text-zinc-700">
+          Təsvir
+        </label>
+        <textarea
+          id="description"
+          name="description"
+          rows={3}
+          className="mt-1 w-full rounded-xl border border-zinc-200 px-3 py-2.5 text-base text-zinc-900 outline-none ring-emerald-500 focus:ring-2"
+        />
+      </div>
+
+      {state.error ? (
+        <p className="rounded-xl bg-rose-50 px-3 py-2 text-sm text-rose-700 ring-1 ring-rose-200">
+          {state.error}
+        </p>
+      ) : null}
+
+      <button
+        type="submit"
+        disabled={pending}
+        className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-emerald-500 disabled:opacity-70"
+      >
+        {pending ? <Spinner className="h-4 w-4" /> : null}
+        Fermer panelinə keç
       </button>
     </form>
   );
