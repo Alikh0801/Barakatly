@@ -442,6 +442,8 @@ export type Category = Database["public"]["Tables"]["categories"]["Row"];
 export type Product = Database["public"]["Tables"]["products"]["Row"];
 export type Order = Database["public"]["Tables"]["orders"]["Row"];
 export type OrderItem = Database["public"]["Tables"]["order_items"]["Row"];
+export type OrderStatusEvent =
+  Database["public"]["Tables"]["order_status_events"]["Row"];
 export type Bank = Database["public"]["Tables"]["banks"]["Row"];
 export type Payment = Database["public"]["Tables"]["payments"]["Row"];
 export type Notification = Database["public"]["Tables"]["notifications"]["Row"];

@@ -1,7 +1,7 @@
 import { unstable_cache } from "next/cache";
 import { createPublicClient } from "@/lib/supabase/public";
 import { createClient } from "@/lib/supabase/server";
-import type { Bank, Order, OrderItem, Payment } from "@/types";
+import type { Bank, Order, OrderItem, OrderStatusEvent, Payment } from "@/types";
 
 async function fetchActiveBanks(): Promise<Bank[]> {
   const supabase = createPublicClient();
@@ -55,6 +55,7 @@ export async function getCustomerOrders(): Promise<OrderListItem[]> {
 export type OrderDetail = Order & {
   order_items: OrderItem[];
   payments: (Payment & { banks: Pick<Bank, "name" | "pan_number"> | null })[] | null;
+  order_status_events: OrderStatusEvent[] | null;
 };
 
 export async function getOrderById(id: string): Promise<OrderDetail | null> {
@@ -75,7 +76,8 @@ export async function getOrderById(id: string): Promise<OrderDetail | null> {
       payments (
         *,
         banks (name, pan_number)
-      )
+      ),
+      order_status_events (*)
     `
     )
     .eq("id", id)
@@ -87,5 +89,13 @@ export async function getOrderById(id: string): Promise<OrderDetail | null> {
     return null;
   }
 
-  return data as unknown as OrderDetail;
+  const detail = data as unknown as OrderDetail;
+  if (detail.order_status_events) {
+    detail.order_status_events = [...detail.order_status_events].sort(
+      (a, b) =>
+        new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+    );
+  }
+
+  return detail;
 }

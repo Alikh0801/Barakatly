@@ -72,13 +72,30 @@ export default async function AccountPage() {
           </div>
         </div>
 
-        <div className="mt-6">
+        <div className="mt-6 flex flex-wrap gap-3">
           <Link
             href="/orders"
+            prefetch
             className="inline-flex items-center rounded-full bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-500"
           >
             Sifarişlərim
           </Link>
+          <Link
+            href="/notifications"
+            prefetch
+            className="inline-flex items-center rounded-full bg-white px-5 py-2.5 text-sm font-semibold text-zinc-700 ring-1 ring-zinc-200 transition hover:bg-zinc-50"
+          >
+            Bildirişlər
+          </Link>
+          {profile.role === "admin" ? (
+            <Link
+              href="/admin"
+              prefetch
+              className="inline-flex items-center rounded-full bg-zinc-900 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-zinc-800"
+            >
+              Admin panel
+            </Link>
+          ) : null}
         </div>
       </main>
     </div>

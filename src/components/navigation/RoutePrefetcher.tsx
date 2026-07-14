@@ -3,7 +3,14 @@
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 
-const PREFETCH_ROUTES = ["/shop", "/cart", "/checkout", "/orders", "/account"];
+const PREFETCH_ROUTES = [
+  "/shop",
+  "/cart",
+  "/checkout",
+  "/orders",
+  "/account",
+  "/notifications",
+];
 
 export function RoutePrefetcher() {
   const router = useRouter();

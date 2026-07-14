@@ -14,6 +14,7 @@ export type {
   Product,
   Order,
   OrderItem,
+  OrderStatusEvent,
   Bank,
   Payment,
   Notification,

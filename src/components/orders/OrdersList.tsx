@@ -1,8 +1,10 @@
 import Link from "next/link";
 import {
   getOrderStatusLabel,
+  getOrderStatusTone,
+  getPaymentBadgeTone,
   getPaymentStatusLabel,
-} from "@/lib/checkout/labels";
+} from "@/lib/orders/labels";
 import { getCustomerOrders } from "@/lib/checkout/queries";
 import { formatPrice } from "@/lib/shop/format";
 
@@ -62,10 +64,20 @@ export async function OrdersList() {
                   {formatPrice(order.total_amount)}
                 </div>
                 <div className="mt-2 flex flex-wrap justify-end gap-2">
-                  <span className="inline-flex rounded-full bg-zinc-100 px-2.5 py-0.5 text-xs font-medium text-zinc-700 ring-1 ring-zinc-200">
+                  <span
+                    className={[
+                      "inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ring-1",
+                      getOrderStatusTone(order.status),
+                    ].join(" ")}
+                  >
                     {getOrderStatusLabel(order.status)}
                   </span>
-                  <span className="inline-flex rounded-full bg-amber-50 px-2.5 py-0.5 text-xs font-medium text-amber-800 ring-1 ring-amber-200">
+                  <span
+                    className={[
+                      "inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ring-1",
+                      getPaymentBadgeTone(paymentStatus),
+                    ].join(" ")}
+                  >
                     Ödəniş: {getPaymentStatusLabel(paymentStatus)}
                   </span>
                 </div>

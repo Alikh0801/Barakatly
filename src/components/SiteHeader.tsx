@@ -3,6 +3,7 @@ import { Suspense } from "react";
 import { AuthNav } from "@/components/AuthNav";
 import { CartNav } from "@/components/CartNav";
 import { NavLink } from "@/components/navigation/NavLink";
+import { NotificationBell } from "@/components/notifications/NotificationBell";
 import { AuthNavSkeleton } from "@/components/skeletons";
 
 function Icon({
@@ -90,6 +91,7 @@ export function SiteHeader({
             </Icon>
           </NavLink>
           <CartNav variant={variant} />
+          <NotificationBell variant={variant} />
           <Suspense fallback={<AuthNavSkeleton variant={variant} />}>
             <AuthNav variant={variant} />
           </Suspense>
