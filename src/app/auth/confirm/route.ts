@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { ensureFarmerRecord } from "@/lib/farmer/ensure";
 import { createClient } from "@/lib/supabase/server";
 import type { EmailOtpType } from "@supabase/supabase-js";
 
@@ -24,5 +25,15 @@ export async function GET(request: Request) {
     );
   }
 
-  return NextResponse.redirect(`${origin}${next}`);
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (user) {
+    await ensureFarmerRecord(user.id);
+  }
+
+  const safeNext =
+    next.startsWith("/") && !next.startsWith("//") ? next : "/";
+  return NextResponse.redirect(`${origin}${safeNext}`);
 }

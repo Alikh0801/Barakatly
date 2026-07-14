@@ -1,6 +1,22 @@
 import { NextResponse } from "next/server";
+import { ensureFarmerRecord } from "@/lib/farmer/ensure";
 import { createClient } from "@/lib/supabase/server";
 import type { EmailOtpType } from "@supabase/supabase-js";
+
+async function finalizeAuthSession(origin: string, next: string) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (user) {
+    await ensureFarmerRecord(user.id);
+  }
+
+  const safeNext =
+    next.startsWith("/") && !next.startsWith("//") ? next : "/";
+  return NextResponse.redirect(`${origin}${safeNext}`);
+}
 
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
@@ -14,7 +30,7 @@ export async function GET(request: Request) {
   if (code) {
     const { error } = await supabase.auth.exchangeCodeForSession(code);
     if (!error) {
-      return NextResponse.redirect(`${origin}${next}`);
+      return finalizeAuthSession(origin, next);
     }
   }
 
@@ -24,7 +40,7 @@ export async function GET(request: Request) {
       type,
     });
     if (!error) {
-      return NextResponse.redirect(`${origin}${next}`);
+      return finalizeAuthSession(origin, next);
     }
   }
 

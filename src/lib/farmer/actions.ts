@@ -46,7 +46,7 @@ export async function signUpFarmer(
   }
 
   const supabase = await createClient();
-  const callbackUrl = getAuthCallbackUrl();
+  const callbackUrl = `${getAuthCallbackUrl()}?next=${encodeURIComponent("/farmer")}`;
 
   const { data, error } = await supabase.auth.signUp({
     email,
@@ -55,6 +55,10 @@ export async function signUpFarmer(
       data: {
         full_name: fullName,
         role: "farmer",
+        phone: phone || null,
+        farm_name: farmName,
+        farm_description: description || null,
+        farm_location_text: locationText || null,
       },
       emailRedirectTo: callbackUrl,
     },
@@ -68,6 +72,14 @@ export async function signUpFarmer(
   const userId = data.user?.id;
   if (!userId) {
     return { error: "Qeydiyyat tamamlanmadı." };
+  }
+
+  // Email confirmation required — no session yet, so farmers insert is deferred.
+  if (!data.session) {
+    return {
+      success:
+        "Təsdiq linki email ünvanınıza göndərildi. Linkə klikləyərək qeydiyyatı tamamlayın.",
+    };
   }
 
   if (phone) {
@@ -85,15 +97,7 @@ export async function signUpFarmer(
   if (farmerError) {
     console.error("[farmer.signUpFarmer.insert]", farmerError.message);
     return {
-      error:
-        "Fermer profili yaradıla bilmədi. Email təsdiqindən sonra yenidən cəhd edin.",
-    };
-  }
-
-  if (data.user && !data.session) {
-    return {
-      success:
-        "Qeydiyyat tamamlandı. Email təsdiqindən sonra admin təsdiqini gözləyin.",
+      error: "Fermer profili yaradıla bilmədi. Bir az sonra yenidən cəhd edin.",
     };
   }
 
