@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import { Skeleton } from "@/components/ui/Skeleton";
 
 export function ImageWithSkeleton({
@@ -14,29 +13,23 @@ export function ImageWithSkeleton({
   className?: string;
   skeletonClassName?: string;
 }) {
-  const [loaded, setLoaded] = useState(false);
-
   return (
-    <div className="relative overflow-hidden">
-      {!loaded ? (
-        <Skeleton
-          className={["absolute inset-0 h-full w-full", skeletonClassName]
-            .filter(Boolean)
-            .join(" ")}
-        />
-      ) : null}
+    <div className="relative overflow-hidden bg-zinc-100">
+      <Skeleton
+        className={[
+          "absolute inset-0 h-full w-full",
+          skeletonClassName,
+        ]
+          .filter(Boolean)
+          .join(" ")}
+      />
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         src={src}
         alt={alt}
-        onLoad={() => setLoaded(true)}
-        className={[
-          className,
-          loaded ? "opacity-100" : "opacity-0",
-          "transition-opacity duration-300",
-        ]
-          .filter(Boolean)
-          .join(" ")}
+        loading="lazy"
+        decoding="async"
+        className={["relative z-10", className].filter(Boolean).join(" ")}
       />
     </div>
   );

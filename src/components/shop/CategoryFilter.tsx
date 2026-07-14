@@ -9,35 +9,37 @@ export function CategoryFilter({
   activeSlug?: string;
 }) {
   return (
-    <div className="flex flex-wrap gap-2">
-      <Link
-        href="/shop"
-        prefetch
-        className={[
-          "inline-flex items-center rounded-full px-4 py-2 text-sm font-medium ring-1 transition",
-          !activeSlug
-            ? "bg-emerald-600 text-white ring-emerald-600"
-            : "bg-white text-zinc-700 ring-zinc-200 hover:bg-emerald-50",
-        ].join(" ")}
-      >
-        Hamısı
-      </Link>
-      {categories.map((category) => (
+    <div className="-mx-4 overflow-x-auto px-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden md:mx-0 md:overflow-visible md:px-0">
+      <div className="flex w-max flex-nowrap gap-2 md:w-auto md:flex-wrap">
         <Link
-          key={category.id}
-          href={`/shop?category=${category.slug}`}
+          href="/shop"
           prefetch
           className={[
-            "inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-medium ring-1 transition",
-            activeSlug === category.slug
+            "inline-flex shrink-0 items-center rounded-full px-4 py-2 text-sm font-medium ring-1 transition",
+            !activeSlug
               ? "bg-emerald-600 text-white ring-emerald-600"
               : "bg-white text-zinc-700 ring-zinc-200 hover:bg-emerald-50",
           ].join(" ")}
         >
-          {category.icon ? <span aria-hidden="true">{category.icon}</span> : null}
-          {category.name_az}
+          Hamısı
         </Link>
-      ))}
+        {categories.map((category) => (
+          <Link
+            key={category.id}
+            href={`/shop?category=${category.slug}`}
+            prefetch
+            className={[
+              "inline-flex shrink-0 items-center gap-1.5 rounded-full px-4 py-2 text-sm font-medium ring-1 transition",
+              activeSlug === category.slug
+                ? "bg-emerald-600 text-white ring-emerald-600"
+                : "bg-white text-zinc-700 ring-zinc-200 hover:bg-emerald-50",
+            ].join(" ")}
+          >
+            {category.icon ? <span aria-hidden="true">{category.icon}</span> : null}
+            {category.name_az}
+          </Link>
+        ))}
+      </div>
     </div>
   );
 }

@@ -17,25 +17,27 @@ export function ProductCard({ product }: { product: ProductListItem }) {
   return (
     <article className="group overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-zinc-200 transition hover:shadow-md">
       <Link href={`/shop/${product.id}`} prefetch className="block">
-        <div className="relative overflow-hidden">
+        <div className="relative aspect-[4/3] overflow-hidden">
           {imageUrl ? (
             <ImageWithSkeleton
               src={imageUrl}
               alt={product.title}
-              className="h-44 w-full object-cover transition duration-500 group-hover:scale-[1.03]"
+              className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.03]"
               skeletonClassName="rounded-none"
             />
           ) : (
-            <ProductImagePlaceholder />
+            <ProductImagePlaceholder className="h-full w-full" />
           )}
         </div>
       </Link>
 
-      <div className="p-4">
+      <div className="p-3 sm:p-4">
         <Link href={`/shop/${product.id}`} prefetch>
-          <div className="text-sm font-semibold text-zinc-900">{product.title}</div>
+          <div className="line-clamp-2 text-sm font-semibold text-zinc-900">
+            {product.title}
+          </div>
         </Link>
-        <div className="mt-1 text-xs text-zinc-500">
+        <div className="mt-1 truncate text-xs text-zinc-500">
           {product.farmer?.farm_name ?? "Fermer"}
         </div>
         {product.category ? (
@@ -46,12 +48,12 @@ export function ProductCard({ product }: { product: ProductListItem }) {
           </div>
         ) : null}
 
-        <div className="mt-3 flex items-center justify-between">
-          <div className="flex items-baseline gap-1">
-            <span className="text-sm font-semibold text-zinc-900">
+        <div className="mt-3 flex items-center justify-between gap-2">
+          <div className="min-w-0 flex items-baseline gap-1">
+            <span className="truncate text-sm font-semibold text-zinc-900">
               {formatPrice(price)}
             </span>
-            <span className="text-xs text-zinc-500">
+            <span className="shrink-0 text-xs text-zinc-500">
               {formatUnit(product.unit_type)}
             </span>
           </div>
