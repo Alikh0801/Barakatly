@@ -10,6 +10,7 @@ const SHOP_LINKS = [
 
 const COMPANY_LINKS = [
   { href: "/about", label: "Haqqımızda" },
+  { href: "/farmers", label: "Fermerlər" },
   { href: "/about#mission", label: "Missiyamız" },
   { href: "/blog", label: "Bloq" },
   { href: "/careers", label: "Karyera" },

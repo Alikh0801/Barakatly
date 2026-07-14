@@ -26,7 +26,7 @@ function Chip({
 
 export function Hero() {
   return (
-    <section className="relative isolate min-h-screen min-h-dvh overflow-hidden">
+    <section className="relative isolate min-h-dvh overflow-x-hidden">
       <div
         className="absolute inset-0 bg-cover bg-center"
         style={{
@@ -37,7 +37,7 @@ export function Hero() {
       <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/45 to-black/10" />
       <div className="absolute inset-0 bg-black/15" />
 
-      <div className="relative mx-auto flex min-h-screen min-h-dvh w-full max-w-6xl flex-col justify-center px-4 py-16 md:px-6">
+      <div className="relative mx-auto flex min-h-dvh w-full max-w-6xl flex-col justify-start px-4 pb-16 pt-28 sm:justify-center sm:pt-24 md:px-6">
         <div className="w-full max-w-2xl">
           <div className="flex flex-wrap items-center gap-2">
             <Chip tone="emerald">
@@ -84,7 +84,7 @@ export function Hero() {
             </Chip>
           </div>
 
-          <h1 className="mt-5 text-4xl font-semibold leading-tight tracking-tight text-white drop-shadow-sm sm:text-5xl">
+          <h1 className="mt-5 text-3xl font-semibold leading-tight tracking-tight text-white drop-shadow-sm sm:text-4xl md:text-5xl">
             Fermerdən,
             <br />
             <span className="text-emerald-300">birbaşa süfrənizə.</span>

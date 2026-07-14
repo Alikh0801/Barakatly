@@ -75,22 +75,22 @@ export default async function ProductDetailPage({
           </div>
 
           <div className="mt-6 space-y-2 rounded-2xl bg-white p-4 text-sm ring-1 ring-zinc-200">
-            <div className="flex justify-between gap-4">
-              <span className="text-zinc-500">Fermer</span>
-              <span className="font-medium text-zinc-900">
+            <div className="flex items-start justify-between gap-4">
+              <span className="shrink-0 text-zinc-500">Fermer</span>
+              <span className="min-w-0 text-right font-medium break-words text-zinc-900">
                 {product.farmer?.farm_name ?? "—"}
               </span>
             </div>
             {product.farmer?.location_text ? (
-              <div className="flex justify-between gap-4">
-                <span className="text-zinc-500">Yerləşmə</span>
-                <span className="font-medium text-zinc-900">
+              <div className="flex items-start justify-between gap-4">
+                <span className="shrink-0 text-zinc-500">Yerləşmə</span>
+                <span className="min-w-0 text-right font-medium break-words text-zinc-900">
                   {product.farmer.location_text}
                 </span>
               </div>
             ) : null}
-            <div className="flex justify-between gap-4">
-              <span className="text-zinc-500">Mövcud miqdar</span>
+            <div className="flex items-start justify-between gap-4">
+              <span className="shrink-0 text-zinc-500">Mövcud miqdar</span>
               <span className="font-medium text-zinc-900">
                 {product.quantity_available}
               </span>

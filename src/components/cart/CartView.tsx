@@ -61,19 +61,21 @@ export function CartView() {
 
             <div className="flex min-w-0 flex-1 flex-col">
               <div className="flex items-start justify-between gap-3">
-                <div>
+                <div className="min-w-0 flex-1">
                   <Link
                     href={`/shop/${item.productId}`}
-                    className="font-semibold text-zinc-900 hover:text-emerald-700"
+                    className="block truncate font-semibold text-zinc-900 hover:text-emerald-700"
                   >
                     {item.title}
                   </Link>
-                  <p className="mt-1 text-xs text-zinc-500">{item.farmerName}</p>
+                  <p className="mt-1 truncate text-xs text-zinc-500">
+                    {item.farmerName}
+                  </p>
                 </div>
                 <button
                   type="button"
                   onClick={() => removeItem(item.productId)}
-                  className="text-xs text-zinc-500 hover:text-rose-600"
+                  className="shrink-0 text-xs text-zinc-500 hover:text-rose-600"
                 >
                   Sil
                 </button>
