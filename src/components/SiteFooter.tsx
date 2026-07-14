@@ -5,7 +5,6 @@ const SHOP_LINKS = [
   { href: "/shop?category=fruits", label: "Meyvələr" },
   { href: "/shop?category=dairy", label: "Süd məhsulları" },
   { href: "/shop?category=honey", label: "Bal" },
-  { href: "/shop?category=herbs", label: "Göyərti" },
   { href: "/shop", label: "Bütün məhsullar" },
 ] as const;
 

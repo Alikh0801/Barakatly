@@ -21,6 +21,7 @@ In the Supabase dashboard, open **SQL Editor** and run these files **in order**:
 3. `supabase/migrations/003_seed.sql` — kateqoriyalar və banklar
 4. `supabase/migrations/004_demo_products.sql` — no-op (köhnə demo seed ləğv olunub)
 5. `supabase/migrations/005_remove_demo_catalog.sql` — mövcud demo məhsul/fermerləri silir
+6. `supabase/migrations/006_remove_herbs_category.sql` — Göyərti kateqoriyasını və bağlı məhsulları silir
 
 Məhsul və şəkilləri fermerlər özləri əlavə edir; demo kataloq yoxdur.
 

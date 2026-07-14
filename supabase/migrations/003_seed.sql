@@ -7,9 +7,8 @@ values
   ('dairy', 'Süd məhsulları', '🥛', 3),
   ('eggs', 'Yumurta', '🥚', 4),
   ('honey', 'Bal', '🍯', 5),
-  ('herbs', 'Göyərti', '🌿', 6),
-  ('grains', 'Taxıl', '🌾', 7),
-  ('oils', 'Yağlar', '🫒', 8)
+  ('grains', 'Taxıl', '🌾', 6),
+  ('oils', 'Yağlar', '🫒', 7)
 on conflict (slug) do nothing;
 
 -- Example banks (replace PAN values in production)
