@@ -68,7 +68,7 @@ function FarmerCard({ farmer }: { farmer: AdminFarmer }) {
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <div className="font-semibold text-zinc-900">{farmer.farm_name}</div>
-          <p className="mt-1 text-sm text-zinc-500">
+          <p className="mt-1 text-sm text-zinc-600">
             {farmer.profiles?.full_name ?? "—"} · {farmer.profiles?.email}
           </p>
           {farmer.location_text ? (
@@ -154,7 +154,7 @@ function ProductCard({ product }: { product: AdminProduct }) {
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <div className="font-semibold text-zinc-900">{product.title}</div>
-          <p className="mt-1 text-sm text-zinc-500">
+          <p className="mt-1 text-sm text-zinc-600">
             {product.farmers?.farm_name ?? "Fermer"} ·{" "}
             {product.categories?.name_az ?? "Kateqoriya"}
           </p>
@@ -185,7 +185,7 @@ function ProductCard({ product }: { product: AdminProduct }) {
               min="0.01"
               required
               defaultValue={product.farmer_price}
-              className="mt-1 w-32 rounded-xl border border-zinc-200 px-3 py-2 text-sm"
+              className="mt-1 w-32 rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-900"
             />
           </div>
           <button
@@ -231,14 +231,14 @@ export function AdminCouriersPanel({ couriers }: { couriers: AdminCourier[] }) {
             name="full_name"
             required
             placeholder="Ad soyad"
-            className="rounded-xl border border-zinc-200 px-3 py-2.5 text-sm"
+            className="rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-sm text-zinc-900 placeholder:text-zinc-500"
           />
           <input
             name="email"
             type="email"
             required
             placeholder="Email"
-            className="rounded-xl border border-zinc-200 px-3 py-2.5 text-sm"
+            className="rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-sm text-zinc-900 placeholder:text-zinc-500"
           />
           <input
             name="password"
@@ -246,7 +246,7 @@ export function AdminCouriersPanel({ couriers }: { couriers: AdminCourier[] }) {
             required
             minLength={6}
             placeholder="Şifrə"
-            className="rounded-xl border border-zinc-200 px-3 py-2.5 text-sm"
+            className="rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-sm text-zinc-900 placeholder:text-zinc-500"
           />
         </div>
         {createState.error ? (
@@ -307,7 +307,7 @@ function CourierCard({ courier }: { courier: AdminCourier }) {
           <div className="font-semibold text-zinc-900">
             {courier.profiles?.full_name ?? "Kuryer"}
           </div>
-          <p className="mt-1 text-sm text-zinc-500">{courier.profiles?.email}</p>
+          <p className="mt-1 text-sm text-zinc-600">{courier.profiles?.email}</p>
         </div>
         <form action={action}>
           <input type="hidden" name="courier_id" value={courier.id} />

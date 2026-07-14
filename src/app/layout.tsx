@@ -30,7 +30,7 @@ export default function RootLayout({
       lang="az"
       className={`${geistSans.variable} ${geistMono.variable} h-full min-h-screen antialiased`}
     >
-      <body className="min-h-screen flex flex-col bg-white">
+      <body className="flex min-h-screen flex-col bg-white text-zinc-900">
         <Suspense fallback={null}>
           <NavigationProgress />
         </Suspense>

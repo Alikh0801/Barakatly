@@ -9,7 +9,7 @@ export default async function AdminProductsPage() {
   return (
     <div className="mx-auto w-full max-w-6xl px-4 py-10 md:px-6 md:py-12">
       <h1 className="text-3xl font-semibold text-zinc-900">Gözləyən məhsullar</h1>
-      <p className="mt-2 text-sm text-zinc-500">
+      <p className="mt-2 text-sm text-zinc-600">
         Final qiymət təyin edib mağazaya buraxın
       </p>
       <div className="mt-8">

@@ -61,9 +61,10 @@ function PendingPaymentCard({ payment }: { payment: PendingPaymentWithReceipt })
           <div className="font-semibold text-zinc-900">
             {order?.order_code ?? "Sifariş"}
           </div>
-          <p className="mt-1 text-sm text-zinc-500">
-            {order ? formatDate(order.created_at) : formatDate(payment.created_at)}
-          </p>
+            <p className="mt-1 text-sm text-zinc-600">
+              {order?.order_code ?? "Sifariş"} ·{" "}
+              {formatDate(order?.created_at ?? payment.created_at)}
+            </p>
           <p className="mt-2 text-sm text-zinc-700">
             {payment.banks?.name ?? "Bank"} · {payment.banks?.pan_number}
           </p>

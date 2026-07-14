@@ -28,7 +28,7 @@ export default async function AdminPaymentsPage() {
       <h1 className="text-3xl font-semibold tracking-tight text-zinc-900">
         Gözləyən ödənişlər
       </h1>
-      <p className="mt-2 text-sm text-zinc-500">
+      <p className="mt-2 text-sm text-zinc-600">
         Çekləri yoxlayın, təsdiqləyin və ya rədd edin
       </p>
       <div className="mt-8">

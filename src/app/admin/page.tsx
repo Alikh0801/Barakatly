@@ -38,7 +38,7 @@ export default async function AdminPage() {
       <h1 className="text-3xl font-semibold tracking-tight text-zinc-900">
         Admin panel
       </h1>
-      <p className="mt-2 text-sm text-zinc-500">
+      <p className="mt-2 text-sm text-zinc-600">
         Ödəniş, sifariş, fermer, məhsul və kuryer idarəsi
       </p>
 
@@ -49,7 +49,7 @@ export default async function AdminPage() {
             href={tile.href}
             className="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-zinc-200 transition hover:shadow-md"
           >
-            <div className="text-sm text-zinc-500">{tile.label}</div>
+            <div className="text-sm text-zinc-600">{tile.label}</div>
             <div className="mt-2 text-3xl font-semibold text-zinc-900">
               {tile.value}
             </div>

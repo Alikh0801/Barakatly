@@ -13,7 +13,7 @@ export default async function AdminOrdersPage() {
       <h1 className="text-3xl font-semibold tracking-tight text-zinc-900">
         Sifarişlər
       </h1>
-      <p className="mt-2 text-sm text-zinc-500">
+      <p className="mt-2 text-sm text-zinc-600">
         Status keçidlərini idarə edin və müştərilərə bildiriş göndərin
       </p>
       <div className="mt-8">

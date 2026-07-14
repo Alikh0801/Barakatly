@@ -167,7 +167,7 @@ export function FarmerProductForm({
           name="title"
           required
           defaultValue={product?.title}
-          className="mt-1 w-full rounded-xl border border-zinc-200 px-3 py-2.5 text-base"
+          className="mt-1 w-full rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-base text-zinc-900"
         />
       </div>
       <div>
@@ -180,7 +180,7 @@ export function FarmerProductForm({
           required
           rows={4}
           defaultValue={product?.description}
-          className="mt-1 w-full rounded-xl border border-zinc-200 px-3 py-2.5 text-base"
+          className="mt-1 w-full rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-base text-zinc-900"
         />
       </div>
       <div className="grid gap-4 sm:grid-cols-2">
@@ -193,7 +193,7 @@ export function FarmerProductForm({
             name="category_id"
             required
             defaultValue={product?.category_id}
-            className="mt-1 w-full rounded-xl border border-zinc-200 px-3 py-2.5 text-base"
+            className="mt-1 w-full rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-base text-zinc-900"
           >
             <option value="">Seçin</option>
             {categories.map((category) => (
@@ -212,7 +212,7 @@ export function FarmerProductForm({
             name="unit_type"
             required
             defaultValue={product?.unit_type ?? "kg"}
-            className="mt-1 w-full rounded-xl border border-zinc-200 px-3 py-2.5 text-base"
+            className="mt-1 w-full rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-base text-zinc-900"
           >
             <option value="kg">kq</option>
             <option value="piece">ədəd</option>
@@ -233,7 +233,7 @@ export function FarmerProductForm({
             min="0.01"
             required
             defaultValue={product?.farmer_price}
-            className="mt-1 w-full rounded-xl border border-zinc-200 px-3 py-2.5 text-base"
+            className="mt-1 w-full rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-base text-zinc-900"
           />
         </div>
         <div>
@@ -251,7 +251,7 @@ export function FarmerProductForm({
             min="0"
             required
             defaultValue={product?.quantity_available ?? 0}
-            className="mt-1 w-full rounded-xl border border-zinc-200 px-3 py-2.5 text-base"
+            className="mt-1 w-full rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-base text-zinc-900"
           />
         </div>
       </div>
@@ -265,7 +265,7 @@ export function FarmerProductForm({
           type="url"
           defaultValue={imageUrl}
           placeholder="https://..."
-          className="mt-1 w-full rounded-xl border border-zinc-200 px-3 py-2.5 text-base"
+          className="mt-1 w-full rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-base text-zinc-900"
         />
       </div>
 
@@ -384,7 +384,7 @@ function FarmerOrderItemCard({ item }: { item: FarmerOrderItem }) {
             name="next_status"
             required
             defaultValue=""
-            className="rounded-xl border border-zinc-200 px-3 py-2 text-sm"
+            className="rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-900"
           >
             <option value="" disabled>
               Növbəti status

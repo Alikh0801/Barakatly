@@ -79,7 +79,7 @@ function CourierOrderCard({ order }: { order: CourierOrder }) {
             name="next_status"
             required
             defaultValue={nextStatuses[0]}
-            className="rounded-xl border border-zinc-200 px-3 py-2 text-sm"
+            className="rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-900"
           >
             {nextStatuses.map((status) => (
               <option key={status} value={status}>
