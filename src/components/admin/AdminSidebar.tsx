@@ -73,6 +73,16 @@ const navItems: NavItem[] = [
       </svg>
     ),
   },
+  {
+    href: "/admin/content",
+    label: "Məzmun",
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-4 w-4">
+        <path d="M5 5h14v14H5V5Z" strokeLinejoin="round" />
+        <path d="M8 9h8M8 12h8M8 15h5" strokeLinecap="round" />
+      </svg>
+    ),
+  },
 ];
 
 function isActive(pathname: string, item: NavItem) {

@@ -1,3 +1,5 @@
+import { getWhyBarakatlyContent } from "@/lib/content/queries";
+
 const FEATURES = [
   {
     title: "Həmişə təzə",
@@ -25,17 +27,17 @@ const FEATURES = [
   },
 ] as const;
 
-export function WhyChooseSection() {
+export async function WhyChooseSection() {
+  const content = await getWhyBarakatlyContent();
+
   return (
     <section className="bg-emerald-950">
       <div className="mx-auto w-full max-w-6xl px-4 py-14 md:px-6 md:py-16">
         <div className="text-center">
           <h2 className="text-2xl font-semibold tracking-tight text-white">
-            Niyə Barakatly?
+            {content.title}
           </h2>
-          <p className="mt-2 text-sm text-emerald-100/80">
-            Fermer məhsullarını hər kəs üçün daha əlçatan edirik
-          </p>
+          <p className="mt-2 text-sm text-emerald-100/80">{content.body}</p>
         </div>
 
         <div className="mt-10 grid gap-8 md:grid-cols-4">
@@ -57,4 +59,3 @@ export function WhyChooseSection() {
     </section>
   );
 }
-

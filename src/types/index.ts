@@ -19,6 +19,7 @@ export type {
   Bank,
   Payment,
   Notification,
+  SiteContent,
 } from "./database";
 
 export type {

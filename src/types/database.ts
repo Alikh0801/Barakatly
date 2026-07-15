@@ -458,6 +458,27 @@ export interface Database {
         };
         Relationships: [];
       };
+      site_content: {
+        Row: {
+          key: string;
+          title: string;
+          body: string;
+          updated_at: string;
+        };
+        Insert: {
+          key: string;
+          title: string;
+          body: string;
+          updated_at?: string;
+        };
+        Update: {
+          key?: string;
+          title?: string;
+          body?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: {
@@ -496,3 +517,4 @@ export type OrderStatusEvent =
 export type Bank = Database["public"]["Tables"]["banks"]["Row"];
 export type Payment = Database["public"]["Tables"]["payments"]["Row"];
 export type Notification = Database["public"]["Tables"]["notifications"]["Row"];
+export type SiteContent = Database["public"]["Tables"]["site_content"]["Row"];
