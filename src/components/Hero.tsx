@@ -37,9 +37,9 @@ export function Hero() {
       <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/45 to-black/10" />
       <div className="absolute inset-0 bg-black/15" />
 
-      <div className="relative mx-auto flex min-h-dvh w-full max-w-6xl flex-col justify-start px-4 pb-16 pt-28 sm:justify-center sm:pt-24 md:px-6">
-        <div className="w-full max-w-2xl">
-          <div className="flex flex-wrap items-center gap-2">
+      <div className="relative mx-auto flex min-h-dvh w-full max-w-6xl flex-col items-center justify-center px-4 py-24 md:items-start md:px-6">
+        <div className="w-full max-w-2xl text-center md:text-left">
+          <div className="flex flex-wrap items-center justify-center gap-2 md:justify-start">
             <Chip tone="emerald">
               <svg
                 aria-hidden="true"
@@ -95,7 +95,7 @@ export function Hero() {
             qidalanaraq icmanızı dəstəkləyin.
           </p>
 
-          <div className="mt-6 flex flex-wrap gap-3">
+          <div className="mt-6 flex flex-wrap items-center justify-center gap-3 md:justify-start">
             <Link
               href="/shop"
               className="inline-flex h-11 items-center justify-center rounded-xl bg-emerald-500 px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-400"
