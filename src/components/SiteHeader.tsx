@@ -37,8 +37,8 @@ export function SiteHeader({
   const isHero = variant === "hero";
 
   const headerClass = isHero
-    ? "absolute inset-x-0 top-0 z-20"
-    : "sticky top-0 z-20 border-b border-zinc-200 bg-white/95 backdrop-blur";
+    ? "fixed inset-x-0 top-0 z-30"
+    : "sticky top-0 z-30 border-b border-zinc-200 bg-white/95 backdrop-blur";
 
   const logoText = isHero ? "text-white" : "text-emerald-800";
   const navText = isHero
