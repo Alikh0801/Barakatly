@@ -76,7 +76,6 @@ const navItems: NavItem[] = [
 ];
 
 function isActive(pathname: string, item: NavItem) {
-  if (item.exact) return pathname === item.href;
   return pathname === item.href || pathname.startsWith(`${item.href}/`);
 }
 
