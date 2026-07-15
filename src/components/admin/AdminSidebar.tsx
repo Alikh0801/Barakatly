@@ -7,21 +7,10 @@ import { useEffect, useState } from "react";
 type NavItem = {
   href: string;
   label: string;
-  exact?: boolean;
   icon: React.ReactNode;
 };
 
 const navItems: NavItem[] = [
-  {
-    href: "/admin",
-    label: "İcmal",
-    exact: true,
-    icon: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-4 w-4">
-        <path d="M4 10.5 12 4l8 6.5V20a1 1 0 0 1-1 1h-5v-6H10v6H5a1 1 0 0 1-1-1v-9.5Z" strokeLinejoin="round" />
-      </svg>
-    ),
-  },
   {
     href: "/admin/payments",
     label: "Ödənişlər",
