@@ -1,10 +1,17 @@
+import { AdminFaqPanel } from "@/components/admin/AdminFaqPanel";
 import { AdminWhyBarakatlyPanel } from "@/components/admin/AdminWhyBarakatlyPanel";
-import { getAdminWhyBarakatlyContent } from "@/lib/content/queries";
+import {
+  getAdminFaqContent,
+  getAdminWhyBarakatlyContent,
+} from "@/lib/content/queries";
 
 export const metadata = { title: "Məzmun — Admin" };
 
 export default async function AdminContentPage() {
-  const content = await getAdminWhyBarakatlyContent();
+  const [whyContent, faqContent] = await Promise.all([
+    getAdminWhyBarakatlyContent(),
+    getAdminFaqContent(),
+  ]);
 
   return (
     <div className="w-full px-4 py-8 md:px-8 md:py-10">
@@ -14,12 +21,13 @@ export default async function AdminContentPage() {
       <p className="mt-2 text-sm text-zinc-600">
         Ana səhifə bölmələrinin başlıq və mətnlərini idarə edin
       </p>
-      <div className="mt-8 max-w-2xl">
+      <div className="mt-8 grid max-w-5xl gap-6 lg:grid-cols-2">
         <AdminWhyBarakatlyPanel
-          title={content.title}
-          body={content.body}
-          items={content.items}
+          title={whyContent.title}
+          body={whyContent.body}
+          items={whyContent.items}
         />
+        <AdminFaqPanel title={faqContent.title} items={faqContent.items} />
       </div>
     </div>
   );

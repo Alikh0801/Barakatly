@@ -61,3 +61,32 @@ on conflict (key) do update
 set items = excluded.items
 where public.site_content.items = '[]'::jsonb
    or public.site_content.items is null;
+
+insert into public.site_content (key, title, body, items)
+values (
+  'faq',
+  'Tez-tez verilən suallar',
+  '',
+  '[
+    {
+      "question": "Məhsullar nə qədər təzə olur?",
+      "answer": "Məhsullar adətən yığıldıqdan sonra 24–48 saat ərzində çatdırılır. Bu, maksimum təravət və qida dəyərini qorumağa kömək edir."
+    },
+    {
+      "question": "Bir neçə fermerdən eyni sifarişdə ala bilərəm?",
+      "answer": "Bəli. Müxtəlif fermerlərin məhsullarını bir səbətdə toplaya bilərsiniz. Sistem sifarişi avtomatik qruplaşdırır və çatdırılmanı koordinasiya edir."
+    },
+    {
+      "question": "Çatdırılma necə işləyir?",
+      "answer": "Kuryer şəbəkəmiz məhsulları fermerlərdən götürür və qapınıza çatdırır. Sifarişinizi real vaxtda izləmək mümkün olacaq."
+    },
+    {
+      "question": "Məhsulların orqanik olması necə təsdiqlənir?",
+      "answer": "Orqanik məhsul iddia edən fermerlərin sertifikatlarını yoxlayırıq. Məhsullarda “Orqanik” nişanını görə bilərsiniz."
+    }
+  ]'::jsonb
+)
+on conflict (key) do update
+set items = excluded.items
+where public.site_content.items = '[]'::jsonb
+   or public.site_content.items is null;

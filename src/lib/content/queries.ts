@@ -1,8 +1,12 @@
 import { unstable_cache } from "next/cache";
 import {
+  FAQ_DEFAULT,
+  FAQ_DEFAULT_ITEMS,
+  FAQ_KEY,
   WHY_BARAKATLY_DEFAULT,
   WHY_BARAKATLY_DEFAULT_FEATURES,
   WHY_BARAKATLY_KEY,
+  type FaqItem,
   type WhyBarakatlyFeature,
 } from "@/lib/content/defaults";
 import { createPublicClient } from "@/lib/supabase/public";
@@ -109,6 +113,108 @@ export async function getAdminWhyBarakatlyContent(): Promise<WhyBarakatlyContent
     title: data.title,
     body: data.body,
     items: parseFeatures(data.items),
+    updated_at: data.updated_at,
+  };
+}
+
+export type FaqContent = {
+  key: string;
+  title: string;
+  items: FaqItem[];
+  updated_at?: string;
+};
+
+function parseFaqItems(value: unknown): FaqItem[] {
+  if (!Array.isArray(value) || value.length === 0) {
+    return [...FAQ_DEFAULT_ITEMS];
+  }
+
+  const items = value
+    .map((item) => {
+      if (!item || typeof item !== "object") return null;
+      const record = item as Record<string, unknown>;
+      const question = String(
+        record.question ?? record.title ?? record.q ?? ""
+      ).trim();
+      const answer = String(
+        record.answer ?? record.description ?? record.a ?? ""
+      ).trim();
+      if (!question || !answer) return null;
+      return { question, answer };
+    })
+    .filter((item): item is FaqItem => item !== null);
+
+  return items.length > 0 ? items : [...FAQ_DEFAULT_ITEMS];
+}
+
+async function fetchFaqContent(): Promise<FaqContent> {
+  const supabase = createPublicClient();
+  const { data, error } = await supabase
+    .from("site_content")
+    .select("key, title, items")
+    .eq("key", FAQ_KEY)
+    .maybeSingle();
+
+  if (error) {
+    console.error("[content.getFaq]", error.message);
+    return {
+      key: FAQ_DEFAULT.key,
+      title: FAQ_DEFAULT.title,
+      items: [...FAQ_DEFAULT_ITEMS],
+    };
+  }
+
+  if (!data) {
+    return {
+      key: FAQ_DEFAULT.key,
+      title: FAQ_DEFAULT.title,
+      items: [...FAQ_DEFAULT_ITEMS],
+    };
+  }
+
+  return {
+    key: data.key,
+    title: data.title,
+    items: parseFaqItems(data.items),
+  };
+}
+
+export const getFaqContent = unstable_cache(fetchFaqContent, ["faq-content"], {
+  revalidate: 300,
+  tags: ["site-content", "faq"],
+});
+
+export async function getAdminFaqContent(): Promise<FaqContent> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("site_content")
+    .select("key, title, items, updated_at")
+    .eq("key", FAQ_KEY)
+    .maybeSingle();
+
+  if (error) {
+    console.error("[admin.getFaq]", error.message);
+    return {
+      key: FAQ_DEFAULT.key,
+      title: FAQ_DEFAULT.title,
+      items: [...FAQ_DEFAULT_ITEMS],
+      updated_at: new Date(0).toISOString(),
+    };
+  }
+
+  if (!data) {
+    return {
+      key: FAQ_DEFAULT.key,
+      title: FAQ_DEFAULT.title,
+      items: [...FAQ_DEFAULT_ITEMS],
+      updated_at: new Date(0).toISOString(),
+    };
+  }
+
+  return {
+    key: data.key,
+    title: data.title,
+    items: parseFaqItems(data.items),
     updated_at: data.updated_at,
   };
 }
