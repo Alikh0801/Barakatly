@@ -6,6 +6,7 @@ import {
   updateWhyBarakatlyContent,
   type AdminContentActionState,
 } from "@/lib/admin/content-actions";
+import type { WhyBarakatlyFeature } from "@/lib/content/defaults";
 import { Spinner } from "@/components/ui/Spinner";
 
 const initialState: AdminContentActionState = {};
@@ -13,9 +14,11 @@ const initialState: AdminContentActionState = {};
 export function AdminWhyBarakatlyPanel({
   title,
   body,
+  items,
 }: {
   title: string;
   body: string;
+  items: WhyBarakatlyFeature[];
 }) {
   const [updateState, updateAction, updatePending] = useActionState(
     updateWhyBarakatlyContent,
@@ -33,7 +36,7 @@ export function AdminWhyBarakatlyPanel({
           Niyə Barakatly?
         </h2>
         <p className="mt-1 text-sm text-zinc-600">
-          Ana səhifədəki bu bölmənin başlıq və mətnini dəyişin.
+          Bölmə başlığı, alt mətni və 4 kartın başlıq/mətnlərini dəyişin.
         </p>
       </div>
 
@@ -48,38 +51,79 @@ export function AdminWhyBarakatlyPanel({
         </p>
       )}
 
-      <form action={updateAction} className="space-y-4">
-        <label className="block space-y-1.5">
-          <span className="text-xs font-medium text-zinc-600">Başlıq</span>
-          <input
-            name="title"
-            required
-            maxLength={120}
-            defaultValue={title}
-            className="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-sm text-zinc-900"
-          />
-        </label>
-        <label className="block space-y-1.5">
-          <span className="text-xs font-medium text-zinc-600">Mətn</span>
-          <textarea
-            name="body"
-            required
-            maxLength={500}
-            rows={4}
-            defaultValue={body}
-            className="w-full resize-y rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-sm text-zinc-900"
-          />
-        </label>
-        <div className="flex flex-wrap gap-2">
-          <button
-            type="submit"
-            disabled={updatePending || resetPending}
-            className="inline-flex items-center gap-2 rounded-full bg-emerald-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-70"
-          >
-            {updatePending ? <Spinner className="h-3.5 w-3.5" /> : null}
-            Yadda saxla
-          </button>
+      <form action={updateAction} className="space-y-6">
+        <div className="space-y-4">
+          <label className="block space-y-1.5">
+            <span className="text-xs font-medium text-zinc-600">
+              Bölmə başlığı
+            </span>
+            <input
+              name="title"
+              required
+              maxLength={120}
+              defaultValue={title}
+              className="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-sm text-zinc-900"
+            />
+          </label>
+          <label className="block space-y-1.5">
+            <span className="text-xs font-medium text-zinc-600">
+              Bölmə mətni
+            </span>
+            <textarea
+              name="body"
+              required
+              maxLength={500}
+              rows={3}
+              defaultValue={body}
+              className="w-full resize-y rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-sm text-zinc-900"
+            />
+          </label>
         </div>
+
+        <div className="space-y-4">
+          <h3 className="text-sm font-semibold text-zinc-900">Kartlar</h3>
+          {items.map((item, index) => (
+            <div
+              key={`${item.title}-${index}`}
+              className="space-y-3 rounded-xl bg-zinc-50 p-4 ring-1 ring-zinc-200"
+            >
+              <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
+                Kart {index + 1}
+              </p>
+              <input type="hidden" name={`feature_icon_${index}`} value={item.icon} />
+              <label className="block space-y-1.5">
+                <span className="text-xs font-medium text-zinc-600">Başlıq</span>
+                <input
+                  name={`feature_title_${index}`}
+                  required
+                  maxLength={80}
+                  defaultValue={item.title}
+                  className="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-sm text-zinc-900"
+                />
+              </label>
+              <label className="block space-y-1.5">
+                <span className="text-xs font-medium text-zinc-600">Mətn</span>
+                <textarea
+                  name={`feature_description_${index}`}
+                  required
+                  maxLength={300}
+                  rows={3}
+                  defaultValue={item.description}
+                  className="w-full resize-y rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-sm text-zinc-900"
+                />
+              </label>
+            </div>
+          ))}
+        </div>
+
+        <button
+          type="submit"
+          disabled={updatePending || resetPending}
+          className="inline-flex items-center gap-2 rounded-full bg-emerald-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-70"
+        >
+          {updatePending ? <Spinner className="h-3.5 w-3.5" /> : null}
+          Yadda saxla
+        </button>
       </form>
 
       <form action={resetAction}>

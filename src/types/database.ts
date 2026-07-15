@@ -463,18 +463,21 @@ export interface Database {
           key: string;
           title: string;
           body: string;
+          items: Json;
           updated_at: string;
         };
         Insert: {
           key: string;
           title: string;
           body: string;
+          items?: Json;
           updated_at?: string;
         };
         Update: {
           key?: string;
           title?: string;
           body?: string;
+          items?: Json;
           updated_at?: string;
         };
         Relationships: [];

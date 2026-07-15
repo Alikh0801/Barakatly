@@ -15,7 +15,11 @@ export default async function AdminContentPage() {
         Ana səhifə bölmələrinin başlıq və mətnlərini idarə edin
       </p>
       <div className="mt-8 max-w-2xl">
-        <AdminWhyBarakatlyPanel title={content.title} body={content.body} />
+        <AdminWhyBarakatlyPanel
+          title={content.title}
+          body={content.body}
+          items={content.items}
+        />
       </div>
     </div>
   );
