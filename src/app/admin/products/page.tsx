@@ -7,7 +7,7 @@ export default async function AdminProductsPage() {
   const products = await getAdminPendingProducts();
 
   return (
-    <div className="mx-auto w-full max-w-6xl px-4 py-10 md:px-6 md:py-12">
+    <div className="w-full px-4 py-8 md:px-8 md:py-10">
       <h1 className="text-3xl font-semibold text-zinc-900">Gözləyən məhsullar</h1>
       <p className="mt-2 text-sm text-zinc-600">
         Final qiymət təyin edib mağazaya buraxın
