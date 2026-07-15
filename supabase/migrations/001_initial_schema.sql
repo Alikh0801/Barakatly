@@ -168,7 +168,7 @@ create table public.banks (
 create table public.orders (
   id uuid primary key default gen_random_uuid(),
   order_code text not null unique,
-  customer_id uuid not null references public.profiles (id),
+  customer_id uuid not null references public.profiles (id) on delete cascade,
   status public.order_status not null default 'awaiting_confirmation',
   contact_phone text not null,
   delivery_address_text text,
@@ -192,8 +192,8 @@ create index orders_order_code_idx on public.orders (order_code);
 create table public.order_items (
   id uuid primary key default gen_random_uuid(),
   order_id uuid not null references public.orders (id) on delete cascade,
-  farmer_id uuid not null references public.farmers (id),
-  product_id uuid not null references public.products (id),
+  farmer_id uuid not null references public.farmers (id) on delete cascade,
+  product_id uuid not null references public.products (id) on delete cascade,
   product_title text not null,
   quantity numeric(10, 2) not null check (quantity > 0),
   unit_type public.unit_type not null,
@@ -217,7 +217,7 @@ create table public.payments (
   bank_id uuid not null references public.banks (id),
   receipt_url text,
   status public.payment_status not null default 'pending',
-  confirmed_by uuid references public.profiles (id),
+  confirmed_by uuid references public.profiles (id) on delete set null,
   confirmed_at timestamptz,
   created_at timestamptz not null default now()
 );
@@ -232,7 +232,7 @@ create table public.order_status_events (
   order_id uuid not null references public.orders (id) on delete cascade,
   order_item_id uuid references public.order_items (id) on delete cascade,
   status text not null,
-  changed_by uuid references public.profiles (id),
+  changed_by uuid references public.profiles (id) on delete set null,
   note text,
   created_at timestamptz not null default now()
 );
