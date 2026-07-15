@@ -146,6 +146,7 @@ export interface Database {
           slug: string;
           name_az: string;
           icon: string | null;
+          image_url: string | null;
           sort_order: number;
           created_at: string;
         };
@@ -154,6 +155,7 @@ export interface Database {
           slug: string;
           name_az: string;
           icon?: string | null;
+          image_url?: string | null;
           sort_order?: number;
           created_at?: string;
         };
@@ -162,6 +164,7 @@ export interface Database {
           slug?: string;
           name_az?: string;
           icon?: string | null;
+          image_url?: string | null;
           sort_order?: number;
           created_at?: string;
         };

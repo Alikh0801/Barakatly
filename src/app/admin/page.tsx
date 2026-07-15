@@ -1,5 +1,6 @@
 import Link from "next/link";
 import {
+  getAdminCategories,
   getAdminCouriers,
   getAdminFarmers,
   getAdminOrders,
@@ -12,13 +13,15 @@ export const metadata = {
 };
 
 export default async function AdminPage() {
-  const [payments, orders, farmers, products, couriers] = await Promise.all([
-    getPendingPayments(),
-    getAdminOrders(),
-    getAdminFarmers(),
-    getAdminPendingProducts(),
-    getAdminCouriers(),
-  ]);
+  const [payments, orders, farmers, products, couriers, categories] =
+    await Promise.all([
+      getPendingPayments(),
+      getAdminOrders(),
+      getAdminFarmers(),
+      getAdminPendingProducts(),
+      getAdminCouriers(),
+      getAdminCategories(),
+    ]);
 
   const activeOrders = orders.filter(
     (order) => order.status !== "delivered" && order.status !== "cancelled"
@@ -30,6 +33,7 @@ export default async function AdminPage() {
     { href: "/admin/orders", label: "Aktiv sifarişlər", value: activeOrders },
     { href: "/admin/farmers", label: "Gözləyən fermerlər", value: pendingFarmers },
     { href: "/admin/products", label: "Gözləyən məhsullar", value: products.length },
+    { href: "/admin/categories", label: "Kateqoriyalar", value: categories.length },
     { href: "/admin/couriers", label: "Kuryerlər", value: couriers.length },
   ];
 
@@ -39,7 +43,7 @@ export default async function AdminPage() {
         Admin panel
       </h1>
       <p className="mt-2 text-sm text-zinc-600">
-        Ödəniş, sifariş, fermer, məhsul və kuryer idarəsi
+        Ödəniş, sifariş, fermer, məhsul, kateqoriya və kuryer idarəsi
       </p>
 
       <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">

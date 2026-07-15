@@ -31,7 +31,7 @@ async function fetchCategories(): Promise<CategoryItem[]> {
   const supabase = createPublicClient();
   const { data, error } = await supabase
     .from("categories")
-    .select("id, slug, name_az, icon")
+    .select("id, slug, name_az, icon, image_url")
     .order("sort_order", { ascending: true });
 
   if (error) {

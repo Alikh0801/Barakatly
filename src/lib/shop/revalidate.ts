@@ -13,3 +13,13 @@ export function revalidateProductCatalog(productId?: string) {
     revalidatePath(`/shop/${productId}`);
   }
 }
+
+/** Invalidate category lists after admin create/update/delete. */
+export function revalidateCategories() {
+  updateTag("categories");
+  revalidatePath("/");
+  revalidatePath("/shop");
+  revalidatePath("/admin/categories");
+  revalidatePath("/admin");
+  revalidatePath("/farmer");
+}

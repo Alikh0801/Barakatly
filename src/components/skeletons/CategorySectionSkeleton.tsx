@@ -14,9 +14,9 @@ export function CategorySectionSkeleton() {
             {Array.from({ length: 6 }).map((_, index) => (
               <div
                 key={index}
-                className="flex w-[84px] shrink-0 flex-col items-center gap-2"
+                className="flex w-[88px] shrink-0 flex-col items-center gap-2 sm:w-[104px]"
               >
-                <Skeleton className="h-12 w-12 rounded-2xl" />
+                <Skeleton className="h-16 w-16 rounded-2xl sm:h-[72px] sm:w-[72px]" />
                 <Skeleton className="h-3 w-14" />
               </div>
             ))}

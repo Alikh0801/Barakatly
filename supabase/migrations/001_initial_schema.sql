@@ -111,6 +111,7 @@ create table public.categories (
   slug text not null unique,
   name_az text not null,
   icon text,
+  image_url text,
   sort_order int not null default 0,
   created_at timestamptz not null default now()
 );

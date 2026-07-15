@@ -38,11 +38,11 @@ export async function CategorySection({
               href="/"
               prefetch
               scroll={false}
-              className="group flex w-[84px] shrink-0 flex-col items-center text-center sm:w-[96px]"
+              className="group flex w-[88px] shrink-0 flex-col items-center text-center sm:w-[104px]"
             >
               <span
                 className={[
-                  "inline-flex h-12 w-12 items-center justify-center rounded-2xl ring-1 transition",
+                  "inline-flex h-16 w-16 items-center justify-center overflow-hidden rounded-2xl ring-1 transition sm:h-[72px] sm:w-[72px]",
                   !categorySlug
                     ? "bg-emerald-600 text-white ring-emerald-600"
                     : "bg-zinc-50 text-zinc-700 ring-zinc-200 group-hover:bg-emerald-50 group-hover:text-emerald-700 group-hover:ring-emerald-200",
@@ -53,7 +53,7 @@ export async function CategorySection({
                   fill="none"
                   stroke="currentColor"
                   strokeWidth="1.8"
-                  className="h-5 w-5"
+                  className="h-6 w-6"
                   aria-hidden="true"
                 >
                   <path
@@ -82,17 +82,34 @@ export async function CategorySection({
                   href={`/?category=${category.slug}`}
                   prefetch
                   scroll={false}
-                  className="group flex w-[84px] shrink-0 flex-col items-center text-center sm:w-[96px]"
+                  className="group flex w-[88px] shrink-0 flex-col items-center text-center sm:w-[104px]"
                 >
                   <span
                     className={[
-                      "inline-flex h-12 w-12 items-center justify-center rounded-2xl text-2xl ring-1 transition",
+                      "relative inline-flex h-16 w-16 items-center justify-center overflow-hidden rounded-2xl ring-1 transition sm:h-[72px] sm:w-[72px]",
                       active
-                        ? "bg-emerald-600 text-white ring-emerald-600"
-                        : "bg-zinc-50 ring-zinc-200 group-hover:bg-emerald-50 group-hover:ring-emerald-200",
+                        ? "ring-2 ring-emerald-600"
+                        : "ring-zinc-200 group-hover:ring-emerald-300",
                     ].join(" ")}
                   >
-                    <span aria-hidden="true">{category.icon ?? "🌿"}</span>
+                    {category.image_url ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={category.image_url}
+                        alt=""
+                        className="h-full w-full object-cover"
+                      />
+                    ) : (
+                      <span
+                        aria-hidden="true"
+                        className="flex h-full w-full items-center justify-center bg-zinc-100 text-2xl"
+                      >
+                        {category.icon ?? "🌿"}
+                      </span>
+                    )}
+                    {active ? (
+                      <span className="pointer-events-none absolute inset-0 bg-emerald-600/15" />
+                    ) : null}
                   </span>
                   <span
                     className={[

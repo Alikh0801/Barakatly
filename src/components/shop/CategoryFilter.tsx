@@ -35,7 +35,16 @@ export function CategoryFilter({
                 : "bg-white text-zinc-700 ring-zinc-200 hover:bg-emerald-50",
             ].join(" ")}
           >
-            {category.icon ? <span aria-hidden="true">{category.icon}</span> : null}
+            {category.image_url ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={category.image_url}
+                alt=""
+                className="h-5 w-5 rounded-full object-cover"
+              />
+            ) : category.icon ? (
+              <span aria-hidden="true">{category.icon}</span>
+            ) : null}
             {category.name_az}
           </Link>
         ))}

@@ -1,5 +1,13 @@
 import { createClient } from "@/lib/supabase/server";
-import type { Bank, Courier, Farmer, Order, Payment, Product } from "@/types";
+import type {
+  Bank,
+  Category,
+  Courier,
+  Farmer,
+  Order,
+  Payment,
+  Product,
+} from "@/types";
 
 export type AdminPendingPayment = Payment & {
   banks: Pick<Bank, "name" | "pan_number"> | null;
@@ -139,4 +147,21 @@ export async function getAdminCouriers(): Promise<AdminCourier[]> {
   }
 
   return (data ?? []) as unknown as AdminCourier[];
+}
+
+export type AdminCategory = Category;
+
+export async function getAdminCategories(): Promise<AdminCategory[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("categories")
+    .select("*")
+    .order("sort_order", { ascending: true });
+
+  if (error) {
+    console.error("[admin.getAdminCategories]", error.message);
+    return [];
+  }
+
+  return data ?? [];
 }

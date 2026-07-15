@@ -39,4 +39,5 @@ export type CategoryItem = {
   slug: string;
   name_az: string;
   icon: string | null;
+  image_url: string | null;
 };
