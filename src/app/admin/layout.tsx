@@ -9,10 +9,12 @@ export default async function AdminLayout({
   await requireAdmin();
 
   return (
-    <div className="min-h-screen bg-zinc-100 lg:flex">
+    <div className="min-h-dvh bg-zinc-100 lg:flex">
       <AdminSidebar />
-      <div className="min-w-0 flex-1">
-        <main className="min-h-screen">{children}</main>
+      <div className="min-w-0 flex-1 overflow-x-hidden">
+        <main className="min-h-dvh pb-[env(safe-area-inset-bottom)]">
+          {children}
+        </main>
       </div>
     </div>
   );

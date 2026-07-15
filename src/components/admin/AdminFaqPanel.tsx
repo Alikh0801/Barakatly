@@ -29,7 +29,7 @@ export function AdminFaqPanel({
   const [rows, setRows] = useState<FaqItem[]>(items);
 
   return (
-    <div className="space-y-4 rounded-2xl bg-white p-5 shadow-sm ring-1 ring-zinc-200">
+    <div className="space-y-4 rounded-2xl bg-white p-4 shadow-sm sm:p-5 ring-1 ring-zinc-200">
       <div>
         <h2 className="text-lg font-semibold text-zinc-900">
           Tez-tez verilən suallar
@@ -61,7 +61,7 @@ export function AdminFaqPanel({
             required
             maxLength={120}
             defaultValue={title}
-            className="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-sm text-zinc-900"
+            className="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-base text-zinc-900 sm:text-sm"
           />
         </label>
 
@@ -106,7 +106,7 @@ export function AdminFaqPanel({
                       )
                     )
                   }
-                  className="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-sm text-zinc-900"
+                  className="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-base text-zinc-900 sm:text-sm"
                 />
               </label>
               <label className="block space-y-1.5">
@@ -126,7 +126,7 @@ export function AdminFaqPanel({
                       )
                     )
                   }
-                  className="w-full resize-y rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-sm text-zinc-900"
+                  className="w-full resize-y rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-base text-zinc-900 sm:text-sm"
                 />
               </label>
             </div>

@@ -1,4 +1,5 @@
 import { AdminFaqPanel } from "@/components/admin/AdminFaqPanel";
+import { AdminPageShell } from "@/components/admin/AdminPageShell";
 import { AdminWhyBarakatlyPanel } from "@/components/admin/AdminWhyBarakatlyPanel";
 import {
   getAdminFaqContent,
@@ -14,14 +15,11 @@ export default async function AdminContentPage() {
   ]);
 
   return (
-    <div className="w-full px-4 py-8 md:px-8 md:py-10">
-      <h1 className="text-3xl font-semibold tracking-tight text-zinc-900">
-        Məzmun
-      </h1>
-      <p className="mt-2 text-sm text-zinc-600">
-        Ana səhifə bölmələrinin başlıq və mətnlərini idarə edin
-      </p>
-      <div className="mt-8 grid max-w-5xl gap-6 lg:grid-cols-2">
+    <AdminPageShell
+      title="Məzmun"
+      description="Ana səhifə bölmələrinin başlıq və mətnlərini idarə edin"
+    >
+      <div className="grid gap-6 xl:grid-cols-2">
         <AdminWhyBarakatlyPanel
           title={whyContent.title}
           body={whyContent.body}
@@ -29,6 +27,6 @@ export default async function AdminContentPage() {
         />
         <AdminFaqPanel title={faqContent.title} items={faqContent.items} />
       </div>
-    </div>
+    </AdminPageShell>
   );
 }

@@ -26,7 +26,7 @@ export function AdminCategoriesPanel({
     <div className="space-y-6">
       <form
         action={createAction}
-        className="space-y-4 rounded-3xl bg-white p-6 shadow-sm ring-1 ring-zinc-200"
+        className="space-y-4 rounded-2xl bg-white p-4 shadow-sm sm:rounded-3xl sm:p-6 ring-1 ring-zinc-200"
       >
         <h2 className="text-lg font-semibold text-zinc-900">
           Yeni kateqoriya
@@ -38,7 +38,7 @@ export function AdminCategoriesPanel({
               name="name_az"
               required
               placeholder="Məs: Tərəvəzlər"
-              className="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-sm text-zinc-900 placeholder:text-zinc-500"
+              className="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-base text-zinc-900 sm:text-sm placeholder:text-zinc-500"
             />
           </label>
           <label className="block space-y-1.5">
@@ -48,7 +48,7 @@ export function AdminCategoriesPanel({
               type="number"
               required
               defaultValue={categories.length + 1}
-              className="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-sm text-zinc-900"
+              className="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-base text-zinc-900 sm:text-sm"
             />
           </label>
           <label className="block space-y-1.5 sm:col-span-2 lg:col-span-1">
@@ -59,7 +59,7 @@ export function AdminCategoriesPanel({
               name="image_url"
               type="url"
               placeholder="https://..."
-              className="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-sm text-zinc-900 placeholder:text-zinc-500"
+              className="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-base text-zinc-900 sm:text-sm placeholder:text-zinc-500"
             />
           </label>
         </div>
@@ -109,7 +109,7 @@ function CategoryCard({ category }: { category: AdminCategory }) {
   );
 
   return (
-    <article className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-zinc-200">
+    <article className="rounded-2xl bg-white p-4 shadow-sm sm:p-5 ring-1 ring-zinc-200">
       {(updateState.error || deleteState.error) && (
         <p className="mb-3 rounded-xl bg-rose-50 px-3 py-2 text-sm text-rose-700">
           {updateState.error ?? deleteState.error}
@@ -145,7 +145,7 @@ function CategoryCard({ category }: { category: AdminCategory }) {
                 name="name_az"
                 required
                 defaultValue={category.name_az}
-                className="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-sm text-zinc-900"
+                className="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-base text-zinc-900 sm:text-sm"
               />
             </label>
             <label className="block space-y-1.5">
@@ -155,7 +155,7 @@ function CategoryCard({ category }: { category: AdminCategory }) {
                 type="number"
                 required
                 defaultValue={category.sort_order}
-                className="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-sm text-zinc-900"
+                className="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-base text-zinc-900 sm:text-sm"
               />
             </label>
             <label className="block space-y-1.5 sm:col-span-2 lg:col-span-1">
@@ -167,7 +167,7 @@ function CategoryCard({ category }: { category: AdminCategory }) {
                 type="url"
                 defaultValue={category.image_url ?? ""}
                 placeholder="https://..."
-                className="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-sm text-zinc-900 placeholder:text-zinc-500"
+                className="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-base text-zinc-900 sm:text-sm placeholder:text-zinc-500"
               />
             </label>
           </div>

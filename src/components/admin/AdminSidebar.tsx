@@ -109,11 +109,11 @@ export function AdminSidebar() {
 
   return (
     <>
-      <header className="sticky top-0 z-30 flex items-center justify-between gap-3 border-b border-zinc-200 bg-white px-4 py-3 lg:hidden">
+      <header className="sticky top-0 z-30 flex items-center justify-between gap-2 border-b border-zinc-200 bg-white/95 px-3 py-3 pt-[max(0.75rem,env(safe-area-inset-top))] backdrop-blur sm:gap-3 sm:px-4 lg:hidden">
         <button
           type="button"
           onClick={() => setOpen(true)}
-          className="inline-flex h-10 w-10 items-center justify-center rounded-xl text-zinc-700 ring-1 ring-zinc-200"
+          className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-zinc-700 ring-1 ring-zinc-200"
           aria-label="Menyunu aç"
         >
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-5 w-5">
@@ -126,7 +126,7 @@ export function AdminSidebar() {
         </div>
         <Link
           href="/"
-          className="rounded-xl px-3 py-2 text-sm font-medium text-zinc-600 ring-1 ring-zinc-200"
+          className="shrink-0 rounded-xl px-3 py-2.5 text-sm font-medium text-zinc-600 ring-1 ring-zinc-200"
         >
           Sayt
         </Link>
@@ -143,8 +143,8 @@ export function AdminSidebar() {
 
       <aside
         className={[
-          "fixed inset-y-0 left-0 z-50 flex w-[260px] flex-col border-r border-zinc-200 bg-white transition-transform duration-200 lg:sticky lg:top-0 lg:z-0 lg:h-screen lg:translate-x-0",
-          open ? "translate-x-0" : "-translate-x-full",
+          "fixed inset-y-0 left-0 z-50 flex w-[min(280px,88vw)] flex-col border-r border-zinc-200 bg-white pt-[env(safe-area-inset-top)] transition-transform duration-200 lg:sticky lg:top-0 lg:z-0 lg:h-dvh lg:w-[260px] lg:translate-x-0 lg:pt-0",
+          open ? "translate-x-0" : "-translate-x-full lg:translate-x-0",
         ].join(" ")}
       >
         <div className="flex items-center justify-between gap-3 border-b border-zinc-200 px-5 py-5">

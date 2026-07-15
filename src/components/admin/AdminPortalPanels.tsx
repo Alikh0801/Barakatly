@@ -65,10 +65,10 @@ function FarmerCard({ farmer }: { farmer: AdminFarmer }) {
         </p>
       )}
 
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <div className="font-semibold text-zinc-900">{farmer.farm_name}</div>
-          <p className="mt-1 text-sm text-zinc-600">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0">
+          <div className="break-words font-semibold text-zinc-900">{farmer.farm_name}</div>
+          <p className="mt-1 break-all text-sm text-zinc-600">
             {farmer.profiles?.full_name ?? "—"} · {farmer.profiles?.email}
           </p>
           {farmer.location_text ? (
@@ -81,24 +81,24 @@ function FarmerCard({ farmer }: { farmer: AdminFarmer }) {
       </div>
 
       {farmer.status === "pending" ? (
-        <div className="mt-4 flex flex-wrap gap-2">
-          <form action={approveAction}>
+        <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+          <form action={approveAction} className="w-full sm:w-auto">
             <input type="hidden" name="farmer_id" value={farmer.id} />
             <button
               type="submit"
               disabled={approvePending || rejectPending}
-              className="inline-flex items-center gap-2 rounded-full bg-emerald-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-70"
+              className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-70 sm:w-auto"
             >
               {approvePending ? <Spinner className="h-3.5 w-3.5" /> : null}
               Təsdiqlə
             </button>
           </form>
-          <form action={rejectAction}>
+          <form action={rejectAction} className="w-full sm:w-auto">
             <input type="hidden" name="farmer_id" value={farmer.id} />
             <button
               type="submit"
               disabled={approvePending || rejectPending}
-              className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-semibold text-rose-700 ring-1 ring-rose-200 disabled:opacity-70"
+              className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-white px-4 py-2.5 text-sm font-semibold text-rose-700 ring-1 ring-rose-200 disabled:opacity-70 sm:w-auto"
             >
               {rejectPending ? <Spinner className="h-3.5 w-3.5" /> : null}
               Rədd et
@@ -167,10 +167,13 @@ function ProductCard({ product }: { product: AdminProduct }) {
         </span>
       </div>
 
-      <div className="mt-4 flex flex-wrap items-end gap-2">
-        <form action={approveAction} className="flex flex-wrap items-end gap-2">
+      <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-end">
+        <form
+          action={approveAction}
+          className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-end"
+        >
           <input type="hidden" name="product_id" value={product.id} />
-          <div>
+          <div className="w-full sm:w-36">
             <label
               htmlFor={`price-${product.id}`}
               className="block text-xs font-medium text-zinc-600"
@@ -185,24 +188,24 @@ function ProductCard({ product }: { product: AdminProduct }) {
               min="0.01"
               required
               defaultValue={product.farmer_price}
-              className="mt-1 w-32 rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-900"
+              className="mt-1 w-full rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-base text-zinc-900 sm:text-sm"
             />
           </div>
           <button
             type="submit"
             disabled={approvePending || rejectPending}
-            className="inline-flex items-center gap-2 rounded-full bg-emerald-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-70"
+            className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-70 sm:w-auto"
           >
             {approvePending ? <Spinner className="h-3.5 w-3.5" /> : null}
             Təsdiqlə
           </button>
         </form>
-        <form action={rejectAction}>
+        <form action={rejectAction} className="w-full sm:w-auto">
           <input type="hidden" name="product_id" value={product.id} />
           <button
             type="submit"
             disabled={approvePending || rejectPending}
-            className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-semibold text-rose-700 ring-1 ring-rose-200 disabled:opacity-70"
+            className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-white px-4 py-2.5 text-sm font-semibold text-rose-700 ring-1 ring-rose-200 disabled:opacity-70 sm:w-auto"
           >
             {rejectPending ? <Spinner className="h-3.5 w-3.5" /> : null}
             Rədd et
@@ -223,22 +226,22 @@ export function AdminCouriersPanel({ couriers }: { couriers: AdminCourier[] }) {
     <div className="space-y-6">
       <form
         action={createAction}
-        className="space-y-4 rounded-3xl bg-white p-6 shadow-sm ring-1 ring-zinc-200"
+        className="space-y-4 rounded-2xl bg-white p-4 shadow-sm sm:rounded-3xl sm:p-6 ring-1 ring-zinc-200"
       >
         <h2 className="text-lg font-semibold text-zinc-900">Yeni kuryer</h2>
-        <div className="grid gap-4 sm:grid-cols-3">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <input
             name="full_name"
             required
             placeholder="Ad soyad"
-            className="rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-sm text-zinc-900 placeholder:text-zinc-500"
+            className="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-base text-zinc-900 placeholder:text-zinc-500 sm:text-sm"
           />
           <input
             name="email"
             type="email"
             required
             placeholder="Email"
-            className="rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-sm text-zinc-900 placeholder:text-zinc-500"
+            className="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-base text-zinc-900 placeholder:text-zinc-500 sm:text-sm"
           />
           <input
             name="password"
@@ -246,7 +249,7 @@ export function AdminCouriersPanel({ couriers }: { couriers: AdminCourier[] }) {
             required
             minLength={6}
             placeholder="Şifrə"
-            className="rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-sm text-zinc-900 placeholder:text-zinc-500"
+            className="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-base text-zinc-900 placeholder:text-zinc-500 sm:col-span-2 sm:text-sm lg:col-span-1"
           />
         </div>
         {createState.error ? (

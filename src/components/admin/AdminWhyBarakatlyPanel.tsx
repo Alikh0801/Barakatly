@@ -30,7 +30,7 @@ export function AdminWhyBarakatlyPanel({
   );
 
   return (
-    <div className="space-y-4 rounded-2xl bg-white p-5 shadow-sm ring-1 ring-zinc-200">
+    <div className="space-y-4 rounded-2xl bg-white p-4 shadow-sm sm:p-5 ring-1 ring-zinc-200">
       <div>
         <h2 className="text-lg font-semibold text-zinc-900">
           Niyə Barakatly?
@@ -62,7 +62,7 @@ export function AdminWhyBarakatlyPanel({
               required
               maxLength={120}
               defaultValue={title}
-              className="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-sm text-zinc-900"
+              className="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-base text-zinc-900 sm:text-sm"
             />
           </label>
           <label className="block space-y-1.5">
@@ -75,7 +75,7 @@ export function AdminWhyBarakatlyPanel({
               maxLength={500}
               rows={3}
               defaultValue={body}
-              className="w-full resize-y rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-sm text-zinc-900"
+              className="w-full resize-y rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-base text-zinc-900 sm:text-sm"
             />
           </label>
         </div>
@@ -98,7 +98,7 @@ export function AdminWhyBarakatlyPanel({
                   required
                   maxLength={80}
                   defaultValue={item.title}
-                  className="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-sm text-zinc-900"
+                  className="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-base text-zinc-900 sm:text-sm"
                 />
               </label>
               <label className="block space-y-1.5">
@@ -109,7 +109,7 @@ export function AdminWhyBarakatlyPanel({
                   maxLength={300}
                   rows={3}
                   defaultValue={item.description}
-                  className="w-full resize-y rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-sm text-zinc-900"
+                  className="w-full resize-y rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-base text-zinc-900 sm:text-sm"
                 />
               </label>
             </div>

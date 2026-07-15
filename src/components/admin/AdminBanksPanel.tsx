@@ -29,7 +29,7 @@ export function AdminBanksPanel({ banks }: { banks: AdminBank[] }) {
           // Clear after FormData is captured from the current controlled value.
           queueMicrotask(() => setPan(""));
         }}
-        className="space-y-4 rounded-2xl bg-white p-5 shadow-sm ring-1 ring-zinc-200"
+        className="space-y-4 rounded-2xl bg-white p-4 shadow-sm sm:p-5 ring-1 ring-zinc-200"
       >
         <div>
           <h2 className="text-lg font-semibold text-zinc-900">
@@ -48,7 +48,7 @@ export function AdminBanksPanel({ banks }: { banks: AdminBank[] }) {
               name="name"
               required
               placeholder="Məs: Kapital Bank"
-              className="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-sm text-zinc-900 placeholder:text-zinc-500"
+              className="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-base text-zinc-900 sm:text-sm placeholder:text-zinc-500"
             />
           </label>
           <label className="block space-y-1.5">
@@ -123,7 +123,7 @@ function BankCard({ bank }: { bank: AdminBank }) {
   const [pan, setPan] = useState(formatPanDisplay(bank.pan_number));
 
   return (
-    <article className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-zinc-200">
+    <article className="rounded-2xl bg-white p-4 shadow-sm sm:p-5 ring-1 ring-zinc-200">
       {(updateState.error || toggleState.error || deleteState.error) && (
         <p className="mb-3 rounded-xl bg-rose-50 px-3 py-2 text-sm text-rose-700">
           {updateState.error ?? toggleState.error ?? deleteState.error}
@@ -157,7 +157,7 @@ function BankCard({ bank }: { bank: AdminBank }) {
               name="name"
               required
               defaultValue={bank.name}
-              className="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-sm text-zinc-900"
+              className="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-base text-zinc-900 sm:text-sm"
             />
           </label>
           <label className="block space-y-1.5">
