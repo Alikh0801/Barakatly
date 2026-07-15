@@ -133,8 +133,8 @@ export function CheckoutForm({
                 />
                 <div>
                   <div className="font-medium text-zinc-900">{bank.name}</div>
-                  <div className="mt-1 font-mono text-sm text-zinc-600">
-                    PAN: {bank.pan_number}
+                  <div className="mt-1 font-mono text-sm tracking-wider text-zinc-700">
+                    {bank.pan_number.replace(/-/g, " ")}
                   </div>
                 </div>
               </label>

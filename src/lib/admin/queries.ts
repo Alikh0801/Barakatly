@@ -165,3 +165,20 @@ export async function getAdminCategories(): Promise<AdminCategory[]> {
 
   return data ?? [];
 }
+
+export type AdminBank = Bank;
+
+export async function getAdminBanks(): Promise<AdminBank[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("banks")
+    .select("*")
+    .order("created_at", { ascending: true });
+
+  if (error) {
+    console.error("[admin.getAdminBanks]", error.message);
+    return [];
+  }
+
+  return data ?? [];
+}

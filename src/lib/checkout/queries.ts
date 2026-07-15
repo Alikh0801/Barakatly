@@ -22,7 +22,7 @@ async function fetchActiveBanks(): Promise<Bank[]> {
 export const getActiveBanks = unstable_cache(
   fetchActiveBanks,
   ["active-banks"],
-  { revalidate: 300 }
+  { revalidate: 300, tags: ["banks"] }
 );
 
 export type OrderListItem = Order & {
