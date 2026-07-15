@@ -85,25 +85,26 @@ async function fetchProductById(id: string): Promise<ProductDetail | null> {
     .select(productSelect)
     .eq("id", id)
     .eq("status", "approved")
-    .single();
+    .maybeSingle();
 
   if (error) {
     console.error("[shop.getProductById]", error.message);
     return null;
   }
 
-  return data as unknown as ProductDetail;
+  return (data as unknown as ProductDetail) ?? null;
 }
 
 export const getCategories = unstable_cache(fetchCategories, ["shop-categories"], {
   revalidate: 300,
+  tags: ["categories"],
 });
 
 export function getProducts(categorySlug?: string) {
   return unstable_cache(
     async () => fetchProducts(categorySlug),
     ["shop-products", categorySlug ?? "all"],
-    { revalidate: 60 }
+    { revalidate: 30, tags: ["products"] },
   )();
 }
 
@@ -111,6 +112,6 @@ export function getProductById(id: string) {
   return unstable_cache(
     async () => fetchProductById(id),
     ["shop-product", id],
-    { revalidate: 60 }
+    { revalidate: 30, tags: ["products", `product-${id}`] },
   )();
 }

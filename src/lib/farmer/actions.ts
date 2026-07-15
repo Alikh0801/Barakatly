@@ -12,6 +12,7 @@ import {
   getOrderItemStatusLabel,
 } from "@/lib/orders/labels";
 import { insertEventAndNotify } from "@/lib/notifications/helpers";
+import { revalidateProductCatalog } from "@/lib/shop/revalidate";
 import { createClient } from "@/lib/supabase/server";
 import type { OrderItemStatus, UnitType } from "@/types";
 
@@ -219,6 +220,7 @@ export async function createProduct(
 
   revalidatePath("/farmer/products");
   revalidatePath("/farmer");
+  revalidateProductCatalog(product.id);
   redirect("/farmer/products");
 }
 
@@ -290,6 +292,7 @@ export async function updateProduct(
 
   revalidatePath("/farmer/products");
   revalidatePath(`/farmer/products/${productId}`);
+  revalidateProductCatalog(productId);
   return { success: "Məhsul yeniləndi və yenidən təsdiqə göndərildi." };
 }
 

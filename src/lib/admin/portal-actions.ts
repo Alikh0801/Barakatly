@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { requireAdmin } from "@/lib/admin/auth";
 import { notifyUser } from "@/lib/notifications/helpers";
+import { revalidateProductCatalog } from "@/lib/shop/revalidate";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
@@ -135,8 +136,8 @@ export async function approveProduct(
 
   revalidatePath("/admin/products");
   revalidatePath("/admin");
-  revalidatePath("/shop");
   revalidatePath("/farmer/products");
+  revalidateProductCatalog(productId);
   return { success: "Məhsul təsdiqləndi." };
 }
 
@@ -180,6 +181,7 @@ export async function rejectProduct(
 
   revalidatePath("/admin/products");
   revalidatePath("/farmer/products");
+  revalidateProductCatalog(productId);
   return { success: "Məhsul rədd edildi." };
 }
 

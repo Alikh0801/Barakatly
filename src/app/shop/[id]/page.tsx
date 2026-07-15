@@ -10,6 +10,8 @@ import {
   getProductImageUrl,
 } from "@/lib/shop/format";
 
+export const dynamic = "force-dynamic";
+
 export async function generateMetadata({
   params,
 }: {
