@@ -138,7 +138,7 @@ export function AdminSidebar() {
         ].join(" ")}
       >
         <div className="flex items-center justify-between gap-3 border-b border-zinc-200 px-5 py-5">
-          <Link href="/admin" className="min-w-0">
+          <Link href="/admin/payments" className="min-w-0">
             <div className="flex items-center gap-3">
               <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-emerald-600 text-sm font-bold text-white">
                 B
