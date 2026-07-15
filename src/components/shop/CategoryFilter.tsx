@@ -10,7 +10,7 @@ export function CategoryFilter({
 }) {
   return (
     <div className="-mx-4 overflow-x-auto px-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden md:mx-0 md:overflow-visible md:px-0">
-      <div className="flex w-max flex-nowrap gap-2 md:w-auto md:flex-wrap">
+      <div className="flex w-max min-w-full flex-nowrap justify-center gap-2 md:w-auto md:min-w-0 md:flex-wrap md:justify-start">
         <Link
           href="/shop"
           prefetch

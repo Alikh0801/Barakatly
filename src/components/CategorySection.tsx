@@ -33,7 +33,7 @@ export async function CategorySection({
         </div>
 
         <div className="mt-10 -mx-4 overflow-x-auto px-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          <div className="flex w-max items-start gap-4 md:gap-6">
+          <div className="flex w-max min-w-full items-start justify-center gap-4 md:gap-6">
             <Link
               href="/"
               prefetch
