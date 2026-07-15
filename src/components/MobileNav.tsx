@@ -12,11 +12,10 @@ const LINKS = [
 export function MobileNav({
   variant = "hero",
 }: {
-  variant?: "hero" | "solid";
+  variant?: "hero" | "solid" | "adaptive";
 }) {
   const [open, setOpen] = useState(false);
   const panelId = useId();
-  const isHero = variant === "hero";
 
   useEffect(() => {
     if (!open) return;
@@ -33,9 +32,12 @@ export function MobileNav({
     };
   }, [open]);
 
-  const buttonClass = isHero
-    ? "bg-white/10 text-white ring-1 ring-white/15 hover:bg-white/15"
-    : "bg-zinc-100 text-zinc-700 ring-1 ring-zinc-200 hover:bg-zinc-200";
+  const buttonClass =
+    variant === "adaptive"
+      ? "bg-white/10 text-white ring-1 ring-white/15 hover:bg-white/15 group-data-[scrolled=true]/header:bg-zinc-100 group-data-[scrolled=true]/header:text-zinc-700 group-data-[scrolled=true]/header:ring-zinc-200 group-data-[scrolled=true]/header:hover:bg-zinc-200"
+      : variant === "hero"
+        ? "bg-white/10 text-white ring-1 ring-white/15 hover:bg-white/15"
+        : "bg-zinc-100 text-zinc-700 ring-1 ring-zinc-200 hover:bg-zinc-200";
 
   return (
     <div className="md:hidden">

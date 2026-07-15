@@ -6,17 +6,19 @@ import { useCartHydrated } from "@/hooks/useCartHydrated";
 import { Skeleton } from "@/components/ui/Skeleton";
 
 export function CartNav({
-  variant = "hero",
+  variant = "solid",
 }: {
-  variant?: "hero" | "solid";
+  variant?: "hero" | "solid" | "adaptive";
 }) {
   const hydrated = useCartHydrated();
   const totalItems = useCartStore((s) => s.totalItems());
 
   const iconWrap =
-    variant === "hero"
-      ? "relative inline-flex h-9 w-9 items-center justify-center rounded-full bg-white/10 text-white ring-1 ring-white/15 backdrop-blur-sm transition hover:bg-white/15"
-      : "relative inline-flex h-9 w-9 items-center justify-center rounded-full bg-zinc-100 text-zinc-700 ring-1 ring-zinc-200 transition hover:bg-zinc-200";
+    variant === "adaptive"
+      ? "relative inline-flex h-9 w-9 items-center justify-center rounded-full bg-white/10 text-white ring-1 ring-white/15 backdrop-blur-sm transition hover:bg-white/15 group-data-[scrolled=true]/header:bg-zinc-100 group-data-[scrolled=true]/header:text-zinc-700 group-data-[scrolled=true]/header:ring-zinc-200 group-data-[scrolled=true]/header:hover:bg-zinc-200"
+      : variant === "hero"
+        ? "relative inline-flex h-9 w-9 items-center justify-center rounded-full bg-white/10 text-white ring-1 ring-white/15 backdrop-blur-sm transition hover:bg-white/15"
+        : "relative inline-flex h-9 w-9 items-center justify-center rounded-full bg-zinc-100 text-zinc-700 ring-1 ring-zinc-200 transition hover:bg-zinc-200";
 
   return (
     <Link href="/cart" prefetch aria-label="Səbət" className={iconWrap}>

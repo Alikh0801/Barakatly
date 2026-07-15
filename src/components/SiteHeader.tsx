@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { AuthNav } from "@/components/AuthNav";
 import { CartNav } from "@/components/CartNav";
+import { HeaderShell } from "@/components/header/HeaderShell";
 import { MobileNav } from "@/components/MobileNav";
 import { NavLink } from "@/components/navigation/NavLink";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
@@ -36,32 +37,38 @@ export function SiteHeader({
 }) {
   const isHero = variant === "hero";
 
-  const headerClass = isHero
-    ? "fixed inset-x-0 top-0 z-30"
-    : "sticky top-0 z-30 border-b border-zinc-200 bg-white/95 backdrop-blur";
-
-  const logoText = isHero ? "text-white" : "text-emerald-800";
+  const logoText = isHero
+    ? "text-white group-data-[scrolled=true]/header:text-emerald-800"
+    : "text-emerald-800";
   const navText = isHero
-    ? "text-white/90 hover:text-white"
+    ? "text-white/90 hover:text-white group-data-[scrolled=true]/header:text-zinc-600 group-data-[scrolled=true]/header:hover:text-zinc-900"
     : "text-zinc-600 hover:text-zinc-900";
   const iconClass = isHero
-    ? "bg-white/10 text-white ring-1 ring-white/15 hover:bg-white/15"
+    ? "bg-white/10 text-white ring-1 ring-white/15 hover:bg-white/15 group-data-[scrolled=true]/header:bg-zinc-100 group-data-[scrolled=true]/header:text-zinc-700 group-data-[scrolled=true]/header:ring-zinc-200 group-data-[scrolled=true]/header:hover:bg-zinc-200"
     : "bg-zinc-100 text-zinc-700 ring-1 ring-zinc-200 hover:bg-zinc-200";
 
   return (
-    <header className={headerClass}>
+    <HeaderShell mode={isHero ? "scroll" : "static"}>
       <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-2 px-4 py-4 md:px-6">
         <Link
           href="/"
           prefetch
-          className={`inline-flex min-w-0 items-center gap-2 font-semibold tracking-tight ${logoText}`}
+          className={`inline-flex min-w-0 items-center gap-2 font-semibold tracking-tight transition-colors ${logoText}`}
         >
           <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-emerald-500/90 ring-1 ring-emerald-300/40">
             <span aria-hidden="true" className="text-base">
               🌿
             </span>
           </span>
-          <span className={isHero ? "drop-shadow-sm" : ""}>Barakatly</span>
+          <span
+            className={
+              isHero
+                ? "drop-shadow-sm group-data-[scrolled=true]/header:drop-shadow-none"
+                : ""
+            }
+          >
+            Barakatly
+          </span>
         </Link>
 
         <nav className="hidden items-center gap-6 text-sm font-medium md:flex">
@@ -77,8 +84,12 @@ export function SiteHeader({
         </nav>
 
         <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
-          <MobileNav variant={variant} />
-          <NavLink href="/shop" aria-label="Axtarış" className="hidden sm:inline-flex">
+          <MobileNav variant={isHero ? "adaptive" : "solid"} />
+          <NavLink
+            href="/shop"
+            aria-label="Axtarış"
+            className="hidden sm:inline-flex"
+          >
             <Icon className={iconClass}>
               <svg
                 viewBox="0 0 24 24"
@@ -92,13 +103,15 @@ export function SiteHeader({
               </svg>
             </Icon>
           </NavLink>
-          <CartNav variant={variant} />
-          <NotificationBell variant={variant} />
-          <Suspense fallback={<AuthNavSkeleton variant={variant} />}>
-            <AuthNav variant={variant} />
+          <CartNav variant={isHero ? "adaptive" : "solid"} />
+          <NotificationBell variant={isHero ? "adaptive" : "solid"} />
+          <Suspense
+            fallback={<AuthNavSkeleton variant={isHero ? "hero" : "solid"} />}
+          >
+            <AuthNav variant={isHero ? "adaptive" : "solid"} />
           </Suspense>
         </div>
       </div>
-    </header>
+    </HeaderShell>
   );
 }

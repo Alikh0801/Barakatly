@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useId, useRef, useState } from "react";
 
 type ProfileMenuProps = {
-  variant?: "hero" | "solid";
+  variant?: "hero" | "solid" | "adaptive";
   fullName: string | null;
   email: string | null;
   role: string;
@@ -47,9 +47,29 @@ export function ProfileMenu({
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
   const menuId = useId();
-  const isHero = variant === "hero";
   const displayName = fullName?.trim() || email || "Hesab";
   const portal = portalLink(role);
+
+  const triggerClass =
+    variant === "adaptive"
+      ? "bg-white/10 ring-1 ring-white/20 backdrop-blur-sm hover:bg-white/15 group-data-[scrolled=true]/header:bg-white group-data-[scrolled=true]/header:ring-zinc-200 group-data-[scrolled=true]/header:hover:ring-zinc-300"
+      : variant === "hero"
+        ? "bg-white/10 ring-1 ring-white/20 backdrop-blur-sm hover:bg-white/15"
+        : "bg-white ring-1 ring-zinc-200 hover:ring-zinc-300";
+
+  const nameClass =
+    variant === "adaptive"
+      ? "text-white group-data-[scrolled=true]/header:text-zinc-800"
+      : variant === "hero"
+        ? "text-white"
+        : "text-zinc-800";
+
+  const caretClass =
+    variant === "adaptive"
+      ? "text-white group-data-[scrolled=true]/header:text-zinc-500"
+      : variant === "hero"
+        ? "text-white"
+        : "text-zinc-500";
 
   useEffect(() => {
     if (!open) return;
@@ -82,9 +102,7 @@ export function ProfileMenu({
         onClick={() => setOpen((value) => !value)}
         className={[
           "group inline-flex items-center gap-2 rounded-full p-0.5 transition",
-          isHero
-            ? "bg-white/10 ring-1 ring-white/20 backdrop-blur-sm hover:bg-white/15"
-            : "bg-white ring-1 ring-zinc-200 hover:ring-zinc-300",
+          triggerClass,
         ].join(" ")}
       >
         <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-emerald-600 text-xs font-semibold tracking-wide text-white ring-2 ring-white/25">
@@ -93,7 +111,7 @@ export function ProfileMenu({
         <span
           className={[
             "hidden items-center gap-1.5 pr-2.5 text-sm font-medium sm:inline-flex",
-            isHero ? "text-white" : "text-zinc-800",
+            nameClass,
           ].join(" ")}
         >
           <span className="max-w-[110px] truncate">{displayName.split(" ")[0]}</span>
@@ -104,7 +122,7 @@ export function ProfileMenu({
             className={[
               "h-4 w-4 opacity-70 transition duration-200",
               open ? "rotate-180" : "",
-              isHero ? "text-white" : "text-zinc-500",
+              caretClass,
             ].join(" ")}
           >
             <path

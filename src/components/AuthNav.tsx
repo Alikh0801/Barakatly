@@ -21,21 +21,20 @@ function getInitials(name: string | null | undefined, email: string | null | und
 export async function AuthNav({
   variant = "hero",
 }: {
-  variant?: "hero" | "solid";
+  variant?: "hero" | "solid" | "adaptive";
 }) {
   const profile = await getProfile();
-  const isHero = variant === "hero";
 
   if (!profile) {
+    const signInClass =
+      variant === "adaptive"
+        ? "ml-1 inline-flex h-9 items-center rounded-full bg-white px-4 text-sm font-semibold text-zinc-950 shadow-sm transition hover:bg-white/90 group-data-[scrolled=true]/header:bg-emerald-600 group-data-[scrolled=true]/header:text-white group-data-[scrolled=true]/header:shadow-none group-data-[scrolled=true]/header:hover:bg-emerald-500"
+        : variant === "hero"
+          ? "ml-1 inline-flex h-9 items-center rounded-full bg-white px-4 text-sm font-semibold text-zinc-950 shadow-sm transition hover:bg-white/90"
+          : "ml-1 inline-flex h-9 items-center rounded-full bg-emerald-600 px-4 text-sm font-semibold text-white transition hover:bg-emerald-500";
+
     return (
-      <Link
-        href="/signin"
-        className={
-          isHero
-            ? "ml-1 inline-flex h-9 items-center rounded-full bg-white px-4 text-sm font-semibold text-zinc-950 shadow-sm transition hover:bg-white/90"
-            : "ml-1 inline-flex h-9 items-center rounded-full bg-emerald-600 px-4 text-sm font-semibold text-white transition hover:bg-emerald-500"
-        }
-      >
+      <Link href="/signin" className={signInClass}>
         Daxil ol
       </Link>
     );

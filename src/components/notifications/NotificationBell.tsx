@@ -4,26 +4,34 @@ import { getProfile } from "@/lib/auth/session";
 import { getUnreadNotificationCount } from "@/lib/notifications/queries";
 import { Skeleton } from "@/components/ui/Skeleton";
 
+type HeaderVariant = "hero" | "solid" | "adaptive";
+
+function iconWrapClass(variant: HeaderVariant) {
+  if (variant === "adaptive") {
+    return "relative inline-flex h-9 w-9 items-center justify-center rounded-full bg-white/10 text-white ring-1 ring-white/15 backdrop-blur-sm transition hover:bg-white/15 group-data-[scrolled=true]/header:bg-zinc-100 group-data-[scrolled=true]/header:text-zinc-700 group-data-[scrolled=true]/header:ring-zinc-200 group-data-[scrolled=true]/header:hover:bg-zinc-200";
+  }
+  if (variant === "hero") {
+    return "relative inline-flex h-9 w-9 items-center justify-center rounded-full bg-white/10 text-white ring-1 ring-white/15 backdrop-blur-sm transition hover:bg-white/15";
+  }
+  return "relative inline-flex h-9 w-9 items-center justify-center rounded-full bg-zinc-100 text-zinc-700 ring-1 ring-zinc-200 transition hover:bg-zinc-200";
+}
+
 async function NotificationBellInner({
   variant,
 }: {
-  variant: "hero" | "solid";
+  variant: HeaderVariant;
 }) {
   const profile = await getProfile();
   if (!profile) return null;
 
   const unread = await getUnreadNotificationCount();
-  const iconWrap =
-    variant === "hero"
-      ? "relative inline-flex h-9 w-9 items-center justify-center rounded-full bg-white/10 text-white ring-1 ring-white/15 backdrop-blur-sm transition hover:bg-white/15"
-      : "relative inline-flex h-9 w-9 items-center justify-center rounded-full bg-zinc-100 text-zinc-700 ring-1 ring-zinc-200 transition hover:bg-zinc-200";
 
   return (
     <Link
       href="/notifications"
       prefetch
       aria-label="Bildirişlər"
-      className={iconWrap}
+      className={iconWrapClass(variant)}
     >
       <svg
         viewBox="0 0 24 24"
@@ -51,13 +59,13 @@ async function NotificationBellInner({
 function NotificationBellSkeleton({
   variant,
 }: {
-  variant: "hero" | "solid";
+  variant: HeaderVariant;
 }) {
   return (
     <Skeleton
       className={[
         "h-9 w-9 rounded-full",
-        variant === "hero" ? "bg-white/20" : "bg-zinc-200",
+        variant === "solid" ? "bg-zinc-200" : "bg-white/20",
       ].join(" ")}
     />
   );
@@ -66,7 +74,7 @@ function NotificationBellSkeleton({
 export function NotificationBell({
   variant = "solid",
 }: {
-  variant?: "hero" | "solid";
+  variant?: HeaderVariant;
 }) {
   return (
     <Suspense fallback={<NotificationBellSkeleton variant={variant} />}>
