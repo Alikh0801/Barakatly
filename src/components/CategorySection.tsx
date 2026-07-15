@@ -134,7 +134,8 @@ export async function CategorySection({
             </div>
           ) : (
             <p className="rounded-2xl bg-zinc-50 px-4 py-8 text-center text-sm text-zinc-600 ring-1 ring-zinc-200">
-              Bu kateqoriyada hələ məhsul yoxdur.
+              Hazırda satışda məhsul yoxdur. Fermerlərin əlavə etdiyi
+              məhsullar admin təsdiqindən sonra burada görünəcək.
             </p>
           )}
         </div>

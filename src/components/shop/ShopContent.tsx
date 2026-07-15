@@ -39,7 +39,8 @@ export async function ShopContent({
             Hazırda məhsul yoxdur
           </p>
           <p className="mt-2 text-sm text-zinc-600">
-            Fermerlər məhsul əlavə etdikcə burada görünəcək.
+            Fermerlərin əlavə etdiyi məhsullar admin təsdiqindən sonra burada
+            görünəcək.
           </p>
         </div>
       )}
