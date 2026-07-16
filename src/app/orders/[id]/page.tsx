@@ -12,7 +12,7 @@ import {
 } from "@/lib/orders/labels";
 import { firstPayment } from "@/lib/orders/payment";
 import { getOrderById } from "@/lib/checkout/queries";
-import { formatPrice, formatUnit } from "@/lib/shop/format";
+import { formatPrice, formatUnit, getProductImageUrl } from "@/lib/shop/format";
 import { getProfile } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
 
@@ -121,31 +121,81 @@ export default async function OrderDetailPage({
             <OrderStatusTracker status={order.status} />
             <OrderStatusTimeline events={events} />
 
-            <section className="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-zinc-200">
-              <h2 className="text-lg font-semibold text-zinc-900">Məhsullar</h2>
+            <section className="rounded-3xl bg-white p-5 shadow-sm ring-1 ring-zinc-200 sm:p-6">
+              <div className="flex flex-wrap items-end justify-between gap-2">
+                <h2 className="text-lg font-semibold text-zinc-900">
+                  Məhsullar
+                </h2>
+                <p className="text-sm text-zinc-500">
+                  {order.order_items.length} məhsul ·{" "}
+                  {order.order_items.reduce(
+                    (sum, item) => sum + Number(item.quantity),
+                    0
+                  )}{" "}
+                  ədəd
+                </p>
+              </div>
               <div className="mt-4 space-y-4">
-                {order.order_items.map((item) => (
-                  <div
-                    key={item.id}
-                    className="flex items-start justify-between gap-4 border-b border-zinc-100 pb-4 last:border-0 last:pb-0"
-                  >
-                    <div>
-                      <div className="font-medium text-zinc-900">
-                        {item.product_title}
+                {order.order_items.map((item) => {
+                  const imageUrl = getProductImageUrl(
+                    item.products?.product_images ?? []
+                  );
+                  return (
+                    <div
+                      key={item.id}
+                      className="flex items-start gap-3 border-b border-zinc-100 pb-4 last:border-0 last:pb-0 sm:gap-4"
+                    >
+                      <div className="h-16 w-16 shrink-0 overflow-hidden rounded-2xl bg-zinc-100 ring-1 ring-zinc-200 sm:h-20 sm:w-20">
+                        {imageUrl ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
+                            src={imageUrl}
+                            alt={item.product_title}
+                            className="h-full w-full object-cover"
+                          />
+                        ) : (
+                          <div className="flex h-full w-full items-center justify-center text-xs text-zinc-400">
+                            Şəkil
+                          </div>
+                        )}
                       </div>
-                      <div className="mt-1 text-sm text-zinc-500">
-                        {item.quantity} × {formatPrice(item.unit_price)}
-                        {formatUnit(item.unit_type)}
-                      </div>
-                      <div className="mt-2 inline-flex rounded-full bg-zinc-100 px-2 py-0.5 text-xs font-medium text-zinc-700 ring-1 ring-zinc-200">
-                        {getOrderItemStatusLabel(item.status)}
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="min-w-0">
+                            <div className="break-words font-medium text-zinc-900">
+                              {item.product_title}
+                            </div>
+                            <dl className="mt-2 space-y-1 text-sm text-zinc-600">
+                              <div className="flex flex-wrap gap-x-3 gap-y-1">
+                                <div>
+                                  <span className="text-zinc-500">Say: </span>
+                                  <span className="font-medium text-zinc-800">
+                                    {item.quantity}
+                                  </span>
+                                </div>
+                                <div>
+                                  <span className="text-zinc-500">
+                                    Qiymət:{" "}
+                                  </span>
+                                  <span className="font-medium text-zinc-800">
+                                    {formatPrice(item.unit_price)}
+                                    {formatUnit(item.unit_type)}
+                                  </span>
+                                </div>
+                              </div>
+                            </dl>
+                            <div className="mt-2 inline-flex rounded-full bg-zinc-100 px-2 py-0.5 text-xs font-medium text-zinc-700 ring-1 ring-zinc-200">
+                              {getOrderItemStatusLabel(item.status)}
+                            </div>
+                          </div>
+                          <div className="shrink-0 text-right font-semibold text-zinc-900">
+                            {formatPrice(item.line_total)}
+                          </div>
+                        </div>
                       </div>
                     </div>
-                    <div className="font-medium text-zinc-900">
-                      {formatPrice(item.line_total)}
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </section>
 

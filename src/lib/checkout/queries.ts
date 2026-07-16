@@ -25,9 +25,21 @@ export const getActiveBanks = unstable_cache(
   { revalidate: 300, tags: ["banks"] }
 );
 
+export type OrderItemProductImage = {
+  url: string;
+  sort_order: number;
+};
+
+export type OrderItemWithProduct = OrderItem & {
+  products: {
+    product_images: OrderItemProductImage[] | null;
+  } | null;
+};
+
 export type OrderListItem = Order & {
   /** Unique FK → may be object or array depending on PostgREST embed shape. */
   payments: Pick<Payment, "status"> | Pick<Payment, "status">[] | null;
+  order_items: OrderItemWithProduct[] | null;
 };
 
 export async function getCustomerOrders(): Promise<OrderListItem[]> {
@@ -41,7 +53,25 @@ export async function getCustomerOrders(): Promise<OrderListItem[]> {
 
   const { data, error } = await supabase
     .from("orders")
-    .select("*, payments(status)")
+    .select(
+      `
+      *,
+      payments (status),
+      order_items (
+        id,
+        product_title,
+        quantity,
+        unit_type,
+        unit_price,
+        line_total,
+        status,
+        product_id,
+        products:product_id (
+          product_images (url, sort_order)
+        )
+      )
+    `
+    )
     .eq("customer_id", user.id)
     .order("created_at", { ascending: false });
 
@@ -54,7 +84,7 @@ export async function getCustomerOrders(): Promise<OrderListItem[]> {
 }
 
 export type OrderDetail = Order & {
-  order_items: OrderItem[];
+  order_items: OrderItemWithProduct[];
   /** Unique FK → may be object or array depending on PostgREST embed shape. */
   payments:
     | (Payment & { banks: Pick<Bank, "name" | "pan_number"> | null })
@@ -77,7 +107,12 @@ export async function getOrderById(id: string): Promise<OrderDetail | null> {
     .select(
       `
       *,
-      order_items (*),
+      order_items (
+        *,
+        products:product_id (
+          product_images (url, sort_order)
+        )
+      ),
       payments (
         *,
         banks (name, pan_number)
