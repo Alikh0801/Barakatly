@@ -10,6 +10,7 @@ import {
   getPaymentBadgeTone,
   getPaymentStatusLabel,
 } from "@/lib/orders/labels";
+import { firstPayment } from "@/lib/orders/payment";
 import { getOrderById } from "@/lib/checkout/queries";
 import { formatPrice, formatUnit } from "@/lib/shop/format";
 import { getProfile } from "@/lib/auth/session";
@@ -54,7 +55,7 @@ export default async function OrderDetailPage({
   const order = await getOrderById(id);
   if (!order) notFound();
 
-  const payment = order.payments?.[0] ?? null;
+  const payment = firstPayment(order.payments);
   const events = order.order_status_events ?? [];
   let receiptSignedUrl: string | null = null;
 

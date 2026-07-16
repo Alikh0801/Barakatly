@@ -13,6 +13,7 @@ import {
   getOrderStatusLabel,
   getPaymentStatusLabel,
 } from "@/lib/orders/labels";
+import { firstPayment } from "@/lib/orders/payment";
 import type { AdminOrderListItem, AdminPendingPayment } from "@/lib/admin/queries";
 import type { OrderStatus } from "@/types";
 
@@ -170,7 +171,8 @@ export function AdminOrdersPanel({ orders }: { orders: AdminOrderListItem[] }) {
 
       {orders.map((order) => {
         const nextStatuses = ADMIN_STATUS_TRANSITIONS[order.status] ?? [];
-        const paymentStatus = order.payments?.[0]?.status ?? "pending";
+        const paymentStatus =
+          firstPayment(order.payments)?.status ?? "pending";
 
         return (
           <article

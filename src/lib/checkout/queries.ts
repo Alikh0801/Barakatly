@@ -26,7 +26,8 @@ export const getActiveBanks = unstable_cache(
 );
 
 export type OrderListItem = Order & {
-  payments: Pick<Payment, "status">[] | null;
+  /** Unique FK → may be object or array depending on PostgREST embed shape. */
+  payments: Pick<Payment, "status"> | Pick<Payment, "status">[] | null;
 };
 
 export async function getCustomerOrders(): Promise<OrderListItem[]> {
@@ -54,7 +55,11 @@ export async function getCustomerOrders(): Promise<OrderListItem[]> {
 
 export type OrderDetail = Order & {
   order_items: OrderItem[];
-  payments: (Payment & { banks: Pick<Bank, "name" | "pan_number"> | null })[] | null;
+  /** Unique FK → may be object or array depending on PostgREST embed shape. */
+  payments:
+    | (Payment & { banks: Pick<Bank, "name" | "pan_number"> | null })
+    | (Payment & { banks: Pick<Bank, "name" | "pan_number"> | null })[]
+    | null;
   order_status_events: OrderStatusEvent[] | null;
 };
 

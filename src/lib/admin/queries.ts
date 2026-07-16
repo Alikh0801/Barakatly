@@ -54,7 +54,11 @@ export async function getPendingPayments(): Promise<AdminPendingPayment[]> {
 }
 
 export type AdminOrderListItem = Order & {
-  payments: Pick<Payment, "id" | "status">[] | null;
+  /** Unique FK → may be object or array depending on PostgREST embed shape. */
+  payments:
+    | Pick<Payment, "id" | "status">
+    | Pick<Payment, "id" | "status">[]
+    | null;
   customer: { full_name: string | null; email: string | null } | null;
 };
 

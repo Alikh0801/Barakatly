@@ -5,6 +5,7 @@ import {
   getPaymentBadgeTone,
   getPaymentStatusLabel,
 } from "@/lib/orders/labels";
+import { firstPayment } from "@/lib/orders/payment";
 import { getCustomerOrders } from "@/lib/checkout/queries";
 import { formatPrice } from "@/lib/shop/format";
 
@@ -41,7 +42,8 @@ export async function OrdersList() {
   return (
     <div className="mt-8 space-y-4">
       {orders.map((order) => {
-        const paymentStatus = order.payments?.[0]?.status ?? "pending";
+        const paymentStatus =
+          firstPayment(order.payments)?.status ?? "pending";
 
         return (
           <Link
