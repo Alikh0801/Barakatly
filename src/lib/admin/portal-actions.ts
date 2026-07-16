@@ -48,7 +48,7 @@ export async function approveFarmer(
   });
 
   revalidatePath("/admin/farmers");
-  revalidatePath("/admin");
+  revalidatePath("/admin", "layout");
   revalidatePath("/farmer");
   return { success: "Fermer təsdiqləndi." };
 }
@@ -86,7 +86,7 @@ export async function rejectFarmer(
   });
 
   revalidatePath("/admin/farmers");
-  revalidatePath("/admin");
+  revalidatePath("/admin", "layout");
   return { success: "Fermer rədd edildi." };
 }
 
@@ -135,7 +135,7 @@ export async function approveProduct(
   }
 
   revalidatePath("/admin/products");
-  revalidatePath("/admin");
+  revalidatePath("/admin", "layout");
   revalidatePath("/farmer/products");
   revalidateProductCatalog(productId);
   return { success: "Məhsul təsdiqləndi." };
@@ -241,7 +241,7 @@ export async function createCourier(
   }
 
   revalidatePath("/admin/couriers");
-  revalidatePath("/admin");
+  revalidatePath("/admin", "layout");
   return { success: "Kuryer hesabı yaradıldı." };
 }
 

@@ -164,7 +164,7 @@ export async function confirmPayment(
     notification: notificationForOrderStatus("confirmed"),
   });
 
-  revalidatePath("/admin");
+  revalidatePath("/admin", "layout");
   revalidatePath("/admin/payments");
   revalidatePath("/admin/orders");
   revalidatePath("/orders");
@@ -248,7 +248,7 @@ export async function rejectPayment(
     notification: notificationForOrderStatus("cancelled"),
   });
 
-  revalidatePath("/admin");
+  revalidatePath("/admin", "layout");
   revalidatePath("/admin/payments");
   revalidatePath("/admin/orders");
   revalidatePath("/orders");
@@ -303,7 +303,7 @@ export async function advanceOrderStatus(
     notification: notificationForOrderStatus(nextStatus),
   });
 
-  revalidatePath("/admin");
+  revalidatePath("/admin", "layout");
   revalidatePath("/admin/orders");
   revalidatePath("/orders");
   revalidatePath(`/orders/${order.id}`);
