@@ -209,3 +209,43 @@ export async function getAdminBanks(): Promise<AdminBank[]> {
 
   return data ?? [];
 }
+
+export type AdminNavBadges = {
+  payments: number;
+  orders: number;
+  farmers: number;
+  products: number;
+};
+
+async function countRows(
+  table: "payments" | "orders" | "farmers" | "products",
+  filters: { column: string; value: string }[],
+): Promise<number> {
+  const supabase = await createClient();
+  let query = supabase.from(table).select("id", { count: "exact", head: true });
+
+  for (const filter of filters) {
+    query = query.eq(filter.column, filter.value);
+  }
+
+  const { count, error } = await query;
+  if (error) {
+    console.error(`[admin.count.${table}]`, error.message);
+    return 0;
+  }
+  return count ?? 0;
+}
+
+/** Pending items needing admin action — shown on sidebar until resolved. */
+export async function getAdminNavBadges(): Promise<AdminNavBadges> {
+  const [payments, orders, farmers, products] = await Promise.all([
+    countRows("payments", [{ column: "status", value: "pending" }]),
+    countRows("orders", [
+      { column: "status", value: "awaiting_confirmation" },
+    ]),
+    countRows("farmers", [{ column: "status", value: "pending" }]),
+    countRows("products", [{ column: "status", value: "pending" }]),
+  ]);
+
+  return { payments, orders, farmers, products };
+}

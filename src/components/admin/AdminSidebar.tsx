@@ -3,10 +3,12 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
+import type { AdminNavBadges } from "@/lib/admin/queries";
 
 type NavItem = {
   href: string;
   label: string;
+  badgeKey?: keyof AdminNavBadges;
   icon: React.ReactNode;
 };
 
@@ -14,6 +16,7 @@ const navItems: NavItem[] = [
   {
     href: "/admin/payments",
     label: "Ödənişlər",
+    badgeKey: "payments",
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-4 w-4">
         <rect x="3" y="6" width="18" height="12" rx="2" />
@@ -24,6 +27,7 @@ const navItems: NavItem[] = [
   {
     href: "/admin/orders",
     label: "Sifarişlər",
+    badgeKey: "orders",
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-4 w-4">
         <path d="M7 7h12l-1.2 9.2a2 2 0 0 1-2 1.8H9.2a2 2 0 0 1-2-1.7L6 4H3" strokeLinecap="round" strokeLinejoin="round" />
@@ -35,6 +39,7 @@ const navItems: NavItem[] = [
   {
     href: "/admin/farmers",
     label: "Fermerlər",
+    badgeKey: "farmers",
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-4 w-4">
         <path d="M12 3c2.5 2.8 3.8 5.2 3.8 7.4A3.8 3.8 0 1 1 8.2 10.4C8.2 8.2 9.5 5.8 12 3Z" strokeLinejoin="round" />
@@ -45,6 +50,7 @@ const navItems: NavItem[] = [
   {
     href: "/admin/products",
     label: "Məhsullar",
+    badgeKey: "products",
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-4 w-4">
         <path d="M4 8.5 12 4l8 4.5v7L12 20l-8-4.5v-7Z" strokeLinejoin="round" />
@@ -89,7 +95,16 @@ function isActive(pathname: string, item: NavItem) {
   return pathname === item.href || pathname.startsWith(`${item.href}/`);
 }
 
-export function AdminSidebar() {
+function formatBadge(count: number) {
+  if (count <= 0) return null;
+  return count > 99 ? "99+" : String(count);
+}
+
+export function AdminSidebar({
+  badges = { payments: 0, orders: 0, farmers: 0, products: 0 },
+}: {
+  badges?: AdminNavBadges;
+}) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
 
@@ -104,8 +119,14 @@ export function AdminSidebar() {
     };
   }, [open]);
 
-  const activeLabel =
-    navItems.find((item) => isActive(pathname, item))?.label ?? "Admin";
+  const activeItem = navItems.find((item) => isActive(pathname, item));
+  const activeLabel = activeItem?.label ?? "Admin";
+  const activeBadge =
+    activeItem?.badgeKey != null
+      ? formatBadge(badges[activeItem.badgeKey])
+      : null;
+  const totalPending =
+    badges.payments + badges.orders + badges.farmers + badges.products;
 
   return (
     <>
@@ -113,15 +134,29 @@ export function AdminSidebar() {
         <button
           type="button"
           onClick={() => setOpen(true)}
-          className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-zinc-700 ring-1 ring-zinc-200"
+          className="relative inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-zinc-700 ring-1 ring-zinc-200"
           aria-label="Menyunu aç"
         >
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-5 w-5">
             <path d="M4 7h16M4 12h16M4 17h16" strokeLinecap="round" />
           </svg>
+          {totalPending > 0 ? (
+            <span className="absolute -right-1 -top-1 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-rose-500 px-1 text-[10px] font-semibold text-white ring-2 ring-white">
+              {formatBadge(totalPending)}
+            </span>
+          ) : null}
         </button>
         <div className="min-w-0 flex-1">
-          <p className="truncate text-sm font-semibold text-zinc-900">{activeLabel}</p>
+          <div className="flex min-w-0 items-center gap-2">
+            <p className="truncate text-sm font-semibold text-zinc-900">
+              {activeLabel}
+            </p>
+            {activeBadge ? (
+              <span className="inline-flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full bg-rose-500 px-1.5 text-[11px] font-semibold text-white">
+                {activeBadge}
+              </span>
+            ) : null}
+          </div>
           <p className="truncate text-xs text-zinc-500">Admin · Barakatly</p>
         </div>
         <Link
@@ -179,6 +214,8 @@ export function AdminSidebar() {
           </p>
           {navItems.map((item) => {
             const active = isActive(pathname, item);
+            const badge =
+              item.badgeKey != null ? formatBadge(badges[item.badgeKey]) : null;
             return (
               <Link
                 key={item.href}
@@ -193,7 +230,19 @@ export function AdminSidebar() {
                 <span className={active ? "text-emerald-700" : "text-zinc-400"}>
                   {item.icon}
                 </span>
-                {item.label}
+                <span className="min-w-0 flex-1 truncate">{item.label}</span>
+                {badge ? (
+                  <span
+                    className={[
+                      "inline-flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full px-1.5 text-[11px] font-semibold",
+                      active
+                        ? "bg-emerald-600 text-white"
+                        : "bg-rose-500 text-white",
+                    ].join(" ")}
+                  >
+                    {badge}
+                  </span>
+                ) : null}
               </Link>
             );
           })}

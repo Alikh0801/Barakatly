@@ -1,5 +1,6 @@
 import { AdminSidebar } from "@/components/admin/AdminSidebar";
 import { requireAdmin } from "@/lib/admin/auth";
+import { getAdminNavBadges } from "@/lib/admin/queries";
 
 export default async function AdminLayout({
   children,
@@ -7,10 +8,11 @@ export default async function AdminLayout({
   children: React.ReactNode;
 }>) {
   await requireAdmin();
+  const badges = await getAdminNavBadges();
 
   return (
     <div className="min-h-dvh bg-zinc-100 lg:flex">
-      <AdminSidebar />
+      <AdminSidebar badges={badges} />
       <div className="min-w-0 flex-1 overflow-x-hidden">
         <main className="min-h-dvh pb-[env(safe-area-inset-bottom)]">
           {children}
