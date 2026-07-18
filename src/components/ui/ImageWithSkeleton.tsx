@@ -7,14 +7,24 @@ export function ImageWithSkeleton({
   alt,
   className = "",
   skeletonClassName = "",
+  fill = false,
 }: {
   src: string;
   alt: string;
   className?: string;
   skeletonClassName?: string;
+  /** Stretch the image to fill the parent box. */
+  fill?: boolean;
 }) {
   return (
-    <div className="relative overflow-hidden bg-zinc-100">
+    <div
+      className={[
+        "relative overflow-hidden bg-zinc-100",
+        fill ? "h-full w-full" : "",
+      ]
+        .filter(Boolean)
+        .join(" ")}
+    >
       <Skeleton
         className={[
           "absolute inset-0 h-full w-full",
@@ -29,7 +39,14 @@ export function ImageWithSkeleton({
         alt={alt}
         loading="lazy"
         decoding="async"
-        className={["relative z-10", className].filter(Boolean).join(" ")}
+        className={[
+          fill
+            ? "absolute inset-0 z-10 h-full w-full object-cover"
+            : "relative z-10",
+          className,
+        ]
+          .filter(Boolean)
+          .join(" ")}
       />
     </div>
   );

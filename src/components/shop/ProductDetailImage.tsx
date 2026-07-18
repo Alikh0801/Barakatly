@@ -11,15 +11,19 @@ export function ProductDetailImage({
   alt: string;
 }) {
   if (!src) {
-    return <ProductImagePlaceholder className="h-full min-h-[320px] w-full" />;
+    return (
+      <ProductImagePlaceholder className="aspect-square w-full sm:aspect-[4/5]" />
+    );
   }
 
   return (
-    <ImageWithSkeleton
-      src={src}
-      alt={alt}
-      className="h-full max-h-[520px] w-full object-cover"
-      skeletonClassName="rounded-none"
-    />
+    <div className="aspect-square w-full sm:aspect-[4/5]">
+      <ImageWithSkeleton
+        src={src}
+        alt={alt}
+        fill
+        skeletonClassName="rounded-none"
+      />
+    </div>
   );
 }
