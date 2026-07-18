@@ -8,6 +8,7 @@ import {
   rejectFarmer,
   rejectProduct,
   toggleCourierActive,
+  updateProductFinalPrice,
   type AdminPortalActionState,
 } from "@/lib/admin/portal-actions";
 import {
@@ -15,7 +16,7 @@ import {
   getProductStatusLabel,
 } from "@/lib/orders/labels";
 import { Spinner } from "@/components/ui/Spinner";
-import { formatPrice } from "@/lib/shop/format";
+import { formatPrice, suggestFinalPrice } from "@/lib/shop/format";
 import type {
   AdminCourier,
   AdminFarmer,
@@ -137,6 +138,7 @@ function ProductCard({ product }: { product: AdminProduct }) {
     rejectProduct,
     initialState
   );
+  const suggested = suggestFinalPrice(product.farmer_price);
 
   return (
     <article className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-zinc-200">
@@ -159,7 +161,10 @@ function ProductCard({ product }: { product: AdminProduct }) {
             {product.categories?.name_az ?? "Kateqoriya"}
           </p>
           <p className="mt-2 text-sm text-zinc-700">
-            Fermer qiyməti: {formatPrice(product.farmer_price)}
+            Fermer təklifi: {formatPrice(product.farmer_price)}
+          </p>
+          <p className="mt-1 text-xs text-zinc-500">
+            60-20-20 tövsiyə: ~{formatPrice(suggested)} (fermer ~60%)
           </p>
         </div>
         <span className="inline-flex rounded-full bg-amber-50 px-2.5 py-0.5 text-xs font-medium text-amber-800 ring-1 ring-amber-200">
@@ -187,7 +192,7 @@ function ProductCard({ product }: { product: AdminProduct }) {
               step="0.01"
               min="0.01"
               required
-              defaultValue={product.farmer_price}
+              defaultValue={suggested || product.farmer_price}
               className="mt-1 w-full rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-base text-zinc-900 sm:text-sm"
             />
           </div>
@@ -213,6 +218,99 @@ function ProductCard({ product }: { product: AdminProduct }) {
         </form>
       </div>
     </article>
+  );
+}
+
+function ApprovedPriceCard({ product }: { product: AdminProduct }) {
+  const [state, action, pending] = useActionState(
+    updateProductFinalPrice,
+    initialState
+  );
+
+  return (
+    <article className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-zinc-200">
+      {state.error ? (
+        <p className="mb-3 rounded-xl bg-rose-50 px-3 py-2 text-sm text-rose-700">
+          {state.error}
+        </p>
+      ) : null}
+      {state.success ? (
+        <p className="mb-3 rounded-xl bg-emerald-50 px-3 py-2 text-sm text-emerald-800">
+          {state.success}
+        </p>
+      ) : null}
+
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <div className="font-semibold text-zinc-900">{product.title}</div>
+          <p className="mt-1 text-sm text-zinc-600">
+            {product.farmers?.farm_name ?? "Fermer"} ·{" "}
+            {product.categories?.name_az ?? "Kateqoriya"}
+          </p>
+          <p className="mt-2 text-sm text-zinc-700">
+            Təklif: {formatPrice(product.farmer_price)} · Son:{" "}
+            {product.final_price != null
+              ? formatPrice(product.final_price)
+              : "—"}
+          </p>
+        </div>
+      </div>
+
+      <form
+        action={action}
+        className="mt-4 flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-end"
+      >
+        <input type="hidden" name="product_id" value={product.id} />
+        <div className="w-full sm:w-36">
+          <label
+            htmlFor={`approved-price-${product.id}`}
+            className="block text-xs font-medium text-zinc-600"
+          >
+            Yeni son qiymət (₼)
+          </label>
+          <input
+            id={`approved-price-${product.id}`}
+            name="final_price"
+            type="number"
+            step="0.01"
+            min="0.01"
+            required
+            defaultValue={product.final_price ?? product.farmer_price}
+            className="mt-1 w-full rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-base text-zinc-900 sm:text-sm"
+          />
+        </div>
+        <button
+          type="submit"
+          disabled={pending}
+          className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-70 sm:w-auto"
+        >
+          {pending ? <Spinner className="h-3.5 w-3.5" /> : null}
+          Qiyməti yenilə
+        </button>
+      </form>
+    </article>
+  );
+}
+
+export function AdminApprovedProductsPanel({
+  products,
+}: {
+  products: AdminProduct[];
+}) {
+  if (products.length === 0) {
+    return (
+      <div className="rounded-3xl bg-white p-8 text-center ring-1 ring-zinc-200">
+        <p className="font-medium text-zinc-900">Təsdiqlənmiş məhsul yoxdur</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-3">
+      {products.map((product) => (
+        <ApprovedPriceCard key={product.id} product={product} />
+      ))}
+    </div>
   );
 }
 

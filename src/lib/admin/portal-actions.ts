@@ -141,6 +141,55 @@ export async function approveProduct(
   return { success: "Məhsul təsdiqləndi." };
 }
 
+export async function updateProductFinalPrice(
+  _prev: AdminPortalActionState,
+  formData: FormData
+): Promise<AdminPortalActionState> {
+  await requireAdmin();
+  const productId = String(formData.get("product_id") ?? "");
+  const finalPrice = Number(formData.get("final_price") ?? 0);
+
+  if (!productId) return { error: "Məhsul tapılmadı." };
+  if (!(finalPrice > 0)) return { error: "Final qiymət daxil edin." };
+
+  const supabase = await createClient();
+  const { data: product } = await supabase
+    .from("products")
+    .select("id, title, status, farmers(profile_id)")
+    .eq("id", productId)
+    .eq("status", "approved")
+    .maybeSingle();
+
+  if (!product) return { error: "Təsdiqlənmiş məhsul tapılmadı." };
+
+  const { error } = await supabase
+    .from("products")
+    .update({ final_price: finalPrice })
+    .eq("id", productId)
+    .eq("status", "approved");
+
+  if (error) return { error: "Qiymət yenilənmədi." };
+
+  const farmer = Array.isArray(product.farmers)
+    ? product.farmers[0]
+    : product.farmers;
+
+  if (farmer?.profile_id) {
+    await notifyUser({
+      userId: farmer.profile_id,
+      type: "product_approval",
+      title: "Son qiymət yeniləndi",
+      body: `"${product.title}" üçün yeni son qiymət: ${finalPrice.toFixed(2)} ₼`,
+      metadata: { product_id: product.id },
+    });
+  }
+
+  revalidatePath("/admin/products");
+  revalidatePath("/farmer/products");
+  revalidateProductCatalog(productId);
+  return { success: "Son qiymət yeniləndi." };
+}
+
 export async function rejectProduct(
   _prev: AdminPortalActionState,
   formData: FormData

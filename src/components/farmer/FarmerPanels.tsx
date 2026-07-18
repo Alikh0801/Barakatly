@@ -436,9 +436,19 @@ export function FarmerProductsList({ products }: { products: FarmerProduct[] }) 
             <div>
               <div className="font-semibold text-zinc-900">{product.title}</div>
               <p className="mt-1 text-sm text-zinc-500">
-                {product.categories?.name_az ?? "Kateqoriya"} ·{" "}
-                {formatPrice(product.farmer_price)}
+                {product.categories?.name_az ?? "Kateqoriya"}
+              </p>
+              <p className="mt-2 text-sm text-zinc-700">
+                Təklif: {formatPrice(product.farmer_price)}
                 {formatUnit(product.unit_type as UnitType)}
+                {product.final_price != null ? (
+                  <span className="ml-2 text-emerald-800">
+                    · Son qiymət: {formatPrice(product.final_price)}
+                    {formatUnit(product.unit_type as UnitType)}
+                  </span>
+                ) : (
+                  <span className="ml-2 text-amber-700">· Son qiymət gözlənilir</span>
+                )}
               </p>
             </div>
             <span className="inline-flex rounded-full bg-zinc-100 px-2.5 py-0.5 text-xs font-medium text-zinc-700 ring-1 ring-zinc-200">
@@ -476,13 +486,12 @@ function FarmerOrderItemCard({ item }: { item: FarmerOrderItem }) {
         <div>
           <div className="font-semibold text-zinc-900">{item.product_title}</div>
           <p className="mt-1 text-sm text-zinc-500">
-            {order?.order_code ?? "Sifariş"} · {item.quantity}{" "}
+            {order?.order_code ?? "Sifariş"} · Say: {item.quantity}{" "}
             {formatUnit(item.unit_type)}
           </p>
-          {order ? (
+          {order?.customer?.full_name ? (
             <p className="mt-2 text-sm text-zinc-600">
-              {order.contact_phone}
-              {order.delivery_address_text ? ` · ${order.delivery_address_text}` : ""}
+              Müştəri: {order.customer.full_name}
             </p>
           ) : null}
           <p className="mt-1 text-xs text-zinc-500">

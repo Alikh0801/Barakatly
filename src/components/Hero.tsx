@@ -95,7 +95,25 @@ export function Hero() {
             qidalanaraq icmanızı dəstəkləyin.
           </p>
 
-          <div className="mt-6 flex flex-wrap items-center justify-center gap-3 md:justify-start">
+          <form
+            action="/search"
+            className="mt-6 flex w-full max-w-xl flex-col gap-2 sm:flex-row"
+          >
+            <input
+              type="search"
+              name="q"
+              placeholder="Məhsul və ya ferma axtar..."
+              className="min-w-0 flex-1 rounded-xl border-0 bg-white px-4 py-3 text-sm text-zinc-900 outline-none ring-1 ring-white/30"
+            />
+            <button
+              type="submit"
+              className="shrink-0 rounded-xl bg-emerald-500 px-5 py-3 text-sm font-semibold text-white transition hover:bg-emerald-400"
+            >
+              Axtar
+            </button>
+          </form>
+
+          <div className="mt-4 flex flex-wrap items-center justify-center gap-3 md:justify-start">
             <Link
               href="/shop"
               className="inline-flex h-11 items-center justify-center rounded-xl bg-emerald-500 px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-400"

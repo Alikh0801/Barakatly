@@ -11,7 +11,6 @@ import {
   getOrderStatusLabel,
 } from "@/lib/orders/labels";
 import { Spinner } from "@/components/ui/Spinner";
-import { formatPrice } from "@/lib/shop/format";
 import type { CourierOrder } from "@/lib/courier/queries";
 import type { OrderStatus } from "@/types";
 
@@ -31,6 +30,22 @@ function CourierOrderCard({ order }: { order: CourierOrder }) {
   );
   const nextStatuses = COURIER_ORDER_STATUS_TRANSITIONS[order.status] ?? [];
 
+  const farmers = new Map<string, { name: string; location: string | null; items: string[] }>();
+  for (const item of order.order_items) {
+    const farmerId = item.farmer_id;
+    const existing = farmers.get(farmerId);
+    const line = `${item.product_title} × ${item.quantity} (${getOrderItemStatusLabel(item.status)})`;
+    if (existing) {
+      existing.items.push(line);
+    } else {
+      farmers.set(farmerId, {
+        name: item.farmers?.farm_name ?? "Fermer",
+        location: item.farmers?.location_text ?? null,
+        items: [line],
+      });
+    }
+  }
+
   return (
     <article className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-zinc-200">
       {state.error ? (
@@ -48,29 +63,36 @@ function CourierOrderCard({ order }: { order: CourierOrder }) {
         <div>
           <div className="font-semibold text-zinc-900">{order.order_code}</div>
           <p className="mt-1 text-sm text-zinc-500">{formatDate(order.created_at)}</p>
-          <p className="mt-2 text-sm text-zinc-700">{order.contact_phone}</p>
+          <p className="mt-2 text-sm text-zinc-700">
+            Müştəri telefonu: {order.contact_phone}
+          </p>
           <p className="mt-1 text-sm text-zinc-600">
-            {order.delivery_address_text ?? "Ünvan qeyd olunmayıb"}
+            Çatdırılma: {order.delivery_address_text ?? "Ünvan qeyd olunmayıb"}
           </p>
         </div>
-        <div className="text-right">
-          <div className="font-semibold text-zinc-900">
-            {formatPrice(order.total_amount)}
-          </div>
-          <div className="mt-2 text-xs font-medium text-zinc-700">
-            {getOrderStatusLabel(order.status)}
-          </div>
+        <div className="text-xs font-medium text-zinc-700">
+          {getOrderStatusLabel(order.status)}
         </div>
       </div>
 
-      <ul className="mt-4 space-y-1 text-sm text-zinc-600">
-        {order.order_items.map((item) => (
-          <li key={item.id}>
-            {item.product_title} × {item.quantity} —{" "}
-            {getOrderItemStatusLabel(item.status)}
-          </li>
+      <div className="mt-4 space-y-3">
+        {[...farmers.values()].map((farmer) => (
+          <div
+            key={`${farmer.name}-${farmer.location ?? ""}`}
+            className="rounded-xl bg-zinc-50 px-3 py-3 ring-1 ring-zinc-100"
+          >
+            <div className="text-sm font-semibold text-zinc-900">{farmer.name}</div>
+            {farmer.location ? (
+              <p className="mt-0.5 text-xs text-zinc-500">{farmer.location}</p>
+            ) : null}
+            <ul className="mt-2 space-y-1 text-sm text-zinc-600">
+              {farmer.items.map((line) => (
+                <li key={line}>{line}</li>
+              ))}
+            </ul>
+          </div>
         ))}
-      </ul>
+      </div>
 
       {nextStatuses.length > 0 ? (
         <form action={action} className="mt-4 flex flex-wrap items-end gap-2">

@@ -6,7 +6,9 @@ import {
   RECEIPT_MAX_BYTES,
   RECEIPT_MIME_TYPES,
 } from "@/lib/checkout/constants";
+import { notifyAdmins } from "@/lib/notifications/helpers";
 import { getDisplayPrice } from "@/lib/shop/format";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import type { UnitType } from "@/types";
 
@@ -240,11 +242,42 @@ export async function placeOrder(
     };
   }
 
+  // Decrement stock via service role (customers cannot update products via RLS).
+  try {
+    const admin = createAdminClient();
+    for (const line of validatedLines) {
+      const product = productMap.get(line.productId);
+      if (!product) continue;
+      const nextQty = Math.max(0, product.quantity_available - line.quantity);
+      const { error: stockError } = await admin
+        .from("products")
+        .update({
+          quantity_available: nextQty,
+          in_stock: nextQty > 0,
+        })
+        .eq("id", line.productId)
+        .gte("quantity_available", line.quantity);
+
+      if (stockError) {
+        console.error("[checkout.placeOrder] stock", stockError.message);
+      }
+    }
+  } catch (error) {
+    console.error("[checkout.placeOrder] stock admin", error);
+  }
+
   await supabase.from("order_status_events").insert({
     order_id: order.id,
     status: "awaiting_confirmation",
     changed_by: user.id,
     note: "Sifariş yaradıldı",
+  });
+
+  await notifyAdmins({
+    type: "payment_received",
+    title: "Yeni ödəniş + çek",
+    body: `${orderCode} sifarişi üçün ödəniş çeki yoxlama gözləyir.`,
+    metadata: { order_id: order.id },
   });
 
   return { orderId: order.id };

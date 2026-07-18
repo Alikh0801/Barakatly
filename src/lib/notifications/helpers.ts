@@ -1,5 +1,38 @@
+import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import type { NotificationType } from "@/types";
+
+export async function notifyAdmins(params: {
+  type: NotificationType;
+  title: string;
+  body: string;
+  metadata?: Record<string, string>;
+}) {
+  try {
+    const admin = createAdminClient();
+    const { data: admins, error } = await admin
+      .from("profiles")
+      .select("id")
+      .eq("role", "admin");
+
+    if (error || !admins?.length) {
+      console.error("[notifications.notifyAdmins]", error?.message);
+      return;
+    }
+
+    await admin.from("notifications").insert(
+      admins.map((adminUser) => ({
+        user_id: adminUser.id,
+        title: params.title,
+        body: params.body,
+        type: params.type,
+        metadata: params.metadata ?? {},
+      })),
+    );
+  } catch (error) {
+    console.error("[notifications.notifyAdmins]", error);
+  }
+}
 
 export async function insertEventAndNotify(params: {
   orderId: string;

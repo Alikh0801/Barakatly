@@ -7,6 +7,12 @@ export function getDisplayPrice(
   return finalPrice ?? farmerPrice;
 }
 
+/** Suggest customer price so farmer share stays near 60% (60-20-20 guideline). */
+export function suggestFinalPrice(farmerPrice: number): number {
+  if (!(farmerPrice > 0)) return 0;
+  return Math.round((farmerPrice / 0.6) * 100) / 100;
+}
+
 export function formatPrice(amount: number): string {
   return `${amount.toFixed(2)} ₼`;
 }

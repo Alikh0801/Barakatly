@@ -134,6 +134,29 @@ export async function getAdminPendingProducts(): Promise<AdminProduct[]> {
   return (data ?? []) as unknown as AdminProduct[];
 }
 
+export async function getAdminApprovedProducts(): Promise<AdminProduct[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("products")
+    .select(
+      `
+      *,
+      farmers (farm_name),
+      categories:category_id (name_az)
+    `
+    )
+    .eq("status", "approved")
+    .order("updated_at", { ascending: false })
+    .limit(40);
+
+  if (error) {
+    console.error("[admin.getAdminApprovedProducts]", error.message);
+    return [];
+  }
+
+  return (data ?? []) as unknown as AdminProduct[];
+}
+
 export type AdminCourier = Courier & {
   profiles: { full_name: string | null; email: string | null } | null;
 };

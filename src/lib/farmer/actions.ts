@@ -11,7 +11,10 @@ import {
   FARMER_ITEM_STATUS_TRANSITIONS,
   getOrderItemStatusLabel,
 } from "@/lib/orders/labels";
-import { insertEventAndNotify } from "@/lib/notifications/helpers";
+import {
+  insertEventAndNotify,
+  notifyAdmins,
+} from "@/lib/notifications/helpers";
 import { revalidateProductCatalog } from "@/lib/shop/revalidate";
 import { createClient } from "@/lib/supabase/server";
 import type { OrderItemStatus, UnitType } from "@/types";
@@ -105,6 +108,13 @@ export async function signUpFarmer(
     };
   }
 
+  await notifyAdmins({
+    type: "farmer_registration",
+    title: "Yeni fermer qeydiyyatı",
+    body: `${farmName} təsdiq gözləyir.`,
+    metadata: { farmer_profile_id: userId },
+  });
+
   redirect("/farmer");
 }
 
@@ -136,6 +146,15 @@ export async function completeFarmerProfile(
 
   if (!farmer) {
     return { error: "Fermer profili yaradıla bilmədi. Yenidən cəhd edin." };
+  }
+
+  if (farmer.status === "pending") {
+    await notifyAdmins({
+      type: "farmer_registration",
+      title: "Yeni fermer qeydiyyatı",
+      body: `${farmName} təsdiq gözləyir.`,
+      metadata: { farmer_id: farmer.id },
+    });
   }
 
   revalidatePath("/farmer");
@@ -218,8 +237,16 @@ export async function createProduct(
     return { error: "Şəkil saxlanılmadı. Yenidən cəhd edin." };
   }
 
+  await notifyAdmins({
+    type: "product_submission",
+    title: "Yeni məhsul göndərildi",
+    body: `"${title}" təsdiq gözləyir.`,
+    metadata: { product_id: product.id },
+  });
+
   revalidatePath("/farmer/products");
   revalidatePath("/farmer");
+  revalidatePath("/admin/products");
   revalidateProductCatalog(product.id);
   redirect("/farmer/products");
 }
@@ -290,8 +317,16 @@ export async function updateProduct(
     }
   }
 
+  await notifyAdmins({
+    type: "product_submission",
+    title: "Məhsul yenidən göndərildi",
+    body: `"${title}" yenidən təsdiq gözləyir.`,
+    metadata: { product_id: productId },
+  });
+
   revalidatePath("/farmer/products");
   revalidatePath(`/farmer/products/${productId}`);
+  revalidatePath("/admin/products");
   revalidateProductCatalog(productId);
   return { success: "Məhsul yeniləndi və yenidən təsdiqə göndərildi." };
 }

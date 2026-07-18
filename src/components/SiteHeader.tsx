@@ -86,7 +86,7 @@ export function SiteHeader({
         <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
           <MobileNav variant={isHero ? "adaptive" : "solid"} />
           <NavLink
-            href="/shop"
+            href="/search"
             aria-label="Axtarış"
             className="hidden sm:inline-flex"
           >

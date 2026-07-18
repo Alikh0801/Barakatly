@@ -55,10 +55,9 @@ export async function getFarmerProductById(
 }
 
 export type FarmerOrderItem = OrderItem & {
-  orders: Pick<
-    Order,
-    "id" | "order_code" | "status" | "contact_phone" | "delivery_address_text" | "created_at"
-  > | null;
+  orders: (Pick<Order, "id" | "order_code" | "status" | "created_at"> & {
+    customer: { full_name: string | null } | null;
+  }) | null;
 };
 
 export async function getFarmerOrderItems(
@@ -74,9 +73,8 @@ export async function getFarmerOrderItems(
         id,
         order_code,
         status,
-        contact_phone,
-        delivery_address_text,
-        created_at
+        created_at,
+        customer:profiles!orders_customer_id_fkey (full_name)
       )
     `
     )
