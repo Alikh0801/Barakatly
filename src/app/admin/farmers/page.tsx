@@ -10,7 +10,7 @@ export default async function AdminFarmersPage() {
   return (
     <AdminPageShell
       title="Fermerlər"
-      description="Müraciətləri təsdiqləyin və ya rədd edin"
+      description="Gözləyən müraciətlərdə fermerin daxil etdiyi bütün məlumatları yoxlayıb təsdiqləyin və ya rədd edin"
     >
       <AdminFarmersPanel farmers={farmers} />
     </AdminPageShell>

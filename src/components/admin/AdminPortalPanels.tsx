@@ -25,6 +25,28 @@ import type {
 
 const initialState: AdminPortalActionState = {};
 
+function formatDate(value: string) {
+  return new Intl.DateTimeFormat("az-AZ", {
+    dateStyle: "medium",
+    timeStyle: "short",
+  }).format(new Date(value));
+}
+
+function FarmerDetailRow({
+  label,
+  value,
+}: {
+  label: string;
+  value: React.ReactNode;
+}) {
+  return (
+    <div className="grid gap-1 sm:grid-cols-[140px_1fr] sm:gap-3">
+      <dt className="text-sm font-medium text-zinc-500">{label}</dt>
+      <dd className="break-words text-sm text-zinc-900">{value || "—"}</dd>
+    </div>
+  );
+}
+
 export function AdminFarmersPanel({ farmers }: { farmers: AdminFarmer[] }) {
   if (farmers.length === 0) {
     return (
@@ -34,16 +56,53 @@ export function AdminFarmersPanel({ farmers }: { farmers: AdminFarmer[] }) {
     );
   }
 
+  const pending = farmers.filter((farmer) => farmer.status === "pending");
+  const others = farmers.filter((farmer) => farmer.status !== "pending");
+
   return (
-    <div className="space-y-3">
-      {farmers.map((farmer) => (
-        <FarmerCard key={farmer.id} farmer={farmer} />
-      ))}
+    <div className="space-y-8">
+      <section className="space-y-3">
+        <h2 className="text-lg font-semibold text-zinc-900">
+          Gözləyən təsdiqlər
+          <span className="ml-2 text-sm font-normal text-zinc-500">
+            ({pending.length})
+          </span>
+        </h2>
+        {pending.length === 0 ? (
+          <div className="rounded-2xl bg-white p-6 text-sm text-zinc-500 ring-1 ring-zinc-200">
+            Gözləyən fermer müraciəti yoxdur.
+          </div>
+        ) : (
+          pending.map((farmer) => (
+            <FarmerCard key={farmer.id} farmer={farmer} detailed />
+          ))
+        )}
+      </section>
+
+      {others.length > 0 ? (
+        <section className="space-y-3">
+          <h2 className="text-lg font-semibold text-zinc-900">
+            Digər fermerlər
+            <span className="ml-2 text-sm font-normal text-zinc-500">
+              ({others.length})
+            </span>
+          </h2>
+          {others.map((farmer) => (
+            <FarmerCard key={farmer.id} farmer={farmer} detailed />
+          ))}
+        </section>
+      ) : null}
     </div>
   );
 }
 
-function FarmerCard({ farmer }: { farmer: AdminFarmer }) {
+function FarmerCard({
+  farmer,
+  detailed = false,
+}: {
+  farmer: AdminFarmer;
+  detailed?: boolean;
+}) {
   const [approveState, approveAction, approvePending] = useActionState(
     approveFarmer,
     initialState
@@ -52,6 +111,13 @@ function FarmerCard({ farmer }: { farmer: AdminFarmer }) {
     rejectFarmer,
     initialState
   );
+
+  const statusTone =
+    farmer.status === "pending"
+      ? "bg-amber-50 text-amber-800 ring-amber-200"
+      : farmer.status === "approved"
+        ? "bg-emerald-50 text-emerald-800 ring-emerald-200"
+        : "bg-zinc-100 text-zinc-700 ring-zinc-200";
 
   return (
     <article className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-zinc-200">
@@ -68,18 +134,67 @@ function FarmerCard({ farmer }: { farmer: AdminFarmer }) {
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
-          <div className="break-words font-semibold text-zinc-900">{farmer.farm_name}</div>
-          <p className="mt-1 break-all text-sm text-zinc-600">
-            {farmer.profiles?.full_name ?? "—"} · {farmer.profiles?.email}
+          <h3 className="break-words text-base font-semibold text-zinc-900">
+            {farmer.farm_name}
+          </h3>
+          <p className="mt-1 text-xs text-zinc-500">
+            Müraciət: {formatDate(farmer.created_at)}
           </p>
-          {farmer.location_text ? (
-            <p className="mt-1 text-sm text-zinc-600">{farmer.location_text}</p>
-          ) : null}
         </div>
-        <span className="inline-flex rounded-full bg-zinc-100 px-2.5 py-0.5 text-xs font-medium text-zinc-700 ring-1 ring-zinc-200">
+        <span
+          className={[
+            "inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ring-1",
+            statusTone,
+          ].join(" ")}
+        >
           {getFarmerStatusLabel(farmer.status)}
         </span>
       </div>
+
+      {detailed ? (
+        <dl className="mt-4 space-y-3 rounded-xl bg-zinc-50 px-4 py-4 ring-1 ring-zinc-100">
+          <FarmerDetailRow label="Təsərrüfat adı" value={farmer.farm_name} />
+          <FarmerDetailRow
+            label="Sahib (ad, soyad)"
+            value={farmer.profiles?.full_name}
+          />
+          <FarmerDetailRow
+            label="Email ünvanı"
+            value={farmer.profiles?.email}
+          />
+          <FarmerDetailRow label="Telefon" value={farmer.profiles?.phone} />
+          <FarmerDetailRow label="Yerləşmə" value={farmer.location_text} />
+          {farmer.location_map_url ? (
+            <FarmerDetailRow
+              label="Xəritə linki"
+              value={
+                <a
+                  href={farmer.location_map_url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="font-medium text-emerald-700 hover:underline"
+                >
+                  Xəritədə aç
+                </a>
+              }
+            />
+          ) : null}
+          <FarmerDetailRow
+            label="Ferma təsviri"
+            value={
+              farmer.description ? (
+                <span className="whitespace-pre-line">{farmer.description}</span>
+              ) : (
+                "—"
+              )
+            }
+          />
+          <FarmerDetailRow
+            label="Status"
+            value={getFarmerStatusLabel(farmer.status)}
+          />
+        </dl>
+      ) : null}
 
       {farmer.status === "pending" ? (
         <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
