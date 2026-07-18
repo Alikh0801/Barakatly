@@ -134,9 +134,11 @@ export function FarmerSignUpForm() {
 }
 
 export function CompleteFarmerProfileForm({
+  accountEmail = "",
   defaultFarmName = "",
   defaultPhone = "",
 }: {
+  accountEmail?: string;
   defaultFarmName?: string;
   defaultPhone?: string;
 }) {
@@ -151,6 +153,19 @@ export function CompleteFarmerProfileForm({
         Hesabınız aktivdir. Təsərrüfat məlumatlarını tamamlayın — sonra fermer
         paneli açılacaq.
       </p>
+      {accountEmail ? (
+        <div>
+          <label className="block text-sm font-medium text-zinc-700">
+            Email (hesabınız)
+          </label>
+          <div className="mt-1 w-full rounded-xl border border-zinc-200 bg-zinc-50 px-3 py-2.5 text-base text-zinc-700">
+            {accountEmail}
+          </div>
+          <p className="mt-1 text-xs text-zinc-500">
+            Bu email dəyişdirilmir — mövcud hesabınızla davam edirsiniz.
+          </p>
+        </div>
+      ) : null}
       <div>
         <label htmlFor="farm_name" className="block text-sm font-medium text-zinc-700">
           Təsərrüfat adı *

@@ -13,6 +13,7 @@ export const metadata = { title: "Fermer qeydiyyatı — BARAKATLY" };
 export default async function FarmerSignUpPage() {
   const profile = await getProfile();
 
+  // Logged-in user: continue with existing account email — no second signup.
   if (profile) {
     const farmer = await ensureFarmerRecord(profile.id);
     if (farmer) {
@@ -24,29 +25,26 @@ export default async function FarmerSignUpPage() {
       data: { user },
     } = await supabase.auth.getUser();
     const meta = user?.user_metadata ?? {};
-    const isFarmerIntent =
-      profile.role === "farmer" ||
-      profile.role === "admin" ||
-      meta.role === "farmer";
+    const accountEmail = user?.email ?? profile.email ?? "";
 
-    if (isFarmerIntent) {
-      return (
-        <div className="mx-auto w-full max-w-lg px-4 py-10 md:px-6">
-          <h1 className="text-3xl font-semibold text-zinc-900">
-            Təsərrüfatı tamamla
-          </h1>
-          <p className="mt-2 text-sm text-zinc-600">
-            Email təsdiqindən sonra yalnız təsərrüfat məlumatları qalıb.
-          </p>
-          <div className="mt-8 rounded-3xl bg-white p-6 shadow-sm ring-1 ring-zinc-200">
-            <CompleteFarmerProfileForm
-              defaultFarmName={String(meta.farm_name ?? profile.full_name ?? "")}
-              defaultPhone={String(meta.phone ?? profile.phone ?? "")}
-            />
-          </div>
+    return (
+      <div className="mx-auto w-full max-w-lg px-4 py-10 md:px-6">
+        <h1 className="text-3xl font-semibold text-zinc-900">
+          Fermer ol
+        </h1>
+        <p className="mt-2 text-sm text-zinc-600">
+          Mövcud hesabınızla davam edirsiniz. Yenidən email və ya şifrə
+          tələb olunmur — yalnız təsərrüfat məlumatlarını doldurun.
+        </p>
+        <div className="mt-8 rounded-3xl bg-white p-6 shadow-sm ring-1 ring-zinc-200">
+          <CompleteFarmerProfileForm
+            accountEmail={accountEmail}
+            defaultFarmName={String(meta.farm_name ?? profile.full_name ?? "")}
+            defaultPhone={String(meta.phone ?? profile.phone ?? "")}
+          />
         </div>
-      );
-    }
+      </div>
+    );
   }
 
   return (
@@ -61,11 +59,13 @@ export default async function FarmerSignUpPage() {
         <p className="mt-4 text-center text-sm text-zinc-600">
           Artıq hesabınız var?{" "}
           <Link
-            href="/signin?next=/farmer"
+            href="/signin?next=/farmer/signup"
             className="font-semibold text-emerald-700"
           >
             Daxil olun
           </Link>
+          {" "}
+          — sonra email olmadan fermer ola bilərsiniz.
         </p>
       </div>
     </div>
