@@ -3,6 +3,7 @@
 import { useActionState, useEffect, useState } from "react";
 import Link from "next/link";
 import { PasswordInput } from "@/components/auth/PasswordInput";
+import { AzPhoneInput } from "@/components/ui/AzPhoneInput";
 import { Spinner } from "@/components/ui/Spinner";
 import {
   completeFarmerProfile,
@@ -59,17 +60,7 @@ export function FarmerSignUpForm() {
           className="mt-1 w-full rounded-xl border border-zinc-200 px-3 py-2.5 text-base text-zinc-900 outline-none ring-emerald-500 focus:ring-2"
         />
       </div>
-      <div>
-        <label htmlFor="phone" className="block text-sm font-medium text-zinc-700">
-          Telefon
-        </label>
-        <input
-          id="phone"
-          name="phone"
-          type="tel"
-          className="mt-1 w-full rounded-xl border border-zinc-200 px-3 py-2.5 text-base text-zinc-900 outline-none ring-emerald-500 focus:ring-2"
-        />
-      </div>
+      <AzPhoneInput id="phone" name="phone" required />
       <div>
         <label htmlFor="farm_name" className="block text-sm font-medium text-zinc-700">
           Təsərrüfat adı *
@@ -178,18 +169,12 @@ export function CompleteFarmerProfileForm({
           className="mt-1 w-full rounded-xl border border-zinc-200 px-3 py-2.5 text-base text-zinc-900 outline-none ring-emerald-500 focus:ring-2"
         />
       </div>
-      <div>
-        <label htmlFor="phone" className="block text-sm font-medium text-zinc-700">
-          Telefon
-        </label>
-        <input
-          id="phone"
-          name="phone"
-          type="tel"
-          defaultValue={defaultPhone}
-          className="mt-1 w-full rounded-xl border border-zinc-200 px-3 py-2.5 text-base text-zinc-900 outline-none ring-emerald-500 focus:ring-2"
-        />
-      </div>
+      <AzPhoneInput
+        id="phone"
+        name="phone"
+        required
+        defaultValue={defaultPhone}
+      />
       <div>
         <label htmlFor="location_text" className="block text-sm font-medium text-zinc-700">
           Yerləşmə

@@ -15,6 +15,7 @@ import {
   insertEventAndNotify,
   notifyAdmins,
 } from "@/lib/notifications/helpers";
+import { isValidAzPhone, normalizeAzPhone } from "@/lib/phone/az";
 import { revalidateProductCatalog } from "@/lib/shop/revalidate";
 import { createClient } from "@/lib/supabase/server";
 import type { OrderItemStatus, UnitType } from "@/types";
@@ -38,10 +39,16 @@ export async function signUpFarmer(
   const farmName = String(formData.get("farm_name") ?? "").trim();
   const description = String(formData.get("description") ?? "").trim();
   const locationText = String(formData.get("location_text") ?? "").trim();
-  const phone = String(formData.get("phone") ?? "").trim();
+  const phone = normalizeAzPhone(String(formData.get("phone") ?? ""));
 
-  if (!fullName || !email || !password || !passwordConfirm || !farmName) {
+  if (!fullName || !email || !password || !passwordConfirm || !farmName || !phone) {
     return { error: "Mütləq sahələri doldurun." };
+  }
+
+  if (!isValidAzPhone(phone)) {
+    return {
+      error: "Telefon +994 ilə başlamalıdır (məs: +994501234567).",
+    };
   }
 
   if (password.length < 6) {
@@ -62,7 +69,7 @@ export async function signUpFarmer(
       data: {
         full_name: fullName,
         role: "farmer",
-        phone: phone || null,
+        phone,
         farm_name: farmName,
         farm_description: description || null,
         farm_location_text: locationText || null,
@@ -89,9 +96,7 @@ export async function signUpFarmer(
     };
   }
 
-  if (phone) {
-    await supabase.from("profiles").update({ phone }).eq("id", userId);
-  }
+  await supabase.from("profiles").update({ phone }).eq("id", userId);
 
   const { error: farmerError } = await supabase.from("farmers").insert({
     profile_id: userId,
@@ -131,10 +136,16 @@ export async function completeFarmerProfile(
   const farmName = String(formData.get("farm_name") ?? "").trim();
   const description = String(formData.get("description") ?? "").trim();
   const locationText = String(formData.get("location_text") ?? "").trim();
-  const phone = String(formData.get("phone") ?? "").trim();
+  const phone = normalizeAzPhone(String(formData.get("phone") ?? ""));
 
   if (!farmName) {
     return { error: "Təsərrüfat adı mütləqdir." };
+  }
+
+  if (!phone || !isValidAzPhone(phone)) {
+    return {
+      error: "Telefon +994 ilə başlamalıdır (məs: +994501234567).",
+    };
   }
 
   const farmer = await ensureFarmerRecord(profile.id, {
