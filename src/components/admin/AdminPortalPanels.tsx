@@ -16,7 +16,7 @@ import {
   getProductStatusLabel,
 } from "@/lib/orders/labels";
 import { Spinner } from "@/components/ui/Spinner";
-import { formatPrice, suggestFinalPrice } from "@/lib/shop/format";
+import { formatPrice } from "@/lib/shop/format";
 import type {
   AdminCourier,
   AdminFarmer,
@@ -253,8 +253,6 @@ function ProductCard({ product }: { product: AdminProduct }) {
     rejectProduct,
     initialState
   );
-  const suggested = suggestFinalPrice(product.farmer_price);
-
   return (
     <article className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-zinc-200">
       {(approveState.error || rejectState.error) && (
@@ -277,9 +275,6 @@ function ProductCard({ product }: { product: AdminProduct }) {
           </p>
           <p className="mt-2 text-sm text-zinc-700">
             Fermer təklifi: {formatPrice(product.farmer_price)}
-          </p>
-          <p className="mt-1 text-xs text-zinc-500">
-            60-20-20 tövsiyə: ~{formatPrice(suggested)} (fermer ~60%)
           </p>
         </div>
         <span className="inline-flex rounded-full bg-amber-50 px-2.5 py-0.5 text-xs font-medium text-amber-800 ring-1 ring-amber-200">
@@ -307,7 +302,7 @@ function ProductCard({ product }: { product: AdminProduct }) {
               step="0.01"
               min="0.01"
               required
-              defaultValue={suggested || product.farmer_price}
+              defaultValue={product.farmer_price}
               className="mt-1 w-full rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-base text-zinc-900 sm:text-sm"
             />
           </div>
