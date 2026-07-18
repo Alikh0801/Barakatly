@@ -27,6 +27,33 @@ const productSelect = `
   )
 `;
 
+const productDetailSelect = `
+  id,
+  title,
+  description,
+  unit_type,
+  final_price,
+  farmer_price,
+  quantity_available,
+  in_stock,
+  farmer:farmers (
+    id,
+    farm_name,
+    description,
+    location_text,
+    verified_at,
+    status
+  ),
+  category:categories (
+    slug,
+    name_az
+  ),
+  product_images (
+    url,
+    sort_order
+  )
+`;
+
 async function fetchCategories(): Promise<CategoryItem[]> {
   const supabase = createPublicClient();
   const { data, error } = await supabase
@@ -82,7 +109,7 @@ async function fetchProductById(id: string): Promise<ProductDetail | null> {
   const supabase = createPublicClient();
   const { data, error } = await supabase
     .from("products")
-    .select(productSelect)
+    .select(productDetailSelect)
     .eq("id", id)
     .eq("status", "approved")
     .maybeSingle();

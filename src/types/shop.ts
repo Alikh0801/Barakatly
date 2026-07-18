@@ -25,11 +25,13 @@ export type ProductListItem = {
   product_images: ProductImage[];
 };
 
-export type ProductDetail = ProductListItem & {
+export type ProductDetail = Omit<ProductListItem, "farmer"> & {
   farmer: {
     id: string;
     farm_name: string;
+    description: string | null;
     location_text: string | null;
+    verified_at: string | null;
     status: string;
   } | null;
 };

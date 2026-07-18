@@ -11,17 +11,22 @@ export function formatPrice(amount: number): string {
   return `${amount.toFixed(2)} ₼`;
 }
 
-export function formatUnit(unit: UnitType): string {
+export function unitLabel(unit: UnitType): string {
   switch (unit) {
     case "kg":
-      return "/kq";
+      return "kq";
     case "piece":
-      return "/ədəd";
+      return "ədəd";
     case "liter":
-      return "/litr";
+      return "litr";
     default:
       return "";
   }
+}
+
+export function formatUnit(unit: UnitType): string {
+  const label = unitLabel(unit);
+  return label ? `/${label}` : "";
 }
 
 export function getProductImageUrl(

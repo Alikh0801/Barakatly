@@ -1,13 +1,15 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { AddToCartButtonLarge } from "@/components/shop/AddToCartButton";
 import { ProductDetailImage } from "@/components/shop/ProductDetailImage";
+import { ProductPurchasePanel } from "@/components/shop/ProductPurchasePanel";
+import { VerifiedIcon } from "@/components/ui/VerifiedIcon";
 import { getProductById } from "@/lib/shop/queries";
 import {
   formatPrice,
   formatUnit,
   getDisplayPrice,
   getProductImageUrl,
+  unitLabel,
 } from "@/lib/shop/format";
 
 export const dynamic = "force-dynamic";
@@ -21,6 +23,7 @@ export async function generateMetadata({
   const product = await getProductById(id);
   return {
     title: product ? `${product.title} — BARAKATLY` : "Məhsul — BARAKATLY",
+    description: product?.description ?? "Fermerdən birbaşa təzə məhsul",
   };
 }
 
@@ -36,6 +39,7 @@ export default async function ProductDetailPage({
 
   const imageUrl = getProductImageUrl(product.product_images);
   const price = getDisplayPrice(product.final_price, product.farmer_price);
+  const farmer = product.farmer;
 
   return (
     <div className="mx-auto w-full max-w-6xl px-4 py-10 md:px-6 md:py-12">
@@ -47,8 +51,8 @@ export default async function ProductDetailPage({
         ← Mağazaya qayıt
       </Link>
 
-      <div className="mt-8 grid gap-10 lg:grid-cols-2">
-        <div className="overflow-hidden rounded-3xl bg-white shadow-sm ring-1 ring-zinc-200">
+      <div className="mt-8 grid gap-10 lg:grid-cols-2 lg:gap-12">
+        <div className="overflow-hidden rounded-3xl bg-zinc-100 ring-1 ring-zinc-200">
           <ProductDetailImage src={imageUrl} alt={product.title} />
         </div>
 
@@ -59,16 +63,12 @@ export default async function ProductDetailPage({
             </span>
           ) : null}
 
-          <h1 className="mt-4 text-3xl font-semibold tracking-tight text-zinc-900">
+          <h1 className="mt-4 text-3xl font-semibold tracking-tight text-zinc-900 md:text-4xl">
             {product.title}
           </h1>
 
-          <p className="mt-4 text-sm leading-7 text-zinc-600">
-            {product.description}
-          </p>
-
-          <div className="mt-6 flex items-baseline gap-2">
-            <span className="text-2xl font-semibold text-zinc-900">
+          <div className="mt-5 flex items-baseline gap-2">
+            <span className="text-3xl font-semibold text-zinc-900">
               {formatPrice(price)}
             </span>
             <span className="text-sm text-zinc-500">
@@ -76,32 +76,73 @@ export default async function ProductDetailPage({
             </span>
           </div>
 
-          <div className="mt-6 space-y-2 rounded-2xl bg-white p-4 text-sm ring-1 ring-zinc-200">
-            <div className="flex items-start justify-between gap-4">
-              <span className="shrink-0 text-zinc-500">Fermer</span>
-              <span className="min-w-0 text-right font-medium break-words text-zinc-900">
-                {product.farmer?.farm_name ?? "—"}
-              </span>
+          {product.description ? (
+            <div className="mt-6">
+              <h2 className="text-sm font-semibold text-zinc-900">Təsvir</h2>
+              <p className="mt-2 whitespace-pre-line text-sm leading-7 text-zinc-600 md:text-base">
+                {product.description}
+              </p>
             </div>
-            {product.farmer?.location_text ? (
-              <div className="flex items-start justify-between gap-4">
-                <span className="shrink-0 text-zinc-500">Yerləşmə</span>
-                <span className="min-w-0 text-right font-medium break-words text-zinc-900">
-                  {product.farmer.location_text}
-                </span>
-              </div>
-            ) : null}
-            <div className="flex items-start justify-between gap-4">
-              <span className="shrink-0 text-zinc-500">Mövcud miqdar</span>
-              <span className="font-medium text-zinc-900">
-                {product.quantity_available}
-              </span>
-            </div>
-          </div>
+          ) : (
+            <p className="mt-6 text-sm text-zinc-500">
+              Bu məhsul üçün təsvir hələ əlavə olunmayıb.
+            </p>
+          )}
 
-          <div className="mt-8">
-            <AddToCartButtonLarge product={product} />
-          </div>
+          <section className="mt-8 border-t border-zinc-200 pt-6">
+            <h2 className="text-sm font-semibold text-zinc-900">
+              Satıcı məlumatı
+            </h2>
+            {farmer ? (
+              <div className="mt-3 space-y-3">
+                <div className="flex flex-wrap items-center gap-2">
+                  <Link
+                    href={`/farmers/${farmer.id}`}
+                    prefetch
+                    className="text-base font-semibold text-emerald-800 hover:underline"
+                  >
+                    {farmer.farm_name}
+                  </Link>
+                  {farmer.verified_at ? (
+                    <span className="inline-flex items-center gap-1 text-xs font-medium text-emerald-700">
+                      <VerifiedIcon className="h-4 w-4" />
+                      Təsdiqlənib
+                    </span>
+                  ) : null}
+                </div>
+                {farmer.location_text ? (
+                  <p className="text-sm text-zinc-600">{farmer.location_text}</p>
+                ) : null}
+                {farmer.description ? (
+                  <p className="text-sm leading-6 text-zinc-600">
+                    {farmer.description}
+                  </p>
+                ) : null}
+                <dl className="grid gap-2 text-sm sm:grid-cols-2">
+                  <div>
+                    <dt className="text-zinc-500">Mövcud miqdar</dt>
+                    <dd className="mt-0.5 font-medium text-zinc-900">
+                      {product.quantity_available} {unitLabel(product.unit_type)}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className="text-zinc-500">Stok</dt>
+                    <dd className="mt-0.5 font-medium text-zinc-900">
+                      {product.in_stock && product.quantity_available > 0
+                        ? "Var"
+                        : "Yoxdur"}
+                    </dd>
+                  </div>
+                </dl>
+              </div>
+            ) : (
+              <p className="mt-3 text-sm text-zinc-500">
+                Satıcı məlumatı mövcud deyil.
+              </p>
+            )}
+          </section>
+
+          <ProductPurchasePanel product={product} />
         </div>
       </div>
     </div>
