@@ -6,8 +6,12 @@ import {
   markAllNotificationsRead,
   markNotificationRead,
 } from "@/lib/notifications/actions";
+import {
+  getNotificationActionLabel,
+  getNotificationHref,
+} from "@/lib/notifications/links";
 import { getNotificationTypeLabel } from "@/lib/orders/labels";
-import type { Notification } from "@/types";
+import type { Notification, UserRole } from "@/types";
 
 function formatDate(value: string) {
   return new Intl.DateTimeFormat("az-AZ", {
@@ -16,18 +20,12 @@ function formatDate(value: string) {
   }).format(new Date(value));
 }
 
-function getOrderId(metadata: Notification["metadata"]): string | null {
-  if (!metadata || typeof metadata !== "object" || Array.isArray(metadata)) {
-    return null;
-  }
-  const orderId = (metadata as { order_id?: unknown }).order_id;
-  return typeof orderId === "string" ? orderId : null;
-}
-
 export function NotificationsList({
   notifications,
+  viewerRole,
 }: {
   notifications: Notification[];
+  viewerRole: UserRole;
 }) {
   const router = useRouter();
 
@@ -59,7 +57,11 @@ export function NotificationsList({
 
       <div className="space-y-3">
         {notifications.map((notification) => {
-          const orderId = getOrderId(notification.metadata);
+          const href = getNotificationHref(notification, viewerRole);
+          const actionLabel = getNotificationActionLabel(
+            notification,
+            viewerRole,
+          );
           const unread = !notification.read_at;
 
           return (
@@ -86,13 +88,13 @@ export function NotificationsList({
                   </p>
                 </div>
                 <div className="flex items-center gap-3">
-                  {orderId ? (
+                  {href ? (
                     <Link
-                      href={`/orders/${orderId}`}
+                      href={href}
                       prefetch
                       className="text-sm font-medium text-emerald-700 hover:underline"
                     >
-                      Sifarişə bax
+                      {actionLabel}
                     </Link>
                   ) : null}
                   {unread ? (

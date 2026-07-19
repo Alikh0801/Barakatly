@@ -170,6 +170,14 @@ export function getNotificationTypeLabel(type: NotificationType): string {
       return "Çatdırılma";
     case "order_delivered":
       return "Çatdırıldı";
+    case "farmer_registration":
+      return "Fermer";
+    case "farmer_approval":
+      return "Fermer";
+    case "product_submission":
+      return "Məhsul";
+    case "product_approval":
+      return "Məhsul";
     default:
       return "Bildiriş";
   }

@@ -9,6 +9,19 @@ export const metadata = {
   title: "Bildirişlər — BARAKATLY",
 };
 
+function backLinkForRole(role: string) {
+  switch (role) {
+    case "admin":
+      return { href: "/admin/payments", label: "← Admin panelə qayıt" };
+    case "farmer":
+      return { href: "/farmer", label: "← Fermer panelə qayıt" };
+    case "courier":
+      return { href: "/courier", label: "← Kuryer panelə qayıt" };
+    default:
+      return { href: "/orders", label: "← Sifarişlərimə qayıt" };
+  }
+}
+
 export default async function NotificationsPage() {
   const profile = await getProfile();
   if (!profile) {
@@ -16,6 +29,7 @@ export default async function NotificationsPage() {
   }
 
   const notifications = await getNotifications();
+  const back = backLinkForRole(profile.role);
 
   return (
     <SolidPageShell>
@@ -27,15 +41,18 @@ export default async function NotificationsPage() {
           Sifariş və ödəniş yenilikləriniz
         </p>
         <div className="mt-8">
-          <NotificationsList notifications={notifications} />
+          <NotificationsList
+            notifications={notifications}
+            viewerRole={profile.role}
+          />
         </div>
         <div className="mt-8">
           <Link
-            href="/orders"
+            href={back.href}
             prefetch
             className="text-sm font-medium text-emerald-700 hover:underline"
           >
-            ← Sifarişlərimə qayıt
+            {back.label}
           </Link>
         </div>
       </div>
