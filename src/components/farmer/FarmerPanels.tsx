@@ -461,6 +461,25 @@ export function FarmerProductsList({ products }: { products: FarmerProduct[] }) 
   );
 }
 
+function farmerItemStatusTone(status: OrderItemStatus) {
+  switch (status) {
+    case "accepted":
+      return "bg-sky-50 text-sky-900 ring-sky-200";
+    case "preparing":
+      return "bg-amber-50 text-amber-900 ring-amber-200";
+    case "ready":
+      return "bg-emerald-50 text-emerald-900 ring-emerald-200";
+    case "awaiting_pickup":
+      return "bg-violet-50 text-violet-900 ring-violet-200";
+    case "picked_up":
+      return "bg-zinc-100 text-zinc-700 ring-zinc-200";
+    case "delivered":
+      return "bg-emerald-50 text-emerald-900 ring-emerald-200";
+    default:
+      return "bg-zinc-100 text-zinc-700 ring-zinc-200";
+  }
+}
+
 function FarmerOrderItemCard({ item }: { item: FarmerOrderItem }) {
   const [state, action, pending] = useActionState(
     updateOrderItemStatus,
@@ -483,7 +502,7 @@ function FarmerOrderItemCard({ item }: { item: FarmerOrderItem }) {
       ) : null}
 
       <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
+        <div className="min-w-0">
           <div className="font-semibold text-zinc-900">{item.product_title}</div>
           <p className="mt-1 text-sm text-zinc-500">
             {order?.order_code ?? "Sifariş"} · Say: {item.quantity}{" "}
@@ -498,7 +517,9 @@ function FarmerOrderItemCard({ item }: { item: FarmerOrderItem }) {
             {formatDate(item.created_at)}
           </p>
         </div>
-        <span className="inline-flex rounded-full bg-zinc-100 px-2.5 py-0.5 text-xs font-medium text-zinc-700 ring-1 ring-zinc-200">
+        <span
+          className={`inline-flex max-w-[16rem] rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ${farmerItemStatusTone(item.status)}`}
+        >
           {getOrderItemStatusLabel(item.status)}
         </span>
       </div>
@@ -506,25 +527,30 @@ function FarmerOrderItemCard({ item }: { item: FarmerOrderItem }) {
       {nextStatuses.length > 0 ? (
         <form action={action} className="mt-4 flex flex-wrap items-end gap-2">
           <input type="hidden" name="order_item_id" value={item.id} />
-          <select
-            name="next_status"
-            required
-            defaultValue=""
-            className="rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-900"
-          >
-            <option value="" disabled>
+          <div className="min-w-[220px] flex-1">
+            <label className="block text-xs font-medium text-zinc-600">
               Növbəti status
-            </option>
-            {nextStatuses.map((status) => (
-              <option key={status} value={status}>
-                {getOrderItemStatusLabel(status as OrderItemStatus)}
+            </label>
+            <select
+              name="next_status"
+              required
+              defaultValue=""
+              className="mt-1 w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-900"
+            >
+              <option value="" disabled>
+                Seçin
               </option>
-            ))}
-          </select>
+              {nextStatuses.map((status) => (
+                <option key={status} value={status}>
+                  {getOrderItemStatusLabel(status as OrderItemStatus)}
+                </option>
+              ))}
+            </select>
+          </div>
           <button
             type="submit"
             disabled={pending}
-            className="inline-flex items-center gap-2 rounded-full bg-emerald-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-70"
+            className="inline-flex items-center gap-2 rounded-full bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-70"
           >
             {pending ? <Spinner className="h-3.5 w-3.5" /> : null}
             Yenilə

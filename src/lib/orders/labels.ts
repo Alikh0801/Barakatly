@@ -35,7 +35,8 @@ export const FARMER_ITEM_STATUS_TRANSITIONS: Record<
   new: ["accepted"],
   accepted: ["preparing"],
   preparing: ["ready"],
-  ready: [],
+  ready: ["awaiting_pickup"],
+  awaiting_pickup: ["picked_up"],
   picked_up: [],
   delivered: [],
 };
@@ -86,13 +87,15 @@ export function getOrderItemStatusLabel(status: OrderItemStatus): string {
     case "new":
       return "Yeni";
     case "accepted":
-      return "Qəbul edildi";
+      return "Sifariş qəbul edildi";
     case "preparing":
       return "Hazırlanır";
     case "ready":
-      return "Hazırdır";
+      return "Hazırlandı";
+    case "awaiting_pickup":
+      return "Kuryer tərəfindən götürülməyi gözləyir";
     case "picked_up":
-      return "Götürüldü";
+      return "Kuryer tərəfindən götürüldü";
     case "delivered":
       return "Çatdırıldı";
     default:
@@ -120,6 +123,7 @@ export function getEventStatusLabel(status: string): string {
     "accepted",
     "preparing",
     "ready",
+    "awaiting_pickup",
     "picked_up",
     "delivered",
   ];

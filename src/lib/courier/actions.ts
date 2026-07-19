@@ -82,7 +82,14 @@ export async function advanceCourierOrder(
     .from("order_items")
     .update({ status: itemStatus })
     .eq("order_id", orderId)
-    .in("status", ["ready", "picked_up", "preparing", "accepted", "new"]);
+    .in("status", [
+      "awaiting_pickup",
+      "ready",
+      "picked_up",
+      "preparing",
+      "accepted",
+      "new",
+    ]);
 
   await insertEventAndNotify({
     orderId: order.id,

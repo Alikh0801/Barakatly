@@ -158,6 +158,9 @@ function farmerProgressHint(
   const progress = summarizeFarmerItemProgress(items);
   if (progress.total === 0) return null;
 
+  if (progress.allAwaitingPickup && orderStatus === "preparing") {
+    return "Bütün məhsullar kuryer gözləyir — sifarişi «Götürüldü» edə bilərsiniz.";
+  }
   if (progress.allReady && orderStatus === "preparing") {
     return "Bütün məhsullar hazırdır — sifarişi «Götürüldü» edə bilərsiniz.";
   }
@@ -175,7 +178,7 @@ function farmerProgressHint(
     orderStatus !== "delivered" &&
     orderStatus !== "cancelled"
   ) {
-    return `Fermer məhsulları: ${progress.readyCount}/${progress.total} hazırdır.`;
+    return `Fermer məhsulları: ${progress.readyCount}/${progress.total} hazır / gözləyir.`;
   }
   return null;
 }
@@ -391,9 +394,9 @@ export function AdminOrdersPanel({
                                   {item.quantity} {formatUnit(item.unit_type)}
                                 </p>
                               </div>
-                              <span className="inline-flex w-fit shrink-0 rounded-full bg-sky-50 px-2.5 py-0.5 text-xs font-medium text-sky-900 ring-1 ring-sky-200">
-                                {getOrderItemStatusLabel(item.status)}
-                              </span>
+                      <span className="inline-flex w-fit max-w-[16rem] shrink-0 rounded-full bg-sky-50 px-2.5 py-0.5 text-xs font-medium text-sky-900 ring-1 ring-sky-200">
+                        {getOrderItemStatusLabel(item.status)}
+                      </span>
                             </li>
                           ))}
                         </ul>

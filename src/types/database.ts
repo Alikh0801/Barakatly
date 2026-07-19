@@ -23,6 +23,7 @@ export type OrderItemStatus =
   | "accepted"
   | "preparing"
   | "ready"
+  | "awaiting_pickup"
   | "picked_up"
   | "delivered";
 export type PaymentStatus = "pending" | "confirmed" | "rejected";
