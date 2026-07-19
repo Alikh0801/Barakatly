@@ -144,7 +144,8 @@ export async function getAdminApprovedProducts(): Promise<AdminProduct[]> {
       `
       *,
       farmers (farm_name),
-      categories:category_id (name_az)
+      categories:category_id (name_az),
+      product_images (url, sort_order)
     `
     )
     .eq("status", "approved")

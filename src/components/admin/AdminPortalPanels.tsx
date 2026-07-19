@@ -358,9 +358,10 @@ function ApprovedPriceCard({ product }: { product: AdminProduct }) {
     updateProductFinalPrice,
     initialState
   );
+  const imageUrl = getProductImageUrl(product.product_images ?? []);
 
   return (
-    <article className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-zinc-200">
+    <article className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-zinc-200 sm:p-5">
       {state.error ? (
         <p className="mb-3 rounded-xl bg-rose-50 px-3 py-2 text-sm text-rose-700">
           {state.error}
@@ -372,10 +373,26 @@ function ApprovedPriceCard({ product }: { product: AdminProduct }) {
         </p>
       ) : null}
 
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <div className="font-semibold text-zinc-900">{product.title}</div>
-          <p className="mt-1 text-sm text-zinc-600">
+      <div className="flex items-start gap-3 sm:gap-4">
+        <div className="h-20 w-20 shrink-0 overflow-hidden rounded-2xl bg-zinc-100 ring-1 ring-zinc-200 sm:h-24 sm:w-24">
+          {imageUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={imageUrl}
+              alt={product.title}
+              className="h-full w-full object-cover"
+            />
+          ) : (
+            <div className="flex h-full w-full items-center justify-center text-xs text-zinc-400">
+              Şəkil yox
+            </div>
+          )}
+        </div>
+        <div className="min-w-0 flex-1">
+          <div className="break-words font-semibold text-zinc-900">
+            {product.title}
+          </div>
+          <p className="mt-1 break-words text-sm text-zinc-600">
             {product.farmers?.farm_name ?? "Fermer"} ·{" "}
             {product.categories?.name_az ?? "Kateqoriya"}
           </p>
