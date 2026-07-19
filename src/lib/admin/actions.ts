@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { requireAdmin } from "@/lib/admin/auth";
 import { ADMIN_STATUS_TRANSITIONS } from "@/lib/orders/labels";
 import { getOrderStatusLabel } from "@/lib/checkout/labels";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import type { NotificationType, OrderStatus } from "@/types";
 
@@ -310,4 +311,50 @@ export async function advanceOrderStatus(
   revalidatePath("/notifications");
 
   return { success: `${order.order_code} statusu yeniləndi.` };
+}
+
+export async function deleteOrders(
+  _prev: ActionResult,
+  formData: FormData
+): Promise<ActionResult> {
+  await requireAdmin();
+
+  const orderIds = formData
+    .getAll("order_ids")
+    .map((value) => String(value).trim())
+    .filter(Boolean);
+
+  const uniqueIds = [...new Set(orderIds)];
+  if (uniqueIds.length === 0) {
+    return { error: "Silmək üçün sifariş seçin." };
+  }
+
+  try {
+    const adminClient = createAdminClient();
+    const { error } = await adminClient
+      .from("orders")
+      .delete()
+      .in("id", uniqueIds);
+
+    if (error) {
+      console.error("[admin.deleteOrders]", error.message);
+      return { error: "Sifarişlər silinmədi." };
+    }
+  } catch (error) {
+    console.error("[admin.deleteOrders]", error);
+    return { error: "Sifarişlər silinmədi. Service role yoxlanılsın." };
+  }
+
+  revalidatePath("/admin", "layout");
+  revalidatePath("/admin/orders");
+  revalidatePath("/admin/payments");
+  revalidatePath("/orders");
+  revalidatePath("/notifications");
+
+  return {
+    success:
+      uniqueIds.length === 1
+        ? "Sifariş silindi."
+        : `${uniqueIds.length} sifariş silindi.`,
+  };
 }

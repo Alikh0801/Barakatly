@@ -6,6 +6,7 @@ import type {
   Farmer,
   Order,
   OrderItem,
+  OrderStatusEvent,
   Payment,
   Product,
 } from "@/types";
@@ -75,10 +76,35 @@ export type AdminOrderListItem = Order & {
     | null;
   customer: { full_name: string | null; email: string | null } | null;
   order_items: AdminOrderItem[] | null;
+  order_status_events: OrderStatusEvent[] | null;
 };
 
-export async function getAdminOrders(): Promise<AdminOrderListItem[]> {
+function matchesAdminOrderQuery(
+  order: AdminOrderListItem,
+  query: string
+): boolean {
+  const needle = query.trim().toLowerCase();
+  if (!needle) return true;
+
+  if (order.id.toLowerCase().includes(needle)) return true;
+  if (order.order_code.toLowerCase().includes(needle)) return true;
+
+  const customerName = order.customer?.full_name?.toLowerCase() ?? "";
+  const customerEmail = order.customer?.email?.toLowerCase() ?? "";
+  if (customerName.includes(needle) || customerEmail.includes(needle)) {
+    return true;
+  }
+
+  return (order.order_items ?? []).some((item) =>
+    item.product_title.toLowerCase().includes(needle)
+  );
+}
+
+export async function getAdminOrders(
+  query?: string
+): Promise<AdminOrderListItem[]> {
   const supabase = await createClient();
+  const trimmed = query?.trim() ?? "";
   const { data, error } = await supabase
     .from("orders")
     .select(
@@ -95,18 +121,40 @@ export async function getAdminOrders(): Promise<AdminOrderListItem[]> {
         farmer_id,
         line_total,
         farmers (farm_name)
+      ),
+      order_status_events (
+        id,
+        order_id,
+        order_item_id,
+        status,
+        changed_by,
+        note,
+        created_at
       )
     `
     )
     .order("created_at", { ascending: false })
-    .limit(40);
+    .limit(trimmed ? 200 : 80);
 
   if (error) {
     console.error("[admin.getAdminOrders]", error.message);
     return [];
   }
 
-  return (data ?? []) as unknown as AdminOrderListItem[];
+  const orders = (data ?? []) as unknown as AdminOrderListItem[];
+
+  const withSortedEvents = orders.map((order) => ({
+    ...order,
+    order_status_events: [...(order.order_status_events ?? [])].sort(
+      (a, b) =>
+        new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+    ),
+  }));
+
+  if (!trimmed) return withSortedEvents;
+  return withSortedEvents.filter((order) =>
+    matchesAdminOrderQuery(order, trimmed)
+  );
 }
 
 export type AdminFarmer = Farmer & {
