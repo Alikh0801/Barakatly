@@ -18,9 +18,7 @@ import {
 } from "@/lib/orders/labels";
 import { firstPayment } from "@/lib/orders/payment";
 import { matchesAdminOrderQuery } from "@/lib/orders/admin-order-filter";
-import { summarizeFarmerItemProgress } from "@/lib/orders/farmer-progress";
 import type {
-  AdminOrderItem,
   AdminOrderListItem,
   AdminPendingPayment,
 } from "@/lib/admin/queries";
@@ -149,44 +147,6 @@ export function PendingPaymentsPanel({
       ))}
     </div>
   );
-}
-
-function farmerProgressHint(
-  orderStatus: OrderStatus,
-  items: AdminOrderItem[]
-): string | null {
-  const progress = summarizeFarmerItemProgress(items);
-  if (progress.total === 0) return null;
-
-  if (progress.allAwaitingPickup && orderStatus === "preparing") {
-    return "Bütün məhsullar kuryer gözləyir — sifarişi «Kuryer tərəfindən götürülməyi gözləyir» edə bilərsiniz.";
-  }
-  if (progress.allReady && orderStatus === "preparing") {
-    return "Bütün məhsullar hazırdır — sifarişi «Kuryer tərəfindən götürülməyi gözləyir» edə bilərsiniz.";
-  }
-  if (
-    progress.allAwaitingPickup &&
-    orderStatus === "awaiting_courier"
-  ) {
-    return "Fermerlər hazırdır — sifarişi «Kuryer yola çıxdı» edə bilərsiniz.";
-  }
-  if (progress.allPreparingOrBeyond && orderStatus === "farmer_accepted") {
-    return "Fermerlər hazırlığa keçib — sifarişi «Hazırlanır» edə bilərsiniz.";
-  }
-  if (progress.allAccepted && orderStatus === "confirmed") {
-    return "Bütün fermerlər qəbul edib — sifarişi «Fermer qəbul etdi» edə bilərsiniz.";
-  }
-  if (!progress.allAccepted && orderStatus === "confirmed") {
-    return `Fermer irəliləyişi: ${progress.readyCount}/${progress.total} hazır · ən geridə: ${progress.lowestLabel ?? "—"}.`;
-  }
-  if (
-    progress.total > 0 &&
-    orderStatus !== "delivered" &&
-    orderStatus !== "cancelled"
-  ) {
-    return `Fermer məhsulları: ${progress.readyCount}/${progress.total} hazır / gözləyir.`;
-  }
-  return null;
 }
 
 export function AdminOrdersPanel({
@@ -329,7 +289,6 @@ export function AdminOrdersPanel({
               firstPayment(order.payments)?.status ?? "pending";
             const items = order.order_items ?? [];
             const events = order.order_status_events ?? [];
-            const hint = farmerProgressHint(order.status, items);
             const isChecked = selected.includes(order.id);
 
             return (
@@ -406,11 +365,6 @@ export function AdminOrdersPanel({
                             </li>
                           ))}
                         </ul>
-                        {hint ? (
-                          <p className="rounded-xl bg-emerald-50 px-3 py-2 text-xs text-emerald-900 ring-1 ring-emerald-200">
-                            {hint}
-                          </p>
-                        ) : null}
                       </div>
                     ) : null}
 
