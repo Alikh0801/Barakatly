@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect, useState } from "react";
+import { useActionState, useDeferredValue, useEffect, useState } from "react";
 import {
   advanceOrderStatus,
   confirmPayment,
@@ -17,6 +17,7 @@ import {
   getPaymentStatusLabel,
 } from "@/lib/orders/labels";
 import { firstPayment } from "@/lib/orders/payment";
+import { matchesAdminOrderQuery } from "@/lib/orders/admin-order-filter";
 import { summarizeFarmerItemProgress } from "@/lib/orders/farmer-progress";
 import type {
   AdminOrderItem,
@@ -181,10 +182,8 @@ function farmerProgressHint(
 
 export function AdminOrdersPanel({
   orders,
-  query = "",
 }: {
   orders: AdminOrderListItem[];
-  query?: string;
 }) {
   const [statusState, statusAction, statusPending] = useActionState(
     advanceOrderStatus,
@@ -195,6 +194,11 @@ export function AdminOrdersPanel({
     initialState
   );
   const [selected, setSelected] = useState<string[]>([]);
+  const [search, setSearch] = useState("");
+  const deferredSearch = useDeferredValue(search);
+  const filteredOrders = orders.filter((order) =>
+    matchesAdminOrderQuery(order, deferredSearch)
+  );
 
   useEffect(() => {
     if (deleteState.success) {
@@ -202,12 +206,23 @@ export function AdminOrdersPanel({
     }
   }, [deleteState.success]);
 
+  useEffect(() => {
+    const visibleIds = new Set(
+      orders
+        .filter((order) => matchesAdminOrderQuery(order, deferredSearch))
+        .map((order) => order.id)
+    );
+    setSelected((prev) => prev.filter((id) => visibleIds.has(id)));
+  }, [deferredSearch, orders]);
+
   const allSelected =
-    orders.length > 0 && selected.length === orders.length;
+    filteredOrders.length > 0 && selected.length === filteredOrders.length;
   const someSelected = selected.length > 0;
 
   function toggleAll() {
-    setSelected(allSelected ? [] : orders.map((order) => order.id));
+    setSelected(
+      allSelected ? [] : filteredOrders.map((order) => order.id)
+    );
   }
 
   function toggleOne(orderId: string) {
@@ -220,31 +235,21 @@ export function AdminOrdersPanel({
 
   return (
     <div className="space-y-4">
-      <form action="/admin/orders" className="flex flex-col gap-2 sm:flex-row">
+      <div className="relative">
         <input
           type="search"
-          name="q"
-          defaultValue={query}
+          value={search}
+          onChange={(event) => setSearch(event.target.value)}
           placeholder="Başlıq, sifariş kodu/ID və ya müştəri adı..."
-          className="min-w-0 flex-1 rounded-xl border border-zinc-200 bg-white px-4 py-2.5 text-sm text-zinc-900 outline-none ring-emerald-500/30 focus:ring-2"
+          className="w-full rounded-xl border border-zinc-200 bg-white px-4 py-2.5 text-sm text-zinc-900 outline-none ring-emerald-500/30 focus:ring-2"
+          autoComplete="off"
         />
-        <div className="flex gap-2">
-          <button
-            type="submit"
-            className="inline-flex flex-1 items-center justify-center rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-500 sm:flex-none"
-          >
-            Axtar
-          </button>
-          {query ? (
-            <a
-              href="/admin/orders"
-              className="inline-flex items-center justify-center rounded-xl bg-white px-4 py-2.5 text-sm font-semibold text-zinc-700 ring-1 ring-zinc-200 transition hover:bg-zinc-50"
-            >
-              Təmizlə
-            </a>
-          ) : null}
-        </div>
-      </form>
+        {search.trim() ? (
+          <p className="mt-2 text-xs text-zinc-500">
+            {filteredOrders.length} nəticə
+          </p>
+        ) : null}
+      </div>
 
       {statusState.error || deleteState.error ? (
         <p className="rounded-xl bg-rose-50 px-3 py-2 text-sm text-rose-700 ring-1 ring-rose-200">
@@ -257,10 +262,12 @@ export function AdminOrdersPanel({
         </p>
       ) : null}
 
-      {orders.length === 0 ? (
+      {filteredOrders.length === 0 ? (
         <div className="rounded-3xl bg-white p-8 text-center shadow-sm ring-1 ring-zinc-200">
           <p className="font-medium text-zinc-900">
-            {query ? "Axtarışa uyğun sifariş tapılmadı" : "Sifariş yoxdur"}
+            {search.trim()
+              ? "Axtarışa uyğun sifariş tapılmadı"
+              : "Sifariş yoxdur"}
           </p>
         </div>
       ) : (
@@ -307,7 +314,7 @@ export function AdminOrdersPanel({
             </form>
           </div>
 
-          {orders.map((order) => {
+          {filteredOrders.map((order) => {
             const nextStatuses = ADMIN_STATUS_TRANSITIONS[order.status] ?? [];
             const paymentStatus =
               firstPayment(order.payments)?.status ?? "pending";
