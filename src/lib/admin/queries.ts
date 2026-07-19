@@ -154,6 +154,7 @@ export async function getAdminFarmers(): Promise<AdminFarmer[]> {
 export type AdminProduct = Product & {
   farmers: Pick<Farmer, "farm_name"> | null;
   categories: { name_az: string } | null;
+  product_images: { url: string; sort_order: number }[] | null;
 };
 
 export async function getAdminPendingProducts(): Promise<AdminProduct[]> {
@@ -164,7 +165,8 @@ export async function getAdminPendingProducts(): Promise<AdminProduct[]> {
       `
       *,
       farmers (farm_name),
-      categories:category_id (name_az)
+      categories:category_id (name_az),
+      product_images (url, sort_order)
     `
     )
     .eq("status", "pending")
@@ -186,7 +188,8 @@ export async function getAdminApprovedProducts(): Promise<AdminProduct[]> {
       `
       *,
       farmers (farm_name),
-      categories:category_id (name_az)
+      categories:category_id (name_az),
+      product_images (url, sort_order)
     `
     )
     .eq("status", "approved")
