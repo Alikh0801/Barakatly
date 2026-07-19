@@ -115,6 +115,19 @@ export function getEventStatusLabel(status: string): string {
     return getOrderStatusLabel(status as OrderStatus);
   }
 
+  const itemStatuses: OrderItemStatus[] = [
+    "new",
+    "accepted",
+    "preparing",
+    "ready",
+    "picked_up",
+    "delivered",
+  ];
+
+  if (itemStatuses.includes(status as OrderItemStatus)) {
+    return getOrderItemStatusLabel(status as OrderItemStatus);
+  }
+
   if (status === "payment_confirmed") return "Ödəniş təsdiqləndi";
   if (status === "payment_rejected") return "Ödəniş rədd edildi";
 

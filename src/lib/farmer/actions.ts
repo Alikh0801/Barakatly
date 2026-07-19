@@ -381,18 +381,32 @@ export async function updateOrderItemStatus(
   }
 
   const order = Array.isArray(item.orders) ? item.orders[0] : item.orders;
+  const statusLabel = getOrderItemStatusLabel(nextStatus);
+
   if (order) {
     await insertEventAndNotify({
       orderId: order.id,
       customerId: order.customer_id,
       orderItemId: itemId,
       status: nextStatus,
-      note: `${item.product_title}: ${getOrderItemStatusLabel(nextStatus)}`,
+      note: `${item.product_title}: ${statusLabel}`,
       changedBy: profile.id,
       notification: {
         type: "general",
         title: "Sifariş yeniləndi",
-        body: `${order.order_code} — ${item.product_title} indi: ${getOrderItemStatusLabel(nextStatus)}.`,
+        body: `${order.order_code} — ${item.product_title} indi: ${statusLabel}.`,
+      },
+    });
+
+    await notifyAdmins({
+      type: "general",
+      title: "Fermer sifariş statusunu yenilədi",
+      body: `${order.order_code} — ${item.product_title}: ${statusLabel}. Sifariş statusunu yoxlayın.`,
+      metadata: {
+        order_id: order.id,
+        order_code: order.order_code,
+        order_item_id: itemId,
+        item_status: nextStatus,
       },
     });
   }
@@ -400,5 +414,7 @@ export async function updateOrderItemStatus(
   revalidatePath("/farmer/orders");
   revalidatePath("/orders");
   revalidatePath("/admin/orders");
+  revalidatePath("/admin");
+  revalidatePath("/notifications");
   return { success: "Status yeniləndi." };
 }

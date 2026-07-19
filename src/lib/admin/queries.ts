@@ -5,6 +5,7 @@ import type {
   Courier,
   Farmer,
   Order,
+  OrderItem,
   Payment,
   Product,
 } from "@/types";
@@ -53,6 +54,19 @@ export async function getPendingPayments(): Promise<AdminPendingPayment[]> {
   return (data ?? []) as unknown as AdminPendingPayment[];
 }
 
+export type AdminOrderItem = Pick<
+  OrderItem,
+  | "id"
+  | "product_title"
+  | "quantity"
+  | "unit_type"
+  | "status"
+  | "farmer_id"
+  | "line_total"
+> & {
+  farmers: { farm_name: string } | null;
+};
+
 export type AdminOrderListItem = Order & {
   /** Unique FK → may be object or array depending on PostgREST embed shape. */
   payments:
@@ -60,6 +74,7 @@ export type AdminOrderListItem = Order & {
     | Pick<Payment, "id" | "status">[]
     | null;
   customer: { full_name: string | null; email: string | null } | null;
+  order_items: AdminOrderItem[] | null;
 };
 
 export async function getAdminOrders(): Promise<AdminOrderListItem[]> {
@@ -70,7 +85,17 @@ export async function getAdminOrders(): Promise<AdminOrderListItem[]> {
       `
       *,
       payments (id, status),
-      customer:profiles!orders_customer_id_fkey (full_name, email)
+      customer:profiles!orders_customer_id_fkey (full_name, email),
+      order_items (
+        id,
+        product_title,
+        quantity,
+        unit_type,
+        status,
+        farmer_id,
+        line_total,
+        farmers (farm_name)
+      )
     `
     )
     .order("created_at", { ascending: false })

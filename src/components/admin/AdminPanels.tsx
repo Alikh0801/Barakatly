@@ -7,14 +7,20 @@ import {
   rejectPayment,
 } from "@/lib/admin/actions";
 import { Spinner } from "@/components/ui/Spinner";
-import { formatPrice } from "@/lib/shop/format";
+import { formatPrice, formatUnit } from "@/lib/shop/format";
 import {
   ADMIN_STATUS_TRANSITIONS,
+  getOrderItemStatusLabel,
   getOrderStatusLabel,
   getPaymentStatusLabel,
 } from "@/lib/orders/labels";
 import { firstPayment } from "@/lib/orders/payment";
-import type { AdminOrderListItem, AdminPendingPayment } from "@/lib/admin/queries";
+import { summarizeFarmerItemProgress } from "@/lib/orders/farmer-progress";
+import type {
+  AdminOrderItem,
+  AdminOrderListItem,
+  AdminPendingPayment,
+} from "@/lib/admin/queries";
 import type { OrderStatus } from "@/types";
 
 type ActionResult = { error?: string; success?: string };
@@ -142,6 +148,35 @@ export function PendingPaymentsPanel({
   );
 }
 
+function farmerProgressHint(
+  orderStatus: OrderStatus,
+  items: AdminOrderItem[]
+): string | null {
+  const progress = summarizeFarmerItemProgress(items);
+  if (progress.total === 0) return null;
+
+  if (progress.allReady && orderStatus === "preparing") {
+    return "Bütün məhsullar hazırdır — sifarişi «Götürüldü» edə bilərsiniz.";
+  }
+  if (progress.allPreparingOrBeyond && orderStatus === "farmer_accepted") {
+    return "Fermerlər hazırlığa keçib — sifarişi «Hazırlanır» edə bilərsiniz.";
+  }
+  if (progress.allAccepted && orderStatus === "confirmed") {
+    return "Bütün fermerlər qəbul edib — sifarişi «Fermer qəbul etdi» edə bilərsiniz.";
+  }
+  if (!progress.allAccepted && orderStatus === "confirmed") {
+    return `Fermer irəliləyişi: ${progress.readyCount}/${progress.total} hazır · ən geridə: ${progress.lowestLabel ?? "—"}.`;
+  }
+  if (
+    progress.total > 0 &&
+    orderStatus !== "delivered" &&
+    orderStatus !== "cancelled"
+  ) {
+    return `Fermer məhsulları: ${progress.readyCount}/${progress.total} hazırdır.`;
+  }
+  return null;
+}
+
 export function AdminOrdersPanel({ orders }: { orders: AdminOrderListItem[] }) {
   const [state, formAction, pending] = useActionState(
     advanceOrderStatus,
@@ -173,6 +208,8 @@ export function AdminOrdersPanel({ orders }: { orders: AdminOrderListItem[] }) {
         const nextStatuses = ADMIN_STATUS_TRANSITIONS[order.status] ?? [];
         const paymentStatus =
           firstPayment(order.payments)?.status ?? "pending";
+        const items = order.order_items ?? [];
+        const hint = farmerProgressHint(order.status, items);
 
         return (
           <article
@@ -206,6 +243,40 @@ export function AdminOrdersPanel({ orders }: { orders: AdminOrderListItem[] }) {
               </div>
             </div>
 
+            {items.length > 0 ? (
+              <div className="mt-4 space-y-2 border-t border-zinc-100 pt-4">
+                <p className="text-xs font-medium uppercase tracking-wide text-zinc-500">
+                  Fermer məhsul statusları
+                </p>
+                <ul className="space-y-2">
+                  {items.map((item) => (
+                    <li
+                      key={item.id}
+                      className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between"
+                    >
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-medium text-zinc-900">
+                          {item.product_title}
+                        </p>
+                        <p className="text-xs text-zinc-500">
+                          {item.farmers?.farm_name ?? "Fermer"} · {item.quantity}{" "}
+                          {formatUnit(item.unit_type)}
+                        </p>
+                      </div>
+                      <span className="inline-flex w-fit shrink-0 rounded-full bg-sky-50 px-2.5 py-0.5 text-xs font-medium text-sky-900 ring-1 ring-sky-200">
+                        {getOrderItemStatusLabel(item.status)}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+                {hint ? (
+                  <p className="rounded-xl bg-emerald-50 px-3 py-2 text-xs text-emerald-900 ring-1 ring-emerald-200">
+                    {hint}
+                  </p>
+                ) : null}
+              </div>
+            ) : null}
+
             {nextStatuses.length > 0 ? (
               <form
                 action={formAction}
@@ -217,7 +288,7 @@ export function AdminOrdersPanel({ orders }: { orders: AdminOrderListItem[] }) {
                     htmlFor={`next-${order.id}`}
                     className="block text-xs font-medium text-zinc-600"
                   >
-                    Növbəti status
+                    Sifariş statusu (müştəriyə görünür)
                   </label>
                   <select
                     id={`next-${order.id}`}

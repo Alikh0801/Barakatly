@@ -12,7 +12,7 @@ export default async function AdminOrdersPage() {
   return (
     <AdminPageShell
       title="Sifarişlər"
-      description="Status keçidlərini idarə edin və müştərilərə bildiriş göndərin"
+      description="Fermer məhsul statuslarını izləyin, sifariş statusunu yeniləyin — müştəri yalnız sifariş statusunu görür"
     >
       <AdminOrdersPanel orders={orders} />
     </AdminPageShell>
