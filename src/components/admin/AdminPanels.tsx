@@ -159,10 +159,16 @@ function farmerProgressHint(
   if (progress.total === 0) return null;
 
   if (progress.allAwaitingPickup && orderStatus === "preparing") {
-    return "Bütün məhsullar kuryer gözləyir — sifarişi «Götürüldü» edə bilərsiniz.";
+    return "Bütün məhsullar kuryer gözləyir — sifarişi «Kuryer tərəfindən götürülməyi gözləyir» edə bilərsiniz.";
   }
   if (progress.allReady && orderStatus === "preparing") {
-    return "Bütün məhsullar hazırdır — sifarişi «Götürüldü» edə bilərsiniz.";
+    return "Bütün məhsullar hazırdır — sifarişi «Kuryer tərəfindən götürülməyi gözləyir» edə bilərsiniz.";
+  }
+  if (
+    progress.allAwaitingPickup &&
+    orderStatus === "awaiting_courier"
+  ) {
+    return "Fermerlər hazırdır — sifarişi «Kuryer yola çıxdı» edə bilərsiniz.";
   }
   if (progress.allPreparingOrBeyond && orderStatus === "farmer_accepted") {
     return "Fermerlər hazırlığa keçib — sifarişi «Hazırlanır» edə bilərsiniz.";

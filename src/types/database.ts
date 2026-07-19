@@ -15,6 +15,7 @@ export type OrderStatus =
   | "confirmed"
   | "farmer_accepted"
   | "preparing"
+  | "awaiting_courier"
   | "picked_up"
   | "delivered"
   | "cancelled";

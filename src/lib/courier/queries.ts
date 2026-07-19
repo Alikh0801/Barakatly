@@ -38,7 +38,7 @@ export async function getCourierQueue(): Promise<CourierOrder[]> {
       )
     `,
     )
-    .in("status", ["preparing", "picked_up"])
+    .in("status", ["awaiting_courier", "picked_up"])
     .order("created_at", { ascending: true });
 
   if (error) {

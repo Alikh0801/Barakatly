@@ -23,7 +23,7 @@ function notificationForStatus(status: OrderStatus): {
   if (status === "picked_up") {
     return {
       type: "order_picked_up",
-      title: "Sifarişiniz yolda",
+      title: "Kuryer yola çıxdı",
       body: "Kuryer sifarişinizi götürdü və çatdırmağa yola düşdü.",
     };
   }

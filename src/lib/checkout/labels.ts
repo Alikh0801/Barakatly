@@ -10,8 +10,10 @@ export function getOrderStatusLabel(status: OrderStatus): string {
       return "Fermer qəbul etdi";
     case "preparing":
       return "Hazırlanır";
+    case "awaiting_courier":
+      return "Kuryer tərəfindən götürülməyi gözləyir";
     case "picked_up":
-      return "Götürüldü";
+      return "Kuryer yola çıxdı";
     case "delivered":
       return "Çatdırıldı";
     case "cancelled":

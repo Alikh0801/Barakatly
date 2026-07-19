@@ -34,10 +34,16 @@ function notificationForOrderStatus(status: OrderStatus): {
         title: "Sifarişiniz hazırlanır",
         body: "Məhsullarınız hazırlanır. Tezliklə kuryerə təhvil veriləcək.",
       };
+    case "awaiting_courier":
+      return {
+        type: "order_prepared",
+        title: "Sifarişiniz kuryer gözləyir",
+        body: "Məhsullar hazırdır. Kuryer tərəfindən götürülməyi gözləyir.",
+      };
     case "picked_up":
       return {
         type: "order_picked_up",
-        title: "Sifarişiniz yolda",
+        title: "Kuryer yola çıxdı",
         body: "Kuryer sifarişinizi götürdü və çatdırmağa yola düşdü.",
       };
     case "delivered":
