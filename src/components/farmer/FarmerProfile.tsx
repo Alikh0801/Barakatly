@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { Syne } from "next/font/google";
-import { useActionState, useMemo, useState } from "react";
+import { useActionState, useEffect, useRef, useState } from "react";
 import {
   createFarmerBlogPost,
   deleteFarmerBlogPost,
@@ -370,47 +370,164 @@ function BlogComposer() {
     createFarmerBlogPost,
     initialState
   );
+  const [files, setFiles] = useState<File[]>([]);
+  const [previews, setPreviews] = useState<
+    { url: string; kind: "image" | "video"; name: string }[]
+  >([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    const next = files.map((file) => ({
+      url: URL.createObjectURL(file),
+      kind: file.type.startsWith("video/")
+        ? ("video" as const)
+        : ("image" as const),
+      name: file.name,
+    }));
+    setPreviews(next);
+    return () => {
+      next.forEach((item) => URL.revokeObjectURL(item.url));
+    };
+  }, [files]);
+
+  useEffect(() => {
+    if (state.success) {
+      setFiles([]);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+    }
+  }, [state.success]);
+
+  function syncFiles(next: File[]) {
+    const limited = next.slice(0, 6);
+    setFiles(limited);
+    if (!fileInputRef.current) return;
+    const transfer = new DataTransfer();
+    limited.forEach((file) => transfer.items.add(file));
+    fileInputRef.current.files = transfer.files;
+  }
+
+  function removeFile(index: number) {
+    syncFiles(files.filter((_, i) => i !== index));
+  }
 
   return (
     <form
       action={action}
-      className="space-y-4 rounded-[1.5rem] bg-white p-5 shadow-sm ring-1 ring-zinc-200 sm:p-6"
+      className="overflow-hidden rounded-[1.5rem] bg-white shadow-sm ring-1 ring-zinc-200"
     >
-      <h3 className={`${displayFont.className} text-lg font-bold text-zinc-900`}>
-        Yeni paylaşım
-      </h3>
+      <div className="border-b border-zinc-100 px-4 py-3 sm:px-5">
+        <h3 className={`${displayFont.className} text-lg font-bold text-zinc-900`}>
+          Yeni paylaşım
+        </h3>
+      </div>
+
       {state.error ? (
-        <p className="rounded-xl bg-rose-50 px-3 py-2 text-sm text-rose-700">
+        <p className="mx-4 mt-3 rounded-xl bg-rose-50 px-3 py-2 text-sm text-rose-700 sm:mx-5">
           {state.error}
         </p>
       ) : null}
       {state.success ? (
-        <p className="rounded-xl bg-emerald-50 px-3 py-2 text-sm text-emerald-800">
+        <p className="mx-4 mt-3 rounded-xl bg-emerald-50 px-3 py-2 text-sm text-emerald-800 sm:mx-5">
           {state.success}
         </p>
       ) : null}
-      <textarea
-        name="caption"
-        rows={3}
-        placeholder="Bu gün təsərrüfatda nələr baş verir?"
-        className="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-sm text-zinc-900"
-      />
-      <FilePickerButton
-        name="media"
-        accept="image/jpeg,image/png,image/webp,video/mp4,video/webm,video/quicktime"
-        multiple
-        required
-        label="Şəkil / video"
-        hint="Ən çox 6 fayl · max 50 MB"
-      />
-      <button
-        type="submit"
-        disabled={pending}
-        className="inline-flex items-center gap-2 rounded-full bg-[#1f5c3d] px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-70"
-      >
-        {pending ? <Spinner className="h-3.5 w-3.5" /> : null}
-        Paylaş
-      </button>
+
+      <div className="px-4 pt-3 sm:px-5">
+        <textarea
+          name="caption"
+          rows={3}
+          placeholder="Bu gün təsərrüfatda nələr baş verir?"
+          className="w-full resize-none border-0 bg-transparent text-sm text-zinc-900 outline-none placeholder:text-zinc-400"
+        />
+
+        {previews.length > 0 ? (
+          <div className="mt-2 flex gap-2 overflow-x-auto pb-2">
+            {previews.map((preview, index) => (
+              <div
+                key={`${preview.name}-${index}`}
+                className="relative h-24 w-24 shrink-0 overflow-hidden rounded-xl bg-zinc-100 ring-1 ring-zinc-200"
+              >
+                {preview.kind === "video" ? (
+                  <video
+                    src={preview.url}
+                    className="h-full w-full object-cover"
+                    muted
+                  />
+                ) : (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={preview.url}
+                    alt=""
+                    className="h-full w-full object-cover"
+                  />
+                )}
+                <button
+                  type="button"
+                  onClick={() => removeFile(index)}
+                  className="absolute right-1 top-1 inline-flex h-6 w-6 items-center justify-center rounded-full bg-black/65 text-xs font-bold text-white"
+                  aria-label="Faylı sil"
+                >
+                  ×
+                </button>
+              </div>
+            ))}
+          </div>
+        ) : null}
+      </div>
+
+      <div className="flex items-center justify-between gap-3 border-t border-zinc-100 px-3 py-2.5 sm:px-4">
+        <div className="flex items-center gap-1">
+          <input
+            ref={fileInputRef}
+            type="file"
+            name="media"
+            accept="image/jpeg,image/png,image/webp,video/mp4,video/webm,video/quicktime"
+            multiple
+            required={files.length === 0}
+            className="sr-only"
+            onChange={(event) => {
+              const selected = event.target.files
+                ? Array.from(event.target.files)
+                : [];
+              syncFiles([...files, ...selected].slice(0, 6));
+            }}
+          />
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            className="inline-flex items-center gap-2 rounded-full px-3 py-2 text-sm font-semibold text-[#1f5c3d] transition hover:bg-[#f3faf6]"
+          >
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              className="h-5 w-5"
+            >
+              <path
+                d="M21.44 11.05 12.7 19.78a5.5 5.5 0 0 1-7.78-7.78l9.9-9.9a3.5 3.5 0 0 1 4.95 4.95l-9.9 9.9a1.5 1.5 0 1 1-2.12-2.12l8.49-8.49"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+            Əlavə et
+          </button>
+          <span className="hidden text-xs text-zinc-400 sm:inline">
+            Şəkil və ya video · max 6
+          </span>
+        </div>
+
+        <button
+          type="submit"
+          disabled={pending || files.length === 0}
+          className="inline-flex items-center gap-2 rounded-full bg-[#1f5c3d] px-5 py-2 text-sm font-semibold text-white disabled:opacity-50"
+        >
+          {pending ? <Spinner className="h-3.5 w-3.5" /> : null}
+          Paylaş
+        </button>
+      </div>
     </form>
   );
 }
@@ -428,7 +545,10 @@ function BlogPostCard({
   );
 
   return (
-    <article className="overflow-hidden rounded-[1.5rem] bg-white shadow-sm ring-1 ring-zinc-200">
+    <article
+      id={`post-${post.id}`}
+      className="overflow-hidden rounded-[1.5rem] bg-white shadow-sm ring-1 ring-zinc-200"
+    >
       {canDelete && (state.error || state.success) ? (
         <p
           className={`mx-4 mt-4 rounded-xl px-3 py-2 text-sm ${
@@ -499,63 +619,12 @@ function BlogPostCard({
   );
 }
 
-function BlogMediaGrid({ posts }: { posts: FarmerBlogPost[] }) {
-  const tiles = useMemo(
-    () =>
-      posts.flatMap((post) =>
-        post.farmer_post_media.map((media) => ({
-          ...media,
-          caption: post.caption,
-          postId: post.id,
-        }))
-      ),
-    [posts]
-  );
-
-  if (tiles.length === 0) return null;
-
-  return (
-    <div className="grid grid-cols-3 gap-1 overflow-hidden rounded-[1.25rem] sm:gap-1.5">
-      {tiles.map((tile) => (
-        <a
-          key={tile.id}
-          href={`#post-${tile.postId}`}
-          className="group relative aspect-square overflow-hidden bg-zinc-200"
-        >
-          {tile.media_type === "video" ? (
-            <>
-              <video
-                src={tile.url}
-                muted
-                playsInline
-                className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
-              />
-              <span className="absolute right-1.5 top-1.5 rounded bg-black/55 px-1.5 py-0.5 text-[10px] font-semibold text-white">
-                VIDEO
-              </span>
-            </>
-          ) : (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={tile.url}
-              alt={tile.caption || ""}
-              className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
-            />
-          )}
-        </a>
-      ))}
-    </div>
-  );
-}
-
 export function FarmerBlogFeed({
   posts,
   canManage = false,
-  showGrid = true,
 }: {
   posts: FarmerBlogPost[];
   canManage?: boolean;
-  showGrid?: boolean;
 }) {
   if (posts.length === 0) {
     return (
@@ -571,15 +640,10 @@ export function FarmerBlogFeed({
   }
 
   return (
-    <div className="space-y-6">
-      {showGrid ? <BlogMediaGrid posts={posts} /> : null}
-      <div className="space-y-4">
-        {posts.map((post) => (
-          <div key={post.id} id={`post-${post.id}`}>
-            <BlogPostCard post={post} canDelete={canManage} />
-          </div>
-        ))}
-      </div>
+    <div className="space-y-4">
+      {posts.map((post) => (
+        <BlogPostCard key={post.id} post={post} canDelete={canManage} />
+      ))}
     </div>
   );
 }
