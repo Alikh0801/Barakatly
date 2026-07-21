@@ -41,14 +41,6 @@ function formatDate(value: string) {
   }).format(new Date(value));
 }
 
-function coverFromPosts(posts: FarmerBlogPost[]): string | null {
-  for (const post of posts) {
-    const image = post.farmer_post_media.find((m) => m.media_type === "image");
-    if (image) return image.url;
-  }
-  return null;
-}
-
 function FarmerAvatar({
   name,
   url,
@@ -77,6 +69,77 @@ function FarmerAvatar({
   );
 }
 
+function FilePickerButton({
+  name,
+  accept,
+  multiple = false,
+  required = false,
+  label,
+  hint,
+  onFilesChange,
+}: {
+  name: string;
+  accept: string;
+  multiple?: boolean;
+  required?: boolean;
+  label: string;
+  hint?: string;
+  onFilesChange?: (files: FileList | null) => void;
+}) {
+  const [fileNames, setFileNames] = useState<string[]>([]);
+
+  return (
+    <div>
+      <label className="block text-sm font-medium text-zinc-700">{label}</label>
+      <label className="mt-2 flex cursor-pointer flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-[#1f5c3d]/35 bg-[#f3faf6] px-4 py-6 text-center transition hover:border-[#1f5c3d] hover:bg-[#e8f6ee]">
+        <span className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-[#1f5c3d] text-white">
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            className="h-5 w-5"
+          >
+            <path
+              d="M12 16V7m0 0 3.5 3.5M12 7 8.5 10.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+            <path
+              d="M20 16.5v1a2.5 2.5 0 0 1-2.5 2.5h-11A2.5 2.5 0 0 1 4 17.5v-1"
+              strokeLinecap="round"
+            />
+          </svg>
+        </span>
+        <span className="text-sm font-semibold text-[#1f5c3d]">
+          Fayl seçin
+        </span>
+        {hint ? <span className="text-xs text-zinc-500">{hint}</span> : null}
+        {fileNames.length > 0 ? (
+          <span className="max-w-full truncate text-xs font-medium text-zinc-700">
+            {fileNames.join(", ")}
+          </span>
+        ) : null}
+        <input
+          type="file"
+          name={name}
+          accept={accept}
+          multiple={multiple}
+          required={required}
+          className="sr-only"
+          onChange={(event) => {
+            const files = event.target.files;
+            setFileNames(
+              files ? Array.from(files).map((file) => file.name) : []
+            );
+            onFilesChange?.(files);
+          }}
+        />
+      </label>
+    </div>
+  );
+}
+
 function ProfileHero({
   farmName,
   avatarUrl,
@@ -85,7 +148,6 @@ function ProfileHero({
   verified,
   productCount,
   postCount,
-  coverUrl,
   actions,
 }: {
   farmName: string;
@@ -95,85 +157,56 @@ function ProfileHero({
   verified: boolean;
   productCount: number;
   postCount: number;
-  coverUrl: string | null;
   actions?: React.ReactNode;
 }) {
   return (
-    <section className="overflow-hidden rounded-[1.75rem] bg-white shadow-[0_20px_60px_-40px_rgba(15,40,28,0.55)] ring-1 ring-zinc-200/80">
-      <div className="relative h-40 overflow-hidden sm:h-52 md:h-60">
-        {coverUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={coverUrl}
-            alt=""
-            className="absolute inset-0 h-full w-full object-cover"
+    <section className="rounded-[1.75rem] bg-white p-5 shadow-[0_20px_60px_-40px_rgba(15,40,28,0.45)] ring-1 ring-zinc-200/80 sm:p-6">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div className="flex items-start gap-4">
+          <FarmerAvatar
+            name={farmName}
+            url={avatarUrl}
+            className="h-24 w-24 shrink-0 text-3xl ring-2 ring-zinc-100 sm:h-28 sm:w-28"
           />
-        ) : (
-          <div
-            className="absolute inset-0"
-            style={{
-              background:
-                "radial-gradient(circle at 20% 20%, rgba(255,255,255,0.18), transparent 40%), radial-gradient(circle at 80% 10%, rgba(190,242,100,0.25), transparent 35%), linear-gradient(135deg, #0f2f22 0%, #1f5c3d 48%, #3f7a3a 100%)",
-            }}
-          />
-        )}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-black/10 to-transparent" />
-        <div
-          className="pointer-events-none absolute inset-0 opacity-30 mix-blend-soft-light"
-          style={{
-            backgroundImage:
-              "url(\"data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.15'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E\")",
-          }}
-        />
+          <div className="min-w-0 pt-1">
+            <div className="flex flex-wrap items-center gap-2">
+              <h1
+                className={`${displayFont.className} text-2xl font-bold tracking-tight text-zinc-900 sm:text-3xl`}
+              >
+                {farmName}
+              </h1>
+              {verified ? <VerifiedIcon className="h-5 w-5" /> : null}
+            </div>
+            {locationText ? (
+              <p className="mt-1 text-sm text-zinc-500">{locationText}</p>
+            ) : null}
+            {description ? (
+              <p className="mt-3 max-w-2xl text-sm leading-6 text-zinc-700 sm:text-[15px]">
+                {description}
+              </p>
+            ) : null}
+          </div>
+        </div>
+        {actions ? (
+          <div className="flex flex-wrap gap-2 sm:justify-end">{actions}</div>
+        ) : null}
       </div>
 
-      <div className="relative px-4 pb-5 sm:px-6 sm:pb-6">
-        <div className="-mt-12 flex flex-col gap-4 sm:-mt-14 sm:flex-row sm:items-end sm:justify-between">
-          <div className="flex items-end gap-4">
-            <FarmerAvatar
-              name={farmName}
-              url={avatarUrl}
-              className="h-24 w-24 text-3xl ring-4 ring-white sm:h-28 sm:w-28"
-            />
-            <div className="min-w-0 pb-1">
-              <div className="flex flex-wrap items-center gap-2">
-                <h1
-                  className={`${displayFont.className} text-2xl font-bold tracking-tight text-zinc-900 sm:text-3xl`}
-                >
-                  {farmName}
-                </h1>
-                {verified ? <VerifiedIcon className="h-5 w-5" /> : null}
-              </div>
-              {locationText ? (
-                <p className="mt-1 text-sm text-zinc-500">{locationText}</p>
-              ) : null}
-            </div>
+      <div className="mt-5 flex gap-6 border-t border-zinc-100 pt-4">
+        <div>
+          <div className={`${displayFont.className} text-lg font-bold text-zinc-900`}>
+            {postCount}
           </div>
-          {actions ? <div className="flex flex-wrap gap-2">{actions}</div> : null}
+          <div className="text-xs uppercase tracking-wide text-zinc-500">
+            Paylaşım
+          </div>
         </div>
-
-        {description ? (
-          <p className="mt-4 max-w-2xl text-sm leading-6 text-zinc-700 sm:text-[15px]">
-            {description}
-          </p>
-        ) : null}
-
-        <div className="mt-5 flex gap-6 border-t border-zinc-100 pt-4">
-          <div>
-            <div className={`${displayFont.className} text-lg font-bold text-zinc-900`}>
-              {postCount}
-            </div>
-            <div className="text-xs uppercase tracking-wide text-zinc-500">
-              Paylaşım
-            </div>
+        <div>
+          <div className={`${displayFont.className} text-lg font-bold text-zinc-900`}>
+            {productCount}
           </div>
-          <div>
-            <div className={`${displayFont.className} text-lg font-bold text-zinc-900`}>
-              {productCount}
-            </div>
-            <div className="text-xs uppercase tracking-wide text-zinc-500">
-              Məhsul
-            </div>
+          <div className="text-xs uppercase tracking-wide text-zinc-500">
+            Məhsul
           </div>
         </div>
       </div>
@@ -248,17 +281,14 @@ function ProfileAboutForm({
           url={preview}
           className="h-20 w-20 text-2xl ring-2 ring-zinc-100"
         />
-        <div>
-          <label className="block text-sm font-medium text-zinc-700">
-            Profil şəkli
-          </label>
-          <input
-            type="file"
+        <div className="min-w-0 flex-1">
+          <FilePickerButton
             name="avatar"
             accept="image/jpeg,image/png,image/webp"
-            className="mt-2 block w-full text-sm text-zinc-600"
-            onChange={(event) => {
-              const file = event.target.files?.[0];
+            label="Profil şəkli"
+            hint="JPEG, PNG və ya WebP"
+            onFilesChange={(files) => {
+              const file = files?.[0];
               if (!file) return;
               setPreview(URL.createObjectURL(file));
             }}
@@ -362,22 +392,14 @@ function BlogComposer() {
         placeholder="Bu gün təsərrüfatda nələr baş verir?"
         className="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-sm text-zinc-900"
       />
-      <div>
-        <label className="block text-sm font-medium text-zinc-700">
-          Şəkil / video
-        </label>
-        <input
-          type="file"
-          name="media"
-          accept="image/jpeg,image/png,image/webp,video/mp4,video/webm,video/quicktime"
-          multiple
-          required
-          className="mt-2 block w-full text-sm text-zinc-600"
-        />
-        <p className="mt-1 text-xs text-zinc-500">
-          Ən çox 6 fayl · max 50 MB
-        </p>
-      </div>
+      <FilePickerButton
+        name="media"
+        accept="image/jpeg,image/png,image/webp,video/mp4,video/webm,video/quicktime"
+        multiple
+        required
+        label="Şəkil / video"
+        hint="Ən çox 6 fayl · max 50 MB"
+      />
       <button
         type="submit"
         disabled={pending}
@@ -574,7 +596,6 @@ export function FarmerProfileDashboard({
   orders: FarmerOrderItem[];
   posts: FarmerBlogPost[];
 }) {
-  const coverUrl = coverFromPosts(posts);
   const tabs = [
     { id: "posts", label: "Paylaşımlar", href: "/farmer?tab=posts" },
     { id: "products", label: "Məhsullar", href: "/farmer?tab=products" },
@@ -592,7 +613,6 @@ export function FarmerProfileDashboard({
         verified={Boolean(farmer.verified_at)}
         productCount={products.filter((p) => p.status === "approved").length}
         postCount={posts.length}
-        coverUrl={coverUrl}
         actions={
           <>
             <Link
@@ -664,7 +684,6 @@ export function PublicFarmerProfile({
   products: ProductListItem[];
   posts: FarmerBlogPost[];
 }) {
-  const coverUrl = coverFromPosts(posts);
   const tabs = [
     {
       id: "posts",
@@ -700,7 +719,6 @@ export function PublicFarmerProfile({
         verified={Boolean(farmer.verified_at)}
         productCount={farmer.productCount}
         postCount={posts.length}
-        coverUrl={coverUrl}
         actions={
           <Link
             href="/shop"
