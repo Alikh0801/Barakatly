@@ -1,7 +1,13 @@
 import Link from "next/link";
 import type { Metadata } from "next";
+import { Syne } from "next/font/google";
 import { VerifiedIcon } from "@/components/ui/VerifiedIcon";
 import { getPublicFarmers } from "@/lib/farmers/queries";
+
+const displayFont = Syne({
+  subsets: ["latin"],
+  weight: ["600", "700"],
+});
 
 export const metadata: Metadata = {
   title: "Fermerlər — BARAKATLY",
@@ -16,16 +22,18 @@ export default async function FarmersPage() {
     <div className="mx-auto w-full max-w-6xl px-4 py-10 md:px-6 md:py-14">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="text-3xl font-semibold tracking-tight text-zinc-900">
+          <h1
+            className={`${displayFont.className} text-3xl font-bold tracking-tight text-zinc-900`}
+          >
             Fermerlər
           </h1>
           <p className="mt-2 text-sm text-zinc-600">
-            Təsdiqlənmiş təsərrüfatlar və yerli istehsalçılar
+            Təsərrüfat profilləri · məhsullar və paylaşımlar
           </p>
         </div>
         <Link
           href="/farmers/apply"
-          className="inline-flex items-center justify-center rounded-full bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-500"
+          className="inline-flex items-center justify-center rounded-full bg-[#1f5c3d] px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[#184a31]"
         >
           Fermer ol
         </Link>
@@ -34,68 +42,61 @@ export default async function FarmersPage() {
       {farmers.length === 0 ? (
         <div className="mt-12 max-w-xl">
           <p className="text-sm leading-6 text-zinc-600">
-            Hazırda siyahıda göstəriləcək təsdiqlənmiş fermer yoxdur. Tezliklə
-            yeni təsərrüfatlar əlavə olunacaq — və ya siz ilklər arasında ola
-            bilərsiniz.
+            Hazırda siyahıda göstəriləcək təsdiqlənmiş fermer yoxdur.
           </p>
-          <div className="mt-6 flex flex-wrap gap-3">
-            <Link
-              href="/shop"
-              className="inline-flex items-center justify-center rounded-full bg-white px-5 py-2.5 text-sm font-semibold text-emerald-700 ring-1 ring-emerald-200 transition hover:bg-emerald-50"
-            >
-              Mağazaya keç
-            </Link>
-            <Link
-              href="/farmers/apply"
-              className="inline-flex items-center justify-center rounded-full bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-500"
-            >
-              Müraciət et
-            </Link>
-          </div>
         </div>
       ) : (
-        <ul className="mt-10 divide-y divide-zinc-200 border-y border-zinc-200">
+        <ul className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {farmers.map((farmer) => (
             <li key={farmer.id}>
               <Link
                 href={`/farmers/${farmer.id}`}
                 prefetch
-                className="flex flex-col gap-3 py-6 transition hover:bg-zinc-50/80 sm:flex-row sm:items-center sm:justify-between"
+                className="group block overflow-hidden rounded-[1.5rem] bg-white shadow-sm ring-1 ring-zinc-200 transition hover:-translate-y-0.5 hover:shadow-md"
               >
-                <div className="flex min-w-0 gap-4">
-                  {farmer.avatar_url ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={farmer.avatar_url}
-                      alt=""
-                      className="h-14 w-14 shrink-0 rounded-full object-cover ring-1 ring-zinc-200"
-                    />
-                  ) : (
-                    <div className="inline-flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-lg font-semibold text-emerald-800">
-                      {farmer.farm_name.slice(0, 1).toUpperCase()}
-                    </div>
-                  )}
-                  <div className="min-w-0">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <h2 className="text-lg font-semibold text-zinc-900">
-                        {farmer.farm_name}
-                      </h2>
-                      {farmer.verified_at ? <VerifiedIcon /> : null}
-                    </div>
-                    {farmer.location_text ? (
-                      <p className="mt-1 text-sm text-zinc-600">
-                        {farmer.location_text}
-                      </p>
-                    ) : null}
-                    {farmer.description ? (
-                      <p className="mt-2 max-w-2xl text-sm leading-6 text-zinc-600">
-                        {farmer.description}
-                      </p>
-                    ) : null}
+                <div
+                  className="h-24"
+                  style={{
+                    background:
+                      "linear-gradient(135deg, #0f2f22 0%, #1f5c3d 55%, #3f7a3a 100%)",
+                  }}
+                />
+                <div className="relative px-4 pb-5 pt-0">
+                  <div className="-mt-8 mb-3">
+                    {farmer.avatar_url ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={farmer.avatar_url}
+                        alt=""
+                        className="h-16 w-16 rounded-full object-cover ring-4 ring-white"
+                      />
+                    ) : (
+                      <div className="inline-flex h-16 w-16 items-center justify-center rounded-full bg-[#1a3d2b] text-xl font-semibold text-[#d7f5e3] ring-4 ring-white">
+                        {farmer.farm_name.slice(0, 1).toUpperCase()}
+                      </div>
+                    )}
                   </div>
-                </div>
-                <div className="shrink-0 text-sm font-medium text-emerald-700">
-                  {farmer.productCount} məhsul →
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <h2
+                      className={`${displayFont.className} text-lg font-bold text-zinc-900 group-hover:text-[#1f5c3d]`}
+                    >
+                      {farmer.farm_name}
+                    </h2>
+                    {farmer.verified_at ? <VerifiedIcon /> : null}
+                  </div>
+                  {farmer.location_text ? (
+                    <p className="mt-1 text-sm text-zinc-500">
+                      {farmer.location_text}
+                    </p>
+                  ) : null}
+                  {farmer.description ? (
+                    <p className="mt-2 line-clamp-2 text-sm leading-6 text-zinc-600">
+                      {farmer.description}
+                    </p>
+                  ) : null}
+                  <p className="mt-3 text-xs font-semibold uppercase tracking-wide text-[#1f5c3d]">
+                    {farmer.productCount} məhsul · Profilə bax
+                  </p>
                 </div>
               </Link>
             </li>

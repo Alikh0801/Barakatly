@@ -13,10 +13,16 @@ import {
 export const metadata = { title: "Fermer profili — BARAKATLY" };
 
 function parseTab(value?: string): FarmerProfileTab {
-  if (value === "products" || value === "orders" || value === "blog") {
-    return value;
+  if (
+    value === "products" ||
+    value === "orders" ||
+    value === "about" ||
+    value === "posts" ||
+    value === "blog"
+  ) {
+    return value === "blog" ? "posts" : value;
   }
-  return "about";
+  return "posts";
 }
 
 export default async function FarmerDashboardPage({

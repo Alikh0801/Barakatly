@@ -1,28 +1,38 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState, useState } from "react";
+import { Syne } from "next/font/google";
+import { useActionState, useMemo, useState } from "react";
 import {
   createFarmerBlogPost,
   deleteFarmerBlogPost,
   updateFarmerProfile,
 } from "@/lib/farmer/actions";
 import { Spinner } from "@/components/ui/Spinner";
+import { VerifiedIcon } from "@/components/ui/VerifiedIcon";
 import {
   FarmerOrdersList,
   FarmerProductsList,
 } from "@/components/farmer/FarmerPanels";
+import { ProductCard } from "@/components/shop/ProductCard";
 import type {
   FarmerBlogPost,
   FarmerOrderItem,
   FarmerProduct,
 } from "@/lib/farmer/queries";
+import type { ProductListItem } from "@/types/shop";
 import type { Farmer, Profile } from "@/types";
+
+const displayFont = Syne({
+  subsets: ["latin"],
+  weight: ["600", "700"],
+});
 
 type ActionResult = { error?: string; success?: string };
 const initialState: ActionResult = {};
 
-export type FarmerProfileTab = "about" | "products" | "orders" | "blog";
+export type FarmerProfileTab = "posts" | "products" | "orders" | "about";
+export type PublicFarmerProfileTab = "posts" | "products" | "about";
 
 function formatDate(value: string) {
   return new Intl.DateTimeFormat("az-AZ", {
@@ -31,32 +41,172 @@ function formatDate(value: string) {
   }).format(new Date(value));
 }
 
+function coverFromPosts(posts: FarmerBlogPost[]): string | null {
+  for (const post of posts) {
+    const image = post.farmer_post_media.find((m) => m.media_type === "image");
+    if (image) return image.url;
+  }
+  return null;
+}
+
 function FarmerAvatar({
   name,
   url,
-  size = "lg",
+  className = "",
 }: {
   name: string;
   url: string | null;
-  size?: "sm" | "lg";
+  className?: string;
 }) {
-  const dim = size === "lg" ? "h-24 w-24 text-3xl" : "h-12 w-12 text-lg";
   if (url) {
     return (
       // eslint-disable-next-line @next/next/no-img-element
       <img
         src={url}
         alt={name}
-        className={`${dim} rounded-full object-cover ring-2 ring-white shadow-sm`}
+        className={`rounded-full object-cover ${className}`}
       />
     );
   }
   return (
     <div
-      className={`inline-flex ${dim} items-center justify-center rounded-full bg-emerald-100 font-semibold text-emerald-800 ring-2 ring-white`}
+      className={`inline-flex items-center justify-center rounded-full bg-[#1a3d2b] font-semibold text-[#d7f5e3] ${className}`}
     >
       {name.slice(0, 1).toUpperCase()}
     </div>
+  );
+}
+
+function ProfileHero({
+  farmName,
+  avatarUrl,
+  locationText,
+  description,
+  verified,
+  productCount,
+  postCount,
+  coverUrl,
+  actions,
+}: {
+  farmName: string;
+  avatarUrl: string | null;
+  locationText: string | null;
+  description: string | null;
+  verified: boolean;
+  productCount: number;
+  postCount: number;
+  coverUrl: string | null;
+  actions?: React.ReactNode;
+}) {
+  return (
+    <section className="overflow-hidden rounded-[1.75rem] bg-white shadow-[0_20px_60px_-40px_rgba(15,40,28,0.55)] ring-1 ring-zinc-200/80">
+      <div className="relative h-40 overflow-hidden sm:h-52 md:h-60">
+        {coverUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={coverUrl}
+            alt=""
+            className="absolute inset-0 h-full w-full object-cover"
+          />
+        ) : (
+          <div
+            className="absolute inset-0"
+            style={{
+              background:
+                "radial-gradient(circle at 20% 20%, rgba(255,255,255,0.18), transparent 40%), radial-gradient(circle at 80% 10%, rgba(190,242,100,0.25), transparent 35%), linear-gradient(135deg, #0f2f22 0%, #1f5c3d 48%, #3f7a3a 100%)",
+            }}
+          />
+        )}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-black/10 to-transparent" />
+        <div
+          className="pointer-events-none absolute inset-0 opacity-30 mix-blend-soft-light"
+          style={{
+            backgroundImage:
+              "url(\"data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.15'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E\")",
+          }}
+        />
+      </div>
+
+      <div className="relative px-4 pb-5 sm:px-6 sm:pb-6">
+        <div className="-mt-12 flex flex-col gap-4 sm:-mt-14 sm:flex-row sm:items-end sm:justify-between">
+          <div className="flex items-end gap-4">
+            <FarmerAvatar
+              name={farmName}
+              url={avatarUrl}
+              className="h-24 w-24 text-3xl ring-4 ring-white sm:h-28 sm:w-28"
+            />
+            <div className="min-w-0 pb-1">
+              <div className="flex flex-wrap items-center gap-2">
+                <h1
+                  className={`${displayFont.className} text-2xl font-bold tracking-tight text-zinc-900 sm:text-3xl`}
+                >
+                  {farmName}
+                </h1>
+                {verified ? <VerifiedIcon className="h-5 w-5" /> : null}
+              </div>
+              {locationText ? (
+                <p className="mt-1 text-sm text-zinc-500">{locationText}</p>
+              ) : null}
+            </div>
+          </div>
+          {actions ? <div className="flex flex-wrap gap-2">{actions}</div> : null}
+        </div>
+
+        {description ? (
+          <p className="mt-4 max-w-2xl text-sm leading-6 text-zinc-700 sm:text-[15px]">
+            {description}
+          </p>
+        ) : null}
+
+        <div className="mt-5 flex gap-6 border-t border-zinc-100 pt-4">
+          <div>
+            <div className={`${displayFont.className} text-lg font-bold text-zinc-900`}>
+              {postCount}
+            </div>
+            <div className="text-xs uppercase tracking-wide text-zinc-500">
+              Paylaşım
+            </div>
+          </div>
+          <div>
+            <div className={`${displayFont.className} text-lg font-bold text-zinc-900`}>
+              {productCount}
+            </div>
+            <div className="text-xs uppercase tracking-wide text-zinc-500">
+              Məhsul
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function ProfileTabs({
+  tabs,
+  active,
+}: {
+  tabs: { id: string; label: string; href: string }[];
+  active: string;
+}) {
+  return (
+    <nav className="sticky top-0 z-10 -mx-1 mt-5 flex gap-1 overflow-x-auto rounded-2xl bg-white/90 p-1 shadow-sm ring-1 ring-zinc-200 backdrop-blur">
+      {tabs.map((tab) => {
+        const isActive = tab.id === active;
+        return (
+          <Link
+            key={tab.id}
+            href={tab.href}
+            className={`shrink-0 rounded-xl px-4 py-2.5 text-sm font-semibold transition ${
+              isActive
+                ? "bg-[#1f5c3d] text-white shadow-sm"
+                : "text-zinc-500 hover:bg-zinc-50 hover:text-zinc-800"
+            }`}
+          >
+            {tab.label}
+          </Link>
+        );
+      })}
+    </nav>
   );
 }
 
@@ -74,7 +224,13 @@ function ProfileAboutForm({
   const [preview, setPreview] = useState<string | null>(farmer.avatar_url);
 
   return (
-    <form action={action} className="space-y-5 rounded-3xl bg-white p-5 shadow-sm ring-1 ring-zinc-200 sm:p-6">
+    <form
+      action={action}
+      className="space-y-5 rounded-[1.5rem] bg-white p-5 shadow-sm ring-1 ring-zinc-200 sm:p-6"
+    >
+      <h2 className={`${displayFont.className} text-xl font-bold text-zinc-900`}>
+        Profili redaktə et
+      </h2>
       {state.error ? (
         <p className="rounded-xl bg-rose-50 px-3 py-2 text-sm text-rose-700">
           {state.error}
@@ -87,7 +243,11 @@ function ProfileAboutForm({
       ) : null}
 
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-        <FarmerAvatar name={farmer.farm_name} url={preview} />
+        <FarmerAvatar
+          name={farmer.farm_name}
+          url={preview}
+          className="h-20 w-20 text-2xl ring-2 ring-zinc-100"
+        />
         <div>
           <label className="block text-sm font-medium text-zinc-700">
             Profil şəkli
@@ -103,7 +263,6 @@ function ProfileAboutForm({
               setPreview(URL.createObjectURL(file));
             }}
           />
-          <p className="mt-1 text-xs text-zinc-500">JPEG, PNG və ya WebP · max 50 MB</p>
         </div>
       </div>
 
@@ -134,7 +293,7 @@ function ProfileAboutForm({
 
       <div>
         <label htmlFor="description" className="block text-sm font-medium text-zinc-700">
-          Haqqında
+          Bio
         </label>
         <textarea
           id="description"
@@ -142,7 +301,7 @@ function ProfileAboutForm({
           rows={4}
           defaultValue={farmer.description ?? ""}
           className="mt-1 w-full rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-sm text-zinc-900"
-          placeholder="Təsərrüfatınız haqqında qısa məlumat..."
+          placeholder="Təsərrüfatınız haqqında qısa bio..."
         />
       </div>
 
@@ -164,10 +323,10 @@ function ProfileAboutForm({
       <button
         type="submit"
         disabled={pending}
-        className="inline-flex items-center gap-2 rounded-full bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-70"
+        className="inline-flex items-center gap-2 rounded-full bg-[#1f5c3d] px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-70"
       >
         {pending ? <Spinner className="h-3.5 w-3.5" /> : null}
-        Profili yadda saxla
+        Yadda saxla
       </button>
     </form>
   );
@@ -182,9 +341,11 @@ function BlogComposer() {
   return (
     <form
       action={action}
-      className="space-y-4 rounded-3xl bg-white p-5 shadow-sm ring-1 ring-zinc-200 sm:p-6"
+      className="space-y-4 rounded-[1.5rem] bg-white p-5 shadow-sm ring-1 ring-zinc-200 sm:p-6"
     >
-      <h3 className="text-base font-semibold text-zinc-900">Yeni paylaşım</h3>
+      <h3 className={`${displayFont.className} text-lg font-bold text-zinc-900`}>
+        Yeni paylaşım
+      </h3>
       {state.error ? (
         <p className="rounded-xl bg-rose-50 px-3 py-2 text-sm text-rose-700">
           {state.error}
@@ -198,7 +359,7 @@ function BlogComposer() {
       <textarea
         name="caption"
         rows={3}
-        placeholder="Təsərrüfatınızdan bir an paylaşın..."
+        placeholder="Bu gün təsərrüfatda nələr baş verir?"
         className="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-sm text-zinc-900"
       />
       <div>
@@ -214,13 +375,13 @@ function BlogComposer() {
           className="mt-2 block w-full text-sm text-zinc-600"
         />
         <p className="mt-1 text-xs text-zinc-500">
-          Ən çox 6 fayl · şəkil və ya qısa video (max 50 MB)
+          Ən çox 6 fayl · max 50 MB
         </p>
       </div>
       <button
         type="submit"
         disabled={pending}
-        className="inline-flex items-center gap-2 rounded-full bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-70"
+        className="inline-flex items-center gap-2 rounded-full bg-[#1f5c3d] px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-70"
       >
         {pending ? <Spinner className="h-3.5 w-3.5" /> : null}
         Paylaş
@@ -242,10 +403,10 @@ function BlogPostCard({
   );
 
   return (
-    <article className="rounded-3xl bg-white p-4 shadow-sm ring-1 ring-zinc-200 sm:p-5">
+    <article className="overflow-hidden rounded-[1.5rem] bg-white shadow-sm ring-1 ring-zinc-200">
       {canDelete && (state.error || state.success) ? (
         <p
-          className={`mb-3 rounded-xl px-3 py-2 text-sm ${
+          className={`mx-4 mt-4 rounded-xl px-3 py-2 text-sm ${
             state.error
               ? "bg-rose-50 text-rose-700"
               : "bg-emerald-50 text-emerald-800"
@@ -255,17 +416,10 @@ function BlogPostCard({
         </p>
       ) : null}
 
-      {post.caption ? (
-        <p className="text-sm leading-6 text-zinc-800">{post.caption}</p>
-      ) : null}
-      <p className="mt-2 text-xs text-zinc-500">{formatDate(post.created_at)}</p>
-
       {post.farmer_post_media.length > 0 ? (
         <div
-          className={`mt-4 grid gap-2 ${
-            post.farmer_post_media.length === 1
-              ? "grid-cols-1"
-              : "grid-cols-2"
+          className={`grid gap-0.5 bg-zinc-100 ${
+            post.farmer_post_media.length === 1 ? "grid-cols-1" : "grid-cols-2"
           }`}
         >
           {post.farmer_post_media.map((media) =>
@@ -274,7 +428,7 @@ function BlogPostCard({
                 key={media.id}
                 src={media.url}
                 controls
-                className="max-h-80 w-full rounded-2xl bg-zinc-100 object-cover"
+                className="max-h-[28rem] w-full bg-black object-cover"
               />
             ) : (
               // eslint-disable-next-line @next/next/no-img-element
@@ -282,60 +436,125 @@ function BlogPostCard({
                 key={media.id}
                 src={media.url}
                 alt=""
-                className="max-h-80 w-full rounded-2xl object-cover"
+                className="max-h-[28rem] w-full object-cover"
               />
             )
           )}
         </div>
       ) : null}
 
-      {canDelete ? (
-        <form
-          action={action}
-          className="mt-4"
-          onSubmit={(event) => {
-            if (!window.confirm("Bu paylaşımı silmək istəyirsiniz?")) {
-              event.preventDefault();
-            }
-          }}
-        >
-          <input type="hidden" name="post_id" value={post.id} />
-          <button
-            type="submit"
-            disabled={pending}
-            className="text-sm font-medium text-rose-700 hover:underline disabled:opacity-70"
+      <div className="p-4 sm:p-5">
+        {post.caption ? (
+          <p className="text-sm leading-6 text-zinc-800">{post.caption}</p>
+        ) : null}
+        <p className="mt-2 text-xs text-zinc-500">{formatDate(post.created_at)}</p>
+
+        {canDelete ? (
+          <form
+            action={action}
+            className="mt-3"
+            onSubmit={(event) => {
+              if (!window.confirm("Bu paylaşımı silmək istəyirsiniz?")) {
+                event.preventDefault();
+              }
+            }}
           >
-            {pending ? "Silinir..." : "Sil"}
-          </button>
-        </form>
-      ) : null}
+            <input type="hidden" name="post_id" value={post.id} />
+            <button
+              type="submit"
+              disabled={pending}
+              className="text-sm font-medium text-rose-700 hover:underline disabled:opacity-70"
+            >
+              {pending ? "Silinir..." : "Sil"}
+            </button>
+          </form>
+        ) : null}
+      </div>
     </article>
+  );
+}
+
+function BlogMediaGrid({ posts }: { posts: FarmerBlogPost[] }) {
+  const tiles = useMemo(
+    () =>
+      posts.flatMap((post) =>
+        post.farmer_post_media.map((media) => ({
+          ...media,
+          caption: post.caption,
+          postId: post.id,
+        }))
+      ),
+    [posts]
+  );
+
+  if (tiles.length === 0) return null;
+
+  return (
+    <div className="grid grid-cols-3 gap-1 overflow-hidden rounded-[1.25rem] sm:gap-1.5">
+      {tiles.map((tile) => (
+        <a
+          key={tile.id}
+          href={`#post-${tile.postId}`}
+          className="group relative aspect-square overflow-hidden bg-zinc-200"
+        >
+          {tile.media_type === "video" ? (
+            <>
+              <video
+                src={tile.url}
+                muted
+                playsInline
+                className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
+              />
+              <span className="absolute right-1.5 top-1.5 rounded bg-black/55 px-1.5 py-0.5 text-[10px] font-semibold text-white">
+                VIDEO
+              </span>
+            </>
+          ) : (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={tile.url}
+              alt={tile.caption || ""}
+              className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
+            />
+          )}
+        </a>
+      ))}
+    </div>
   );
 }
 
 export function FarmerBlogFeed({
   posts,
   canManage = false,
+  showGrid = true,
 }: {
   posts: FarmerBlogPost[];
   canManage?: boolean;
+  showGrid?: boolean;
 }) {
   if (posts.length === 0) {
     return (
-      <div className="rounded-3xl bg-white p-8 text-center ring-1 ring-zinc-200">
-        <p className="font-medium text-zinc-900">Hələ paylaşım yoxdur</p>
+      <div className="rounded-[1.5rem] bg-white px-6 py-12 text-center ring-1 ring-zinc-200">
+        <p className={`${displayFont.className} text-lg font-bold text-zinc-900`}>
+          Hələ paylaşım yoxdur
+        </p>
         <p className="mt-2 text-sm text-zinc-500">
-          Təsərrüfatınızdan şəkil və video paylaşın.
+          Təsərrüfatdan ilk şəkil və ya videonu paylaşın.
         </p>
       </div>
     );
   }
 
   return (
-    <div className="space-y-4">
-      {posts.map((post) => (
-        <BlogPostCard key={post.id} post={post} canDelete={canManage} />
-      ))}
+    <div className="space-y-6">
+      {showGrid ? <BlogMediaGrid posts={posts} /> : null}
+      <div className="space-y-4">
+        {posts.map((post) => (
+          <div key={post.id} id={`post-${post.id}`}>
+            <BlogPostCard post={post} canDelete={canManage} />
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
@@ -355,58 +574,51 @@ export function FarmerProfileDashboard({
   orders: FarmerOrderItem[];
   posts: FarmerBlogPost[];
 }) {
-  const tabs: { id: FarmerProfileTab; label: string; href: string }[] = [
-    { id: "about", label: "Profil", href: "/farmer?tab=about" },
+  const coverUrl = coverFromPosts(posts);
+  const tabs = [
+    { id: "posts", label: "Paylaşımlar", href: "/farmer?tab=posts" },
     { id: "products", label: "Məhsullar", href: "/farmer?tab=products" },
     { id: "orders", label: "Sifarişlər", href: "/farmer?tab=orders" },
-    { id: "blog", label: "Blog", href: "/farmer?tab=blog" },
+    { id: "about", label: "Redaktə", href: "/farmer?tab=about" },
   ];
 
   return (
-    <div className="mx-auto w-full max-w-6xl px-4 py-10 md:px-6 md:py-12">
-      <section className="overflow-hidden rounded-3xl bg-white shadow-sm ring-1 ring-zinc-200">
-        <div className="bg-gradient-to-br from-emerald-700 via-emerald-600 to-lime-600 px-5 py-8 sm:px-8">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-end">
-            <FarmerAvatar name={farmer.farm_name} url={farmer.avatar_url} />
-            <div className="min-w-0 text-white">
-              <h1 className="text-3xl font-semibold tracking-tight">
-                {farmer.farm_name}
-              </h1>
-              {farmer.location_text ? (
-                <p className="mt-1 text-sm text-emerald-50/90">
-                  {farmer.location_text}
-                </p>
-              ) : null}
-              <p className="mt-2 text-sm text-emerald-50/80">
-                {profile.full_name ?? "Fermer"} · Profil səhifəniz
-              </p>
-            </div>
+    <div className="mx-auto w-full max-w-3xl px-4 py-8 md:px-6 md:py-10">
+      <ProfileHero
+        farmName={farmer.farm_name}
+        avatarUrl={farmer.avatar_url}
+        locationText={farmer.location_text}
+        description={farmer.description}
+        verified={Boolean(farmer.verified_at)}
+        productCount={products.filter((p) => p.status === "approved").length}
+        postCount={posts.length}
+        coverUrl={coverUrl}
+        actions={
+          <>
+            <Link
+              href={`/farmers/${farmer.id}`}
+              className="inline-flex rounded-full bg-white px-4 py-2 text-sm font-semibold text-[#1f5c3d] ring-1 ring-[#1f5c3d]/20 transition hover:bg-[#f3faf6]"
+            >
+              Müştəri görünüşü
+            </Link>
+            <Link
+              href="/farmer?tab=posts"
+              className="inline-flex rounded-full bg-[#1f5c3d] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#184a31]"
+            >
+              Paylaş
+            </Link>
+          </>
+        }
+      />
+
+      <ProfileTabs tabs={tabs} active={tab} />
+
+      <div className="mt-5">
+        {tab === "posts" ? (
+          <div className="space-y-5">
+            <BlogComposer />
+            <FarmerBlogFeed posts={posts} canManage />
           </div>
-        </div>
-
-        <nav className="flex gap-1 overflow-x-auto border-t border-zinc-100 px-2 sm:px-4">
-          {tabs.map((item) => {
-            const active = item.id === tab;
-            return (
-              <Link
-                key={item.id}
-                href={item.href}
-                className={`shrink-0 border-b-2 px-4 py-3 text-sm font-medium transition ${
-                  active
-                    ? "border-emerald-600 text-emerald-800"
-                    : "border-transparent text-zinc-500 hover:text-zinc-800"
-                }`}
-              >
-                {item.label}
-              </Link>
-            );
-          })}
-        </nav>
-      </section>
-
-      <div className="mt-6">
-        {tab === "about" ? (
-          <ProfileAboutForm farmer={farmer} profile={profile} />
         ) : null}
 
         {tab === "products" ? (
@@ -414,7 +626,7 @@ export function FarmerProfileDashboard({
             <div className="flex justify-end">
               <Link
                 href="/farmer/products/new"
-                className="inline-flex rounded-full bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-500"
+                className="inline-flex rounded-full bg-[#1f5c3d] px-4 py-2 text-sm font-semibold text-white hover:bg-[#184a31]"
               >
                 Yeni məhsul
               </Link>
@@ -425,10 +637,119 @@ export function FarmerProfileDashboard({
 
         {tab === "orders" ? <FarmerOrdersList items={orders} /> : null}
 
-        {tab === "blog" ? (
-          <div className="space-y-6">
-            <BlogComposer />
-            <FarmerBlogFeed posts={posts} canManage />
+        {tab === "about" ? (
+          <ProfileAboutForm farmer={farmer} profile={profile} />
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
+export function PublicFarmerProfile({
+  farmer,
+  tab,
+  products,
+  posts,
+}: {
+  farmer: {
+    id: string;
+    farm_name: string;
+    description: string | null;
+    location_text: string | null;
+    verified_at: string | null;
+    avatar_url: string | null;
+    productCount: number;
+  };
+  tab: PublicFarmerProfileTab;
+  products: ProductListItem[];
+  posts: FarmerBlogPost[];
+}) {
+  const coverUrl = coverFromPosts(posts);
+  const tabs = [
+    {
+      id: "posts",
+      label: "Paylaşımlar",
+      href: `/farmers/${farmer.id}?tab=posts`,
+    },
+    {
+      id: "products",
+      label: "Məhsullar",
+      href: `/farmers/${farmer.id}?tab=products`,
+    },
+    {
+      id: "about",
+      label: "Haqqında",
+      href: `/farmers/${farmer.id}?tab=about`,
+    },
+  ];
+
+  return (
+    <div className="mx-auto w-full max-w-3xl px-4 py-8 md:px-6 md:py-10">
+      <Link
+        href="/farmers"
+        className="mb-4 inline-flex text-sm font-medium text-[#1f5c3d] hover:underline"
+      >
+        ← Fermerlərə qayıt
+      </Link>
+
+      <ProfileHero
+        farmName={farmer.farm_name}
+        avatarUrl={farmer.avatar_url}
+        locationText={farmer.location_text}
+        description={tab === "about" ? null : farmer.description}
+        verified={Boolean(farmer.verified_at)}
+        productCount={farmer.productCount}
+        postCount={posts.length}
+        coverUrl={coverUrl}
+        actions={
+          <Link
+            href="/shop"
+            className="inline-flex rounded-full bg-[#1f5c3d] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#184a31]"
+          >
+            Məhsullara bax
+          </Link>
+        }
+      />
+
+      <ProfileTabs tabs={tabs} active={tab} />
+
+      <div className="mt-5">
+        {tab === "posts" ? <FarmerBlogFeed posts={posts} /> : null}
+
+        {tab === "products" ? (
+          products.length > 0 ? (
+            <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3">
+              {products.map((product) => (
+                <ProductCard key={product.id} product={product} />
+              ))}
+            </div>
+          ) : (
+            <p className="rounded-[1.5rem] bg-white px-4 py-10 text-center text-sm text-zinc-600 ring-1 ring-zinc-200">
+              Bu fermerin hazırda satışda məhsulu yoxdur.
+            </p>
+          )
+        ) : null}
+
+        {tab === "about" ? (
+          <div className="rounded-[1.5rem] bg-white p-5 shadow-sm ring-1 ring-zinc-200 sm:p-6">
+            <h2 className={`${displayFont.className} text-xl font-bold text-zinc-900`}>
+              Haqqında
+            </h2>
+            {farmer.description ? (
+              <p className="mt-3 text-sm leading-7 text-zinc-700">
+                {farmer.description}
+              </p>
+            ) : (
+              <p className="mt-3 text-sm text-zinc-500">
+                Bu təsərrüfat haqqında əlavə təsvir hələ əlavə olunmayıb.
+              </p>
+            )}
+            {farmer.location_text ? (
+              <p className="mt-4 text-sm text-zinc-600">
+                <span className="font-medium text-zinc-800">Yer:</span>{" "}
+                {farmer.location_text}
+              </p>
+            ) : null}
           </div>
         ) : null}
       </div>

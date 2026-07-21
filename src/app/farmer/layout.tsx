@@ -7,10 +7,10 @@ export default function FarmerLayout({
     <PortalShell
       title="Fermer · Barakatly"
       links={[
-        { href: "/farmer?tab=about", label: "Profil" },
+        { href: "/farmer?tab=posts", label: "Profil" },
         { href: "/farmer?tab=products", label: "Məhsullar" },
         { href: "/farmer?tab=orders", label: "Sifarişlər" },
-        { href: "/farmer?tab=blog", label: "Blog" },
+        { href: "/farmer?tab=about", label: "Redaktə" },
       ]}
     >
       {children}
