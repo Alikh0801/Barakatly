@@ -32,7 +32,7 @@ export default async function FarmerDashboardPage({
 }) {
   const { profile, farmer } = await requireFarmer();
   const params = await searchParams;
-  const tab = parseTab(params.tab);
+  const initialTab = parseTab(params.tab);
 
   if (farmer.status !== "approved") {
     return (
@@ -55,7 +55,7 @@ export default async function FarmerDashboardPage({
     <FarmerProfileDashboard
       farmer={farmer}
       profile={profile}
-      tab={tab}
+      initialTab={initialTab}
       products={products}
       orders={orders}
       posts={posts}

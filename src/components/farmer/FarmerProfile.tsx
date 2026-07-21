@@ -217,18 +217,21 @@ function ProfileHero({
 function ProfileTabs({
   tabs,
   active,
+  onChange,
 }: {
-  tabs: { id: string; label: string; href: string }[];
+  tabs: { id: string; label: string }[];
   active: string;
+  onChange: (id: string) => void;
 }) {
   return (
     <nav className="sticky top-0 z-10 -mx-1 mt-5 flex gap-1 overflow-x-auto rounded-2xl bg-white/90 p-1 shadow-sm ring-1 ring-zinc-200 backdrop-blur">
       {tabs.map((tab) => {
         const isActive = tab.id === active;
         return (
-          <Link
+          <button
             key={tab.id}
-            href={tab.href}
+            type="button"
+            onClick={() => onChange(tab.id)}
             className={`shrink-0 rounded-xl px-4 py-2.5 text-sm font-semibold transition ${
               isActive
                 ? "bg-[#1f5c3d] text-white shadow-sm"
@@ -236,7 +239,7 @@ function ProfileTabs({
             }`}
           >
             {tab.label}
-          </Link>
+          </button>
         );
       })}
     </nav>
@@ -584,23 +587,34 @@ export function FarmerBlogFeed({
 export function FarmerProfileDashboard({
   farmer,
   profile,
-  tab,
+  initialTab = "posts",
   products,
   orders,
   posts,
 }: {
   farmer: Farmer;
   profile: Profile;
-  tab: FarmerProfileTab;
+  initialTab?: FarmerProfileTab;
   products: FarmerProduct[];
   orders: FarmerOrderItem[];
   posts: FarmerBlogPost[];
 }) {
-  const tabs = [
-    { id: "posts", label: "Paylaşımlar", href: "/farmer?tab=posts" },
-    { id: "products", label: "Məhsullar", href: "/farmer?tab=products" },
-    { id: "orders", label: "Sifarişlər", href: "/farmer?tab=orders" },
-    { id: "about", label: "Redaktə", href: "/farmer?tab=about" },
+  const [tab, setTab] = useState<FarmerProfileTab>(initialTab);
+
+  function selectTab(next: FarmerProfileTab) {
+    setTab(next);
+    if (typeof window !== "undefined") {
+      const url = new URL(window.location.href);
+      url.searchParams.set("tab", next);
+      window.history.replaceState(null, "", url.pathname + "?" + url.searchParams.toString());
+    }
+  }
+
+  const tabs: { id: FarmerProfileTab; label: string }[] = [
+    { id: "posts", label: "Paylaşımlar" },
+    { id: "products", label: "Məhsullar" },
+    { id: "orders", label: "Sifarişlər" },
+    { id: "about", label: "Redaktə" },
   ];
 
   return (
@@ -621,45 +635,48 @@ export function FarmerProfileDashboard({
             >
               Müştəri görünüşü
             </Link>
-            <Link
-              href="/farmer?tab=posts"
+            <button
+              type="button"
+              onClick={() => selectTab("posts")}
               className="inline-flex rounded-full bg-[#1f5c3d] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#184a31]"
             >
               Paylaş
-            </Link>
+            </button>
           </>
         }
       />
 
-      <ProfileTabs tabs={tabs} active={tab} />
+      <ProfileTabs
+        tabs={tabs}
+        active={tab}
+        onChange={(id) => selectTab(id as FarmerProfileTab)}
+      />
 
       <div className="mt-5">
-        {tab === "posts" ? (
-          <div className="space-y-5">
-            <BlogComposer />
-            <FarmerBlogFeed posts={posts} canManage />
+        <div className={tab === "posts" ? "space-y-5" : "hidden"}>
+          <BlogComposer />
+          <FarmerBlogFeed posts={posts} canManage />
+        </div>
+
+        <div className={tab === "products" ? "space-y-4" : "hidden"}>
+          <div className="flex justify-end">
+            <Link
+              href="/farmer/products/new"
+              className="inline-flex rounded-full bg-[#1f5c3d] px-4 py-2 text-sm font-semibold text-white hover:bg-[#184a31]"
+            >
+              Yeni məhsul
+            </Link>
           </div>
-        ) : null}
+          <FarmerProductsList products={products} />
+        </div>
 
-        {tab === "products" ? (
-          <div className="space-y-4">
-            <div className="flex justify-end">
-              <Link
-                href="/farmer/products/new"
-                className="inline-flex rounded-full bg-[#1f5c3d] px-4 py-2 text-sm font-semibold text-white hover:bg-[#184a31]"
-              >
-                Yeni məhsul
-              </Link>
-            </div>
-            <FarmerProductsList products={products} />
-          </div>
-        ) : null}
+        <div className={tab === "orders" ? "block" : "hidden"}>
+          <FarmerOrdersList items={orders} />
+        </div>
 
-        {tab === "orders" ? <FarmerOrdersList items={orders} /> : null}
-
-        {tab === "about" ? (
+        <div className={tab === "about" ? "block" : "hidden"}>
           <ProfileAboutForm farmer={farmer} profile={profile} />
-        ) : null}
+        </div>
       </div>
     </div>
   );
@@ -667,7 +684,7 @@ export function FarmerProfileDashboard({
 
 export function PublicFarmerProfile({
   farmer,
-  tab,
+  initialTab = "posts",
   products,
   posts,
 }: {
@@ -680,26 +697,29 @@ export function PublicFarmerProfile({
     avatar_url: string | null;
     productCount: number;
   };
-  tab: PublicFarmerProfileTab;
+  initialTab?: PublicFarmerProfileTab;
   products: ProductListItem[];
   posts: FarmerBlogPost[];
 }) {
-  const tabs = [
-    {
-      id: "posts",
-      label: "Paylaşımlar",
-      href: `/farmers/${farmer.id}?tab=posts`,
-    },
-    {
-      id: "products",
-      label: "Məhsullar",
-      href: `/farmers/${farmer.id}?tab=products`,
-    },
-    {
-      id: "about",
-      label: "Haqqında",
-      href: `/farmers/${farmer.id}?tab=about`,
-    },
+  const [tab, setTab] = useState<PublicFarmerProfileTab>(initialTab);
+
+  function selectTab(next: PublicFarmerProfileTab) {
+    setTab(next);
+    if (typeof window !== "undefined") {
+      const url = new URL(window.location.href);
+      url.searchParams.set("tab", next);
+      window.history.replaceState(
+        null,
+        "",
+        url.pathname + "?" + url.searchParams.toString()
+      );
+    }
+  }
+
+  const tabs: { id: PublicFarmerProfileTab; label: string }[] = [
+    { id: "posts", label: "Paylaşımlar" },
+    { id: "products", label: "Məhsullar" },
+    { id: "about", label: "Haqqında" },
   ];
 
   return (
@@ -729,13 +749,19 @@ export function PublicFarmerProfile({
         }
       />
 
-      <ProfileTabs tabs={tabs} active={tab} />
+      <ProfileTabs
+        tabs={tabs}
+        active={tab}
+        onChange={(id) => selectTab(id as PublicFarmerProfileTab)}
+      />
 
       <div className="mt-5">
-        {tab === "posts" ? <FarmerBlogFeed posts={posts} /> : null}
+        <div className={tab === "posts" ? "block" : "hidden"}>
+          <FarmerBlogFeed posts={posts} />
+        </div>
 
-        {tab === "products" ? (
-          products.length > 0 ? (
+        <div className={tab === "products" ? "block" : "hidden"}>
+          {products.length > 0 ? (
             <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3">
               {products.map((product) => (
                 <ProductCard key={product.id} product={product} />
@@ -745,10 +771,10 @@ export function PublicFarmerProfile({
             <p className="rounded-[1.5rem] bg-white px-4 py-10 text-center text-sm text-zinc-600 ring-1 ring-zinc-200">
               Bu fermerin hazırda satışda məhsulu yoxdur.
             </p>
-          )
-        ) : null}
+          )}
+        </div>
 
-        {tab === "about" ? (
+        <div className={tab === "about" ? "block" : "hidden"}>
           <div className="rounded-[1.5rem] bg-white p-5 shadow-sm ring-1 ring-zinc-200 sm:p-6">
             <h2 className={`${displayFont.className} text-xl font-bold text-zinc-900`}>
               Haqqında
@@ -769,7 +795,7 @@ export function PublicFarmerProfile({
               </p>
             ) : null}
           </div>
-        ) : null}
+        </div>
       </div>
     </div>
   );

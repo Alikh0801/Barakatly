@@ -49,7 +49,7 @@ export default async function FarmerDetailPage({
   const farmer = await getPublicFarmerById(id);
   if (!farmer) notFound();
 
-  const tab = parseTab(tabParam);
+  const initialTab = parseTab(tabParam);
 
   const [products, rawPosts] = await Promise.all([
     getPublicFarmerProducts(farmer.id),
@@ -77,7 +77,7 @@ export default async function FarmerDetailPage({
   return (
     <PublicFarmerProfile
       farmer={farmer}
-      tab={tab}
+      initialTab={initialTab}
       products={products}
       posts={posts}
     />
