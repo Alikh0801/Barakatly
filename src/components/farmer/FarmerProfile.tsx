@@ -14,6 +14,7 @@ import {
   FarmerOrdersList,
   FarmerProductsList,
 } from "@/components/farmer/FarmerPanels";
+import { AvatarField } from "@/components/farmer/AvatarField";
 import { ProductCard } from "@/components/shop/ProductCard";
 import type {
   FarmerBlogPost,
@@ -257,7 +258,6 @@ function ProfileAboutForm({
     updateFarmerProfile,
     initialState
   );
-  const [preview, setPreview] = useState<string | null>(farmer.avatar_url);
 
   return (
     <form
@@ -278,26 +278,7 @@ function ProfileAboutForm({
         </p>
       ) : null}
 
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-        <FarmerAvatar
-          name={farmer.farm_name}
-          url={preview}
-          className="h-20 w-20 text-2xl ring-2 ring-zinc-100"
-        />
-        <div className="min-w-0 flex-1">
-          <FilePickerButton
-            name="avatar"
-            accept="image/jpeg,image/png,image/webp"
-            label="Profil şəkli"
-            hint="JPEG, PNG və ya WebP"
-            onFilesChange={(files) => {
-              const file = files?.[0];
-              if (!file) return;
-              setPreview(URL.createObjectURL(file));
-            }}
-          />
-        </div>
-      </div>
+      <AvatarField farmName={farmer.farm_name} initialUrl={farmer.avatar_url} />
 
       <div>
         <label htmlFor="farm_name" className="block text-sm font-medium text-zinc-700">

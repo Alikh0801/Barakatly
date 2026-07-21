@@ -430,6 +430,7 @@ export async function updateFarmerProfile(
   const description = String(formData.get("description") ?? "").trim();
   const locationText = String(formData.get("location_text") ?? "").trim();
   const avatarFile = formData.get("avatar");
+  const removeAvatar = String(formData.get("remove_avatar") ?? "") === "1";
 
   if (!farmName) {
     return { error: "Təsərrüfat adı mütləqdir." };
@@ -438,7 +439,9 @@ export async function updateFarmerProfile(
   const supabase = await createClient();
   let avatarUrl = farmer.avatar_url;
 
-  if (avatarFile instanceof File && avatarFile.size > 0) {
+  if (removeAvatar) {
+    avatarUrl = null;
+  } else if (avatarFile instanceof File && avatarFile.size > 0) {
     const uploaded = await uploadFarmerMedia(
       supabase,
       profile.id,
