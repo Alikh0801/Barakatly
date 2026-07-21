@@ -1,12 +1,13 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
 import { redirect } from "next/navigation";
 import { getAuthCallbackUrl, getSupabaseEnvError } from "@/lib/auth/urls";
 import { getProfile } from "@/lib/auth/session";
 import { requireApprovedFarmer } from "@/lib/farmer/auth";
 import { ensureFarmerRecord } from "@/lib/farmer/ensure";
 import { uploadProductImage } from "@/lib/farmer/image-upload";
+import { uploadFarmerMedia } from "@/lib/farmer/media-upload";
 import {
   FARMER_ITEM_STATUS_TRANSITIONS,
   getOrderItemStatusLabel,
@@ -412,9 +413,167 @@ export async function updateOrderItemStatus(
   }
 
   revalidatePath("/farmer/orders");
+  revalidatePath("/farmer");
   revalidatePath("/orders");
   revalidatePath("/admin/orders");
   revalidatePath("/admin");
   revalidatePath("/notifications");
   return { success: "Status yeniləndi." };
+}
+
+export async function updateFarmerProfile(
+  _prev: FarmerActionState,
+  formData: FormData
+): Promise<FarmerActionState> {
+  const { profile, farmer } = await requireApprovedFarmer();
+  const farmName = String(formData.get("farm_name") ?? "").trim();
+  const description = String(formData.get("description") ?? "").trim();
+  const locationText = String(formData.get("location_text") ?? "").trim();
+  const avatarFile = formData.get("avatar");
+
+  if (!farmName) {
+    return { error: "Təsərrüfat adı mütləqdir." };
+  }
+
+  const supabase = await createClient();
+  let avatarUrl = farmer.avatar_url;
+
+  if (avatarFile instanceof File && avatarFile.size > 0) {
+    const uploaded = await uploadFarmerMedia(
+      supabase,
+      profile.id,
+      "avatar",
+      avatarFile
+    );
+    if ("error" in uploaded) return { error: uploaded.error };
+    if (uploaded.mediaType !== "image") {
+      return { error: "Profil şəkli yalnız şəkil ola bilər." };
+    }
+    avatarUrl = uploaded.url;
+  }
+
+  const { error } = await supabase
+    .from("farmers")
+    .update({
+      farm_name: farmName,
+      description: description || null,
+      location_text: locationText || null,
+      avatar_url: avatarUrl,
+    })
+    .eq("id", farmer.id);
+
+  if (error) {
+    console.error("[farmer.updateFarmerProfile]", error.message);
+    return { error: "Profil yenilənmədi." };
+  }
+
+  revalidatePath("/farmer");
+  revalidatePath("/farmers");
+  revalidatePath(`/farmers/${farmer.id}`);
+  updateTag("farmers");
+
+  return { success: "Profil yeniləndi." };
+}
+
+export async function createFarmerBlogPost(
+  _prev: FarmerActionState,
+  formData: FormData
+): Promise<FarmerActionState> {
+  const { profile, farmer } = await requireApprovedFarmer();
+  const caption = String(formData.get("caption") ?? "").trim();
+  const files = formData
+    .getAll("media")
+    .filter((value): value is File => value instanceof File && value.size > 0);
+
+  if (files.length === 0) {
+    return { error: "Ən azı bir şəkil və ya video seçin." };
+  }
+
+  if (files.length > 6) {
+    return { error: "Bir paylaşıma ən çox 6 fayl əlavə etmək olar." };
+  }
+
+  const supabase = await createClient();
+  const { data: post, error: postError } = await supabase
+    .from("farmer_posts")
+    .insert({
+      farmer_id: farmer.id,
+      caption,
+    })
+    .select("id")
+    .single();
+
+  if (postError || !post) {
+    console.error("[farmer.createFarmerBlogPost]", postError?.message);
+    return { error: "Paylaşım yaradıla bilmədi." };
+  }
+
+  const mediaRows: {
+    post_id: string;
+    media_type: "image" | "video";
+    url: string;
+    sort_order: number;
+  }[] = [];
+
+  for (const [index, file] of files.entries()) {
+    const uploaded = await uploadFarmerMedia(
+      supabase,
+      profile.id,
+      `posts/${post.id}`,
+      file
+    );
+    if ("error" in uploaded) {
+      await supabase.from("farmer_posts").delete().eq("id", post.id);
+      return { error: uploaded.error };
+    }
+    mediaRows.push({
+      post_id: post.id,
+      media_type: uploaded.mediaType,
+      url: uploaded.url,
+      sort_order: index,
+    });
+  }
+
+  const { error: mediaError } = await supabase
+    .from("farmer_post_media")
+    .insert(mediaRows);
+
+  if (mediaError) {
+    console.error("[farmer.createFarmerBlogPost.media]", mediaError.message);
+    await supabase.from("farmer_posts").delete().eq("id", post.id);
+    return { error: "Media yadda saxlanılmadı." };
+  }
+
+  revalidatePath("/farmer");
+  revalidatePath(`/farmers/${farmer.id}`);
+  updateTag("farmers");
+
+  return { success: "Paylaşım əlavə olundu." };
+}
+
+export async function deleteFarmerBlogPost(
+  _prev: FarmerActionState,
+  formData: FormData
+): Promise<FarmerActionState> {
+  const { farmer } = await requireApprovedFarmer();
+  const postId = String(formData.get("post_id") ?? "").trim();
+  if (!postId) return { error: "Paylaşım tapılmadı." };
+
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("farmer_posts")
+    .delete()
+    .eq("id", postId)
+    .eq("farmer_id", farmer.id);
+
+  if (error) {
+    console.error("[farmer.deleteFarmerBlogPost]", error.message);
+    return { error: "Paylaşım silinmədi." };
+  }
+
+  revalidatePath("/farmer");
+  revalidatePath(`/farmers/${farmer.id}`);
+  updateTag("farmers");
+
+  return { success: "Paylaşım silindi." };
 }

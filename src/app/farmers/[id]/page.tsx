@@ -1,11 +1,14 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { FarmerBlogFeed } from "@/components/farmer/FarmerProfile";
 import { ProductCard } from "@/components/shop/ProductCard";
 import { VerifiedIcon } from "@/components/ui/VerifiedIcon";
 import {
+  getPublicFarmerBlogPosts,
   getPublicFarmerById,
   getPublicFarmerProducts,
 } from "@/lib/farmers/queries";
+import type { FarmerBlogPost } from "@/lib/farmer/queries";
 
 export async function generateMetadata({
   params,
@@ -36,7 +39,28 @@ export default async function FarmerDetailPage({
   const farmer = await getPublicFarmerById(id);
   if (!farmer) notFound();
 
-  const products = await getPublicFarmerProducts(farmer.id);
+  const [products, rawPosts] = await Promise.all([
+    getPublicFarmerProducts(farmer.id),
+    getPublicFarmerBlogPosts(farmer.id),
+  ]);
+
+  const posts = rawPosts.map(
+    (post): FarmerBlogPost => ({
+      id: post.id,
+      farmer_id: farmer.id,
+      caption: post.caption,
+      created_at: post.created_at,
+      updated_at: post.created_at,
+      farmer_post_media: post.farmer_post_media.map((media) => ({
+        id: media.id,
+        post_id: post.id,
+        media_type: media.media_type,
+        url: media.url,
+        sort_order: media.sort_order,
+        created_at: post.created_at,
+      })),
+    })
+  );
 
   return (
     <div className="mx-auto w-full max-w-6xl px-4 py-10 md:px-6 md:py-14">
@@ -48,31 +72,46 @@ export default async function FarmerDetailPage({
         ← Fermerlərə qayıt
       </Link>
 
-      <section className="mt-6">
-        <div className="flex flex-wrap items-center gap-2">
-          <h1 className="text-3xl font-semibold tracking-tight text-zinc-900">
-            {farmer.farm_name}
-          </h1>
-          {farmer.verified_at ? <VerifiedIcon className="h-6 w-6" /> : null}
-        </div>
-
-        {farmer.location_text ? (
-          <p className="mt-2 text-sm text-zinc-600">{farmer.location_text}</p>
-        ) : null}
-
-        {farmer.description ? (
-          <p className="mt-4 max-w-3xl text-base leading-7 text-zinc-700">
-            {farmer.description}
-          </p>
+      <section className="mt-6 flex flex-col gap-5 sm:flex-row sm:items-start">
+        {farmer.avatar_url ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={farmer.avatar_url}
+            alt={farmer.farm_name}
+            className="h-24 w-24 shrink-0 rounded-full object-cover ring-2 ring-emerald-100"
+          />
         ) : (
-          <p className="mt-4 text-sm text-zinc-600">
-            Bu təsərrüfat haqqında əlavə təsvir hələ əlavə olunmayıb.
-          </p>
+          <div className="inline-flex h-24 w-24 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-3xl font-semibold text-emerald-800">
+            {farmer.farm_name.slice(0, 1).toUpperCase()}
+          </div>
         )}
 
-        <p className="mt-4 text-sm text-zinc-600">
-          {farmer.productCount} təsdiqlənmiş məhsul
-        </p>
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-2">
+            <h1 className="text-3xl font-semibold tracking-tight text-zinc-900">
+              {farmer.farm_name}
+            </h1>
+            {farmer.verified_at ? <VerifiedIcon className="h-6 w-6" /> : null}
+          </div>
+
+          {farmer.location_text ? (
+            <p className="mt-2 text-sm text-zinc-600">{farmer.location_text}</p>
+          ) : null}
+
+          {farmer.description ? (
+            <p className="mt-4 max-w-3xl text-base leading-7 text-zinc-700">
+              {farmer.description}
+            </p>
+          ) : (
+            <p className="mt-4 text-sm text-zinc-600">
+              Bu təsərrüfat haqqında əlavə təsvir hələ əlavə olunmayıb.
+            </p>
+          )}
+
+          <p className="mt-4 text-sm text-zinc-600">
+            {farmer.productCount} təsdiqlənmiş məhsul
+          </p>
+        </div>
       </section>
 
       <section className="mt-12">
@@ -91,6 +130,24 @@ export default async function FarmerDetailPage({
             Bu fermerin hazırda satışda məhsulu yoxdur.
           </p>
         )}
+      </section>
+
+      <section className="mt-14">
+        <h2 className="text-xl font-semibold tracking-tight text-zinc-900">
+          Blog
+        </h2>
+        <p className="mt-1 text-sm text-zinc-500">
+          Təsərrüfatdan şəkillər və videolar
+        </p>
+        <div className="mt-6">
+          {posts.length > 0 ? (
+            <FarmerBlogFeed posts={posts} />
+          ) : (
+            <p className="rounded-2xl bg-zinc-50 px-4 py-8 text-center text-sm text-zinc-600 ring-1 ring-zinc-200">
+              Bu fermer hələ blog paylaşımı etməyib.
+            </p>
+          )}
+        </div>
       </section>
     </div>
   );

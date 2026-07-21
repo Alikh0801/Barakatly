@@ -1,5 +1,12 @@
 import { createClient } from "@/lib/supabase/server";
-import type { Category, Order, OrderItem, Product } from "@/types";
+import type {
+  Category,
+  FarmerPost,
+  FarmerPostMedia,
+  Order,
+  OrderItem,
+  Product,
+} from "@/types";
 
 export type FarmerProduct = Product & {
   product_images: { id: string; url: string; sort_order: number }[];
@@ -88,6 +95,46 @@ export async function getFarmerOrderItems(
   }
 
   return (data ?? []) as unknown as FarmerOrderItem[];
+}
+
+export type FarmerBlogPost = FarmerPost & {
+  farmer_post_media: FarmerPostMedia[];
+};
+
+export async function getFarmerBlogPosts(
+  farmerId: string
+): Promise<FarmerBlogPost[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("farmer_posts")
+    .select(
+      `
+      *,
+      farmer_post_media (
+        id,
+        post_id,
+        media_type,
+        url,
+        sort_order,
+        created_at
+      )
+    `
+    )
+    .eq("farmer_id", farmerId)
+    .order("created_at", { ascending: false })
+    .limit(40);
+
+  if (error) {
+    console.error("[farmer.getFarmerBlogPosts]", error.message);
+    return [];
+  }
+
+  return ((data ?? []) as unknown as FarmerBlogPost[]).map((post) => ({
+    ...post,
+    farmer_post_media: [...(post.farmer_post_media ?? [])].sort(
+      (a, b) => a.sort_order - b.sort_order
+    ),
+  }));
 }
 
 export async function getShopCategories(): Promise<Category[]> {

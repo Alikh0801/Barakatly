@@ -62,23 +62,37 @@ export default async function FarmersPage() {
                 prefetch
                 className="flex flex-col gap-3 py-6 transition hover:bg-zinc-50/80 sm:flex-row sm:items-center sm:justify-between"
               >
-                <div>
-                  <div className="flex flex-wrap items-center gap-2">
-                    <h2 className="text-lg font-semibold text-zinc-900">
-                      {farmer.farm_name}
-                    </h2>
-                    {farmer.verified_at ? <VerifiedIcon /> : null}
+                <div className="flex min-w-0 gap-4">
+                  {farmer.avatar_url ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={farmer.avatar_url}
+                      alt=""
+                      className="h-14 w-14 shrink-0 rounded-full object-cover ring-1 ring-zinc-200"
+                    />
+                  ) : (
+                    <div className="inline-flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-lg font-semibold text-emerald-800">
+                      {farmer.farm_name.slice(0, 1).toUpperCase()}
+                    </div>
+                  )}
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <h2 className="text-lg font-semibold text-zinc-900">
+                        {farmer.farm_name}
+                      </h2>
+                      {farmer.verified_at ? <VerifiedIcon /> : null}
+                    </div>
+                    {farmer.location_text ? (
+                      <p className="mt-1 text-sm text-zinc-600">
+                        {farmer.location_text}
+                      </p>
+                    ) : null}
+                    {farmer.description ? (
+                      <p className="mt-2 max-w-2xl text-sm leading-6 text-zinc-600">
+                        {farmer.description}
+                      </p>
+                    ) : null}
                   </div>
-                  {farmer.location_text ? (
-                    <p className="mt-1 text-sm text-zinc-600">
-                      {farmer.location_text}
-                    </p>
-                  ) : null}
-                  {farmer.description ? (
-                    <p className="mt-2 max-w-2xl text-sm leading-6 text-zinc-600">
-                      {farmer.description}
-                    </p>
-                  ) : null}
                 </div>
                 <div className="shrink-0 text-sm font-medium text-emerald-700">
                   {farmer.productCount} məhsul →

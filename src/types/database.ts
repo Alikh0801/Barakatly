@@ -28,6 +28,7 @@ export type OrderItemStatus =
   | "picked_up"
   | "delivered";
 export type PaymentStatus = "pending" | "confirmed" | "rejected";
+export type FarmerPostMediaType = "image" | "video";
 export type NotificationType =
   | "farmer_registration"
   | "farmer_approval"
@@ -88,6 +89,7 @@ export interface Database {
           location_map_url: string | null;
           status: FarmerStatus;
           verified_at: string | null;
+          avatar_url: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -102,6 +104,7 @@ export interface Database {
           location_map_url?: string | null;
           status?: FarmerStatus;
           verified_at?: string | null;
+          avatar_url?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -116,8 +119,60 @@ export interface Database {
           location_map_url?: string | null;
           status?: FarmerStatus;
           verified_at?: string | null;
+          avatar_url?: string | null;
           created_at?: string;
           updated_at?: string;
+        };
+        Relationships: [];
+      };
+      farmer_posts: {
+        Row: {
+          id: string;
+          farmer_id: string;
+          caption: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          farmer_id: string;
+          caption?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          farmer_id?: string;
+          caption?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      farmer_post_media: {
+        Row: {
+          id: string;
+          post_id: string;
+          media_type: FarmerPostMediaType;
+          url: string;
+          sort_order: number;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          post_id: string;
+          media_type: FarmerPostMediaType;
+          url: string;
+          sort_order?: number;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          post_id?: string;
+          media_type?: FarmerPostMediaType;
+          url?: string;
+          sort_order?: number;
+          created_at?: string;
         };
         Relationships: [];
       };
@@ -504,6 +559,7 @@ export interface Database {
       order_status: OrderStatus;
       order_item_status: OrderItemStatus;
       payment_status: PaymentStatus;
+      farmer_post_media_type: FarmerPostMediaType;
       notification_type: NotificationType;
     };
     CompositeTypes: Record<string, never>;
@@ -512,6 +568,9 @@ export interface Database {
 
 export type Profile = Database["public"]["Tables"]["profiles"]["Row"];
 export type Farmer = Database["public"]["Tables"]["farmers"]["Row"];
+export type FarmerPost = Database["public"]["Tables"]["farmer_posts"]["Row"];
+export type FarmerPostMedia =
+  Database["public"]["Tables"]["farmer_post_media"]["Row"];
 export type Courier = Database["public"]["Tables"]["couriers"]["Row"];
 export type Category = Database["public"]["Tables"]["categories"]["Row"];
 export type Product = Database["public"]["Tables"]["products"]["Row"];

@@ -8,6 +8,7 @@ export type PublicFarmer = {
   description: string | null;
   location_text: string | null;
   verified_at: string | null;
+  avatar_url: string | null;
   productCount: number;
 };
 
@@ -42,6 +43,7 @@ function mapPublicFarmer(farmer: {
   description: string | null;
   location_text: string | null;
   verified_at: string | null;
+  avatar_url?: string | null;
   products?: { id: string; status: string }[] | null;
 }): PublicFarmer {
   const products = Array.isArray(farmer.products) ? farmer.products : [];
@@ -55,6 +57,7 @@ function mapPublicFarmer(farmer: {
     description: farmer.description,
     location_text: farmer.location_text,
     verified_at: farmer.verified_at,
+    avatar_url: farmer.avatar_url ?? null,
     productCount: approvedCount,
   };
 }
@@ -70,6 +73,7 @@ async function fetchPublicFarmers(): Promise<PublicFarmer[]> {
       description,
       location_text,
       verified_at,
+      avatar_url,
       products ( id, status )
     `,
     )
@@ -97,6 +101,7 @@ async function fetchPublicFarmerById(id: string): Promise<PublicFarmer | null> {
       description,
       location_text,
       verified_at,
+      avatar_url,
       products ( id, status )
     `,
     )
@@ -132,6 +137,54 @@ async function fetchFarmerProducts(farmerId: string): Promise<ProductListItem[]>
   return (data ?? []) as unknown as ProductListItem[];
 }
 
+export type PublicFarmerBlogPost = {
+  id: string;
+  caption: string;
+  created_at: string;
+  farmer_post_media: {
+    id: string;
+    media_type: "image" | "video";
+    url: string;
+    sort_order: number;
+  }[];
+};
+
+async function fetchPublicFarmerBlogPosts(
+  farmerId: string
+): Promise<PublicFarmerBlogPost[]> {
+  const supabase = createPublicClient();
+  const { data, error } = await supabase
+    .from("farmer_posts")
+    .select(
+      `
+      id,
+      caption,
+      created_at,
+      farmer_post_media (
+        id,
+        media_type,
+        url,
+        sort_order
+      )
+    `
+    )
+    .eq("farmer_id", farmerId)
+    .order("created_at", { ascending: false })
+    .limit(30);
+
+  if (error) {
+    console.error("[farmers.getPublicFarmerBlogPosts]", error.message);
+    return [];
+  }
+
+  return ((data ?? []) as unknown as PublicFarmerBlogPost[]).map((post) => ({
+    ...post,
+    farmer_post_media: [...(post.farmer_post_media ?? [])].sort(
+      (a, b) => a.sort_order - b.sort_order
+    ),
+  }));
+}
+
 export function getPublicFarmers() {
   return unstable_cache(fetchPublicFarmers, ["public-farmers"], {
     revalidate: 60,
@@ -152,5 +205,13 @@ export function getPublicFarmerProducts(farmerId: string) {
     async () => fetchFarmerProducts(farmerId),
     ["public-farmer-products", farmerId],
     { revalidate: 60, tags: ["farmers", "products"] },
+  )();
+}
+
+export function getPublicFarmerBlogPosts(farmerId: string) {
+  return unstable_cache(
+    async () => fetchPublicFarmerBlogPosts(farmerId),
+    ["public-farmer-blog", farmerId],
+    { revalidate: 60, tags: ["farmers"] },
   )();
 }
