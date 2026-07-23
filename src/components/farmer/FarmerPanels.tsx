@@ -19,17 +19,46 @@ import {
   getOrderItemStatusLabel,
   getProductStatusLabel,
 } from "@/lib/orders/labels";
+import { AZ_REGIONS } from "@/lib/az/regions";
+import { formatDateTime } from "@/lib/format/date";
 import { formatPrice, formatUnit } from "@/lib/shop/format";
 import type { FarmerOrderItem, FarmerProduct } from "@/lib/farmer/queries";
 import type { Category, Farmer, OrderItemStatus, UnitType } from "@/types";
 
 const initialState: FarmerActionState = {};
 
-function formatDate(value: string) {
-  return new Intl.DateTimeFormat("az-AZ", {
-    dateStyle: "medium",
-    timeStyle: "short",
-  }).format(new Date(value));
+function RegionSelect({
+  id = "location_text",
+  name = "location_text",
+  defaultValue = "",
+  required = false,
+}: {
+  id?: string;
+  name?: string;
+  defaultValue?: string;
+  required?: boolean;
+}) {
+  return (
+    <div>
+      <label htmlFor={id} className="block text-sm font-medium text-zinc-700">
+        Bölgə{required ? " *" : ""}
+      </label>
+      <select
+        id={id}
+        name={name}
+        required={required}
+        defaultValue={defaultValue}
+        className="mt-1 w-full rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-base text-zinc-900 outline-none ring-emerald-500 focus:ring-2"
+      >
+        <option value="">Bölgə seçin</option>
+        {AZ_REGIONS.map((region) => (
+          <option key={region} value={region}>
+            {region}
+          </option>
+        ))}
+      </select>
+    </div>
+  );
 }
 
 export function FarmerSignUpForm() {
@@ -72,27 +101,7 @@ export function FarmerSignUpForm() {
           className="mt-1 w-full rounded-xl border border-zinc-200 px-3 py-2.5 text-base text-zinc-900 outline-none ring-emerald-500 focus:ring-2"
         />
       </div>
-      <div>
-        <label htmlFor="location_text" className="block text-sm font-medium text-zinc-700">
-          Yerləşmə
-        </label>
-        <input
-          id="location_text"
-          name="location_text"
-          className="mt-1 w-full rounded-xl border border-zinc-200 px-3 py-2.5 text-base text-zinc-900 outline-none ring-emerald-500 focus:ring-2"
-        />
-      </div>
-      <div>
-        <label htmlFor="description" className="block text-sm font-medium text-zinc-700">
-          Təsvir
-        </label>
-        <textarea
-          id="description"
-          name="description"
-          rows={3}
-          className="mt-1 w-full rounded-xl border border-zinc-200 px-3 py-2.5 text-base text-zinc-900 outline-none ring-emerald-500 focus:ring-2"
-        />
-      </div>
+      <RegionSelect required />
       <PasswordInput id="password" name="password" label="Şifrə" autoComplete="new-password" />
       <PasswordInput
         id="password_confirm"
@@ -175,27 +184,7 @@ export function CompleteFarmerProfileForm({
         required
         defaultValue={defaultPhone}
       />
-      <div>
-        <label htmlFor="location_text" className="block text-sm font-medium text-zinc-700">
-          Yerləşmə
-        </label>
-        <input
-          id="location_text"
-          name="location_text"
-          className="mt-1 w-full rounded-xl border border-zinc-200 px-3 py-2.5 text-base text-zinc-900 outline-none ring-emerald-500 focus:ring-2"
-        />
-      </div>
-      <div>
-        <label htmlFor="description" className="block text-sm font-medium text-zinc-700">
-          Təsvir
-        </label>
-        <textarea
-          id="description"
-          name="description"
-          rows={3}
-          className="mt-1 w-full rounded-xl border border-zinc-200 px-3 py-2.5 text-base text-zinc-900 outline-none ring-emerald-500 focus:ring-2"
-        />
-      </div>
+      <RegionSelect required />
 
       {state.error ? (
         <p className="rounded-xl bg-rose-50 px-3 py-2 text-sm text-rose-700 ring-1 ring-rose-200">
@@ -514,7 +503,7 @@ function FarmerOrderItemCard({ item }: { item: FarmerOrderItem }) {
             </p>
           ) : null}
           <p className="mt-1 text-xs text-zinc-500">
-            {formatDate(item.created_at)}
+            {formatDateTime(item.created_at)}
           </p>
         </div>
         <span

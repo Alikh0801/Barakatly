@@ -10,6 +10,7 @@ import {
 import { Spinner } from "@/components/ui/Spinner";
 import { OrderStatusTimeline } from "@/components/orders/OrderStatusTimeline";
 import { formatPrice, formatUnit } from "@/lib/shop/format";
+import { formatDateTime } from "@/lib/format/date";
 import {
   ADMIN_STATUS_TRANSITIONS,
   getOrderItemStatusLabel,
@@ -27,13 +28,6 @@ import type { OrderStatus } from "@/types";
 type ActionResult = { error?: string; success?: string };
 
 const initialState: ActionResult = {};
-
-function formatDate(value: string) {
-  return new Intl.DateTimeFormat("az-AZ", {
-    dateStyle: "medium",
-    timeStyle: "short",
-  }).format(new Date(value));
-}
 
 type PendingPaymentWithReceipt = AdminPendingPayment & {
   receiptSignedUrl?: string | null;
@@ -70,7 +64,7 @@ function PendingPaymentCard({ payment }: { payment: PendingPaymentWithReceipt })
             {order?.order_code ?? "Sifariş"}
           </div>
           <p className="mt-1 break-words text-sm text-zinc-600">
-            {formatDate(order?.created_at ?? payment.created_at)}
+            {formatDateTime(order?.created_at ?? payment.created_at)}
           </p>
           <p className="mt-2 break-all text-sm text-zinc-700">
             {payment.banks?.name ?? "Bank"} · {payment.banks?.pan_number}
@@ -316,7 +310,7 @@ export function AdminOrdersPanel({
                           ID: {order.id}
                         </p>
                         <p className="mt-1 text-sm text-zinc-500">
-                          {formatDate(order.created_at)}
+                          {formatDateTime(order.created_at)}
                         </p>
                         <p className="mt-2 break-all text-sm text-zinc-700">
                           {order.customer?.full_name ??

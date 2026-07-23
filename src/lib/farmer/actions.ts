@@ -16,6 +16,7 @@ import {
   insertEventAndNotify,
   notifyAdmins,
 } from "@/lib/notifications/helpers";
+import { AZ_REGIONS } from "@/lib/az/regions";
 import { isValidAzPhone, normalizeAzPhone } from "@/lib/phone/az";
 import { revalidateProductCatalog } from "@/lib/shop/revalidate";
 import { createClient } from "@/lib/supabase/server";
@@ -25,6 +26,12 @@ export type FarmerActionState = {
   error?: string;
   success?: string;
 };
+
+function parseRegion(formData: FormData): string | null {
+  const value = String(formData.get("location_text") ?? "").trim();
+  if (!value) return null;
+  return (AZ_REGIONS as readonly string[]).includes(value) ? value : null;
+}
 
 export async function signUpFarmer(
   _prev: FarmerActionState,
@@ -38,12 +45,15 @@ export async function signUpFarmer(
   const password = String(formData.get("password") ?? "");
   const passwordConfirm = String(formData.get("password_confirm") ?? "");
   const farmName = String(formData.get("farm_name") ?? "").trim();
-  const description = String(formData.get("description") ?? "").trim();
-  const locationText = String(formData.get("location_text") ?? "").trim();
+  const locationText = parseRegion(formData);
   const phone = normalizeAzPhone(String(formData.get("phone") ?? ""));
 
   if (!fullName || !email || !password || !passwordConfirm || !farmName || !phone) {
     return { error: "Mütləq sahələri doldurun." };
+  }
+
+  if (!locationText) {
+    return { error: "Bölgə seçin." };
   }
 
   if (!isValidAzPhone(phone)) {
@@ -72,8 +82,7 @@ export async function signUpFarmer(
         role: "farmer",
         phone,
         farm_name: farmName,
-        farm_description: description || null,
-        farm_location_text: locationText || null,
+        farm_location_text: locationText,
       },
       emailRedirectTo: callbackUrl,
     },
@@ -102,8 +111,8 @@ export async function signUpFarmer(
   const { error: farmerError } = await supabase.from("farmers").insert({
     profile_id: userId,
     farm_name: farmName,
-    description: description || null,
-    location_text: locationText || null,
+    description: null,
+    location_text: locationText,
     status: "pending",
   });
 
@@ -135,12 +144,15 @@ export async function completeFarmerProfile(
   }
 
   const farmName = String(formData.get("farm_name") ?? "").trim();
-  const description = String(formData.get("description") ?? "").trim();
-  const locationText = String(formData.get("location_text") ?? "").trim();
+  const locationText = parseRegion(formData);
   const phone = normalizeAzPhone(String(formData.get("phone") ?? ""));
 
   if (!farmName) {
     return { error: "Təsərrüfat adı mütləqdir." };
+  }
+
+  if (!locationText) {
+    return { error: "Bölgə seçin." };
   }
 
   if (!phone || !isValidAzPhone(phone)) {
@@ -151,7 +163,6 @@ export async function completeFarmerProfile(
 
   const farmer = await ensureFarmerRecord(profile.id, {
     farmName,
-    description,
     locationText,
     phone,
   });

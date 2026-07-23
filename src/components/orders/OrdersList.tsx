@@ -8,13 +8,7 @@ import {
 import { firstPayment } from "@/lib/orders/payment";
 import { getCustomerOrders } from "@/lib/checkout/queries";
 import { formatPrice, formatUnit, getProductImageUrl } from "@/lib/shop/format";
-
-function formatDate(value: string) {
-  return new Intl.DateTimeFormat("az-AZ", {
-    dateStyle: "medium",
-    timeStyle: "short",
-  }).format(new Date(value));
-}
+import { formatDateTime } from "@/lib/format/date";
 
 export async function OrdersList() {
   const orders = await getCustomerOrders();
@@ -65,7 +59,7 @@ export async function OrdersList() {
                   {order.order_code}
                 </div>
                 <div className="mt-1 text-sm text-zinc-500">
-                  {formatDate(order.created_at)}
+                  {formatDateTime(order.created_at)}
                   {items.length > 0 ? (
                     <span>
                       {" "}

@@ -17,6 +17,7 @@ import {
 } from "@/lib/orders/labels";
 import { Spinner } from "@/components/ui/Spinner";
 import { formatPrice, getProductImageUrl } from "@/lib/shop/format";
+import { formatDateTime } from "@/lib/format/date";
 import type {
   AdminCourier,
   AdminFarmer,
@@ -24,13 +25,6 @@ import type {
 } from "@/lib/admin/queries";
 
 const initialState: AdminPortalActionState = {};
-
-function formatDate(value: string) {
-  return new Intl.DateTimeFormat("az-AZ", {
-    dateStyle: "medium",
-    timeStyle: "short",
-  }).format(new Date(value));
-}
 
 function FarmerDetailRow({
   label,
@@ -138,7 +132,7 @@ function FarmerCard({
             {farmer.farm_name}
           </h3>
           <p className="mt-1 text-xs text-zinc-500">
-            Müraciət: {formatDate(farmer.created_at)}
+            Müraciət: {formatDateTime(farmer.created_at)}
           </p>
         </div>
         <span

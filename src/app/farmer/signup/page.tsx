@@ -56,17 +56,23 @@ export default async function FarmerSignUpPage() {
       </p>
       <div className="mt-8 rounded-3xl bg-white p-6 shadow-sm ring-1 ring-zinc-200">
         <FarmerSignUpForm />
-        <p className="mt-4 text-center text-sm text-zinc-600">
-          Artıq hesabınız var?{" "}
+        <div className="mt-4 flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-sm text-zinc-600">
           <Link
             href="/signin?next=/farmer/signup"
-            className="font-semibold text-emerald-700"
+            className="font-semibold text-emerald-700 hover:underline"
           >
-            Daxil olun
+            Daxil ol
           </Link>
-          {" "}
-          — sonra email olmadan fermer ola bilərsiniz.
-        </p>
+          <span className="text-zinc-300" aria-hidden>
+            ·
+          </span>
+          <Link
+            href="/signup"
+            className="font-semibold text-emerald-700 hover:underline"
+          >
+            Müştəri kimi qeydiyyat
+          </Link>
+        </div>
       </div>
     </div>
   );

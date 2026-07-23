@@ -38,13 +38,6 @@ export default async function SignInPage({
       <div className={linkExpired ? "mt-5" : "mt-6"}>
         <SignInForm next={next} />
       </div>
-
-      <p className="mt-4 text-center text-xs text-zinc-500">
-        Fermersiniz?{" "}
-        <Link href="/farmer/signup" className="text-emerald-700 hover:underline">
-          Fermer qeydiyyatı
-        </Link>
-      </p>
     </div>
   );
 }

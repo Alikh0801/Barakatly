@@ -11,17 +11,11 @@ import {
   getOrderStatusLabel,
 } from "@/lib/orders/labels";
 import { Spinner } from "@/components/ui/Spinner";
+import { formatDateTime } from "@/lib/format/date";
 import type { CourierOrder } from "@/lib/courier/queries";
 import type { OrderStatus } from "@/types";
 
 const initialState: CourierActionState = {};
-
-function formatDate(value: string) {
-  return new Intl.DateTimeFormat("az-AZ", {
-    dateStyle: "medium",
-    timeStyle: "short",
-  }).format(new Date(value));
-}
 
 function CourierOrderCard({ order }: { order: CourierOrder }) {
   const [state, action, pending] = useActionState(
@@ -62,7 +56,7 @@ function CourierOrderCard({ order }: { order: CourierOrder }) {
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <div className="font-semibold text-zinc-900">{order.order_code}</div>
-          <p className="mt-1 text-sm text-zinc-500">{formatDate(order.created_at)}</p>
+          <p className="mt-1 text-sm text-zinc-500">{formatDateTime(order.created_at)}</p>
           <p className="mt-2 text-sm text-zinc-700">
             Müştəri telefonu: {order.contact_phone}
           </p>

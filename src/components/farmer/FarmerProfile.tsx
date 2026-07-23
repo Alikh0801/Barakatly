@@ -23,6 +23,7 @@ import type {
 } from "@/lib/farmer/queries";
 import type { ProductListItem } from "@/types/shop";
 import type { Farmer, Profile } from "@/types";
+import { formatDateTime } from "@/lib/format/date";
 
 const displayFont = Syne({
   subsets: ["latin"],
@@ -34,13 +35,6 @@ const initialState: ActionResult = {};
 
 export type FarmerProfileTab = "posts" | "products" | "orders" | "about";
 export type PublicFarmerProfileTab = "posts" | "products" | "about";
-
-function formatDate(value: string) {
-  return new Intl.DateTimeFormat("az-AZ", {
-    dateStyle: "medium",
-    timeStyle: "short",
-  }).format(new Date(value));
-}
 
 function FarmerAvatar({
   name,
@@ -502,7 +496,7 @@ function BlogPostCard({
         {post.caption ? (
           <p className="text-sm leading-6 text-zinc-800">{post.caption}</p>
         ) : null}
-        <p className="mt-2 text-xs text-zinc-500">{formatDate(post.created_at)}</p>
+        <p className="mt-2 text-xs text-zinc-500">{formatDateTime(post.created_at)}</p>
 
         {canDelete ? (
           <form

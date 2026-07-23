@@ -13,6 +13,7 @@ import {
 import { firstPayment } from "@/lib/orders/payment";
 import { getOrderById } from "@/lib/checkout/queries";
 import { formatPrice, formatUnit, getProductImageUrl } from "@/lib/shop/format";
+import { formatDateTime } from "@/lib/format/date";
 import { getProfile } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
 
@@ -28,13 +29,6 @@ export async function generateMetadata({
       ? `${order.order_code} — BARAKATLY`
       : "Sifariş — BARAKATLY",
   };
-}
-
-function formatDate(value: string) {
-  return new Intl.DateTimeFormat("az-AZ", {
-    dateStyle: "medium",
-    timeStyle: "short",
-  }).format(new Date(value));
 }
 
 export default async function OrderDetailPage({
@@ -91,7 +85,7 @@ export default async function OrderDetailPage({
               {order.order_code}
             </h1>
             <p className="mt-2 text-sm text-zinc-500">
-              {formatDate(order.created_at)}
+              {formatDateTime(order.created_at)}
             </p>
           </div>
           <div className="flex flex-wrap gap-2">

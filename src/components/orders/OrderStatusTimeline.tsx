@@ -1,12 +1,6 @@
 import type { OrderStatusEvent } from "@/types";
 import { getEventStatusLabel } from "@/lib/orders/labels";
-
-function formatDate(value: string) {
-  return new Intl.DateTimeFormat("az-AZ", {
-    dateStyle: "medium",
-    timeStyle: "short",
-  }).format(new Date(value));
-}
+import { formatDateTime } from "@/lib/format/date";
 
 export function OrderStatusTimeline({
   events,
@@ -55,7 +49,7 @@ export function OrderStatusTimeline({
               <p className="mt-0.5 text-sm text-zinc-600">{event.note}</p>
             ) : null}
             <p className="mt-1 text-xs text-zinc-500">
-              {formatDate(event.created_at)}
+              {formatDateTime(event.created_at)}
             </p>
           </div>
         </li>

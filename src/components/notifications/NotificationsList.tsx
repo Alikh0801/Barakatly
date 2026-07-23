@@ -12,13 +12,7 @@ import {
 } from "@/lib/notifications/links";
 import { getNotificationTypeLabel } from "@/lib/orders/labels";
 import type { Notification, UserRole } from "@/types";
-
-function formatDate(value: string) {
-  return new Intl.DateTimeFormat("az-AZ", {
-    dateStyle: "medium",
-    timeStyle: "short",
-  }).format(new Date(value));
-}
+import { formatDateTime } from "@/lib/format/date";
 
 export function NotificationsList({
   notifications,
@@ -84,7 +78,7 @@ export function NotificationsList({
                   </h2>
                   <p className="mt-1 text-sm text-zinc-600">{notification.body}</p>
                   <p className="mt-2 text-xs text-zinc-500">
-                    {formatDate(notification.created_at)}
+                    {formatDateTime(notification.created_at)}
                   </p>
                 </div>
                 <div className="flex items-center gap-3">
