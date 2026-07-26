@@ -1,36 +1,30 @@
 import Link from "next/link";
 
-const SHOP_LINKS = [
+type FooterLink = {
+  href: string;
+  label: string;
+};
+
+const SHOP_LINKS: FooterLink[] = [
   { href: "/shop?category=vegetables", label: "Tərəvəzlər" },
   { href: "/shop?category=fruits", label: "Meyvələr" },
   { href: "/shop?category=dairy", label: "Süd məhsulları" },
   { href: "/shop?category=honey", label: "Bal" },
   { href: "/shop", label: "Bütün məhsullar" },
-] as const;
+];
 
-const COMPANY_LINKS = [
+const COMPANY_LINKS: FooterLink[] = [
   { href: "/about", label: "Haqqımızda" },
   { href: "/farmers", label: "Fermerlər" },
   { href: "/about#mission", label: "Missiyamız" },
-  { href: "/blog", label: "Bloq" },
-  { href: "/careers", label: "Karyera" },
-  { href: "/press", label: "Mətbuat" },
-] as const;
-
-const SUPPORT_LINKS = [
-  { href: "/help", label: "Kömək mərkəzi" },
-  { href: "/contact", label: "Əlaqə" },
-  { href: "/returns", label: "Qaytarma" },
-  { href: "/track", label: "Sifarişi izlə" },
-  { href: "/privacy", label: "Məxfilik" },
-] as const;
+];
 
 function FooterColumn({
   title,
   links,
 }: {
   title: string;
-  links: ReadonlyArray<{ href: string; label: string }>;
+  links: ReadonlyArray<FooterLink>;
 }) {
   return (
     <div>
@@ -52,7 +46,7 @@ export function SiteFooter() {
   return (
     <footer className="bg-zinc-950">
       <div className="mx-auto w-full max-w-6xl px-4 py-14 md:px-6">
-        <div className="grid gap-10 md:grid-cols-5">
+        <div className="grid gap-10 md:grid-cols-4">
           <div className="md:col-span-2">
             <Link
               href="/"
@@ -69,35 +63,10 @@ export function SiteFooter() {
               Yerli fermerləri şüurlu istehlakçılarla birləşdiririk — təzə,
               izlənəbilən və dayanıqlı qida üçün.
             </p>
-
-            <div className="mt-5 flex items-center gap-3 text-white/70">
-              <Link
-                href="#"
-                aria-label="Instagram"
-                className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-white/5 ring-1 ring-white/10 transition hover:bg-white/10"
-              >
-                ☐
-              </Link>
-              <Link
-                href="#"
-                aria-label="X"
-                className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-white/5 ring-1 ring-white/10 transition hover:bg-white/10"
-              >
-                ☐
-              </Link>
-              <Link
-                href="#"
-                aria-label="Facebook"
-                className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-white/5 ring-1 ring-white/10 transition hover:bg-white/10"
-              >
-                ☐
-              </Link>
-            </div>
           </div>
 
           <FooterColumn title="Mağaza" links={SHOP_LINKS} />
           <FooterColumn title="Şirkət" links={COMPANY_LINKS} />
-          <FooterColumn title="Dəstək" links={SUPPORT_LINKS} />
         </div>
 
         <div className="mt-12 border-t border-white/10 pt-6 text-center text-xs text-white/50">
@@ -107,4 +76,3 @@ export function SiteFooter() {
     </footer>
   );
 }
-

@@ -4,6 +4,7 @@ import { getProfile } from "@/lib/auth/session";
 
 export const metadata = {
   title: "Hesabım — BARAKATLY",
+  robots: { index: false, follow: false },
 };
 
 export default async function AccountPage() {

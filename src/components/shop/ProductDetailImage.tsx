@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useState } from "react";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { ProductImagePlaceholder } from "@/components/shop/ProductImagePlaceholder";
@@ -18,17 +19,17 @@ export function ProductDetailImage({
   }
 
   return (
-    <div className="relative w-full bg-zinc-50">
+    <div className="relative w-full min-h-[280px] bg-zinc-50">
       {!loaded ? (
         <Skeleton className="absolute inset-0 min-h-[280px] w-full rounded-none" />
       ) : null}
-      {/* Full photo, no crop — natural aspect ratio */}
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
+      <Image
         src={src}
         alt={alt}
-        loading="eager"
-        decoding="async"
+        width={1200}
+        height={900}
+        priority
+        sizes="(max-width: 1024px) 100vw, 50vw"
         onLoad={() => setLoaded(true)}
         className={[
           "mx-auto block h-auto w-full object-contain transition-opacity duration-300",

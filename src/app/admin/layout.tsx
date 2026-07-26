@@ -1,6 +1,11 @@
+import type { Metadata } from "next";
 import { AdminSidebar } from "@/components/admin/AdminSidebar";
 import { requireAdmin } from "@/lib/admin/auth";
 import { getAdminNavBadges } from "@/lib/admin/queries";
+
+export const metadata: Metadata = {
+  robots: { index: false, follow: false },
+};
 
 export default async function AdminLayout({
   children,

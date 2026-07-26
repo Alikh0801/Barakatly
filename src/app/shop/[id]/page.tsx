@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import type { Metadata } from "next";
 import { ProductDetailImage } from "@/components/shop/ProductDetailImage";
 import { ProductPurchasePanel } from "@/components/shop/ProductPurchasePanel";
 import { VerifiedIcon } from "@/components/ui/VerifiedIcon";
@@ -12,18 +13,33 @@ import {
   unitLabel,
 } from "@/lib/shop/format";
 
-export const dynamic = "force-dynamic";
-
 export async function generateMetadata({
   params,
 }: {
   params: Promise<{ id: string }>;
-}) {
+}): Promise<Metadata> {
   const { id } = await params;
   const product = await getProductById(id);
+  if (!product) {
+    return { title: "Məhsul" };
+  }
+
+  const imageUrl = getProductImageUrl(product.product_images);
+  const description =
+    product.description?.slice(0, 160) ||
+    "Fermerdən birbaşa təzə məhsul";
+
   return {
-    title: product ? `${product.title} — BARAKATLY` : "Məhsul — BARAKATLY",
-    description: product?.description ?? "Fermerdən birbaşa təzə məhsul",
+    title: `${product.title} — BARAKATLY`,
+    description,
+    alternates: { canonical: `/shop/${product.id}` },
+    openGraph: {
+      title: product.title,
+      description,
+      type: "website",
+      url: `/shop/${product.id}`,
+      images: imageUrl ? [{ url: imageUrl, alt: product.title }] : undefined,
+    },
   };
 }
 

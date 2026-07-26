@@ -1,5 +1,7 @@
 "use client";
 
+import Image from "next/image";
+import { useState } from "react";
 import { Skeleton } from "@/components/ui/Skeleton";
 
 export function ImageWithSkeleton({
@@ -7,7 +9,9 @@ export function ImageWithSkeleton({
   alt,
   className = "",
   skeletonClassName = "",
-  fill = false,
+  fill = true,
+  sizes = "(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw",
+  priority = false,
 }: {
   src: string;
   alt: string;
@@ -15,7 +19,11 @@ export function ImageWithSkeleton({
   skeletonClassName?: string;
   /** Stretch the image to fill the parent box. */
   fill?: boolean;
+  sizes?: string;
+  priority?: boolean;
 }) {
+  const [loaded, setLoaded] = useState(false);
+
   return (
     <div
       className={[
@@ -25,24 +33,27 @@ export function ImageWithSkeleton({
         .filter(Boolean)
         .join(" ")}
     >
-      <Skeleton
-        className={[
-          "absolute inset-0 h-full w-full",
-          skeletonClassName,
-        ]
-          .filter(Boolean)
-          .join(" ")}
-      />
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
+      {!loaded ? (
+        <Skeleton
+          className={[
+            "absolute inset-0 z-0 h-full w-full",
+            skeletonClassName,
+          ]
+            .filter(Boolean)
+            .join(" ")}
+        />
+      ) : null}
+      <Image
         src={src}
         alt={alt}
-        loading="lazy"
-        decoding="async"
+        fill={fill}
+        sizes={sizes}
+        priority={priority}
+        onLoad={() => setLoaded(true)}
         className={[
-          fill
-            ? "absolute inset-0 z-10 h-full w-full object-cover"
-            : "relative z-10",
+          fill ? "z-10 object-cover" : "relative z-10",
+          loaded ? "opacity-100" : "opacity-0",
+          "transition-opacity duration-300",
           className,
         ]
           .filter(Boolean)

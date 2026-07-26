@@ -1,16 +1,10 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 
-const PREFETCH_ROUTES = [
-  "/shop",
-  "/cart",
-  "/checkout",
-  "/orders",
-  "/account",
-  "/notifications",
-];
+/** Prefetch only public routes — avoid auth/checkout noise for every visitor. */
+const PREFETCH_ROUTES = ["/shop", "/farmers", "/about", "/cart", "/search"];
 
 export function RoutePrefetcher() {
   const router = useRouter();

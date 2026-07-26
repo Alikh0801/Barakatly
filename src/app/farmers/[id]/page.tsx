@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import type { Metadata } from "next";
 import {
   PublicFarmerProfile,
   type PublicFarmerProfileTab,
@@ -14,14 +15,29 @@ export async function generateMetadata({
   params,
 }: {
   params: Promise<{ id: string }>;
-}) {
+}): Promise<Metadata> {
   const { id } = await params;
   const farmer = await getPublicFarmerById(id);
+  if (!farmer) {
+    return { title: "Fermer" };
+  }
+
+  const description =
+    farmer.description?.slice(0, 160) || "Təsdiqlənmiş fermer profili";
+
   return {
-    title: farmer
-      ? `${farmer.farm_name} — BARAKATLY`
-      : "Fermer — BARAKATLY",
-    description: farmer?.description ?? "Təsdiqlənmiş fermer profili",
+    title: `${farmer.farm_name} — BARAKATLY`,
+    description,
+    alternates: { canonical: `/farmers/${farmer.id}` },
+    openGraph: {
+      title: farmer.farm_name,
+      description,
+      type: "website",
+      url: `/farmers/${farmer.id}`,
+      images: farmer.avatar_url
+        ? [{ url: farmer.avatar_url, alt: farmer.farm_name }]
+        : undefined,
+    },
   };
 }
 
