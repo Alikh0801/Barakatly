@@ -102,7 +102,9 @@ async function fetchProducts(categorySlug?: string): Promise<ProductListItem[]> 
     return [];
   }
 
-  return (data ?? []) as unknown as ProductListItem[];
+  return ((data ?? []) as unknown as ProductListItem[]).filter(
+    (product) => product.farmer?.status === "approved",
+  );
 }
 
 async function fetchProductById(id: string): Promise<ProductDetail | null> {
@@ -119,7 +121,9 @@ async function fetchProductById(id: string): Promise<ProductDetail | null> {
     return null;
   }
 
-  return (data as unknown as ProductDetail) ?? null;
+  const product = (data as unknown as ProductDetail) ?? null;
+  if (!product || product.farmer?.status !== "approved") return null;
+  return product;
 }
 
 export const getCategories = unstable_cache(fetchCategories, ["shop-categories"], {

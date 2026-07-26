@@ -5,8 +5,10 @@ import {
   approveFarmer,
   approveProduct,
   createCourier,
+  deleteFarmer,
   rejectFarmer,
   rejectProduct,
+  suspendFarmer,
   toggleCourierActive,
   updateProductFinalPrice,
   type AdminPortalActionState,
@@ -105,26 +107,50 @@ function FarmerCard({
     rejectFarmer,
     initialState
   );
+  const [suspendState, suspendAction, suspendPending] = useActionState(
+    suspendFarmer,
+    initialState
+  );
+  const [deleteState, deleteAction, deletePending] = useActionState(
+    deleteFarmer,
+    initialState
+  );
+
+  const busy =
+    approvePending || rejectPending || suspendPending || deletePending;
 
   const statusTone =
     farmer.status === "pending"
       ? "bg-amber-50 text-amber-800 ring-amber-200"
       : farmer.status === "approved"
         ? "bg-emerald-50 text-emerald-800 ring-emerald-200"
-        : "bg-zinc-100 text-zinc-700 ring-zinc-200";
+        : farmer.status === "suspended"
+          ? "bg-orange-50 text-orange-800 ring-orange-200"
+          : "bg-zinc-100 text-zinc-700 ring-zinc-200";
+
+  const actionError =
+    approveState.error ||
+    rejectState.error ||
+    suspendState.error ||
+    deleteState.error;
+  const actionSuccess =
+    approveState.success ||
+    rejectState.success ||
+    suspendState.success ||
+    deleteState.success;
 
   return (
     <article className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-zinc-200">
-      {(approveState.error || rejectState.error) && (
+      {actionError ? (
         <p className="mb-3 rounded-xl bg-rose-50 px-3 py-2 text-sm text-rose-700">
-          {approveState.error ?? rejectState.error}
+          {actionError}
         </p>
-      )}
-      {(approveState.success || rejectState.success) && (
+      ) : null}
+      {actionSuccess ? (
         <p className="mb-3 rounded-xl bg-emerald-50 px-3 py-2 text-sm text-emerald-800">
-          {approveState.success ?? rejectState.success}
+          {actionSuccess}
         </p>
-      )}
+      ) : null}
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
@@ -190,32 +216,86 @@ function FarmerCard({
         </dl>
       ) : null}
 
-      {farmer.status === "pending" ? (
-        <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+      <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+        {farmer.status === "pending" ? (
+          <>
+            <form action={approveAction} className="w-full sm:w-auto">
+              <input type="hidden" name="farmer_id" value={farmer.id} />
+              <button
+                type="submit"
+                disabled={busy}
+                className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-70 sm:w-auto"
+              >
+                {approvePending ? <Spinner className="h-3.5 w-3.5" /> : null}
+                Təsdiqlə
+              </button>
+            </form>
+            <form action={rejectAction} className="w-full sm:w-auto">
+              <input type="hidden" name="farmer_id" value={farmer.id} />
+              <button
+                type="submit"
+                disabled={busy}
+                className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-white px-4 py-2.5 text-sm font-semibold text-rose-700 ring-1 ring-rose-200 disabled:opacity-70 sm:w-auto"
+              >
+                {rejectPending ? <Spinner className="h-3.5 w-3.5" /> : null}
+                Rədd et
+              </button>
+            </form>
+          </>
+        ) : null}
+
+        {farmer.status === "suspended" ? (
           <form action={approveAction} className="w-full sm:w-auto">
             <input type="hidden" name="farmer_id" value={farmer.id} />
             <button
               type="submit"
-              disabled={approvePending || rejectPending}
+              disabled={busy}
               className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-70 sm:w-auto"
             >
               {approvePending ? <Spinner className="h-3.5 w-3.5" /> : null}
-              Təsdiqlə
+              Aktiv et
             </button>
           </form>
-          <form action={rejectAction} className="w-full sm:w-auto">
+        ) : null}
+
+        {farmer.status === "approved" ? (
+          <form action={suspendAction} className="w-full sm:w-auto">
             <input type="hidden" name="farmer_id" value={farmer.id} />
             <button
               type="submit"
-              disabled={approvePending || rejectPending}
-              className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-white px-4 py-2.5 text-sm font-semibold text-rose-700 ring-1 ring-rose-200 disabled:opacity-70 sm:w-auto"
+              disabled={busy}
+              className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-white px-4 py-2.5 text-sm font-semibold text-orange-800 ring-1 ring-orange-200 disabled:opacity-70 sm:w-auto"
             >
-              {rejectPending ? <Spinner className="h-3.5 w-3.5" /> : null}
-              Rədd et
+              {suspendPending ? <Spinner className="h-3.5 w-3.5" /> : null}
+              Deaktiv et
             </button>
           </form>
-        </div>
-      ) : null}
+        ) : null}
+
+        <form
+          action={deleteAction}
+          className="w-full sm:w-auto"
+          onSubmit={(event) => {
+            if (
+              !window.confirm(
+                `"${farmer.farm_name}" fermerini bazadan həmişəlik silmək istəyirsiniz? Məhsulları da silinəcək.`,
+              )
+            ) {
+              event.preventDefault();
+            }
+          }}
+        >
+          <input type="hidden" name="farmer_id" value={farmer.id} />
+          <button
+            type="submit"
+            disabled={busy}
+            className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-rose-600 px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-70 sm:w-auto"
+          >
+            {deletePending ? <Spinner className="h-3.5 w-3.5" /> : null}
+            Fermeri sil
+          </button>
+        </form>
+      </div>
     </article>
   );
 }

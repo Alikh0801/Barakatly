@@ -92,7 +92,9 @@ export async function searchCatalog(query: string): Promise<SearchResults> {
 
   return {
     query: q,
-    products: (productsResult.data ?? []) as unknown as ProductListItem[],
+    products: ((productsResult.data ?? []) as unknown as ProductListItem[]).filter(
+      (product) => product.farmer?.status === "approved",
+    ),
     farmers,
   };
 }

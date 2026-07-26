@@ -17,6 +17,7 @@ export type ProductListItem = {
   farmer: {
     id: string;
     farm_name: string;
+    status?: string;
   } | null;
   category: {
     slug: string;

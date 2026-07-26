@@ -90,6 +90,108 @@ export async function rejectFarmer(
   return { success: "Fermer rədd edildi." };
 }
 
+export async function suspendFarmer(
+  _prev: AdminPortalActionState,
+  formData: FormData
+): Promise<AdminPortalActionState> {
+  await requireAdmin();
+  const farmerId = String(formData.get("farmer_id") ?? "");
+  if (!farmerId) return { error: "Fermer tapılmadı." };
+
+  const supabase = await createClient();
+  const { data: farmer } = await supabase
+    .from("farmers")
+    .select("id, profile_id, farm_name, status")
+    .eq("id", farmerId)
+    .single();
+
+  if (!farmer) return { error: "Fermer tapılmadı." };
+
+  if (farmer.status === "suspended") {
+    return { error: "Fermer artıq deaktivdir." };
+  }
+
+  const { error } = await supabase
+    .from("farmers")
+    .update({ status: "suspended", verified_at: null })
+    .eq("id", farmerId);
+
+  if (error) return { error: "Fermer deaktiv edilmədi." };
+
+  await notifyUser({
+    userId: farmer.profile_id,
+    type: "farmer_approval",
+    title: "Fermer hesabınız deaktiv edildi",
+    body: `${farmer.farm_name} hesabınız müvəqqəti dayandırılıb. Məhsullarınız satışda görünmür.`,
+    metadata: { farmer_id: farmer.id },
+  });
+
+  revalidateProductCatalog();
+  revalidatePath("/admin/farmers");
+  revalidatePath("/admin", "layout");
+  revalidatePath("/farmer");
+  revalidatePath("/farmers");
+  return { success: "Fermer deaktiv edildi." };
+}
+
+export async function deleteFarmer(
+  _prev: AdminPortalActionState,
+  formData: FormData
+): Promise<AdminPortalActionState> {
+  await requireAdmin();
+  const farmerId = String(formData.get("farmer_id") ?? "");
+  if (!farmerId) return { error: "Fermer tapılmadı." };
+
+  const supabase = await createClient();
+  const { data: farmer } = await supabase
+    .from("farmers")
+    .select("id, profile_id, farm_name")
+    .eq("id", farmerId)
+    .single();
+
+  if (!farmer) return { error: "Fermer tapılmadı." };
+
+  const admin = createAdminClient();
+
+  // Hard delete farmer row (cascades products, images, blog, order_items).
+  const { error: deleteError } = await admin
+    .from("farmers")
+    .delete()
+    .eq("id", farmerId);
+
+  if (deleteError) {
+    console.error("[admin.deleteFarmer]", deleteError.message);
+    return { error: "Fermer silinmədi. Sifariş tarixçəsi və ya digər bağlı məlumatlar mane ola bilər." };
+  }
+
+  // Keep auth account, but demote role so they are no longer a farmer.
+  const { error: profileError } = await admin
+    .from("profiles")
+    .update({ role: "customer" })
+    .eq("id", farmer.profile_id)
+    .eq("role", "farmer");
+
+  if (profileError) {
+    console.error("[admin.deleteFarmer.profile]", profileError.message);
+  }
+
+  await notifyUser({
+    userId: farmer.profile_id,
+    type: "general",
+    title: "Fermer hesabınız silindi",
+    body: `${farmer.farm_name} fermer profili admin tərəfindən silinib. Müştəri hesabınız qalır.`,
+    metadata: { farmer_id: farmer.id },
+  });
+
+  revalidateProductCatalog();
+  revalidatePath("/admin/farmers");
+  revalidatePath("/admin", "layout");
+  revalidatePath("/farmer");
+  revalidatePath("/farmers");
+  revalidatePath("/shop");
+  return { success: "Fermer bazadan silindi." };
+}
+
 export async function approveProduct(
   _prev: AdminPortalActionState,
   formData: FormData

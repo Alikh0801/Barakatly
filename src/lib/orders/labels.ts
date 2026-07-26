@@ -66,7 +66,7 @@ export function getFarmerStatusLabel(status: string): string {
     case "rejected":
       return "Rədd edildi";
     case "suspended":
-      return "Dayandırılıb";
+      return "Deaktiv";
     default:
       return status;
   }

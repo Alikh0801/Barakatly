@@ -205,12 +205,36 @@ export function CompleteFarmerProfileForm({
 }
 
 export function FarmerPendingCard({ farmer }: { farmer: Farmer }) {
+  const isSuspended = farmer.status === "suspended";
+
   return (
-    <div className="rounded-3xl bg-amber-50 p-8 ring-1 ring-amber-200">
-      <h2 className="text-lg font-semibold text-amber-900">{farmer.farm_name}</h2>
-      <p className="mt-2 text-sm text-amber-800">
-        Status: {getFarmerStatusLabel(farmer.status)}. Admin təsdiqindən sonra
-        məhsul əlavə edə biləcəksiniz.
+    <div
+      className={
+        isSuspended
+          ? "rounded-3xl bg-orange-50 p-8 ring-1 ring-orange-200"
+          : "rounded-3xl bg-amber-50 p-8 ring-1 ring-amber-200"
+      }
+    >
+      <h2
+        className={
+          isSuspended
+            ? "text-lg font-semibold text-orange-900"
+            : "text-lg font-semibold text-amber-900"
+        }
+      >
+        {farmer.farm_name}
+      </h2>
+      <p
+        className={
+          isSuspended
+            ? "mt-2 text-sm text-orange-800"
+            : "mt-2 text-sm text-amber-800"
+        }
+      >
+        Status: {getFarmerStatusLabel(farmer.status)}.{" "}
+        {isSuspended
+          ? "Hesabınız deaktiv edilib — məhsullar satışda görünmür. Dəstək ilə əlaqə saxlayın."
+          : "Admin təsdiqindən sonra məhsul əlavə edə biləcəksiniz."}
       </p>
     </div>
   );
