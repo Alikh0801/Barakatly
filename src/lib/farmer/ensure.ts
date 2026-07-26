@@ -43,7 +43,10 @@ export async function ensureFarmerRecord(
   const hasFarmerIntent =
     profile?.role === "farmer" ||
     profile?.role === "admin" ||
-    meta.role === "farmer" ||
+    // Metadata role only counts when farm details were collected at signup
+    // (email confirmation flow). Stale role alone must not recreate a farmer.
+    (meta.role === "farmer" &&
+      Boolean(String(meta.farm_name ?? "").trim() || explicitFarmName)) ||
     Boolean(explicitFarmName);
 
   if (!hasFarmerIntent) return null;

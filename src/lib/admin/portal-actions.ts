@@ -164,22 +164,39 @@ export async function deleteFarmer(
     return { error: "Fermer silinmədi. Sifariş tarixçəsi və ya digər bağlı məlumatlar mane ola bilər." };
   }
 
-  // Keep auth account, but demote role so they are no longer a farmer.
+  // Keep auth account; demote profile and clear farmer metadata so they can
+  // re-apply via /farmer/signup with the same login.
   const { error: profileError } = await admin
     .from("profiles")
     .update({ role: "customer" })
     .eq("id", farmer.profile_id)
-    .eq("role", "farmer");
+    .neq("role", "admin");
 
   if (profileError) {
     console.error("[admin.deleteFarmer.profile]", profileError.message);
+  }
+
+  const { error: metaError } = await admin.auth.admin.updateUserById(
+    farmer.profile_id,
+    {
+      user_metadata: {
+        role: "customer",
+        farm_name: null,
+        farm_location_text: null,
+        farm_description: null,
+      },
+    },
+  );
+
+  if (metaError) {
+    console.error("[admin.deleteFarmer.metadata]", metaError.message);
   }
 
   await notifyUser({
     userId: farmer.profile_id,
     type: "general",
     title: "Fermer hesabınız silindi",
-    body: `${farmer.farm_name} fermer profili admin tərəfindən silinib. Müştəri hesabınız qalır.`,
+    body: `${farmer.farm_name} fermer profili admin tərəfindən silinib. Eyni hesabla yenidən fermer qeydiyyatından keçə bilərsiniz.`,
     metadata: { farmer_id: farmer.id },
   });
 

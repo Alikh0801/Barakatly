@@ -17,6 +17,11 @@ import {
   notifyAdmins,
 } from "@/lib/notifications/helpers";
 import { AZ_REGIONS } from "@/lib/az/regions";
+import {
+  emailAlreadyRegistered,
+  isDuplicateSignUpUser,
+  translateAuthError,
+} from "@/lib/auth/signup";
 import { isValidAzPhone, normalizeAzPhone } from "@/lib/phone/az";
 import { revalidateProductCatalog } from "@/lib/shop/revalidate";
 import { createClient } from "@/lib/supabase/server";
@@ -70,6 +75,13 @@ export async function signUpFarmer(
     return { error: "Şifrələr uyğun gəlmir." };
   }
 
+  if (await emailAlreadyRegistered(email)) {
+    return {
+      error:
+        "Bu email artıq qeydiyyatdadır. Daxil olun — sonra mövcud hesabla fermer ola bilərsiniz.",
+    };
+  }
+
   const supabase = await createClient();
   const callbackUrl = `${getAuthCallbackUrl()}?next=${encodeURIComponent("/farmer")}`;
 
@@ -90,7 +102,14 @@ export async function signUpFarmer(
 
   if (error) {
     console.error("[farmer.signUpFarmer]", error.message);
-    return { error: error.message };
+    return { error: translateAuthError(error.message) };
+  }
+
+  if (isDuplicateSignUpUser(data.user)) {
+    return {
+      error:
+        "Bu email artıq qeydiyyatdadır. Daxil olun — sonra mövcud hesabla fermer ola bilərsiniz.",
+    };
   }
 
   const userId = data.user?.id;
@@ -106,7 +125,7 @@ export async function signUpFarmer(
     };
   }
 
-  await supabase.from("profiles").update({ phone }).eq("id", userId);
+  await supabase.from("profiles").update({ phone, role: "farmer" }).eq("id", userId);
 
   const { error: farmerError } = await supabase.from("farmers").insert({
     profile_id: userId,
@@ -169,6 +188,27 @@ export async function completeFarmerProfile(
 
   if (!farmer) {
     return { error: "Fermer profili yaradıla bilmədi. Yenidən cəhd edin." };
+  }
+
+  const supabase = await createClient();
+  await supabase
+    .from("profiles")
+    .update({ role: "farmer", phone })
+    .eq("id", profile.id)
+    .neq("role", "admin");
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (user) {
+    await supabase.auth.updateUser({
+      data: {
+        role: "farmer",
+        farm_name: farmName,
+        farm_location_text: locationText,
+        phone,
+      },
+    });
   }
 
   if (farmer.status === "pending") {

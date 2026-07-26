@@ -5,7 +5,6 @@ import {
   FarmerSignUpForm,
 } from "@/components/farmer/FarmerPanels";
 import { getProfile } from "@/lib/auth/session";
-import { ensureFarmerRecord } from "@/lib/farmer/ensure";
 import { createClient } from "@/lib/supabase/server";
 
 export const metadata = { title: "Fermer qeydiyyatı — BARAKATLY" };
@@ -13,14 +12,20 @@ export const metadata = { title: "Fermer qeydiyyatı — BARAKATLY" };
 export default async function FarmerSignUpPage() {
   const profile = await getProfile();
 
-  // Logged-in user: continue with existing account email — no second signup.
+  // Logged-in user: keep the same auth account and only collect farm details.
+  // Do NOT auto-create a farmers row here — that blocked re-apply after admin delete.
   if (profile) {
-    const farmer = await ensureFarmerRecord(profile.id);
-    if (farmer) {
+    const supabase = await createClient();
+    const { data: existingFarmer } = await supabase
+      .from("farmers")
+      .select("id")
+      .eq("profile_id", profile.id)
+      .maybeSingle();
+
+    if (existingFarmer) {
       redirect("/farmer");
     }
 
-    const supabase = await createClient();
     const {
       data: { user },
     } = await supabase.auth.getUser();
@@ -29,12 +34,10 @@ export default async function FarmerSignUpPage() {
 
     return (
       <div className="mx-auto w-full max-w-lg px-4 py-10 md:px-6">
-        <h1 className="text-3xl font-semibold text-zinc-900">
-          Fermer ol
-        </h1>
+        <h1 className="text-3xl font-semibold text-zinc-900">Fermer ol</h1>
         <p className="mt-2 text-sm text-zinc-600">
-          Mövcud hesabınızla davam edirsiniz. Yenidən email və ya şifrə
-          tələb olunmur — yalnız təsərrüfat məlumatlarını doldurun.
+          Mövcud hesabınızla davam edirsiniz. Yenidən email və ya şifrə tələb
+          olunmur — yalnız təsərrüfat məlumatlarını doldurun.
         </p>
         <div className="mt-8 rounded-3xl bg-white p-6 shadow-sm ring-1 ring-zinc-200">
           <CompleteFarmerProfileForm

@@ -1,6 +1,5 @@
 import { redirect } from "next/navigation";
 import { getProfile } from "@/lib/auth/session";
-import { ensureFarmerRecord } from "@/lib/farmer/ensure";
 import { createClient } from "@/lib/supabase/server";
 import type { Farmer, Profile } from "@/types";
 
@@ -17,23 +16,13 @@ export async function requireFarmer(): Promise<FarmerContext> {
   }
 
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { data: farmer } = await supabase
+    .from("farmers")
+    .select("*")
+    .eq("profile_id", profile.id)
+    .maybeSingle();
 
-  const metaRole = user?.user_metadata?.role;
-  const isFarmer =
-    profile.role === "farmer" ||
-    profile.role === "admin" ||
-    metaRole === "farmer";
-
-  if (!isFarmer) {
-    redirect("/account");
-  }
-
-  // Rebuild farmers row after email confirmation / deferred signup insert.
-  const farmer = await ensureFarmerRecord(profile.id);
-
+  // No farmers row → must complete /farmer/signup (e.g. after admin delete).
   if (!farmer) {
     redirect("/farmer/signup");
   }
