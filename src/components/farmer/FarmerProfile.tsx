@@ -36,6 +36,57 @@ const initialState: ActionResult = {};
 export type FarmerProfileTab = "posts" | "products" | "orders" | "about";
 export type PublicFarmerProfileTab = "posts" | "products" | "about";
 
+function getPublicFarmerUrl(farmerId: string) {
+  if (typeof window === "undefined") return `/farmers/${farmerId}`;
+  return `${window.location.origin}/farmers/${farmerId}`;
+}
+
+function ShareProfileButton({
+  farmerId,
+  farmName,
+}: {
+  farmerId: string;
+  farmName: string;
+}) {
+  const [copied, setCopied] = useState(false);
+
+  async function shareProfile() {
+    const url = getPublicFarmerUrl(farmerId);
+    const title = `${farmName} — Barakatly`;
+    const text = `${farmName} təsərrüfatına baxın`;
+
+    try {
+      if (typeof navigator !== "undefined" && navigator.share) {
+        await navigator.share({ title, text, url });
+        return;
+      }
+    } catch (error) {
+      // User cancelled share sheet — don't fall through as an error toast.
+      if (error instanceof DOMException && error.name === "AbortError") {
+        return;
+      }
+    }
+
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 2000);
+    } catch {
+      window.prompt("Profil linkini kopyalayın:", url);
+    }
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={() => void shareProfile()}
+      className="inline-flex rounded-full bg-[#1f5c3d] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#184a31]"
+    >
+      {copied ? "Link kopyalandı" : "Profili paylaş"}
+    </button>
+  );
+}
+
 function FarmerAvatar({
   name,
   url,
@@ -603,13 +654,10 @@ export function FarmerProfileDashboard({
             >
               Müştəri görünüşü
             </Link>
-            <button
-              type="button"
-              onClick={() => selectTab("posts")}
-              className="inline-flex rounded-full bg-[#1f5c3d] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#184a31]"
-            >
-              Paylaş
-            </button>
+            <ShareProfileButton
+              farmerId={farmer.id}
+              farmName={farmer.farm_name}
+            />
           </>
         }
       />
