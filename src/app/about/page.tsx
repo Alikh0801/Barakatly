@@ -1,39 +1,28 @@
 import Link from "next/link";
 import type { Metadata } from "next";
+import { getAboutContent } from "@/lib/content/queries";
 
-export const metadata: Metadata = {
-  title: "Haqqımızda — BARAKATLY",
-  description:
-    "Barakatly yerli fermerləri istehlakçılarla birləşdirən təzə və izlənəbilən kənd məhsulları platformasıdır.",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const content = await getAboutContent();
+  return {
+    title: "Haqqımızda — BARAKATLY",
+    description: content.body.slice(0, 160),
+  };
+}
 
-const VALUES = [
-  {
-    title: "Birbaşa fermerdən",
-    text: "Ara vasitəçiləri azaldırıq ki, məhsul daha təzə, qiymət isə daha ədalətli olsun.",
-  },
-  {
-    title: "İzlənəbilən mənşə",
-    text: "Hər sifarişdə təsərrüfat, mənşə və çatdırılma yolu şəffaf qalır.",
-  },
-  {
-    title: "Yerliyə dəstək",
-    text: "Alışlarınız Azərbaycanın kiçik və orta təsərrüfatlarını birbaşa gücləndirir.",
-  },
-] as const;
+export default async function AboutPage() {
+  const content = await getAboutContent();
+  const { items } = content;
 
-export default function AboutPage() {
   return (
     <div className="mx-auto w-full max-w-6xl px-4 py-10 md:px-6 md:py-14">
       <section>
         <p className="text-sm font-medium text-emerald-700">Barakatly</p>
         <h1 className="mt-2 max-w-3xl text-3xl font-semibold tracking-tight text-zinc-900 md:text-4xl">
-          Fermerdən süfrəyə — daha təzə, daha yaxın
+          {content.title}
         </h1>
         <p className="mt-4 max-w-2xl text-base leading-7 text-zinc-600">
-          Barakatly yerli fermerlərin məhsullarını şəhər sakinlərinə birbaşa
-          çatdıran marketplace-dir. Məqsədimiz sadədir: təzə qida, ədalətli
-          satış və aydın izləmə.
+          {content.body}
         </p>
         <div className="mt-8 flex flex-wrap gap-3">
           <Link
@@ -51,21 +40,24 @@ export default function AboutPage() {
         </div>
       </section>
 
-      <section id="mission" className="scroll-mt-24 mt-16 border-t border-zinc-200 pt-12">
+      <section
+        id="mission"
+        className="scroll-mt-24 mt-16 border-t border-zinc-200 pt-12"
+      >
         <h2 className="text-2xl font-semibold tracking-tight text-zinc-900">
-          Missiyamız
+          {items.missionTitle}
         </h2>
         <p className="mt-3 max-w-3xl text-base leading-7 text-zinc-600">
-          Yerli istehsalı gündəlik ələçatan etmək — fermerlərə sabit satış
-          kanalı, müştərilərə isə etibarlı, təzə və şəffaf qida yolu vermək.
-          Hər sifariş həm keyfiyyəti, həm də kənd təsərrüfatını dəstəkləyir.
+          {items.missionBody}
         </p>
       </section>
 
       <section className="mt-14 grid gap-8 md:grid-cols-3">
-        {VALUES.map((item) => (
+        {items.values.map((item) => (
           <div key={item.title}>
-            <h3 className="text-base font-semibold text-zinc-900">{item.title}</h3>
+            <h3 className="text-base font-semibold text-zinc-900">
+              {item.title}
+            </h3>
             <p className="mt-2 text-sm leading-6 text-zinc-600">{item.text}</p>
           </div>
         ))}
@@ -73,11 +65,10 @@ export default function AboutPage() {
 
       <section className="mt-16 border-t border-zinc-200 pt-12">
         <h2 className="text-2xl font-semibold tracking-tight text-zinc-900">
-          Fermer­siniz?
+          {items.farmerTitle}
         </h2>
         <p className="mt-3 max-w-2xl text-sm leading-6 text-zinc-600">
-          Məhsullarınızı Barakatly-da satışa çıxarın və təsdiqlənmiş
-          müştərilərə birbaşa çatın.
+          {items.farmerBody}
         </p>
         <Link
           href="/farmers/apply"

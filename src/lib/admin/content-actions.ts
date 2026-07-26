@@ -3,12 +3,18 @@
 import { revalidatePath, updateTag } from "next/cache";
 import { requireAdmin } from "@/lib/admin/auth";
 import {
+  ABOUT_DEFAULT,
+  ABOUT_DEFAULT_ITEMS,
+  ABOUT_DEFAULT_VALUES,
+  ABOUT_KEY,
   FAQ_DEFAULT,
   FAQ_DEFAULT_ITEMS,
   FAQ_KEY,
   WHY_BARAKATLY_DEFAULT,
   WHY_BARAKATLY_DEFAULT_FEATURES,
   WHY_BARAKATLY_KEY,
+  type AboutItems,
+  type AboutValue,
   type FaqItem,
   type WhyBarakatlyFeature,
 } from "@/lib/content/defaults";
@@ -219,4 +225,119 @@ export async function resetFaqContent(
 
   revalidateFaqContent();
   return { success: "Default FAQ bərpa olundu." };
+}
+
+const VALUE_COUNT = 3;
+
+function parseAboutForm(formData: FormData): AboutItems | string {
+  const missionTitle = String(formData.get("mission_title") ?? "").trim();
+  const missionBody = String(formData.get("mission_body") ?? "").trim();
+  const farmerTitle = String(formData.get("farmer_title") ?? "").trim();
+  const farmerBody = String(formData.get("farmer_body") ?? "").trim();
+
+  if (!missionTitle) return "Missiya başlığı tələb olunur.";
+  if (!missionBody) return "Missiya mətni tələb olunur.";
+  if (!farmerTitle) return "Fermer bölməsi başlığı tələb olunur.";
+  if (!farmerBody) return "Fermer bölməsi mətni tələb olunur.";
+  if (missionTitle.length > 120) return "Missiya başlığı çox uzundur.";
+  if (missionBody.length > 1000) return "Missiya mətni çox uzundur.";
+  if (farmerTitle.length > 120) return "Fermer bölməsi başlığı çox uzundur.";
+  if (farmerBody.length > 500) return "Fermer bölməsi mətni çox uzundur.";
+
+  const values: AboutValue[] = [];
+  for (let index = 0; index < VALUE_COUNT; index += 1) {
+    const title = String(formData.get(`value_title_${index}`) ?? "").trim();
+    const text = String(formData.get(`value_text_${index}`) ?? "").trim();
+    if (!title) return `${index + 1}-ci dəyərin başlığı tələb olunur.`;
+    if (!text) return `${index + 1}-ci dəyərin mətni tələb olunur.`;
+    if (title.length > 80) return `${index + 1}-ci dəyərin başlığı çox uzundur.`;
+    if (text.length > 400) return `${index + 1}-ci dəyərin mətni çox uzundur.`;
+    values.push({ title, text });
+  }
+
+  return {
+    missionTitle,
+    missionBody,
+    values,
+    farmerTitle,
+    farmerBody,
+  };
+}
+
+function revalidateAboutContent() {
+  updateTag("site-content");
+  updateTag("about");
+  revalidatePath("/about");
+  revalidatePath("/admin/content");
+}
+
+export async function updateAboutContent(
+  _prev: AdminContentActionState,
+  formData: FormData
+): Promise<AdminContentActionState> {
+  await requireAdmin();
+
+  const title = String(formData.get("title") ?? "").trim();
+  const body = String(formData.get("body") ?? "").trim();
+  const items = parseAboutForm(formData);
+
+  if (!title) return { error: "Başlıq tələb olunur." };
+  if (!body) return { error: "Mətn tələb olunur." };
+  if (title.length > 160) return { error: "Başlıq çox uzundur." };
+  if (body.length > 1000) return { error: "Mətn çox uzundur." };
+  if (typeof items === "string") return { error: items };
+
+  const supabase = await createClient();
+  const { error } = await supabase.from("site_content").upsert(
+    {
+      key: ABOUT_KEY,
+      title,
+      body,
+      items,
+    },
+    { onConflict: "key" }
+  );
+
+  if (error) {
+    console.error("[admin.updateAboutContent]", error.message);
+    if (error.message.toLowerCase().includes("site_content")) {
+      return {
+        error:
+          "site_content cədvəli tapılmadı. Supabase-də 009_site_content.sql işə salın.",
+      };
+    }
+    return { error: "Haqqımızda məzmunu yenilənmədi." };
+  }
+
+  revalidateAboutContent();
+  return { success: "Haqqımızda səhifəsi yeniləndi." };
+}
+
+export async function resetAboutContent(
+  _prev: AdminContentActionState,
+  _formData: FormData
+): Promise<AdminContentActionState> {
+  await requireAdmin();
+
+  const supabase = await createClient();
+  const { error } = await supabase.from("site_content").upsert(
+    {
+      key: ABOUT_KEY,
+      title: ABOUT_DEFAULT.title,
+      body: ABOUT_DEFAULT.body,
+      items: {
+        ...ABOUT_DEFAULT_ITEMS,
+        values: [...ABOUT_DEFAULT_VALUES],
+      },
+    },
+    { onConflict: "key" }
+  );
+
+  if (error) {
+    console.error("[admin.resetAboutContent]", error.message);
+    return { error: "Default Haqqımızda məzmunu bərpa edilmədi." };
+  }
+
+  revalidateAboutContent();
+  return { success: "Default Haqqımızda məzmunu bərpa olundu." };
 }

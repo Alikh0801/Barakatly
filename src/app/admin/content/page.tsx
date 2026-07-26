@@ -1,7 +1,9 @@
+import { AdminAboutPanel } from "@/components/admin/AdminAboutPanel";
 import { AdminFaqPanel } from "@/components/admin/AdminFaqPanel";
 import { AdminPageShell } from "@/components/admin/AdminPageShell";
 import { AdminWhyBarakatlyPanel } from "@/components/admin/AdminWhyBarakatlyPanel";
 import {
+  getAdminAboutContent,
   getAdminFaqContent,
   getAdminWhyBarakatlyContent,
 } from "@/lib/content/queries";
@@ -9,15 +11,16 @@ import {
 export const metadata = { title: "Məzmun — Admin" };
 
 export default async function AdminContentPage() {
-  const [whyContent, faqContent] = await Promise.all([
+  const [whyContent, faqContent, aboutContent] = await Promise.all([
     getAdminWhyBarakatlyContent(),
     getAdminFaqContent(),
+    getAdminAboutContent(),
   ]);
 
   return (
     <AdminPageShell
       title="Məzmun"
-      description="Ana səhifə bölmələrinin başlıq və mətnlərini idarə edin"
+      description="Ana səhifə və Haqqımızda mətnlərini idarə edin"
     >
       <div className="grid gap-6 xl:grid-cols-2">
         <AdminWhyBarakatlyPanel
@@ -26,6 +29,11 @@ export default async function AdminContentPage() {
           items={whyContent.items}
         />
         <AdminFaqPanel title={faqContent.title} items={faqContent.items} />
+        <AdminAboutPanel
+          title={aboutContent.title}
+          body={aboutContent.body}
+          items={aboutContent.items}
+        />
       </div>
     </AdminPageShell>
   );

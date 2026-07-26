@@ -76,3 +76,50 @@ export const FAQ_DEFAULT = {
   body: "",
   items: FAQ_DEFAULT_ITEMS,
 } as const;
+
+export const ABOUT_KEY = "about" as const;
+
+export type AboutValue = {
+  title: string;
+  text: string;
+};
+
+export type AboutItems = {
+  missionTitle: string;
+  missionBody: string;
+  values: AboutValue[];
+  farmerTitle: string;
+  farmerBody: string;
+};
+
+export const ABOUT_DEFAULT_VALUES: AboutValue[] = [
+  {
+    title: "Birbaşa fermerdən",
+    text: "Ara vasitəçiləri azaldırıq ki, məhsul daha təzə, qiymət isə daha ədalətli olsun.",
+  },
+  {
+    title: "İzlənəbilən mənşə",
+    text: "Hər sifarişdə təsərrüfat, mənşə və çatdırılma yolu şəffaf qalır.",
+  },
+  {
+    title: "Yerliyə dəstək",
+    text: "Alışlarınız Azərbaycanın kiçik və orta təsərrüfatlarını birbaşa gücləndirir.",
+  },
+];
+
+export const ABOUT_DEFAULT_ITEMS: AboutItems = {
+  missionTitle: "Missiyamız",
+  missionBody:
+    "Yerli istehsalı gündəlik ələçatan etmək — fermerlərə sabit satış kanalı, müştərilərə isə etibarlı, təzə və şəffaf qida yolu vermək. Hər sifariş həm keyfiyyəti, həm də kənd təsərrüfatını dəstəkləyir.",
+  values: ABOUT_DEFAULT_VALUES,
+  farmerTitle: "Fermersiniz?",
+  farmerBody:
+    "Məhsullarınızı Barakatly-da satışa çıxarın və təsdiqlənmiş müştərilərə birbaşa çatın.",
+};
+
+export const ABOUT_DEFAULT = {
+  key: ABOUT_KEY,
+  title: "Fermerdən süfrəyə — daha təzə, daha yaxın",
+  body: "Barakatly yerli fermerlərin məhsullarını şəhər sakinlərinə birbaşa çatdıran marketplace-dir. Məqsədimiz sadədir: təzə qida, ədalətli satış və aydın izləmə.",
+  items: ABOUT_DEFAULT_ITEMS,
+} as const;

@@ -1,11 +1,17 @@
 import { unstable_cache } from "next/cache";
 import {
+  ABOUT_DEFAULT,
+  ABOUT_DEFAULT_ITEMS,
+  ABOUT_DEFAULT_VALUES,
+  ABOUT_KEY,
   FAQ_DEFAULT,
   FAQ_DEFAULT_ITEMS,
   FAQ_KEY,
   WHY_BARAKATLY_DEFAULT,
   WHY_BARAKATLY_DEFAULT_FEATURES,
   WHY_BARAKATLY_KEY,
+  type AboutItems,
+  type AboutValue,
   type FaqItem,
   type WhyBarakatlyFeature,
 } from "@/lib/content/defaults";
@@ -215,6 +221,148 @@ export async function getAdminFaqContent(): Promise<FaqContent> {
     key: data.key,
     title: data.title,
     items: parseFaqItems(data.items),
+    updated_at: data.updated_at,
+  };
+}
+
+export type AboutContent = {
+  key: string;
+  title: string;
+  body: string;
+  items: AboutItems;
+  updated_at?: string;
+};
+
+function parseAboutValues(value: unknown): AboutValue[] {
+  const defaults = [...ABOUT_DEFAULT_VALUES];
+  if (!Array.isArray(value) || value.length === 0) return defaults;
+
+  return defaults.map((fallback, index) => {
+    const item = value[index];
+    if (!item || typeof item !== "object") return fallback;
+    const record = item as Record<string, unknown>;
+    const title = String(record.title ?? "").trim();
+    const text = String(record.text ?? record.description ?? "").trim();
+    if (!title || !text) return fallback;
+    return { title, text };
+  });
+}
+
+function parseAboutItems(value: unknown): AboutItems {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return {
+      ...ABOUT_DEFAULT_ITEMS,
+      values: [...ABOUT_DEFAULT_VALUES],
+    };
+  }
+
+  const record = value as Record<string, unknown>;
+  const missionTitle =
+    String(record.missionTitle ?? "").trim() ||
+    ABOUT_DEFAULT_ITEMS.missionTitle;
+  const missionBody =
+    String(record.missionBody ?? "").trim() || ABOUT_DEFAULT_ITEMS.missionBody;
+  const farmerTitle =
+    String(record.farmerTitle ?? "").trim() || ABOUT_DEFAULT_ITEMS.farmerTitle;
+  const farmerBody =
+    String(record.farmerBody ?? "").trim() || ABOUT_DEFAULT_ITEMS.farmerBody;
+
+  return {
+    missionTitle,
+    missionBody,
+    values: parseAboutValues(record.values),
+    farmerTitle,
+    farmerBody,
+  };
+}
+
+async function fetchAboutContent(): Promise<AboutContent> {
+  const supabase = createPublicClient();
+  const { data, error } = await supabase
+    .from("site_content")
+    .select("key, title, body, items")
+    .eq("key", ABOUT_KEY)
+    .maybeSingle();
+
+  if (error) {
+    console.error("[content.getAbout]", error.message);
+    return {
+      key: ABOUT_DEFAULT.key,
+      title: ABOUT_DEFAULT.title,
+      body: ABOUT_DEFAULT.body,
+      items: {
+        ...ABOUT_DEFAULT_ITEMS,
+        values: [...ABOUT_DEFAULT_VALUES],
+      },
+    };
+  }
+
+  if (!data) {
+    return {
+      key: ABOUT_DEFAULT.key,
+      title: ABOUT_DEFAULT.title,
+      body: ABOUT_DEFAULT.body,
+      items: {
+        ...ABOUT_DEFAULT_ITEMS,
+        values: [...ABOUT_DEFAULT_VALUES],
+      },
+    };
+  }
+
+  return {
+    key: data.key,
+    title: data.title,
+    body: data.body,
+    items: parseAboutItems(data.items),
+  };
+}
+
+export const getAboutContent = unstable_cache(
+  fetchAboutContent,
+  ["about-content"],
+  { revalidate: 300, tags: ["site-content", "about"] },
+);
+
+export async function getAdminAboutContent(): Promise<AboutContent> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("site_content")
+    .select("key, title, body, items, updated_at")
+    .eq("key", ABOUT_KEY)
+    .maybeSingle();
+
+  if (error) {
+    console.error("[admin.getAbout]", error.message);
+    return {
+      key: ABOUT_DEFAULT.key,
+      title: ABOUT_DEFAULT.title,
+      body: ABOUT_DEFAULT.body,
+      items: {
+        ...ABOUT_DEFAULT_ITEMS,
+        values: [...ABOUT_DEFAULT_VALUES],
+      },
+      updated_at: new Date(0).toISOString(),
+    };
+  }
+
+  if (!data) {
+    return {
+      key: ABOUT_DEFAULT.key,
+      title: ABOUT_DEFAULT.title,
+      body: ABOUT_DEFAULT.body,
+      items: {
+        ...ABOUT_DEFAULT_ITEMS,
+        values: [...ABOUT_DEFAULT_VALUES],
+      },
+      updated_at: new Date(0).toISOString(),
+    };
+  }
+
+  return {
+    key: data.key,
+    title: data.title,
+    body: data.body,
+    items: parseAboutItems(data.items),
     updated_at: data.updated_at,
   };
 }
