@@ -11,6 +11,7 @@ const productSelect = `
   farmer_price,
   quantity_available,
   in_stock,
+  sold_count,
   farmer:farmers (
     id,
     farm_name,

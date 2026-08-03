@@ -14,6 +14,7 @@ export type ProductListItem = {
   farmer_price: number;
   quantity_available: number;
   in_stock: boolean;
+  sold_count: number;
   farmer: {
     id: string;
     farm_name: string;

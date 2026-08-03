@@ -240,6 +240,7 @@ export interface Database {
           quantity_available: number;
           in_stock: boolean;
           status: ProductStatus;
+          sold_count: number;
           created_at: string;
           updated_at: string;
         };
@@ -255,6 +256,7 @@ export interface Database {
           quantity_available?: number;
           in_stock?: boolean;
           status?: ProductStatus;
+          sold_count?: number;
           created_at?: string;
           updated_at?: string;
         };
@@ -270,6 +272,7 @@ export interface Database {
           quantity_available?: number;
           in_stock?: boolean;
           status?: ProductStatus;
+          sold_count?: number;
           created_at?: string;
           updated_at?: string;
         };

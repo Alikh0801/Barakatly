@@ -756,18 +756,10 @@ export function PublicFarmerProfile({
         productCount={farmer.productCount}
         postCount={posts.length}
         actions={
-          <>
-            <ShareProfileButton
-              farmerId={farmer.id}
-              farmName={farmer.farm_name}
-            />
-            <Link
-              href="/shop"
-              className="inline-flex rounded-full bg-white px-4 py-2 text-sm font-semibold text-[#1f5c3d] ring-1 ring-[#1f5c3d]/20 transition hover:bg-[#f3faf6]"
-            >
-              Məhsullara bax
-            </Link>
-          </>
+          <ShareProfileButton
+            farmerId={farmer.id}
+            farmName={farmer.farm_name}
+          />
         }
       />
 
