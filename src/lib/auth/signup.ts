@@ -55,7 +55,7 @@ export function translateAuthError(message: string): string {
     normalized.includes("redirect") &&
     (normalized.includes("not allowed") || normalized.includes("invalid"))
   ) {
-    return "Redirect URL icazəli deyil. Supabase-də https://barakatly.vercel.app/auth/callback əlavə edin.";
+    return "Redirect URL icazəli deyil. Supabase-də https://barakatly.az/auth/callback əlavə edin.";
   }
   if (normalized.includes("error sending confirmation email")) {
     return "Təsdiq emaili göndərilmədi. Supabase email konfiqurasiyasını yoxlayın.";

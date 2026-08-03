@@ -120,7 +120,7 @@ In **Vercel → Settings → Environment Variables** (Production):
 NEXT_PUBLIC_SUPABASE_URL=https://xxxx.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJ...
 SUPABASE_SERVICE_ROLE_KEY=eyJ...
-NEXT_PUBLIC_APP_URL=https://barakatly.vercel.app
+NEXT_PUBLIC_APP_URL=https://barakatly.az
 ```
 
 If `NEXT_PUBLIC_APP_URL` is missing, the app auto-detects the Vercel URL at runtime.
@@ -129,8 +129,8 @@ In **Supabase → Authentication → URL Configuration**:
 
 | Field | Value |
 |---|---|
-| Site URL | `https://barakatly.vercel.app` |
-| Redirect URLs | `https://barakatly.vercel.app/auth/callback` |
+| Site URL | `https://barakatly.az` |
+| Redirect URLs | `https://barakatly.az/auth/callback` |
 | | `http://localhost:3000/auth/callback` |
 
 After changing env vars, **redeploy** on Vercel.
