@@ -8,6 +8,10 @@ import {
   deleteFarmerBlogPost,
   updateFarmerProfile,
 } from "@/lib/farmer/actions";
+import {
+  toggleFollowFarmer,
+  type FollowActionState,
+} from "@/lib/farmers/actions";
 import { Spinner } from "@/components/ui/Spinner";
 import { VerifiedIcon } from "@/components/ui/VerifiedIcon";
 import {
@@ -23,7 +27,7 @@ import type {
 } from "@/lib/farmer/queries";
 import type { ProductListItem } from "@/types/shop";
 import type { Farmer, Profile } from "@/types";
-import { formatDateTime } from "@/lib/format/date";
+import { formatDate, formatDateTime } from "@/lib/format/date";
 
 const displayFont = Syne({
   subsets: ["latin"],
@@ -80,10 +84,80 @@ function ShareProfileButton({
     <button
       type="button"
       onClick={() => void shareProfile()}
-      className="inline-flex rounded-full bg-[#1f5c3d] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#184a31]"
+      className="inline-flex items-center gap-1.5 rounded-full bg-[#1f5c3d] px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-[#184a31]"
     >
-      {copied ? "Link kopyalandı" : "Profili paylaş"}
+      {copied ? (
+        "Link kopyalandı"
+      ) : (
+        <>
+          <ShareIcon className="h-4 w-4" />
+          Profili paylaş
+        </>
+      )}
     </button>
+  );
+}
+
+const followInitialState: FollowActionState = { following: false };
+
+function FollowButton({
+  farmerId,
+  initialFollowing,
+  isAuthenticated,
+}: {
+  farmerId: string;
+  initialFollowing: boolean;
+  isAuthenticated: boolean;
+}) {
+  const [state, action, pending] = useActionState(toggleFollowFarmer, {
+    ...followInitialState,
+    following: initialFollowing,
+  });
+
+  if (!isAuthenticated) {
+    return (
+      <Link
+        href="/signin"
+        className="inline-flex items-center gap-1.5 rounded-full bg-[#1f5c3d] px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-[#184a31]"
+      >
+        <PlusIcon className="h-4 w-4" />
+        İzlə
+      </Link>
+    );
+  }
+
+  return (
+    <div className="flex flex-col items-end gap-1">
+      <form action={action}>
+        <input type="hidden" name="farmer_id" value={farmerId} />
+        <button
+          type="submit"
+          disabled={pending}
+          className={
+            state.following
+              ? "group inline-flex items-center gap-1.5 rounded-full bg-white px-4 py-2 text-sm font-semibold text-[#1f5c3d] ring-1 ring-[#1f5c3d]/30 transition hover:bg-rose-50 hover:text-rose-700 hover:ring-rose-200 disabled:opacity-70"
+              : "inline-flex items-center gap-1.5 rounded-full bg-[#1f5c3d] px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-[#184a31] disabled:opacity-70"
+          }
+        >
+          {state.following ? (
+            <>
+              <CheckIcon className="h-4 w-4 group-hover:hidden" />
+              <CloseIcon className="hidden h-4 w-4 group-hover:block" />
+              <span className="group-hover:hidden">İzlənilir</span>
+              <span className="hidden group-hover:inline">İzləmə</span>
+            </>
+          ) : (
+            <>
+              <PlusIcon className="h-4 w-4" />
+              İzlə
+            </>
+          )}
+        </button>
+      </form>
+      {state.error ? (
+        <p className="text-xs text-rose-600">{state.error}</p>
+      ) : null}
+    </div>
   );
 }
 
@@ -115,6 +189,176 @@ function FarmerAvatar({
   );
 }
 
+function ShareIcon({ className = "h-4 w-4" }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      className={className}
+    >
+      <circle cx="18" cy="5" r="2.5" />
+      <circle cx="6" cy="12" r="2.5" />
+      <circle cx="18" cy="19" r="2.5" />
+      <path d="M8.2 10.8l7.6-4.4M8.2 13.2l7.6 4.4" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function PlusIcon({ className = "h-4 w-4" }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.5"
+      className={className}
+    >
+      <path d="M12 5v14M5 12h14" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function CheckIcon({ className = "h-4 w-4" }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.5"
+      className={className}
+    >
+      <path d="M5 12l5 5L19 7" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function CloseIcon({ className = "h-4 w-4" }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.5"
+      className={className}
+    >
+      <path d="M6 6l12 12M18 6L6 18" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function PackageIcon({ className = "h-4 w-4" }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      className={className}
+    >
+      <path d="M21 8 12 3 3 8l9 5 9-5Z" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M3 8v8l9 5 9-5V8" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M12 13v8" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function ImageStackIcon({ className = "h-4 w-4" }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      className={className}
+    >
+      <rect x="3" y="3" width="18" height="18" rx="3" />
+      <circle cx="8.5" cy="8.5" r="1.5" />
+      <path d="M21 15l-5-5-9 9" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function UsersIcon({ className = "h-4 w-4" }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      className={className}
+    >
+      <circle cx="9" cy="8" r="3" />
+      <path d="M2.5 20c0-3.5 3-6 6.5-6s6.5 2.5 6.5 6" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M16.5 3.5c1.7.4 3 2 3 3.9 0 1.9-1.3 3.5-3 3.9" strokeLinecap="round" />
+      <path d="M18 14.3c2 .5 3.5 2.3 3.5 4.7" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function PinIcon({ className = "h-3.5 w-3.5" }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      className={className}
+    >
+      <path
+        d="M12 21s-7-7.2-7-12a7 7 0 1 1 14 0c0 4.8-7 12-7 12Z"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <circle cx="12" cy="9" r="2.5" />
+    </svg>
+  );
+}
+
+function CalendarIcon({ className = "h-3.5 w-3.5" }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      className={className}
+    >
+      <rect x="3" y="5" width="18" height="16" rx="2" />
+      <path d="M8 3v4M16 3v4M3 10h18" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function StatTile({
+  icon,
+  value,
+  label,
+}: {
+  icon: React.ReactNode;
+  value: string | number;
+  label: string;
+}) {
+  return (
+    <div className="flex items-center gap-3 rounded-2xl bg-zinc-50 px-3.5 py-3 ring-1 ring-zinc-100 sm:px-4">
+      <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-700">
+        {icon}
+      </span>
+      <div className="min-w-0">
+        <div
+          className={`${displayFont.className} text-lg font-bold leading-tight text-zinc-900 sm:text-xl`}
+        >
+          {value}
+        </div>
+        <div className="truncate text-[11px] font-medium uppercase tracking-wide text-zinc-500">
+          {label}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function ProfileHero({
   farmName,
   avatarUrl,
@@ -123,6 +367,8 @@ function ProfileHero({
   verified,
   productCount,
   postCount,
+  followerCount,
+  createdAt,
   actions,
 }: {
   farmName: string;
@@ -132,58 +378,69 @@ function ProfileHero({
   verified: boolean;
   productCount: number;
   postCount: number;
+  followerCount: number;
+  createdAt: string;
   actions?: React.ReactNode;
 }) {
   return (
     <section className="rounded-[1.75rem] bg-white p-5 shadow-[0_20px_60px_-40px_rgba(15,40,28,0.45)] ring-1 ring-zinc-200/80 sm:p-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div className="flex items-start gap-4">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex min-w-0 items-center gap-4">
           <FarmerAvatar
             name={farmName}
             url={avatarUrl}
-            className="h-24 w-24 shrink-0 text-3xl ring-2 ring-zinc-100 sm:h-28 sm:w-28"
+            className="h-20 w-20 shrink-0 text-2xl shadow-sm ring-2 ring-emerald-50 sm:h-24 sm:w-24"
           />
-          <div className="min-w-0 pt-1">
-            <div className="flex flex-wrap items-center gap-2">
+          <div className="min-w-0">
+            <div className="flex min-w-0 items-center gap-2">
               <h1
-                className={`${displayFont.className} text-2xl font-bold tracking-tight text-zinc-900 sm:text-3xl`}
+                className={`${displayFont.className} truncate text-2xl font-bold tracking-tight text-zinc-900 sm:text-3xl`}
               >
                 {farmName}
               </h1>
-              {verified ? <VerifiedIcon className="h-5 w-5" /> : null}
+              {verified ? <VerifiedIcon className="h-5 w-5 shrink-0" /> : null}
             </div>
-            {locationText ? (
-              <p className="mt-1 text-sm text-zinc-500">{locationText}</p>
-            ) : null}
-            {description ? (
-              <p className="mt-3 max-w-2xl text-sm leading-6 text-zinc-700 sm:text-[15px]">
-                {description}
-              </p>
-            ) : null}
+            <div className="mt-2 flex flex-wrap items-center gap-1.5">
+              {locationText ? (
+                <span className="inline-flex items-center gap-1 rounded-full bg-zinc-50 px-2.5 py-1 text-xs font-medium text-zinc-600 ring-1 ring-zinc-100">
+                  <PinIcon className="h-3.5 w-3.5 text-emerald-600" />
+                  {locationText}
+                </span>
+              ) : null}
+              <span className="inline-flex items-center gap-1 rounded-full bg-zinc-50 px-2.5 py-1 text-xs font-medium text-zinc-600 ring-1 ring-zinc-100">
+                <CalendarIcon className="h-3.5 w-3.5 text-emerald-600" />
+                Üzv: {formatDate(createdAt)}
+              </span>
+            </div>
           </div>
         </div>
         {actions ? (
-          <div className="flex flex-wrap gap-2 sm:justify-end">{actions}</div>
+          <div className="flex shrink-0 flex-wrap gap-2 sm:justify-end">{actions}</div>
         ) : null}
       </div>
 
-      <div className="mt-5 flex gap-6 border-t border-zinc-100 pt-4">
-        <div>
-          <div className={`${displayFont.className} text-lg font-bold text-zinc-900`}>
-            {postCount}
-          </div>
-          <div className="text-xs uppercase tracking-wide text-zinc-500">
-            Paylaşım
-          </div>
-        </div>
-        <div>
-          <div className={`${displayFont.className} text-lg font-bold text-zinc-900`}>
-            {productCount}
-          </div>
-          <div className="text-xs uppercase tracking-wide text-zinc-500">
-            Məhsul
-          </div>
-        </div>
+      {description ? (
+        <p className="mt-4 max-w-2xl text-sm leading-6 text-zinc-700 sm:text-[15px]">
+          {description}
+        </p>
+      ) : null}
+
+      <div className="mt-5 grid grid-cols-3 gap-3 border-t border-zinc-100 pt-5">
+        <StatTile
+          icon={<PackageIcon className="h-4 w-4" />}
+          value={productCount}
+          label="Məhsul"
+        />
+        <StatTile
+          icon={<ImageStackIcon className="h-4 w-4" />}
+          value={postCount}
+          label="Paylaşım"
+        />
+        <StatTile
+          icon={<UsersIcon className="h-4 w-4" />}
+          value={followerCount}
+          label="İzləyici"
+        />
       </div>
     </section>
   );
@@ -610,6 +867,7 @@ export function FarmerProfileDashboard({
   products,
   orders,
   posts,
+  followerCount,
 }: {
   farmer: Farmer;
   profile: Profile;
@@ -617,6 +875,7 @@ export function FarmerProfileDashboard({
   products: FarmerProduct[];
   orders: FarmerOrderItem[];
   posts: FarmerBlogPost[];
+  followerCount: number;
 }) {
   const [tab, setTab] = useState<FarmerProfileTab>(initialTab);
 
@@ -646,6 +905,8 @@ export function FarmerProfileDashboard({
         verified={Boolean(farmer.verified_at)}
         productCount={products.filter((p) => p.status === "approved").length}
         postCount={posts.length}
+        followerCount={followerCount}
+        createdAt={farmer.created_at}
         actions={
           <>
             <Link
@@ -703,6 +964,9 @@ export function PublicFarmerProfile({
   initialTab = "posts",
   products,
   posts,
+  followerCount,
+  isFollowing,
+  isAuthenticated,
 }: {
   farmer: {
     id: string;
@@ -712,10 +976,14 @@ export function PublicFarmerProfile({
     verified_at: string | null;
     avatar_url: string | null;
     productCount: number;
+    created_at: string;
   };
   initialTab?: PublicFarmerProfileTab;
   products: ProductListItem[];
   posts: FarmerBlogPost[];
+  followerCount: number;
+  isFollowing: boolean;
+  isAuthenticated: boolean;
 }) {
   const [tab, setTab] = useState<PublicFarmerProfileTab>(initialTab);
 
@@ -755,11 +1023,20 @@ export function PublicFarmerProfile({
         verified={Boolean(farmer.verified_at)}
         productCount={farmer.productCount}
         postCount={posts.length}
+        followerCount={followerCount}
+        createdAt={farmer.created_at}
         actions={
-          <ShareProfileButton
-            farmerId={farmer.id}
-            farmName={farmer.farm_name}
-          />
+          <>
+            <FollowButton
+              farmerId={farmer.id}
+              initialFollowing={isFollowing}
+              isAuthenticated={isAuthenticated}
+            />
+            <ShareProfileButton
+              farmerId={farmer.id}
+              farmName={farmer.farm_name}
+            />
+          </>
         }
       />
 

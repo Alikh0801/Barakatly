@@ -5,11 +5,14 @@ import {
   type PublicFarmerProfileTab,
 } from "@/components/farmer/FarmerProfile";
 import {
+  getFarmerFollowerCount,
+  getIsFollowingFarmer,
   getPublicFarmerBlogPosts,
   getPublicFarmerById,
   getPublicFarmerProducts,
 } from "@/lib/farmers/queries";
 import type { FarmerBlogPost } from "@/lib/farmer/queries";
+import { getProfile } from "@/lib/auth/session";
 
 export async function generateMetadata({
   params,
@@ -67,9 +70,13 @@ export default async function FarmerDetailPage({
 
   const initialTab = parseTab(tabParam);
 
-  const [products, rawPosts] = await Promise.all([
+  const profile = await getProfile();
+
+  const [products, rawPosts, followerCount, isFollowing] = await Promise.all([
     getPublicFarmerProducts(farmer.id),
     getPublicFarmerBlogPosts(farmer.id),
+    getFarmerFollowerCount(farmer.id),
+    profile ? getIsFollowingFarmer(farmer.id, profile.id) : Promise.resolve(false),
   ]);
 
   const posts = rawPosts.map(
@@ -96,6 +103,9 @@ export default async function FarmerDetailPage({
       initialTab={initialTab}
       products={products}
       posts={posts}
+      followerCount={followerCount}
+      isFollowing={isFollowing}
+      isAuthenticated={Boolean(profile)}
     />
   );
 }

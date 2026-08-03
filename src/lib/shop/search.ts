@@ -61,6 +61,7 @@ export async function searchCatalog(query: string): Promise<SearchResults> {
         location_text,
         verified_at,
         avatar_url,
+        created_at,
         products ( id, status )
       `,
       )
@@ -87,6 +88,7 @@ export async function searchCatalog(query: string): Promise<SearchResults> {
       verified_at: farmer.verified_at,
       avatar_url: farmer.avatar_url ?? null,
       productCount: products.filter((p) => p.status === "approved").length,
+      created_at: farmer.created_at,
     };
   });
 

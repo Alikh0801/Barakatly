@@ -176,6 +176,27 @@ export interface Database {
         };
         Relationships: [];
       };
+      farmer_follows: {
+        Row: {
+          id: string;
+          follower_id: string;
+          farmer_id: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          follower_id: string;
+          farmer_id: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          follower_id?: string;
+          farmer_id?: string;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
       couriers: {
         Row: {
           id: string;

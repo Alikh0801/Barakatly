@@ -10,6 +10,7 @@ export type PublicFarmer = {
   verified_at: string | null;
   avatar_url: string | null;
   productCount: number;
+  created_at: string;
 };
 
 const productSelect = `
@@ -44,6 +45,7 @@ function mapPublicFarmer(farmer: {
   location_text: string | null;
   verified_at: string | null;
   avatar_url?: string | null;
+  created_at: string;
   products?: { id: string; status: string }[] | null;
 }): PublicFarmer {
   const products = Array.isArray(farmer.products) ? farmer.products : [];
@@ -59,6 +61,7 @@ function mapPublicFarmer(farmer: {
     verified_at: farmer.verified_at,
     avatar_url: farmer.avatar_url ?? null,
     productCount: approvedCount,
+    created_at: farmer.created_at,
   };
 }
 
@@ -74,6 +77,7 @@ async function fetchPublicFarmers(): Promise<PublicFarmer[]> {
       location_text,
       verified_at,
       avatar_url,
+      created_at,
       products ( id, status )
     `,
     )
@@ -102,6 +106,7 @@ async function fetchPublicFarmerById(id: string): Promise<PublicFarmer | null> {
       location_text,
       verified_at,
       avatar_url,
+      created_at,
       products ( id, status )
     `,
     )
@@ -214,4 +219,39 @@ export function getPublicFarmerBlogPosts(farmerId: string) {
     ["public-farmer-blog", farmerId],
     { revalidate: 60, tags: ["farmers"] },
   )();
+}
+
+export async function getFarmerFollowerCount(farmerId: string): Promise<number> {
+  const supabase = createPublicClient();
+  const { count, error } = await supabase
+    .from("farmer_follows")
+    .select("id", { count: "exact", head: true })
+    .eq("farmer_id", farmerId);
+
+  if (error) {
+    console.error("[farmers.getFarmerFollowerCount]", error.message);
+    return 0;
+  }
+
+  return count ?? 0;
+}
+
+export async function getIsFollowingFarmer(
+  farmerId: string,
+  followerId: string,
+): Promise<boolean> {
+  const supabase = createPublicClient();
+  const { data, error } = await supabase
+    .from("farmer_follows")
+    .select("id")
+    .eq("farmer_id", farmerId)
+    .eq("follower_id", followerId)
+    .maybeSingle();
+
+  if (error) {
+    console.error("[farmers.getIsFollowingFarmer]", error.message);
+    return false;
+  }
+
+  return Boolean(data);
 }

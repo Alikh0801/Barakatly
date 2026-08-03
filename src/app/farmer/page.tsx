@@ -9,6 +9,7 @@ import {
   getFarmerOrderItems,
   getFarmerProducts,
 } from "@/lib/farmer/queries";
+import { getFarmerFollowerCount } from "@/lib/farmers/queries";
 
 export const metadata = { title: "Fermer profili — BARAKATLY" };
 
@@ -45,10 +46,11 @@ export default async function FarmerDashboardPage({
     );
   }
 
-  const [products, orders, posts] = await Promise.all([
+  const [products, orders, posts, followerCount] = await Promise.all([
     getFarmerProducts(farmer.id),
     getFarmerOrderItems(farmer.id),
     getFarmerBlogPosts(farmer.id),
+    getFarmerFollowerCount(farmer.id),
   ]);
 
   return (
@@ -59,6 +61,7 @@ export default async function FarmerDashboardPage({
       products={products}
       orders={orders}
       posts={posts}
+      followerCount={followerCount}
     />
   );
 }
