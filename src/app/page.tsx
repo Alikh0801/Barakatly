@@ -3,6 +3,7 @@ import { AreYouAFarmerSection } from "@/components/AreYouAFarmerSection";
 import { Hero } from "@/components/Hero";
 import { CategorySection } from "@/components/CategorySection";
 import { FaqSection } from "@/components/FaqSection";
+import { Reveal } from "@/components/Reveal";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
 import { WhyChooseSection } from "@/components/WhyChooseSection";
@@ -20,11 +21,19 @@ export default async function Home({
       <SiteHeader />
       <Hero />
       <Suspense fallback={<CategorySectionSkeleton />}>
-        <CategorySection categorySlug={params.category} />
+        <Reveal>
+          <CategorySection categorySlug={params.category} />
+        </Reveal>
       </Suspense>
-      <WhyChooseSection />
-      <FaqSection />
-      <AreYouAFarmerSection />
+      <Reveal>
+        <WhyChooseSection />
+      </Reveal>
+      <Reveal>
+        <FaqSection />
+      </Reveal>
+      <Reveal>
+        <AreYouAFarmerSection />
+      </Reveal>
       <SiteFooter />
     </div>
   );
