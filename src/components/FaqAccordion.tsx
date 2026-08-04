@@ -16,7 +16,7 @@ export function FaqAccordion({ items }: { items: FaqItem[] }) {
         return (
           <div
             key={`${item.question}-${idx}`}
-            className="rounded-2xl bg-white shadow-sm ring-1 ring-zinc-200"
+            className="rounded-2xl bg-white shadow-sm ring-1 ring-zinc-200 transition-shadow hover:shadow-md"
           >
             <button
               id={buttonId}
@@ -29,20 +29,30 @@ export function FaqAccordion({ items }: { items: FaqItem[] }) {
               <span className="text-sm font-semibold text-zinc-900">
                 {item.question}
               </span>
-              <span aria-hidden="true" className="text-zinc-400 transition">
-                {isOpen ? "˄" : "˅"}
+              <span
+                aria-hidden="true"
+                className={[
+                  "text-zinc-400 transition-transform duration-300 ease-out",
+                  isOpen ? "rotate-180" : "rotate-0",
+                ].join(" ")}
+              >
+                ˅
               </span>
             </button>
-            {isOpen ? (
-              <div
-                id={panelId}
-                role="region"
-                aria-labelledby={buttonId}
-                className="px-5 pb-5 text-sm leading-6 text-zinc-600"
-              >
+            <div
+              id={panelId}
+              role="region"
+              aria-labelledby={buttonId}
+              aria-hidden={!isOpen}
+              className={[
+                "grid overflow-hidden transition-[grid-template-rows] duration-300 ease-out",
+                isOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]",
+              ].join(" ")}
+            >
+              <div className="min-h-0 overflow-hidden px-5 pb-5 text-sm leading-6 text-zinc-600">
                 {item.answer}
               </div>
-            ) : null}
+            </div>
           </div>
         );
       })}

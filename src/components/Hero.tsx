@@ -38,7 +38,7 @@ export function Hero() {
       <div className="absolute inset-0 bg-black/15" />
 
       <div className="relative mx-auto flex min-h-dvh w-full max-w-6xl flex-col items-center justify-center px-4 py-24 md:items-start md:px-6">
-        <div className="w-full max-w-2xl text-center md:text-left">
+        <div className="w-full max-w-2xl text-center motion-safe:opacity-0 motion-safe:animate-[hero-fade-up_0.8s_cubic-bezier(0.16,1,0.3,1)_0.05s_forwards] md:text-left">
           <div className="flex flex-wrap items-center justify-center gap-2 md:justify-start">
             <Chip tone="emerald">
               <svg
