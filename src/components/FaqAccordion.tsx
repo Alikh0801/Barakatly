@@ -5,7 +5,7 @@ import type { FaqItem } from "@/lib/content/defaults";
 
 export function FaqAccordion({ items }: { items: FaqItem[] }) {
   const baseId = useId();
-  const [openIdx, setOpenIdx] = useState<number>(0);
+  const [openIdx, setOpenIdx] = useState<number>(-1);
 
   return (
     <div className="space-y-3">
