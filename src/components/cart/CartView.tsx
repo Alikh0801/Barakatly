@@ -1,18 +1,21 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo } from "react";
-import { useCartStore, type CartItem } from "@/store/cart";
-import { useCartHydrated } from "@/hooks/useCartHydrated";
+import { useMemo, useTransition } from "react";
+import {
+  clearCart,
+  removeFromCart,
+  setCartQuantity,
+} from "@/lib/cart/actions";
+import type { CartLineItem } from "@/lib/cart/queries";
 import { formatPrice } from "@/lib/shop/format";
 import { DELIVERY_FEE } from "@/lib/checkout/constants";
-import { CartSkeleton } from "@/components/skeletons";
 import { ImageWithSkeleton } from "@/components/ui/ImageWithSkeleton";
 
-function groupByFarmer(items: CartItem[]) {
+function groupByFarmer(items: CartLineItem[]) {
   const groups = new Map<
     string,
-    { farmerId: string; farmerName: string; items: CartItem[] }
+    { farmerId: string; farmerName: string; items: CartLineItem[] }
   >();
 
   for (const item of items) {
@@ -32,19 +35,29 @@ function groupByFarmer(items: CartItem[]) {
   return [...groups.values()];
 }
 
-export function CartView() {
-  const hydrated = useCartHydrated();
-  const items = useCartStore((s) => s.items);
-  const subtotal = useCartStore((s) => s.subtotal());
-  const updateQuantity = useCartStore((s) => s.updateQuantity);
-  const removeItem = useCartStore((s) => s.removeItem);
-  const clearCart = useCartStore((s) => s.clearCart);
+export function CartView({ items }: { items: CartLineItem[] }) {
+  const [pending, startTransition] = useTransition();
 
   const groups = useMemo(() => groupByFarmer(items), [items]);
+  const subtotal = items.reduce((sum, i) => sum + i.price * i.quantity, 0);
   const total = subtotal + (items.length > 0 ? DELIVERY_FEE : 0);
 
-  if (!hydrated) {
-    return <CartSkeleton />;
+  function changeQuantity(productId: string, quantity: number) {
+    startTransition(async () => {
+      await setCartQuantity(productId, quantity);
+    });
+  }
+
+  function remove(productId: string) {
+    startTransition(async () => {
+      await removeFromCart(productId);
+    });
+  }
+
+  function clear() {
+    startTransition(async () => {
+      await clearCart();
+    });
   }
 
   if (items.length === 0) {
@@ -66,7 +79,9 @@ export function CartView() {
   }
 
   return (
-    <div className="grid gap-8 lg:grid-cols-[1fr_360px]">
+    <div
+      className={`grid gap-8 lg:grid-cols-[1fr_360px] ${pending ? "opacity-70" : ""}`}
+    >
       <div className="space-y-6">
         {groups.map((group) => (
           <section key={group.farmerId || group.farmerName}>
@@ -115,8 +130,9 @@ export function CartView() {
                       </div>
                       <button
                         type="button"
-                        onClick={() => removeItem(item.productId)}
-                        className="shrink-0 text-xs text-zinc-500 hover:text-rose-600"
+                        onClick={() => remove(item.productId)}
+                        disabled={pending}
+                        className="shrink-0 text-xs text-zinc-500 hover:text-rose-600 disabled:opacity-60"
                       >
                         Sil
                       </button>
@@ -127,9 +143,10 @@ export function CartView() {
                         <button
                           type="button"
                           onClick={() =>
-                            updateQuantity(item.productId, item.quantity - 1)
+                            changeQuantity(item.productId, item.quantity - 1)
                           }
-                          className="px-3 py-1 text-sm font-medium text-zinc-900 hover:text-emerald-700"
+                          disabled={pending}
+                          className="px-3 py-1 text-sm font-medium text-zinc-900 hover:text-emerald-700 disabled:opacity-60"
                           aria-label="Miqdarı azalt"
                         >
                           −
@@ -140,9 +157,10 @@ export function CartView() {
                         <button
                           type="button"
                           onClick={() =>
-                            updateQuantity(item.productId, item.quantity + 1)
+                            changeQuantity(item.productId, item.quantity + 1)
                           }
-                          className="px-3 py-1 text-sm font-medium text-zinc-900 hover:text-emerald-700"
+                          disabled={pending || item.quantity >= item.maxQuantity}
+                          className="px-3 py-1 text-sm font-medium text-zinc-900 hover:text-emerald-700 disabled:opacity-40"
                           aria-label="Miqdarı artır"
                         >
                           +
@@ -161,8 +179,9 @@ export function CartView() {
 
         <button
           type="button"
-          onClick={clearCart}
-          className="text-sm text-zinc-500 hover:text-rose-600"
+          onClick={clear}
+          disabled={pending}
+          className="text-sm text-zinc-500 hover:text-rose-600 disabled:opacity-60"
         >
           Səbəti təmizlə
         </button>

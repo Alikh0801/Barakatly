@@ -4,6 +4,7 @@ import { CheckoutForm } from "@/components/checkout/CheckoutForm";
 import { SolidPageShell } from "@/components/layout/SolidPageShell";
 import { getActiveBanks } from "@/lib/checkout/queries";
 import { getProfile } from "@/lib/auth/session";
+import { getCartItems } from "@/lib/cart/queries";
 
 export const metadata = {
   title: "Ödəniş — BARAKATLY",
@@ -15,6 +16,8 @@ export default async function CheckoutPage() {
   if (!profile) {
     redirect("/signin?next=/checkout");
   }
+
+  const items = await getCartItems();
 
   return (
     <SolidPageShell>
@@ -33,7 +36,11 @@ export default async function CheckoutPage() {
           Əlaqə məlumatlarınızı doldurun, bank seçin və çeki yükləyin
         </p>
         <div className="mt-8">
-          <CheckoutForm banks={banks} defaultPhone={profile.phone} />
+          <CheckoutForm
+            banks={banks}
+            defaultPhone={profile.phone}
+            items={items}
+          />
         </div>
       </div>
     </SolidPageShell>

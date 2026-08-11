@@ -1,20 +1,20 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { useState } from "react";
-import { useCartStore } from "@/store/cart";
+import { usePathname, useRouter } from "next/navigation";
+import { useState, useTransition } from "react";
+import { addToCart } from "@/lib/cart/actions";
 import type { ProductDetail } from "@/types/shop";
 import {
   formatPrice,
   formatUnit,
   getDisplayPrice,
-  getProductImageUrl,
   unitLabel,
 } from "@/lib/shop/format";
 
 export function ProductPurchasePanel({ product }: { product: ProductDetail }) {
   const router = useRouter();
-  const addItem = useCartStore((s) => s.addItem);
+  const pathname = usePathname();
+  const [pending, startTransition] = useTransition();
   const maxQty = Math.max(1, Number(product.quantity_available) || 1);
   const [quantity, setQuantity] = useState(1);
   const [added, setAdded] = useState(false);
@@ -23,29 +23,33 @@ export function ProductPurchasePanel({ product }: { product: ProductDetail }) {
   const lineTotal = price * quantity;
   const outOfStock = !product.in_stock || product.quantity_available <= 0;
 
-  function cartPayload() {
-    return {
-      productId: product.id,
-      title: product.title,
-      price,
-      unitType: product.unit_type,
-      imageUrl: getProductImageUrl(product.product_images),
-      farmerId: product.farmer?.id ?? "",
-      farmerName: product.farmer?.farm_name ?? "Fermer",
-    };
-  }
-
   function handleAddToCart() {
     if (outOfStock) return;
-    addItem(cartPayload(), quantity);
-    setAdded(true);
-    window.setTimeout(() => setAdded(false), 1800);
+    startTransition(async () => {
+      const result = await addToCart(product.id, quantity);
+      if (result.needsAuth) {
+        router.push(`/signin?next=${encodeURIComponent(pathname)}`);
+        return;
+      }
+      if (result.ok) {
+        setAdded(true);
+        window.setTimeout(() => setAdded(false), 1800);
+      }
+    });
   }
 
   function handleBuyNow() {
     if (outOfStock) return;
-    addItem(cartPayload(), quantity);
-    router.push("/checkout");
+    startTransition(async () => {
+      const result = await addToCart(product.id, quantity);
+      if (result.needsAuth) {
+        router.push(`/signin?next=${encodeURIComponent("/checkout")}`);
+        return;
+      }
+      if (result.ok) {
+        router.push("/checkout");
+      }
+    });
   }
 
   function decrease() {
@@ -112,14 +116,16 @@ export function ProductPurchasePanel({ product }: { product: ProductDetail }) {
           <button
             type="button"
             onClick={handleAddToCart}
-            className="inline-flex w-full items-center justify-center rounded-xl bg-white px-4 py-3.5 text-sm font-semibold text-emerald-800 ring-1 ring-emerald-200 transition hover:bg-emerald-50"
+            disabled={pending}
+            className="inline-flex w-full items-center justify-center rounded-xl bg-white px-4 py-3.5 text-sm font-semibold text-emerald-800 ring-1 ring-emerald-200 transition hover:bg-emerald-50 disabled:opacity-60"
           >
             {added ? "Əlavə olundu" : "Səbətə at"}
           </button>
           <button
             type="button"
             onClick={handleBuyNow}
-            className="inline-flex w-full items-center justify-center rounded-xl bg-emerald-600 px-4 py-3.5 text-sm font-semibold text-white transition hover:bg-emerald-500"
+            disabled={pending}
+            className="inline-flex w-full items-center justify-center rounded-xl bg-emerald-600 px-4 py-3.5 text-sm font-semibold text-white transition hover:bg-emerald-500 disabled:opacity-60"
           >
             İndi al
           </button>

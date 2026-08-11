@@ -1,13 +1,33 @@
 "use client";
 
-import { useCartStore } from "@/store/cart";
+import { usePathname, useRouter } from "next/navigation";
+import { useState, useTransition } from "react";
+import { addToCart } from "@/lib/cart/actions";
 import type { ProductListItem } from "@/types/shop";
-import {
-  formatPrice,
-  formatUnit,
-  getDisplayPrice,
-  getProductImageUrl,
-} from "@/lib/shop/format";
+import { formatPrice, formatUnit, getDisplayPrice } from "@/lib/shop/format";
+
+function useAddToCart() {
+  const router = useRouter();
+  const pathname = usePathname();
+  const [pending, startTransition] = useTransition();
+  const [added, setAdded] = useState(false);
+
+  function add(productId: string, quantity = 1) {
+    startTransition(async () => {
+      const result = await addToCart(productId, quantity);
+      if (result.needsAuth) {
+        router.push(`/signin?next=${encodeURIComponent(pathname)}`);
+        return;
+      }
+      if (result.ok) {
+        setAdded(true);
+        window.setTimeout(() => setAdded(false), 1800);
+      }
+    });
+  }
+
+  return { add, pending, added };
+}
 
 export function AddToCartButton({
   product,
@@ -16,33 +36,22 @@ export function AddToCartButton({
   product: ProductListItem;
   className?: string;
 }) {
-  const addItem = useCartStore((s) => s.addItem);
-
-  const price = getDisplayPrice(product.final_price, product.farmer_price);
+  const { add, pending, added } = useAddToCart();
 
   return (
     <button
       type="button"
-      onClick={() =>
-        addItem({
-          productId: product.id,
-          title: product.title,
-          price,
-          unitType: product.unit_type,
-          imageUrl: getProductImageUrl(product.product_images),
-          farmerId: product.farmer?.id ?? "",
-          farmerName: product.farmer?.farm_name ?? "Fermer",
-        })
-      }
+      disabled={pending}
+      onClick={() => add(product.id)}
       className={[
-        "inline-flex h-8 w-8 items-center justify-center rounded-full bg-emerald-600 text-white shadow-sm transition hover:bg-emerald-500",
+        "inline-flex h-8 w-8 items-center justify-center rounded-full bg-emerald-600 text-white shadow-sm transition hover:bg-emerald-500 disabled:opacity-60",
         className,
       ]
         .filter(Boolean)
         .join(" ")}
       aria-label={`${product.title} səbətə əlavə et`}
     >
-      +
+      {added ? "✓" : "+"}
     </button>
   );
 }
@@ -52,27 +61,19 @@ export function AddToCartButtonLarge({
 }: {
   product: ProductListItem;
 }) {
-  const addItem = useCartStore((s) => s.addItem);
+  const { add, pending, added } = useAddToCart();
   const price = getDisplayPrice(product.final_price, product.farmer_price);
 
   return (
     <button
       type="button"
-      onClick={() =>
-        addItem({
-          productId: product.id,
-          title: product.title,
-          price,
-          unitType: product.unit_type,
-          imageUrl: getProductImageUrl(product.product_images),
-          farmerId: product.farmer?.id ?? "",
-          farmerName: product.farmer?.farm_name ?? "Fermer",
-        })
-      }
-      className="inline-flex w-full items-center justify-center rounded-xl bg-emerald-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-emerald-500"
+      disabled={pending}
+      onClick={() => add(product.id)}
+      className="inline-flex w-full items-center justify-center rounded-xl bg-emerald-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-emerald-500 disabled:opacity-60"
     >
-      Səbətə əlavə et — {formatPrice(price)}
-      {formatUnit(product.unit_type)}
+      {added
+        ? "Səbətə əlavə olundu"
+        : `Səbətə əlavə et — ${formatPrice(price)}${formatUnit(product.unit_type)}`}
     </button>
   );
 }

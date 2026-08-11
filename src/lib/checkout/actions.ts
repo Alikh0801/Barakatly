@@ -64,7 +64,6 @@ export async function placeOrder(
   ).trim();
   const bankId = String(formData.get("bank_id") ?? "").trim();
   const receipt = formData.get("receipt");
-  const cartJson = String(formData.get("cart_items") ?? "[]");
 
   if (!contactPhone || contactPhone.length < 9) {
     return { error: "Düzgün telefon nömrəsi daxil edin." };
@@ -90,28 +89,27 @@ export async function placeOrder(
     return { error: "Çek JPEG, PNG, WebP və ya PDF formatında olmalıdır." };
   }
 
-  let cartItems: CheckoutCartItem[];
-  try {
-    const parsed = JSON.parse(cartJson) as CheckoutCartItem[];
-    if (!Array.isArray(parsed)) {
-      return { error: "Səbət məlumatları yanlışdır." };
-    }
-    cartItems = parsed.filter(
-      (item) =>
-        item &&
-        typeof item.productId === "string" &&
-        typeof item.quantity === "number" &&
-        item.quantity > 0
-    );
-  } catch {
-    return { error: "Səbət məlumatları yanlışdır." };
+  const supabase = await createClient();
+
+  // Read the cart straight from the server so the client cannot tamper with it.
+  const { data: cartRows, error: cartError } = await supabase
+    .from("cart_items")
+    .select("product_id, quantity")
+    .eq("customer_id", user.id);
+
+  if (cartError) {
+    console.error("[checkout.placeOrder] cart", cartError.message);
+    return { error: "Səbət oxuna bilmədi." };
   }
+
+  const cartItems: CheckoutCartItem[] = (cartRows ?? [])
+    .filter((row) => row.quantity > 0)
+    .map((row) => ({ productId: row.product_id, quantity: row.quantity }));
 
   if (cartItems.length === 0) {
     return { error: "Səbətiniz boşdur." };
   }
 
-  const supabase = await createClient();
   const productIds = [...new Set(cartItems.map((item) => item.productId))];
 
   const { data: products, error: productsError } = await supabase
@@ -272,6 +270,9 @@ export async function placeOrder(
     changed_by: user.id,
     note: "Sifariş yaradıldı",
   });
+
+  // Empty the cart now that it has become an order.
+  await supabase.from("cart_items").delete().eq("customer_id", user.id);
 
   await notifyAdmins({
     type: "payment_received",

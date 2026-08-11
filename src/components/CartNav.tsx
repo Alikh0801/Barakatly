@@ -1,18 +1,15 @@
-"use client";
-
 import Link from "next/link";
-import { useCartStore } from "@/store/cart";
-import { useCartHydrated } from "@/hooks/useCartHydrated";
-import { Skeleton } from "@/components/ui/Skeleton";
+import { getCartCount } from "@/lib/cart/queries";
+
+type Variant = "hero" | "solid" | "adaptive";
 
 export function CartNav({
+  count = 0,
   variant = "solid",
 }: {
-  variant?: "hero" | "solid" | "adaptive";
+  count?: number;
+  variant?: Variant;
 }) {
-  const hydrated = useCartHydrated();
-  const totalItems = useCartStore((s) => s.totalItems());
-
   const iconWrap =
     variant === "adaptive"
       ? "relative inline-flex h-9 w-9 items-center justify-center rounded-full bg-white/10 text-white ring-1 ring-white/15 backdrop-blur-sm transition hover:bg-white/15 group-data-[scrolled=true]/header:bg-zinc-100 group-data-[scrolled=true]/header:text-zinc-700 group-data-[scrolled=true]/header:ring-zinc-200 group-data-[scrolled=true]/header:hover:bg-zinc-200"
@@ -37,15 +34,16 @@ export function CartNav({
         <path d="M9.5 21a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z" />
         <path d="M17.5 21a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z" />
       </svg>
-      {hydrated ? (
-        totalItems > 0 ? (
-          <span className="absolute -right-1 -top-1 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-emerald-600 px-1 text-[10px] font-semibold text-white">
-            {totalItems > 9 ? "9+" : totalItems}
-          </span>
-        ) : null
-      ) : (
-        <Skeleton className="absolute -right-1 -top-1 h-4 w-4 rounded-full" />
-      )}
+      {count > 0 ? (
+        <span className="absolute -right-1 -top-1 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-emerald-600 px-1 text-[10px] font-semibold text-white">
+          {count > 9 ? "9+" : count}
+        </span>
+      ) : null}
     </Link>
   );
+}
+
+export async function CartNavServer({ variant = "solid" }: { variant?: Variant }) {
+  const count = await getCartCount();
+  return <CartNav count={count} variant={variant} />;
 }

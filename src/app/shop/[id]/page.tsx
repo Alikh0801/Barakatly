@@ -141,14 +141,6 @@ export default async function ProductDetailPage({
                       {product.quantity_available} {unitLabel(product.unit_type)}
                     </dd>
                   </div>
-                  <div>
-                    <dt className="text-zinc-500">Stok</dt>
-                    <dd className="mt-0.5 font-medium text-zinc-900">
-                      {product.in_stock && product.quantity_available > 0
-                        ? "Var"
-                        : "Yoxdur"}
-                    </dd>
-                  </div>
                 </dl>
               </div>
             ) : (

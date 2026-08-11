@@ -1,7 +1,8 @@
+import Image from "next/image";
 import Link from "next/link";
 import { Suspense } from "react";
 import { AuthNav } from "@/components/AuthNav";
-import { CartNav } from "@/components/CartNav";
+import { CartNav, CartNavServer } from "@/components/CartNav";
 import { HeaderShell } from "@/components/header/HeaderShell";
 import { MobileNav } from "@/components/MobileNav";
 import { NavLink } from "@/components/navigation/NavLink";
@@ -55,11 +56,14 @@ export function SiteHeader({
           prefetch
           className={`inline-flex min-w-0 items-center gap-2 font-semibold tracking-tight transition-colors ${logoText}`}
         >
-          <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-emerald-500/90 ring-1 ring-emerald-300/40">
-            <span aria-hidden="true" className="text-base">
-              🌿
-            </span>
-          </span>
+          <Image
+            src="/logo/logo.png"
+            alt="Barakatly"
+            width={36}
+            height={36}
+            priority
+            className="h-9 w-9 shrink-0 rounded-full object-cover ring-1 ring-black/5"
+          />
           <span
             className={
               isHero
@@ -103,7 +107,11 @@ export function SiteHeader({
               </svg>
             </Icon>
           </NavLink>
-          <CartNav variant={isHero ? "adaptive" : "solid"} />
+          <Suspense
+            fallback={<CartNav variant={isHero ? "adaptive" : "solid"} />}
+          >
+            <CartNavServer variant={isHero ? "adaptive" : "solid"} />
+          </Suspense>
           <NotificationBell variant={isHero ? "adaptive" : "solid"} />
           <Suspense
             fallback={<AuthNavSkeleton variant={isHero ? "hero" : "solid"} />}

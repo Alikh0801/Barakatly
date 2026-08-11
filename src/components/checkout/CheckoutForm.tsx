@@ -5,9 +5,7 @@ import { useActionState, useEffect } from "react";
 import { placeOrder, type PlaceOrderState } from "@/lib/checkout/actions";
 import { DELIVERY_FEE } from "@/lib/checkout/constants";
 import { formatPrice, formatUnit } from "@/lib/shop/format";
-import { useCartStore } from "@/store/cart";
-import { useCartHydrated } from "@/hooks/useCartHydrated";
-import { CheckoutSkeleton } from "@/components/skeletons";
+import type { CartLineItem } from "@/lib/cart/queries";
 import { Spinner } from "@/components/ui/Spinner";
 import type { Bank } from "@/types";
 
@@ -16,35 +14,23 @@ const initialState: PlaceOrderState = {};
 export function CheckoutForm({
   banks,
   defaultPhone,
+  items,
 }: {
   banks: Bank[];
   defaultPhone?: string | null;
+  items: CartLineItem[];
 }) {
   const router = useRouter();
-  const hydrated = useCartHydrated();
-  const items = useCartStore((s) => s.items);
-  const subtotal = useCartStore((s) => s.subtotal());
-  const clearCart = useCartStore((s) => s.clearCart);
   const [state, formAction, pending] = useActionState(placeOrder, initialState);
 
+  const subtotal = items.reduce((sum, i) => sum + i.price * i.quantity, 0);
   const total = subtotal + (items.length > 0 ? DELIVERY_FEE : 0);
-  const cartPayload = JSON.stringify(
-    items.map((item) => ({
-      productId: item.productId,
-      quantity: item.quantity,
-    }))
-  );
 
   useEffect(() => {
     if (state.orderId) {
-      clearCart();
       router.replace(`/orders/${state.orderId}?success=1`);
     }
-  }, [state.orderId, clearCart, router]);
-
-  if (!hydrated) {
-    return <CheckoutSkeleton />;
-  }
+  }, [state.orderId, router]);
 
   if (items.length === 0) {
     return (
@@ -70,8 +56,6 @@ export function CheckoutForm({
 
   return (
     <form action={formAction} className="grid gap-8 lg:grid-cols-[1fr_360px]">
-      <input type="hidden" name="cart_items" value={cartPayload} />
-
       <div className="space-y-6">
         <section className="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-zinc-200">
           <h2 className="text-lg font-semibold text-zinc-900">
