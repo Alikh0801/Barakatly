@@ -5,15 +5,17 @@ import {
 } from "@/components/admin/AdminPortalPanels";
 import {
   getAdminApprovedProducts,
+  getAdminCategories,
   getAdminPendingProducts,
 } from "@/lib/admin/queries";
 
 export const metadata = { title: "Məhsullar — Admin" };
 
 export default async function AdminProductsPage() {
-  const [pending, approved] = await Promise.all([
+  const [pending, approved, categories] = await Promise.all([
     getAdminPendingProducts(),
     getAdminApprovedProducts(),
+    getAdminCategories(),
   ]);
 
   return (
@@ -26,7 +28,7 @@ export default async function AdminProductsPage() {
           <h2 className="mb-4 text-lg font-semibold text-zinc-900">
             Gözləyən təsdiqlər
           </h2>
-          <AdminProductsPanel products={pending} />
+          <AdminProductsPanel products={pending} categories={categories} />
         </section>
         <section>
           <h2 className="mb-4 text-lg font-semibold text-zinc-900">

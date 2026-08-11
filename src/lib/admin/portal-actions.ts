@@ -6,6 +6,7 @@ import { notifyUser } from "@/lib/notifications/helpers";
 import { revalidateProductCatalog } from "@/lib/shop/revalidate";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
+import type { UnitType } from "@/types";
 
 export type AdminPortalActionState = {
   error?: string;
@@ -308,6 +309,52 @@ export async function updateProductFinalPrice(
   revalidatePath("/farmer/products");
   revalidateProductCatalog(productId);
   return { success: "Son qiymət yeniləndi." };
+}
+
+export async function updateProductByAdmin(
+  _prev: AdminPortalActionState,
+  formData: FormData
+): Promise<AdminPortalActionState> {
+  await requireAdmin();
+  const productId = String(formData.get("product_id") ?? "");
+  const title = String(formData.get("title") ?? "").trim();
+  const description = String(formData.get("description") ?? "").trim();
+  const categoryId = String(formData.get("category_id") ?? "").trim();
+  const subcategoryId = String(formData.get("subcategory_id") ?? "").trim();
+  const unitType = String(formData.get("unit_type") ?? "").trim();
+
+  if (!productId) return { error: "Məhsul tapılmadı." };
+  if (!title || !description || !categoryId) {
+    return { error: "Ad, təsvir və kateqoriya mütləqdir." };
+  }
+  if (!["kg", "piece", "liter"].includes(unitType)) {
+    return { error: "Vahid tipi yanlışdır." };
+  }
+
+  const supabase = await createClient();
+  // Note: farmer_price and quantity_available are intentionally not touched here —
+  // the farmer's offer stays as submitted.
+  const { error } = await supabase
+    .from("products")
+    .update({
+      title,
+      description,
+      category_id: categoryId,
+      subcategory_id: subcategoryId || null,
+      unit_type: unitType as UnitType,
+    })
+    .eq("id", productId);
+
+  if (error) {
+    console.error("[admin.updateProductByAdmin]", error.message);
+    return { error: "Məhsul yenilənmədi." };
+  }
+
+  revalidatePath("/admin/products");
+  revalidatePath("/admin", "layout");
+  revalidatePath("/farmer/products");
+  revalidateProductCatalog(productId);
+  return { success: "Məhsul yeniləndi." };
 }
 
 export async function rejectProduct(

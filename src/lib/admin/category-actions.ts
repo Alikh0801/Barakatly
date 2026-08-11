@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { requireAdmin } from "@/lib/admin/auth";
 import { uploadCategoryImage } from "@/lib/admin/category-image-upload";
 import { slugifyAz } from "@/lib/admin/slug";
@@ -255,6 +256,34 @@ export async function approveSubcategory(
 
   revalidateCategories();
   return { success: "Alt kateqoriya təsdiqləndi." };
+}
+
+export async function renameSubcategory(
+  _prev: AdminPortalActionState,
+  formData: FormData
+): Promise<AdminPortalActionState> {
+  await requireAdmin();
+
+  const id = String(formData.get("subcategory_id") ?? "");
+  const nameAz = String(formData.get("name_az") ?? "").trim();
+
+  if (!id) return { error: "Alt kateqoriya tapılmadı." };
+  if (!nameAz) return { error: "Alt kateqoriya adı tələb olunur." };
+
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("subcategories")
+    .update({ name_az: nameAz })
+    .eq("id", id);
+
+  if (error) {
+    console.error("[admin.renameSubcategory]", error.message);
+    return { error: "Alt kateqoriya adı yenilənmədi." };
+  }
+
+  revalidateCategories();
+  revalidatePath("/admin/products");
+  return { success: "Alt kateqoriya adı yeniləndi." };
 }
 
 export async function deleteSubcategory(
