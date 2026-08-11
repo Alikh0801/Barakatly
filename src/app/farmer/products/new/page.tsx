@@ -1,12 +1,18 @@
 import { FarmerProductForm } from "@/components/farmer/FarmerPanels";
 import { requireApprovedFarmer } from "@/lib/farmer/auth";
-import { getShopCategories } from "@/lib/farmer/queries";
+import {
+  getShopCategories,
+  getShopSubcategories,
+} from "@/lib/farmer/queries";
 
 export const metadata = { title: "Yeni məhsul — Fermer" };
 
 export default async function FarmerNewProductPage() {
   await requireApprovedFarmer();
-  const categories = await getShopCategories();
+  const [categories, subcategories] = await Promise.all([
+    getShopCategories(),
+    getShopSubcategories(),
+  ]);
 
   return (
     <div className="mx-auto w-full max-w-2xl px-4 py-10 md:px-6">
@@ -15,7 +21,10 @@ export default async function FarmerNewProductPage() {
         Məhsul admin təsdiqindən sonra mağazaya düşəcək
       </p>
       <div className="mt-8">
-        <FarmerProductForm categories={categories} />
+        <FarmerProductForm
+          categories={categories}
+          subcategories={subcategories}
+        />
       </div>
     </div>
   );

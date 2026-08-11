@@ -6,6 +6,7 @@ import type {
   Order,
   OrderItem,
   Product,
+  Subcategory,
 } from "@/types";
 
 export type FarmerProduct = Product & {
@@ -142,10 +143,27 @@ export async function getShopCategories(): Promise<Category[]> {
   const { data, error } = await supabase
     .from("categories")
     .select("*")
+    .eq("approved", true)
     .order("sort_order", { ascending: true });
 
   if (error) {
     console.error("[farmer.getShopCategories]", error.message);
+    return [];
+  }
+
+  return data ?? [];
+}
+
+export async function getShopSubcategories(): Promise<Subcategory[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("subcategories")
+    .select("*")
+    .eq("approved", true)
+    .order("name_az", { ascending: true });
+
+  if (error) {
+    console.error("[farmer.getShopSubcategories]", error.message);
     return [];
   }
 

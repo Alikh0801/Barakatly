@@ -5,10 +5,12 @@ export async function PortalShell({
   title,
   children,
   links,
+  hideNav = false,
 }: {
   title: string;
   children: React.ReactNode;
   links: { href: string; label: string }[];
+  hideNav?: boolean;
 }) {
   const profile = await getProfile();
 
@@ -25,22 +27,24 @@ export async function PortalShell({
             </span>
             {title}
           </Link>
-          <nav className="flex flex-wrap items-center gap-3 text-sm font-medium">
-            {links.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className="text-zinc-600 hover:text-zinc-900"
-              >
-                {link.label}
-              </Link>
-            ))}
-            {profile ? (
-              <Link href="/account" className="text-zinc-600 hover:text-zinc-900">
-                Hesab
-              </Link>
-            ) : null}
-          </nav>
+          {hideNav ? null : (
+            <nav className="flex flex-wrap items-center gap-3 text-sm font-medium">
+              {links.map((link) => (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className="text-zinc-600 hover:text-zinc-900"
+                >
+                  {link.label}
+                </Link>
+              ))}
+              {profile ? (
+                <Link href="/account" className="text-zinc-600 hover:text-zinc-900">
+                  Hesab
+                </Link>
+              ) : null}
+            </nav>
+          )}
         </div>
       </header>
       <main className="flex-1">{children}</main>

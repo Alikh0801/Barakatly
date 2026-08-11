@@ -4,6 +4,7 @@ import { requireApprovedFarmer } from "@/lib/farmer/auth";
 import {
   getFarmerProductById,
   getShopCategories,
+  getShopSubcategories,
 } from "@/lib/farmer/queries";
 
 export const metadata = { title: "Məhsulu redaktə et — Fermer" };
@@ -15,9 +16,10 @@ export default async function FarmerEditProductPage({
 }) {
   const { id } = await params;
   const { farmer } = await requireApprovedFarmer();
-  const [product, categories] = await Promise.all([
+  const [product, categories, subcategories] = await Promise.all([
     getFarmerProductById(farmer.id, id),
     getShopCategories(),
+    getShopSubcategories(),
   ]);
 
   if (!product) notFound();
@@ -29,7 +31,11 @@ export default async function FarmerEditProductPage({
         Dəyişiklikdən sonra məhsul yenidən təsdiqə göndərilir
       </p>
       <div className="mt-8">
-        <FarmerProductForm categories={categories} product={product} />
+        <FarmerProductForm
+          categories={categories}
+          subcategories={subcategories}
+          product={product}
+        />
       </div>
     </div>
   );

@@ -393,9 +393,7 @@ function ProfileHero({
           />
           <div className="min-w-0">
             <div className="flex min-w-0 items-center gap-2">
-              <h1
-                className={`${displayFont.className} truncate text-2xl font-bold tracking-tight text-zinc-900 sm:text-3xl`}
-              >
+              <h1 className="truncate text-2xl font-bold tracking-tight text-zinc-900 sm:text-3xl">
                 {farmName}
               </h1>
               {verified ? <VerifiedIcon className="h-5 w-5 shrink-0" /> : null}
@@ -908,18 +906,10 @@ export function FarmerProfileDashboard({
         followerCount={followerCount}
         createdAt={farmer.created_at}
         actions={
-          <>
-            <Link
-              href={`/farmers/${farmer.id}`}
-              className="inline-flex rounded-full bg-white px-4 py-2 text-sm font-semibold text-[#1f5c3d] ring-1 ring-[#1f5c3d]/20 transition hover:bg-[#f3faf6]"
-            >
-              Müştəri görünüşü
-            </Link>
-            <ShareProfileButton
-              farmerId={farmer.id}
-              farmName={farmer.farm_name}
-            />
-          </>
+          <ShareProfileButton
+            farmerId={farmer.id}
+            farmName={farmer.farm_name}
+          />
         }
       />
 

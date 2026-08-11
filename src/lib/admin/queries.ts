@@ -9,6 +9,7 @@ import type {
   OrderStatusEvent,
   Payment,
   Product,
+  Subcategory,
 } from "@/types";
 
 export type AdminPendingPayment = Payment & {
@@ -223,13 +224,13 @@ export async function getAdminCouriers(): Promise<AdminCourier[]> {
   return (data ?? []) as unknown as AdminCourier[];
 }
 
-export type AdminCategory = Category;
+export type AdminCategory = Category & { subcategories: Subcategory[] };
 
 export async function getAdminCategories(): Promise<AdminCategory[]> {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("categories")
-    .select("*")
+    .select("*, subcategories(*)")
     .order("sort_order", { ascending: true });
 
   if (error) {
@@ -237,7 +238,12 @@ export async function getAdminCategories(): Promise<AdminCategory[]> {
     return [];
   }
 
-  return data ?? [];
+  return ((data ?? []) as unknown as AdminCategory[]).map((category) => ({
+    ...category,
+    subcategories: [...(category.subcategories ?? [])].sort((a, b) =>
+      a.name_az.localeCompare(b.name_az),
+    ),
+  }));
 }
 
 export type AdminBank = Bank;

@@ -15,6 +15,7 @@ export type {
   FarmerPostMediaType,
   Courier,
   Category,
+  Subcategory,
   Product,
   Order,
   OrderItem,

@@ -1,24 +1,11 @@
 "use server";
 
 import { requireAdmin } from "@/lib/admin/auth";
+import { uploadCategoryImage } from "@/lib/admin/category-image-upload";
 import { slugifyAz } from "@/lib/admin/slug";
 import { revalidateCategories } from "@/lib/shop/revalidate";
 import { createClient } from "@/lib/supabase/server";
 import type { AdminPortalActionState } from "@/lib/admin/portal-actions";
-
-function normalizeImageUrl(value: string): string | null {
-  const trimmed = value.trim();
-  if (!trimmed) return null;
-  try {
-    const url = new URL(trimmed);
-    if (url.protocol !== "http:" && url.protocol !== "https:") {
-      return null;
-    }
-    return url.toString();
-  } catch {
-    return null;
-  }
-}
 
 async function uniqueSlug(
   supabase: Awaited<ReturnType<typeof createClient>>,
@@ -48,20 +35,21 @@ export async function createCategory(
 
   const nameAz = String(formData.get("name_az") ?? "").trim();
   const sortOrderRaw = String(formData.get("sort_order") ?? "0").trim();
-  const imageUrlRaw = String(formData.get("image_url") ?? "");
+  const image = formData.get("image");
   const sortOrder = Number.parseInt(sortOrderRaw, 10);
 
   if (!nameAz) return { error: "Kateqoriya adı tələb olunur." };
   if (!Number.isFinite(sortOrder)) return { error: "Sıra düzgün deyil." };
 
-  const imageUrl = imageUrlRaw.trim()
-    ? normalizeImageUrl(imageUrlRaw)
-    : null;
-  if (imageUrlRaw.trim() && !imageUrl) {
-    return { error: "Şəkil URL düzgün deyil (http/https olmalıdır)." };
+  const supabase = await createClient();
+
+  let imageUrl: string | null = null;
+  if (image instanceof File && image.size > 0) {
+    const uploaded = await uploadCategoryImage(supabase, image);
+    if ("error" in uploaded) return { error: uploaded.error };
+    imageUrl = uploaded.url;
   }
 
-  const supabase = await createClient();
   const slug = await uniqueSlug(supabase, slugifyAz(nameAz));
   if (!slug) return { error: "Slug yaradıla bilmədi." };
 
@@ -90,28 +78,28 @@ export async function updateCategory(
   const id = String(formData.get("category_id") ?? "");
   const nameAz = String(formData.get("name_az") ?? "").trim();
   const sortOrderRaw = String(formData.get("sort_order") ?? "0").trim();
-  const imageUrlRaw = String(formData.get("image_url") ?? "");
+  const image = formData.get("image");
   const sortOrder = Number.parseInt(sortOrderRaw, 10);
 
   if (!id) return { error: "Kateqoriya tapılmadı." };
   if (!nameAz) return { error: "Kateqoriya adı tələb olunur." };
   if (!Number.isFinite(sortOrder)) return { error: "Sıra düzgün deyil." };
 
-  const imageUrl = imageUrlRaw.trim()
-    ? normalizeImageUrl(imageUrlRaw)
-    : null;
-  if (imageUrlRaw.trim() && !imageUrl) {
-    return { error: "Şəkil URL düzgün deyil (http/https olmalıdır)." };
-  }
-
   const supabase = await createClient();
   const { data: existing } = await supabase
     .from("categories")
-    .select("id")
+    .select("id, image_url")
     .eq("id", id)
     .maybeSingle();
 
   if (!existing) return { error: "Kateqoriya tapılmadı." };
+
+  let imageUrl = existing.image_url;
+  if (image instanceof File && image.size > 0) {
+    const uploaded = await uploadCategoryImage(supabase, image);
+    if ("error" in uploaded) return { error: uploaded.error };
+    imageUrl = uploaded.url;
+  }
 
   const { error } = await supabase
     .from("categories")
@@ -168,4 +156,124 @@ export async function deleteCategory(
 
   revalidateCategories();
   return { success: "Kateqoriya silindi." };
+}
+
+export async function approveCategory(
+  _prev: AdminPortalActionState,
+  formData: FormData
+): Promise<AdminPortalActionState> {
+  await requireAdmin();
+
+  const id = String(formData.get("category_id") ?? "");
+  if (!id) return { error: "Kateqoriya tapılmadı." };
+
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("categories")
+    .update({ approved: true })
+    .eq("id", id);
+
+  if (error) {
+    console.error("[admin.approveCategory]", error.message);
+    return { error: "Kateqoriya təsdiqlənmədi." };
+  }
+
+  revalidateCategories();
+  return { success: "Kateqoriya təsdiqləndi." };
+}
+
+async function uniqueSubcategorySlug(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  categoryId: string,
+  base: string
+): Promise<string | null> {
+  const root = base || "alt-kateqoriya";
+  for (let attempt = 0; attempt < 20; attempt += 1) {
+    const candidate = attempt === 0 ? root : `${root}-${attempt + 1}`;
+    const { data } = await supabase
+      .from("subcategories")
+      .select("id")
+      .eq("category_id", categoryId)
+      .eq("slug", candidate)
+      .maybeSingle();
+    if (!data) return candidate;
+  }
+  return null;
+}
+
+export async function createSubcategory(
+  _prev: AdminPortalActionState,
+  formData: FormData
+): Promise<AdminPortalActionState> {
+  await requireAdmin();
+
+  const categoryId = String(formData.get("category_id") ?? "");
+  const nameAz = String(formData.get("name_az") ?? "").trim();
+
+  if (!categoryId) return { error: "Kateqoriya tapılmadı." };
+  if (!nameAz) return { error: "Alt kateqoriya adı tələb olunur." };
+
+  const supabase = await createClient();
+  const slug = await uniqueSubcategorySlug(supabase, categoryId, slugifyAz(nameAz));
+  if (!slug) return { error: "Slug yaradıla bilmədi." };
+
+  const { error } = await supabase.from("subcategories").insert({
+    category_id: categoryId,
+    name_az: nameAz,
+    slug,
+    approved: true,
+  });
+
+  if (error) {
+    console.error("[admin.createSubcategory]", error.message);
+    return { error: "Alt kateqoriya əlavə edilmədi." };
+  }
+
+  revalidateCategories();
+  return { success: "Alt kateqoriya əlavə olundu." };
+}
+
+export async function approveSubcategory(
+  _prev: AdminPortalActionState,
+  formData: FormData
+): Promise<AdminPortalActionState> {
+  await requireAdmin();
+
+  const id = String(formData.get("subcategory_id") ?? "");
+  if (!id) return { error: "Alt kateqoriya tapılmadı." };
+
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("subcategories")
+    .update({ approved: true })
+    .eq("id", id);
+
+  if (error) {
+    console.error("[admin.approveSubcategory]", error.message);
+    return { error: "Alt kateqoriya təsdiqlənmədi." };
+  }
+
+  revalidateCategories();
+  return { success: "Alt kateqoriya təsdiqləndi." };
+}
+
+export async function deleteSubcategory(
+  _prev: AdminPortalActionState,
+  formData: FormData
+): Promise<AdminPortalActionState> {
+  await requireAdmin();
+
+  const id = String(formData.get("subcategory_id") ?? "");
+  if (!id) return { error: "Alt kateqoriya tapılmadı." };
+
+  const supabase = await createClient();
+  const { error } = await supabase.from("subcategories").delete().eq("id", id);
+
+  if (error) {
+    console.error("[admin.deleteSubcategory]", error.message);
+    return { error: "Alt kateqoriya silinmədi." };
+  }
+
+  revalidateCategories();
+  return { success: "Alt kateqoriya silindi." };
 }

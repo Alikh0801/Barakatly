@@ -60,6 +60,7 @@ async function fetchCategories(): Promise<CategoryItem[]> {
   const { data, error } = await supabase
     .from("categories")
     .select("id, slug, name_az, icon, image_url")
+    .eq("approved", true)
     .order("sort_order", { ascending: true });
 
   if (error) {

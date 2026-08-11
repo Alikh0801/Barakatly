@@ -10,7 +10,7 @@ export default async function AdminCategoriesPage() {
   return (
     <AdminPageShell
       title="Kateqoriyalar"
-      description="Ad, sıra və banner şəkil URL-lərini idarə edin"
+      description="Ad, sıra və şəkilləri idarə edin"
     >
       <AdminCategoriesPanel categories={categories} />
     </AdminPageShell>

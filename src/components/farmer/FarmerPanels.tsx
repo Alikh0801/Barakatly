@@ -21,9 +21,15 @@ import {
 } from "@/lib/orders/labels";
 import { AZ_REGIONS } from "@/lib/az/regions";
 import { formatDateTime } from "@/lib/format/date";
-import { formatPrice, formatUnit } from "@/lib/shop/format";
+import { formatPrice, formatUnit, unitLabel } from "@/lib/shop/format";
 import type { FarmerOrderItem, FarmerProduct } from "@/lib/farmer/queries";
-import type { Category, Farmer, OrderItemStatus, UnitType } from "@/types";
+import type {
+  Category,
+  Farmer,
+  OrderItemStatus,
+  Subcategory,
+  UnitType,
+} from "@/types";
 
 const initialState: FarmerActionState = {};
 
@@ -242,15 +248,31 @@ export function FarmerPendingCard({ farmer }: { farmer: Farmer }) {
 
 export function FarmerProductForm({
   categories,
+  subcategories,
   product,
 }: {
   categories: Category[];
+  subcategories: Subcategory[];
   product?: FarmerProduct;
 }) {
   const action = product ? updateProduct : createProduct;
   const [state, formAction, pending] = useActionState(action, initialState);
   const existingImageUrl = product?.product_images?.[0]?.url ?? "";
   const [previewUrl, setPreviewUrl] = useState(existingImageUrl);
+  const [unitType, setUnitType] = useState<UnitType>(
+    (product?.unit_type as UnitType) ?? "kg",
+  );
+  const [categoryId, setCategoryId] = useState<string>(
+    product?.category_id ?? "",
+  );
+  const [subcategoryId, setSubcategoryId] = useState<string>(
+    product?.subcategory_id ?? "",
+  );
+
+  const visibleSubcategories =
+    categoryId && categoryId !== "__new__"
+      ? subcategories.filter((sub) => sub.category_id === categoryId)
+      : [];
 
   useEffect(() => {
     return () => {
@@ -300,7 +322,11 @@ export function FarmerProductForm({
             id="category_id"
             name="category_id"
             required
-            defaultValue={product?.category_id}
+            value={categoryId}
+            onChange={(event) => {
+              setCategoryId(event.target.value);
+              setSubcategoryId("");
+            }}
             className="mt-1 w-full rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-base text-zinc-900"
           >
             <option value="">Seçin</option>
@@ -309,6 +335,7 @@ export function FarmerProductForm({
                 {category.name_az}
               </option>
             ))}
+            <option value="__new__">+ Yeni kateqoriya əlavə et</option>
           </select>
         </div>
         <div>
@@ -319,7 +346,8 @@ export function FarmerProductForm({
             id="unit_type"
             name="unit_type"
             required
-            defaultValue={product?.unit_type ?? "kg"}
+            value={unitType}
+            onChange={(event) => setUnitType(event.target.value as UnitType)}
             className="mt-1 w-full rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-base text-zinc-900"
           >
             <option value="kg">kq</option>
@@ -328,6 +356,78 @@ export function FarmerProductForm({
           </select>
         </div>
       </div>
+
+      {categoryId === "__new__" ? (
+        <div>
+          <label
+            htmlFor="new_category_name"
+            className="block text-sm font-medium text-zinc-700"
+          >
+            Yeni kateqoriya adı
+          </label>
+          <input
+            id="new_category_name"
+            name="new_category_name"
+            required
+            placeholder="Məs: Süd məhsulları"
+            className="mt-1 w-full rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-base text-zinc-900"
+          />
+          <p className="mt-1 text-xs text-zinc-500">
+            Admin təsdiqindən sonra mağazada görünəcək.
+          </p>
+        </div>
+      ) : null}
+
+      <div>
+        <label
+          htmlFor="subcategory_id"
+          className="block text-sm font-medium text-zinc-700"
+        >
+          Alt kateqoriya
+        </label>
+        <select
+          id="subcategory_id"
+          name="subcategory_id"
+          required
+          value={subcategoryId}
+          onChange={(event) => setSubcategoryId(event.target.value)}
+          disabled={!categoryId}
+          className="mt-1 w-full rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-base text-zinc-900 disabled:bg-zinc-50 disabled:text-zinc-400"
+        >
+          <option value="">
+            {categoryId ? "Seçin" : "Əvvəlcə kateqoriya seçin"}
+          </option>
+          {visibleSubcategories.map((sub) => (
+            <option key={sub.id} value={sub.id}>
+              {sub.name_az}
+            </option>
+          ))}
+          {categoryId ? (
+            <option value="__new__">+ Yeni alt kateqoriya əlavə et</option>
+          ) : null}
+        </select>
+      </div>
+
+      {subcategoryId === "__new__" ? (
+        <div>
+          <label
+            htmlFor="new_subcategory_name"
+            className="block text-sm font-medium text-zinc-700"
+          >
+            Yeni alt kateqoriya adı
+          </label>
+          <input
+            id="new_subcategory_name"
+            name="new_subcategory_name"
+            required
+            placeholder="Məs: Pendir"
+            className="mt-1 w-full rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-base text-zinc-900"
+          />
+          <p className="mt-1 text-xs text-zinc-500">
+            Admin təsdiqindən sonra mağazada görünəcək.
+          </p>
+        </div>
+      ) : null}
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
           <label htmlFor="farmer_price" className="block text-sm font-medium text-zinc-700">
@@ -349,7 +449,7 @@ export function FarmerProductForm({
             htmlFor="quantity_available"
             className="block text-sm font-medium text-zinc-700"
           >
-            Miqdar
+            Əldə olan ({unitLabel(unitType)})
           </label>
           <input
             id="quantity_available"

@@ -253,6 +253,8 @@ export interface Database {
           icon: string | null;
           image_url: string | null;
           sort_order: number;
+          approved: boolean;
+          created_by: string | null;
           created_at: string;
         };
         Insert: {
@@ -262,6 +264,8 @@ export interface Database {
           icon?: string | null;
           image_url?: string | null;
           sort_order?: number;
+          approved?: boolean;
+          created_by?: string | null;
           created_at?: string;
         };
         Update: {
@@ -271,6 +275,41 @@ export interface Database {
           icon?: string | null;
           image_url?: string | null;
           sort_order?: number;
+          approved?: boolean;
+          created_by?: string | null;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+      subcategories: {
+        Row: {
+          id: string;
+          category_id: string;
+          name_az: string;
+          slug: string;
+          sort_order: number;
+          approved: boolean;
+          created_by: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          category_id: string;
+          name_az: string;
+          slug: string;
+          sort_order?: number;
+          approved?: boolean;
+          created_by?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          category_id?: string;
+          name_az?: string;
+          slug?: string;
+          sort_order?: number;
+          approved?: boolean;
+          created_by?: string | null;
           created_at?: string;
         };
         Relationships: [];
@@ -280,6 +319,7 @@ export interface Database {
           id: string;
           farmer_id: string;
           category_id: string;
+          subcategory_id: string | null;
           title: string;
           description: string;
           unit_type: UnitType;
@@ -296,6 +336,7 @@ export interface Database {
           id?: string;
           farmer_id: string;
           category_id: string;
+          subcategory_id?: string | null;
           title: string;
           description: string;
           unit_type: UnitType;
@@ -312,6 +353,7 @@ export interface Database {
           id?: string;
           farmer_id?: string;
           category_id?: string;
+          subcategory_id?: string | null;
           title?: string;
           description?: string;
           unit_type?: UnitType;
@@ -624,6 +666,7 @@ export type FarmerPostMedia =
   Database["public"]["Tables"]["farmer_post_media"]["Row"];
 export type Courier = Database["public"]["Tables"]["couriers"]["Row"];
 export type Category = Database["public"]["Tables"]["categories"]["Row"];
+export type Subcategory = Database["public"]["Tables"]["subcategories"]["Row"];
 export type Product = Database["public"]["Tables"]["products"]["Row"];
 export type Order = Database["public"]["Tables"]["orders"]["Row"];
 export type OrderItem = Database["public"]["Tables"]["order_items"]["Row"];
