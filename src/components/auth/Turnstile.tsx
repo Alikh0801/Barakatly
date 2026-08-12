@@ -16,13 +16,11 @@ declare global {
         container: HTMLElement,
         options: {
           sitekey: string;
-          execution?: "render" | "execute";
           callback: (token: string) => void;
           "expired-callback"?: () => void;
           "error-callback"?: () => void;
         }
       ) => string;
-      execute: (widgetId: string) => void;
       reset: (widgetId: string) => void;
       remove: (widgetId: string) => void;
     };
@@ -30,7 +28,7 @@ declare global {
 }
 
 export type TurnstileHandle = {
-  /** Runs the challenge on demand and resolves with a fresh, single-use token. */
+  /** Returns the token from the visible widget (waits if not solved yet). */
   getToken: () => Promise<string>;
 };
 
@@ -38,22 +36,27 @@ export const Turnstile = forwardRef<TurnstileHandle, { siteKey: string }>(
   function Turnstile({ siteKey }, ref) {
     const containerRef = useRef<HTMLDivElement>(null);
     const widgetId = useRef<string | null>(null);
+    const tokenRef = useRef<string>("");
     const pendingResolve = useRef<((token: string) => void) | null>(null);
     const [scriptReady, setScriptReady] = useState(false);
 
     useEffect(() => {
       if (!scriptReady || !containerRef.current || !window.turnstile) return;
 
+      // Visible ("managed") widget: it renders and runs the challenge on page
+      // load, then fires the callback with a token.
       widgetId.current = window.turnstile.render(containerRef.current, {
         sitekey: siteKey,
-        // Don't generate a token at render — wait until getToken() calls
-        // execute(), so the token is always seconds-old at submit time.
-        execution: "execute",
         callback: (token) => {
+          tokenRef.current = token;
           pendingResolve.current?.(token);
           pendingResolve.current = null;
         },
+        "expired-callback": () => {
+          tokenRef.current = "";
+        },
         "error-callback": () => {
+          tokenRef.current = "";
           pendingResolve.current?.("");
           pendingResolve.current = null;
         },
@@ -71,13 +74,20 @@ export const Turnstile = forwardRef<TurnstileHandle, { siteKey: string }>(
       getToken: () =>
         new Promise<string>((resolve) => {
           if (!window.turnstile || !widgetId.current) {
-            resolve("");
+            resolve(tokenRef.current);
             return;
           }
+          if (tokenRef.current) {
+            const token = tokenRef.current;
+            // Tokens are single-use: clear and refresh so a repeated submit
+            // gets a fresh token instead of a duplicate.
+            tokenRef.current = "";
+            window.turnstile.reset(widgetId.current);
+            resolve(token);
+            return;
+          }
+          // Challenge not solved yet — wait for the callback.
           pendingResolve.current = resolve;
-          // Clear any previous token, then run a fresh challenge.
-          window.turnstile.reset(widgetId.current);
-          window.turnstile.execute(widgetId.current);
         }),
     }));
 
