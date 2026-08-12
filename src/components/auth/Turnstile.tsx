@@ -16,6 +16,7 @@ declare global {
         container: HTMLElement,
         options: {
           sitekey: string;
+          size?: "normal" | "flexible" | "compact";
           callback: (token: string) => void;
           "expired-callback"?: () => void;
           "error-callback"?: () => void;
@@ -47,6 +48,8 @@ export const Turnstile = forwardRef<TurnstileHandle, { siteKey: string }>(
       // load, then fires the callback with a token.
       widgetId.current = window.turnstile.render(containerRef.current, {
         sitekey: siteKey,
+        // Fill the form width (min 300px, up to 100% of the container).
+        size: "flexible",
         callback: (token) => {
           tokenRef.current = token;
           pendingResolve.current?.(token);
@@ -98,7 +101,7 @@ export const Turnstile = forwardRef<TurnstileHandle, { siteKey: string }>(
           strategy="afterInteractive"
           onReady={() => setScriptReady(true)}
         />
-        <div ref={containerRef} />
+        <div ref={containerRef} className="w-full" />
       </>
     );
   }
