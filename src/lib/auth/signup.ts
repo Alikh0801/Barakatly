@@ -41,6 +41,9 @@ export function translateAuthError(message: string): string {
   if (normalized.includes("invalid login credentials")) {
     return "Email və ya şifrə yanlışdır.";
   }
+  if (normalized.includes("captcha")) {
+    return "Təhlükəsizlik yoxlaması uğursuz oldu. Səhifəni yeniləyib yenidən cəhd edin.";
+  }
   if (
     normalized.includes("user already registered") ||
     normalized.includes("already been registered") ||

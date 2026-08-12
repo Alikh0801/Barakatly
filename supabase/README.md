@@ -112,6 +112,19 @@ Important:
 - `.env.local` must have exactly: `NEXT_PUBLIC_APP_URL=http://localhost:3000` (no trailing slash, no extra URLs).
 - After email confirmation, users are redirected to `/auth/callback` and logged in on the homepage.
 
+### Login captcha (Cloudflare Turnstile)
+
+Sign-in is protected by Turnstile — but only once it's configured on both sides. Without it, sign-in works exactly as before.
+
+1. Create a Turnstile widget at [dash.cloudflare.com → Turnstile](https://dash.cloudflare.com/?to=/:account/turnstile) (free). Use widget mode **Managed**. Add your domain(s), e.g. `localhost` and `barakatly.az`.
+2. Copy the **Site Key** into `.env.local` (and Vercel env vars):
+   ```env
+   NEXT_PUBLIC_TURNSTILE_SITE_KEY=0x4AAA...
+   ```
+3. Copy the **Secret Key** into **Supabase → Authentication → Attack Protection** (or **Settings** on older projects) → **Enable Captcha protection** → provider **Turnstile** → paste the secret key → Save.
+
+If the site key env var is missing, the sign-in form simply renders without the captcha widget — nothing breaks.
+
 ## Vercel deploy
 
 In **Vercel → Settings → Environment Variables** (Production):
@@ -121,6 +134,7 @@ NEXT_PUBLIC_SUPABASE_URL=https://xxxx.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJ...
 SUPABASE_SERVICE_ROLE_KEY=eyJ...
 NEXT_PUBLIC_APP_URL=https://barakatly.az
+NEXT_PUBLIC_TURNSTILE_SITE_KEY=0x4AAA...
 ```
 
 If `NEXT_PUBLIC_APP_URL` is missing, the app auto-detects the Vercel URL at runtime.

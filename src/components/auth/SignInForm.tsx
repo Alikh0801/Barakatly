@@ -1,15 +1,31 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { signIn, type AuthActionState } from "@/lib/auth/actions";
 import { PasswordInput } from "@/components/auth/PasswordInput";
+import { Turnstile } from "@/components/auth/Turnstile";
 import { Spinner } from "@/components/ui/Spinner";
 
 const initialState: AuthActionState = {};
+const TURNSTILE_SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
 
 export function SignInForm({ next }: { next?: string }) {
   const [state, formAction, pending] = useActionState(signIn, initialState);
+  const [captchaToken, setCaptchaToken] = useState("");
+  const [widgetAttempt, setWidgetAttempt] = useState(0);
+  const [handledError, setHandledError] = useState<string | undefined>(
+    undefined
+  );
+
+  // A failed sign-in burns the Turnstile token. Remount the widget to get a
+  // fresh one — done during render (not an effect) per React's guidance for
+  // resetting state in response to a prop/state change.
+  if (state.error && state.error !== handledError) {
+    setHandledError(state.error);
+    setCaptchaToken("");
+    setWidgetAttempt((n) => n + 1);
+  }
 
   return (
     <form action={formAction} className="space-y-4">
@@ -36,6 +52,17 @@ export function SignInForm({ next }: { next?: string }) {
         autoComplete="current-password"
       />
 
+      {TURNSTILE_SITE_KEY ? (
+        <>
+          <input type="hidden" name="captchaToken" value={captchaToken} />
+          <Turnstile
+            key={widgetAttempt}
+            siteKey={TURNSTILE_SITE_KEY}
+            onToken={setCaptchaToken}
+          />
+        </>
+      ) : null}
+
       {state.error ? (
         <p className="rounded-xl bg-rose-50 px-3 py-2 text-sm text-rose-700 ring-1 ring-rose-200">
           {state.error}
@@ -44,7 +71,7 @@ export function SignInForm({ next }: { next?: string }) {
 
       <button
         type="submit"
-        disabled={pending}
+        disabled={pending || (Boolean(TURNSTILE_SITE_KEY) && !captchaToken)}
         className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-70"
       >
         {pending ? (

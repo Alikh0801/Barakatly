@@ -24,13 +24,18 @@ export async function signIn(
   const email = String(formData.get("email") ?? "").trim();
   const password = String(formData.get("password") ?? "");
   const next = String(formData.get("next") ?? "").trim();
+  const captchaToken = String(formData.get("captchaToken") ?? "").trim();
 
   if (!email || !password) {
     return { error: "Email və şifrə mütləqdir." };
   }
 
   const supabase = await createClient();
-  const { error } = await supabase.auth.signInWithPassword({ email, password });
+  const { error } = await supabase.auth.signInWithPassword({
+    email,
+    password,
+    options: captchaToken ? { captchaToken } : undefined,
+  });
 
   if (error) {
     return { error: translateAuthError(error.message) };
