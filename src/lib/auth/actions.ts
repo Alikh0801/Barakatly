@@ -7,11 +7,14 @@ import {
   isDuplicateSignUpUser,
   translateAuthError,
 } from "@/lib/auth/signup";
-import { getAuthCallbackUrl, getSupabaseEnvError } from "@/lib/auth/urls";
+import { getSupabaseEnvError } from "@/lib/auth/urls";
+import { ensureFarmerRecord } from "@/lib/farmer/ensure";
 
 export type AuthActionState = {
   error?: string;
   success?: string;
+  /** Email awaiting a 6-digit signup code. When set, the UI shows the OTP step. */
+  otpEmail?: string;
 };
 
 export async function signIn(
@@ -74,8 +77,8 @@ export async function signUp(
     return { error: "Bu email artıq qeydiyyatdadır. Daxil olun." };
   }
 
+  const captchaToken = String(formData.get("captchaToken") ?? "").trim();
   const supabase = await createClient();
-  const callbackUrl = getAuthCallbackUrl();
 
   const { data, error } = await supabase.auth.signUp({
     email,
@@ -85,12 +88,12 @@ export async function signUp(
         full_name: fullName,
         role: "customer",
       },
-      emailRedirectTo: callbackUrl,
+      captchaToken: captchaToken || undefined,
     },
   });
 
   if (error) {
-    console.error("[auth.signUp]", error.message, { callbackUrl });
+    console.error("[auth.signUp]", error.message);
     return { error: translateAuthError(error.message) };
   }
 
@@ -99,11 +102,67 @@ export async function signUp(
   }
 
   if (data.user && !data.session) {
-    return {
-      success:
-        "Qeydiyyat tamamlandı. Email ünvanınıza göndərilən təsdiq linkinə klikləyin.",
-    };
+    return { otpEmail: email };
   }
 
   redirect("/");
+}
+
+export async function verifySignupOtp(
+  _prevState: AuthActionState,
+  formData: FormData
+): Promise<AuthActionState> {
+  const envError = getSupabaseEnvError();
+  if (envError) return { error: envError };
+
+  const email = String(formData.get("email") ?? "").trim();
+  const token = String(formData.get("token") ?? "").trim();
+
+  if (!email) {
+    return { error: "Email tapılmadı. Yenidən qeydiyyatdan keçin." };
+  }
+  if (!token || token.length < 6) {
+    return { otpEmail: email, error: "6 rəqəmli kodu daxil edin." };
+  }
+
+  const supabase = await createClient();
+  const { data, error } = await supabase.auth.verifyOtp({
+    email,
+    token,
+    type: "signup",
+  });
+
+  if (error || !data.user) {
+    console.error("[auth.verifySignupOtp]", error?.message);
+    return {
+      otpEmail: email,
+      error: translateAuthError(error?.message ?? "invalid token"),
+    };
+  }
+
+  await ensureFarmerRecord(data.user.id);
+  redirect("/");
+}
+
+export async function resendSignupOtp(
+  _prevState: AuthActionState,
+  formData: FormData
+): Promise<AuthActionState> {
+  const envError = getSupabaseEnvError();
+  if (envError) return { error: envError };
+
+  const email = String(formData.get("email") ?? "").trim();
+  if (!email) {
+    return { error: "Email tapılmadı. Yenidən qeydiyyatdan keçin." };
+  }
+
+  const supabase = await createClient();
+  const { error } = await supabase.auth.resend({ type: "signup", email });
+
+  if (error) {
+    console.error("[auth.resendSignupOtp]", error.message);
+    return { otpEmail: email, error: translateAuthError(error.message) };
+  }
+
+  return { otpEmail: email, success: "Yeni kod göndərildi." };
 }

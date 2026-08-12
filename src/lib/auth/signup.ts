@@ -55,6 +55,12 @@ export function translateAuthError(message: string): string {
     return "Email ünvanınız hələ təsdiqlənməyib.";
   }
   if (
+    (normalized.includes("token") || normalized.includes("otp")) &&
+    (normalized.includes("expired") || normalized.includes("invalid"))
+  ) {
+    return "Kod yanlışdır və ya vaxtı bitib. Yenidən göndərin.";
+  }
+  if (
     normalized.includes("redirect") &&
     (normalized.includes("not allowed") || normalized.includes("invalid"))
   ) {
