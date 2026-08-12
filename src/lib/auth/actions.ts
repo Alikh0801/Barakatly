@@ -8,6 +8,7 @@ import {
   translateAuthError,
 } from "@/lib/auth/signup";
 import { getSupabaseEnvError } from "@/lib/auth/urls";
+import { verifyTurnstileToken } from "@/lib/auth/turnstile";
 import { ensureFarmerRecord } from "@/lib/farmer/ensure";
 
 export type AuthActionState = {
@@ -33,11 +34,17 @@ export async function signIn(
     return { error: "Email və şifrə mütləqdir." };
   }
 
+  if (!(await verifyTurnstileToken(captchaToken))) {
+    return {
+      error:
+        "Təhlükəsizlik yoxlaması uğursuz oldu. Səhifəni yeniləyib yenidən cəhd edin.",
+    };
+  }
+
   const supabase = await createClient();
   const { error } = await supabase.auth.signInWithPassword({
     email,
     password,
-    options: captchaToken ? { captchaToken } : undefined,
   });
 
   if (error) {
@@ -79,13 +86,12 @@ export async function signUp(
 
   const captchaToken = String(formData.get("captchaToken") ?? "").trim();
 
-  // TEMP diagnostic: how many times is signUp invoked per submit, and with what token?
-  console.log("[auth.signUp] invoked", {
-    email,
-    tokenHead: captchaToken.slice(0, 12),
-    tokenLen: captchaToken.length,
-    at: new Date().toISOString(),
-  });
+  if (!(await verifyTurnstileToken(captchaToken))) {
+    return {
+      error:
+        "Təhlükəsizlik yoxlaması uğursuz oldu. Səhifəni yeniləyib yenidən cəhd edin.",
+    };
+  }
 
   const supabase = await createClient();
 
@@ -97,12 +103,23 @@ export async function signUp(
         full_name: fullName,
         role: "customer",
       },
-      captchaToken: captchaToken || undefined,
     },
   });
 
   if (error) {
-    console.error("[auth.signUp]", error.message);
+    // TEMP diagnostic: surface the real Supabase error shape (message was "{}").
+    const e = error as {
+      name?: string;
+      status?: number;
+      code?: string;
+      message?: string;
+    };
+    console.error("[auth.signUp] error", {
+      name: e.name,
+      status: e.status,
+      code: e.code,
+      message: e.message,
+    });
     return { error: translateAuthError(error.message) };
   }
 
