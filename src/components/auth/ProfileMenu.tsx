@@ -175,6 +175,11 @@ export function ProfileMenu({
                 {portal.label}
               </MenuLink>
             ) : null}
+            {role === "customer" ? (
+              <MenuLink href="/farmer/signup" onNavigate={() => setOpen(false)}>
+                Fermer olun
+              </MenuLink>
+            ) : null}
           </div>
 
           <div className="border-t border-zinc-100 p-1.5">

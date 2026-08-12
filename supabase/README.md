@@ -95,7 +95,7 @@ Customer auth pages:
 
 ### Supabase Auth settings
 
-In **Authentication → Providers**, enable **Email** only for now.
+In **Authentication → Providers**, enable **Email**. See below to also enable **Google**.
 
 For local development, you can disable email confirmation in:
 **Authentication → Providers → Email → Confirm email** (optional for testing).
@@ -111,6 +111,22 @@ Important:
 - Add **one URL per line** — do not paste multiple URLs with spaces.
 - `.env.local` must have exactly: `NEXT_PUBLIC_APP_URL=http://localhost:3000` (no trailing slash, no extra URLs).
 - After email confirmation, users are redirected to `/auth/callback` and logged in on the homepage.
+
+### Google sign-in
+
+No app-side env vars needed — the whole OAuth dance happens between the browser, Supabase, and Google; our app never sees Google's client secret.
+
+1. In [Google Cloud Console](https://console.cloud.google.com/apis/credentials) → **Create Credentials → OAuth client ID** → application type **Web application**.
+2. **Authorized redirect URIs** — add Supabase's own callback, *not* our app's:
+   ```
+   https://<project-ref>.supabase.co/auth/v1/callback
+   ```
+   (find `<project-ref>` in `NEXT_PUBLIC_SUPABASE_URL`).
+3. **Authorized JavaScript origins** — add `https://barakatly.az` and, for local testing, `http://localhost:3000`.
+4. Copy the generated **Client ID** and **Client Secret**.
+5. In **Supabase → Authentication → Providers → Google** — enable it, paste the Client ID and Client Secret, Save.
+
+That's it — the "Google ilə davam et" button on `/signin` and `/signup` starts working immediately, no redeploy needed. If the provider isn't enabled yet, clicking the button just shows "Google ilə giriş hazırda mövcud deyil." instead of breaking the page.
 
 ### Login captcha (Cloudflare Turnstile)
 

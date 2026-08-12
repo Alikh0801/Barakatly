@@ -105,6 +105,15 @@ export default async function AccountPage() {
               Fermer panel
             </Link>
           ) : null}
+          {profile.role === "customer" ? (
+            <Link
+              href="/farmer/signup"
+              prefetch
+              className="inline-flex items-center rounded-full bg-emerald-50 px-5 py-2.5 text-sm font-semibold text-emerald-800 ring-1 ring-emerald-200 transition hover:bg-emerald-100"
+            >
+              Fermer olun
+            </Link>
+          ) : null}
           {profile.role === "courier" ? (
             <Link
               href="/courier"
