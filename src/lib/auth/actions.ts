@@ -78,6 +78,15 @@ export async function signUp(
   }
 
   const captchaToken = String(formData.get("captchaToken") ?? "").trim();
+
+  // TEMP diagnostic: how many times is signUp invoked per submit, and with what token?
+  console.log("[auth.signUp] invoked", {
+    email,
+    tokenHead: captchaToken.slice(0, 12),
+    tokenLen: captchaToken.length,
+    at: new Date().toISOString(),
+  });
+
   const supabase = await createClient();
 
   const { data, error } = await supabase.auth.signUp({
