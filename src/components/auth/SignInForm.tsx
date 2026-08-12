@@ -15,17 +15,19 @@ export function SignInForm({ next }: { next?: string }) {
   const [state, formAction, pending] = useActionState(signIn, initialState);
   const [captchaToken, setCaptchaToken] = useState("");
   const [widgetAttempt, setWidgetAttempt] = useState(0);
-  const [handledError, setHandledError] = useState<string | undefined>(
-    undefined
-  );
+  const [lastState, setLastState] = useState(state);
 
-  // A failed sign-in burns the Turnstile token. Remount the widget to get a
-  // fresh one — done during render (not an effect) per React's guidance for
-  // resetting state in response to a prop/state change.
-  if (state.error && state.error !== handledError) {
-    setHandledError(state.error);
-    setCaptchaToken("");
-    setWidgetAttempt((n) => n + 1);
+  // Turnstile tokens are single-use. Every time a new action response comes
+  // back (useActionState returns a fresh object per submit), remount the widget
+  // so a retry always gets a brand-new token — otherwise re-submitting reuses
+  // the spent token and Cloudflare rejects it as "timeout-or-duplicate".
+  // Done during render (not an effect) per React's state-reset guidance.
+  if (state !== lastState) {
+    setLastState(state);
+    if (state.error) {
+      setCaptchaToken("");
+      setWidgetAttempt((n) => n + 1);
+    }
   }
 
   return (
