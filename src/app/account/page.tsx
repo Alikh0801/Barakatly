@@ -1,11 +1,35 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getProfile } from "@/lib/auth/session";
+import { AccountProfileForm } from "@/components/account/AccountProfileForm";
 
 export const metadata = {
   title: "Hesabım — BARAKATLY",
   robots: { index: false, follow: false },
 };
+
+function roleLabel(role: string): string {
+  switch (role) {
+    case "farmer":
+      return "Fermer";
+    case "courier":
+      return "Kuryer";
+    case "admin":
+      return "Admin";
+    default:
+      return "Müştəri";
+  }
+}
+
+function initialsFrom(name: string | null, email: string | null): string {
+  const source = (name?.trim() || email || "").trim();
+  if (!source) return "?";
+  const parts = source.split(/\s+/).filter(Boolean);
+  if (parts.length >= 2) {
+    return (parts[0][0] + parts[1][0]).toUpperCase();
+  }
+  return source.slice(0, 2).toUpperCase();
+}
 
 export default async function AccountPage() {
   const profile = await getProfile();
@@ -13,6 +37,10 @@ export default async function AccountPage() {
   if (!profile) {
     redirect("/signin");
   }
+
+  const displayName = profile.full_name?.trim() || profile.email || "Hesab";
+  const initials = initialsFrom(profile.full_name, profile.email);
+  const role = roleLabel(profile.role);
 
   return (
     <div className="flex min-h-screen min-h-dvh flex-col bg-[#faf9f5]">
@@ -38,100 +66,37 @@ export default async function AccountPage() {
         </div>
       </header>
 
-      <main className="mx-auto w-full max-w-2xl px-4 py-12 md:px-6">
+      <main className="mx-auto w-full max-w-2xl px-4 py-10 md:px-6">
         <h1 className="text-2xl font-semibold tracking-tight text-zinc-900">
           Hesabım
         </h1>
-        <p className="mt-2 text-sm text-zinc-500">
-          Profil məlumatlarınız və sifarişləriniz
+        <p className="mt-1 text-sm text-zinc-500">
+          Profil məlumatlarınızı görün və redaktə edin
         </p>
 
-        <div className="mt-8 space-y-4 rounded-3xl bg-white p-6 shadow-sm ring-1 ring-zinc-200">
-          <div>
-            <div className="text-xs font-medium uppercase tracking-wide text-zinc-500">
-              Ad
-            </div>
-            <div className="mt-1 text-sm text-zinc-900">
-              {profile.full_name ?? "—"}
-            </div>
-          </div>
-          <div>
-            <div className="text-xs font-medium uppercase tracking-wide text-zinc-500">
-              Email
-            </div>
-            <div className="mt-1 text-sm text-zinc-900">
-              {profile.email ?? "—"}
+        <div className="mt-6 overflow-hidden rounded-3xl bg-white shadow-sm ring-1 ring-zinc-200">
+          <div className="flex items-center gap-4 border-b border-zinc-100 bg-[linear-gradient(180deg,#f2faf3_0%,#ffffff_100%)] px-6 py-5">
+            <span className="inline-flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-emerald-600 text-lg font-semibold text-white ring-4 ring-emerald-100">
+              {initials}
+            </span>
+            <div className="min-w-0">
+              <div className="truncate text-lg font-semibold text-zinc-900">
+                {displayName}
+              </div>
+              <div className="mt-1 inline-flex items-center rounded-md bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-800 ring-1 ring-emerald-100">
+                {role}
+              </div>
             </div>
           </div>
-          <div>
-            <div className="text-xs font-medium uppercase tracking-wide text-zinc-500">
-              Rol
-            </div>
-            <div className="mt-1 text-sm capitalize text-zinc-900">
-              {profile.role === "customer"
-                ? "Müştəri"
-                : profile.role === "farmer"
-                  ? "Fermer"
-                  : profile.role === "courier"
-                    ? "Kuryer"
-                    : profile.role === "admin"
-                      ? "Admin"
-                      : profile.role}
-            </div>
-          </div>
-        </div>
 
-        <div className="mt-6 flex flex-wrap gap-3">
-          <Link
-            href="/orders"
-            prefetch
-            className="inline-flex items-center rounded-full bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-500"
-          >
-            Sifarişlərim
-          </Link>
-          <Link
-            href="/notifications"
-            prefetch
-            className="inline-flex items-center rounded-full bg-white px-5 py-2.5 text-sm font-semibold text-zinc-700 ring-1 ring-zinc-200 transition hover:bg-zinc-50"
-          >
-            Bildirişlər
-          </Link>
-          {profile.role === "farmer" ? (
-            <Link
-              href="/farmer"
-              prefetch
-              className="inline-flex items-center rounded-full bg-emerald-700 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-600"
-            >
-              Fermer panel
-            </Link>
-          ) : null}
-          {profile.role === "customer" ? (
-            <Link
-              href="/farmer/signup"
-              prefetch
-              className="inline-flex items-center rounded-full bg-emerald-50 px-5 py-2.5 text-sm font-semibold text-emerald-800 ring-1 ring-emerald-200 transition hover:bg-emerald-100"
-            >
-              Fermer olun
-            </Link>
-          ) : null}
-          {profile.role === "courier" ? (
-            <Link
-              href="/courier"
-              prefetch
-              className="inline-flex items-center rounded-full bg-sky-700 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-sky-600"
-            >
-              Kuryer panel
-            </Link>
-          ) : null}
-          {profile.role === "admin" ? (
-            <Link
-              href="/admin"
-              prefetch
-              className="inline-flex items-center rounded-full bg-zinc-900 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-zinc-800"
-            >
-              Admin panel
-            </Link>
-          ) : null}
+          <div className="px-6 py-6">
+            <AccountProfileForm
+              fullName={profile.full_name ?? ""}
+              phone={profile.phone ?? ""}
+              email={profile.email ?? "—"}
+              roleLabel={role}
+            />
+          </div>
         </div>
       </main>
     </div>
