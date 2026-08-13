@@ -7,7 +7,10 @@ import {
   isValidAzPhone,
   normalizeAzPhone,
 } from "@/lib/phone/az";
+import { isPhoneTakenByAnother } from "@/lib/phone/uniqueness";
 import { createClient } from "@/lib/supabase/server";
+
+const PHONE_TAKEN = "Bu telefon nömrəsi başqa hesabda istifadə olunur.";
 
 export type AccountActionState = {
   error?: string;
@@ -37,6 +40,10 @@ export async function updateAccountProfile(
       return { error: "Telefon +994 ilə başlamalıdır (məs: +994501234567)." };
     }
     phone = normalizeAzPhone(phoneRaw);
+
+    if (await isPhoneTakenByAnother(phone, user.id)) {
+      return { error: PHONE_TAKEN };
+    }
   }
 
   const supabase = await createClient();
@@ -46,6 +53,10 @@ export async function updateAccountProfile(
     .eq("id", user.id);
 
   if (error) {
+    // Unique index race: another account grabbed the same phone concurrently.
+    if ((error as { code?: string }).code === "23505") {
+      return { error: PHONE_TAKEN };
+    }
     console.error("[account.updateAccountProfile]", error.message);
     return { error: "Məlumatlar yenilənmədi. Yenidən cəhd edin." };
   }

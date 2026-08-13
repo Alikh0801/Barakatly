@@ -23,6 +23,7 @@ import {
   translateAuthError,
 } from "@/lib/auth/signup";
 import { isValidAzPhone, normalizeAzPhone } from "@/lib/phone/az";
+import { isPhoneTakenByAnother } from "@/lib/phone/uniqueness";
 import { revalidateProductCatalog } from "@/lib/shop/revalidate";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
@@ -215,6 +216,10 @@ export async function signUpFarmer(
     };
   }
 
+  if (await isPhoneTakenByAnother(phone)) {
+    return { error: "Bu telefon nömrəsi başqa hesabda istifadə olunur." };
+  }
+
   const supabase = await createClient();
   const callbackUrl = `${getAuthCallbackUrl()}?next=${encodeURIComponent("/farmer")}`;
 
@@ -314,6 +319,10 @@ export async function completeFarmerProfile(
     return {
       error: "Telefon +994 ilə başlamalıdır (məs: +994501234567).",
     };
+  }
+
+  if (await isPhoneTakenByAnother(phone, profile.id)) {
+    return { error: "Bu telefon nömrəsi başqa hesabda istifadə olunur." };
   }
 
   const farmer = await ensureFarmerRecord(profile.id, {
