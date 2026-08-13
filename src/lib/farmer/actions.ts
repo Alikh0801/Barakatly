@@ -223,8 +223,10 @@ export async function signUpFarmer(
     password,
     options: {
       data: {
+        // Stays "customer" until an admin approves; farm details drive the
+        // pending farmers row (see ensureFarmerRecord / approveFarmer).
         full_name: fullName,
-        role: "farmer",
+        role: "customer",
         phone,
         farm_name: farmName,
         farm_location_text: locationText,
@@ -258,7 +260,8 @@ export async function signUpFarmer(
     };
   }
 
-  await supabase.from("profiles").update({ phone, role: "farmer" }).eq("id", userId);
+  // Role stays "customer" until an admin approves the pending farmers row.
+  await supabase.from("profiles").update({ phone }).eq("id", userId);
 
   const { error: farmerError } = await supabase.from("farmers").insert({
     profile_id: userId,
@@ -324,9 +327,10 @@ export async function completeFarmerProfile(
   }
 
   const supabase = await createClient();
+  // Role stays "customer" until an admin approves the pending farmers row.
   await supabase
     .from("profiles")
-    .update({ role: "farmer", phone })
+    .update({ phone })
     .eq("id", profile.id)
     .neq("role", "admin");
 
@@ -336,7 +340,6 @@ export async function completeFarmerProfile(
   if (user) {
     await supabase.auth.updateUser({
       data: {
-        role: "farmer",
         farm_name: farmName,
         farm_location_text: locationText,
         phone,

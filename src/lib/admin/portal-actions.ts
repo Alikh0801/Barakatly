@@ -40,6 +40,25 @@ export async function approveFarmer(
 
   if (updateError) return { error: "Fermer təsdiqlənmədi." };
 
+  // Promote the account to "farmer" only now, on approval. A cross-user
+  // profile update needs the service-role client (RLS).
+  const admin = createAdminClient();
+  const { error: roleError } = await admin
+    .from("profiles")
+    .update({ role: "farmer" })
+    .eq("id", farmer.profile_id)
+    .neq("role", "admin");
+  if (roleError) {
+    console.error("[admin.approveFarmer.role]", roleError.message);
+  }
+  const { error: metaError } = await admin.auth.admin.updateUserById(
+    farmer.profile_id,
+    { user_metadata: { role: "farmer" } },
+  );
+  if (metaError) {
+    console.error("[admin.approveFarmer.metadata]", metaError.message);
+  }
+
   await notifyUser({
     userId: farmer.profile_id,
     type: "farmer_approval",

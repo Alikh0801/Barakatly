@@ -39,14 +39,15 @@ export async function ensureFarmerRecord(
     .eq("id", userId)
     .maybeSingle();
 
+  const metaFarmName = String(meta.farm_name ?? "").trim();
   const explicitFarmName = String(input.farmName ?? "").trim();
   const hasFarmerIntent =
     profile?.role === "farmer" ||
     profile?.role === "admin" ||
-    // Metadata role only counts when farm details were collected at signup
-    // (email confirmation flow). Stale role alone must not recreate a farmer.
-    (meta.role === "farmer" &&
-      Boolean(String(meta.farm_name ?? "").trim() || explicitFarmName)) ||
+    // Farm details (in signup metadata or passed explicitly) mean the user
+    // applied to be a farmer. Admin delete clears the metadata, so a demoted
+    // user is not recreated. Role stays "customer" until admin approval.
+    Boolean(metaFarmName) ||
     Boolean(explicitFarmName);
 
   if (!hasFarmerIntent) return null;
@@ -73,13 +74,8 @@ export async function ensureFarmerRecord(
     String(meta.phone ?? "").trim() ||
     String(profile?.phone ?? "").trim();
 
-  if (profile?.role !== "farmer" && profile?.role !== "admin") {
-    await supabase
-      .from("profiles")
-      .update({ role: "farmer" })
-      .eq("id", userId);
-  }
-
+  // Role is NOT promoted here — a pending farmer stays "customer" until an
+  // admin approves the farmers row (see approveFarmer).
   if (phone) {
     await supabase.from("profiles").update({ phone }).eq("id", userId);
   }
