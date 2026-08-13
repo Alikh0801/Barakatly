@@ -41,14 +41,12 @@ export async function ensureFarmerRecord(
 
   const metaFarmName = String(meta.farm_name ?? "").trim();
   const explicitFarmName = String(input.farmName ?? "").trim();
-  const hasFarmerIntent =
-    profile?.role === "farmer" ||
-    profile?.role === "admin" ||
-    // Farm details (in signup metadata or passed explicitly) mean the user
-    // applied to be a farmer. Admin delete clears the metadata, so a demoted
-    // user is not recreated. Role stays "customer" until admin approval.
-    Boolean(metaFarmName) ||
-    Boolean(explicitFarmName);
+  // Intent is based ONLY on real farm details (signup metadata or an explicit
+  // farm name). A role of admin/farmer must NOT auto-create a pending farmers
+  // row on ordinary login (e.g. Google) — that turned admins into pending
+  // farmers. Admin delete clears the metadata, so a demoted user isn't
+  // recreated. Role stays "customer" until admin approval.
+  const hasFarmerIntent = Boolean(metaFarmName) || Boolean(explicitFarmName);
 
   if (!hasFarmerIntent) return null;
 
