@@ -150,6 +150,19 @@ export async function placeOrder(
     });
   }
 
+  // A farmer cannot order their own products.
+  const { data: ownFarmer } = await supabase
+    .from("farmers")
+    .select("id")
+    .eq("profile_id", user.id)
+    .maybeSingle();
+
+  if (ownFarmer && validatedLines.some((line) => line.farmerId === ownFarmer.id)) {
+    return {
+      error: "Öz məhsulunuza sifariş verə bilməzsiniz. Onu səbətdən çıxarın.",
+    };
+  }
+
   const { data: bank, error: bankError } = await supabase
     .from("banks")
     .select("id")

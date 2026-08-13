@@ -33,13 +33,24 @@ export async function addToCart(
 
   const { data: product } = await supabase
     .from("products")
-    .select("id, quantity_available, in_stock, status")
+    .select("id, quantity_available, in_stock, status, farmer_id")
     .eq("id", productId)
     .eq("status", "approved")
     .maybeSingle();
 
   if (!product || !product.in_stock || product.quantity_available <= 0) {
     return { ok: false, error: "Bu məhsul hazırda mövcud deyil." };
+  }
+
+  // A farmer cannot order their own product.
+  const { data: ownFarmer } = await supabase
+    .from("farmers")
+    .select("id")
+    .eq("profile_id", user.id)
+    .maybeSingle();
+
+  if (ownFarmer && ownFarmer.id === product.farmer_id) {
+    return { ok: false, error: "Öz məhsulunuza sifariş verə bilməzsiniz." };
   }
 
   const { data: existing } = await supabase
