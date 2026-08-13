@@ -1,5 +1,6 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
+import { adminLinkForType, sendAdminTelegram } from "@/lib/notifications/telegram";
 import type { NotificationType } from "@/types";
 
 export async function notifyAdmins(params: {
@@ -28,6 +29,11 @@ export async function notifyAdmins(params: {
         type: params.type,
         metadata: params.metadata ?? {},
       })),
+    );
+
+    // Also push to Telegram (no-op if Telegram isn't configured).
+    await sendAdminTelegram(
+      `🔔 ${params.title}\n${params.body}\n\n${adminLinkForType(params.type)}`,
     );
   } catch (error) {
     console.error("[notifications.notifyAdmins]", error);
