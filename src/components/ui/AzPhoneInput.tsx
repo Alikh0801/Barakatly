@@ -45,9 +45,6 @@ export function AzPhoneInput({
         />
         <input type="hidden" name={name} value={combined} />
       </div>
-      <p className="mt-1 text-xs text-zinc-500">
-        Məcburi ölkə kodu: {AZ_PREFIX}. Nümunə: {AZ_PREFIX}501234567
-      </p>
     </div>
   );
 }

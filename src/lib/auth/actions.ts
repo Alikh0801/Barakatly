@@ -9,6 +9,7 @@ import {
 } from "@/lib/auth/signup";
 import { getSupabaseEnvError } from "@/lib/auth/urls";
 import { ensureFarmerRecord } from "@/lib/farmer/ensure";
+import { notifyAdmins } from "@/lib/notifications/helpers";
 
 export type AuthActionState = {
   error?: string;
@@ -141,7 +142,17 @@ export async function verifySignupOtp(
     };
   }
 
-  await ensureFarmerRecord(data.user.id);
+  // Creates the pending farmers row when signup metadata carries farm details
+  // (i.e. this was a farmer signup, not a plain customer one).
+  const farmer = await ensureFarmerRecord(data.user.id);
+  if (farmer?.status === "pending") {
+    await notifyAdmins({
+      type: "farmer_registration",
+      title: "Yeni fermer qeydiyyatı",
+      body: `${farmer.farm_name} təsdiq gözləyir.`,
+      metadata: { farmer_id: farmer.id },
+    });
+  }
   redirect("/");
 }
 

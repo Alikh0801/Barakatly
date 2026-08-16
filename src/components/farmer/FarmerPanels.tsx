@@ -2,8 +2,10 @@
 
 import { useActionState, useEffect, useRef, useState, useTransition } from "react";
 import Link from "next/link";
+import { GoogleAuthButton } from "@/components/auth/GoogleAuthButton";
 import { PasswordInput } from "@/components/auth/PasswordInput";
 import { Turnstile, type TurnstileHandle } from "@/components/auth/Turnstile";
+import { VerifyOtpForm } from "@/components/auth/VerifyOtpForm";
 import { AzPhoneInput } from "@/components/ui/AzPhoneInput";
 import { Spinner } from "@/components/ui/Spinner";
 import {
@@ -96,76 +98,90 @@ export function FarmerSignUpForm() {
     startTransition(() => formAction(formData));
   }
 
+  if (state.otpEmail) {
+    return <VerifyOtpForm email={state.otpEmail} />;
+  }
+
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div>
-        <label htmlFor="full_name" className="block text-sm font-medium text-zinc-700">
-          Ad və soyad
-        </label>
-        <input
-          id="full_name"
-          name="full_name"
-          required
-          className="mt-1 w-full rounded-xl border border-zinc-200 px-3 py-2.5 text-base text-zinc-900 outline-none ring-emerald-500 focus:ring-2"
+    <div className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div>
+          <label htmlFor="full_name" className="block text-sm font-medium text-zinc-700">
+            Ad və soyad
+          </label>
+          <input
+            id="full_name"
+            name="full_name"
+            required
+            className="mt-1 w-full rounded-xl border border-zinc-200 px-3 py-2.5 text-base text-zinc-900 outline-none ring-emerald-500 focus:ring-2"
+          />
+        </div>
+        <div>
+          <label htmlFor="email" className="block text-sm font-medium text-zinc-700">
+            Email
+          </label>
+          <input
+            id="email"
+            name="email"
+            type="email"
+            required
+            className="mt-1 w-full rounded-xl border border-zinc-200 px-3 py-2.5 text-base text-zinc-900 outline-none ring-emerald-500 focus:ring-2"
+          />
+        </div>
+        <AzPhoneInput id="phone" name="phone" required />
+        <div>
+          <label htmlFor="farm_name" className="block text-sm font-medium text-zinc-700">
+            Təsərrüfat adı *
+          </label>
+          <input
+            id="farm_name"
+            name="farm_name"
+            required
+            className="mt-1 w-full rounded-xl border border-zinc-200 px-3 py-2.5 text-base text-zinc-900 outline-none ring-emerald-500 focus:ring-2"
+          />
+        </div>
+        <RegionSelect required />
+        <PasswordInput id="password" name="password" label="Şifrə" autoComplete="new-password" />
+        <PasswordInput
+          id="password_confirm"
+          name="password_confirm"
+          label="Şifrəni təkrar yazın"
+          autoComplete="new-password"
         />
-      </div>
-      <div>
-        <label htmlFor="email" className="block text-sm font-medium text-zinc-700">
-          Email
-        </label>
-        <input
-          id="email"
-          name="email"
-          type="email"
-          required
-          className="mt-1 w-full rounded-xl border border-zinc-200 px-3 py-2.5 text-base text-zinc-900 outline-none ring-emerald-500 focus:ring-2"
-        />
-      </div>
-      <AzPhoneInput id="phone" name="phone" required />
-      <div>
-        <label htmlFor="farm_name" className="block text-sm font-medium text-zinc-700">
-          Təsərrüfat adı *
-        </label>
-        <input
-          id="farm_name"
-          name="farm_name"
-          required
-          className="mt-1 w-full rounded-xl border border-zinc-200 px-3 py-2.5 text-base text-zinc-900 outline-none ring-emerald-500 focus:ring-2"
-        />
-      </div>
-      <RegionSelect required />
-      <PasswordInput id="password" name="password" label="Şifrə" autoComplete="new-password" />
-      <PasswordInput
-        id="password_confirm"
-        name="password_confirm"
-        label="Şifrəni təkrar yazın"
-        autoComplete="new-password"
-      />
 
-      {TURNSTILE_SITE_KEY ? (
-        <Turnstile ref={turnstileRef} siteKey={TURNSTILE_SITE_KEY} />
-      ) : null}
+        {TURNSTILE_SITE_KEY ? (
+          <Turnstile ref={turnstileRef} siteKey={TURNSTILE_SITE_KEY} />
+        ) : null}
 
-      {state.error || captchaError ? (
-        <p className="rounded-xl bg-rose-50 px-3 py-2 text-sm text-rose-700 ring-1 ring-rose-200">
-          {captchaError || state.error}
-        </p>
-      ) : null}
-      {state.success ? (
-        <p className="rounded-xl bg-emerald-50 px-3 py-2 text-sm text-emerald-800 ring-1 ring-emerald-200">
-          {state.success}
-        </p>
-      ) : null}
+        {state.error || captchaError ? (
+          <p className="rounded-xl bg-rose-50 px-3 py-2 text-sm text-rose-700 ring-1 ring-rose-200">
+            {captchaError || state.error}
+          </p>
+        ) : null}
+        {state.success ? (
+          <p className="rounded-xl bg-emerald-50 px-3 py-2 text-sm text-emerald-800 ring-1 ring-emerald-200">
+            {state.success}
+          </p>
+        ) : null}
 
-      <button
-        type="submit"
-        disabled={busy}
-        className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-emerald-500 disabled:opacity-70"
-      >
-        {busy ? <Spinner className="h-4 w-4" /> : null}
-        Fermer kimi qeydiyyat
-      </button>
-    </form>
+        <button
+          type="submit"
+          disabled={busy}
+          className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-emerald-500 disabled:opacity-70"
+        >
+          {busy ? <Spinner className="h-4 w-4" /> : null}
+          Fermer kimi qeydiyyat
+        </button>
+      </form>
+
+      <div className="flex items-center gap-3">
+        <span className="h-px flex-1 bg-zinc-200" />
+        <span className="text-xs font-medium text-zinc-400">və ya</span>
+        <span className="h-px flex-1 bg-zinc-200" />
+      </div>
+
+      <GoogleAuthButton next="/farmer/signup" />
+    </div>
   );
 }
 

@@ -164,6 +164,8 @@ async function notifyNewTaxonomy(farmName: string, labels: string[]) {
 export type FarmerActionState = {
   error?: string;
   success?: string;
+  /** Email awaiting a 6-digit signup code. When set, the UI shows the OTP step. */
+  otpEmail?: string;
 };
 
 function parseRegion(formData: FormData): string | null {
@@ -259,12 +261,10 @@ export async function signUpFarmer(
     return { error: "Qeydiyyat tamamlanmadı." };
   }
 
-  // Email confirmation required — no session yet, so farmers insert is deferred.
+  // Email confirmation required — no session yet, so farmers insert is deferred
+  // until the OTP is verified (see verifySignupOtp in @/lib/auth/actions).
   if (!data.session) {
-    return {
-      success:
-        "Təsdiq linki email ünvanınıza göndərildi. Linkə klikləyərək qeydiyyatı tamamlayın.",
-    };
+    return { otpEmail: email };
   }
 
   // Role stays "customer" until an admin approves the pending farmers row.
