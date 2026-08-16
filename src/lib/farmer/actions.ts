@@ -186,6 +186,7 @@ export async function signUpFarmer(
   const farmName = String(formData.get("farm_name") ?? "").trim();
   const locationText = parseRegion(formData);
   const phone = normalizeAzPhone(String(formData.get("phone") ?? ""));
+  const captchaToken = String(formData.get("captchaToken") ?? "").trim();
 
   if (!fullName || !email || !password || !passwordConfirm || !farmName || !phone) {
     return { error: "Mütləq sahələri doldurun." };
@@ -236,6 +237,7 @@ export async function signUpFarmer(
         farm_name: farmName,
         farm_location_text: locationText,
       },
+      captchaToken: captchaToken || undefined,
       emailRedirectTo: callbackUrl,
     },
   });
