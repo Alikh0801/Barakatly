@@ -46,3 +46,44 @@ export async function markAllNotificationsRead() {
   revalidatePath("/");
   return { success: true };
 }
+
+export async function deleteNotification(notificationId: string) {
+  const profile = await getProfile();
+  if (!profile) return { error: "Daxil olmalısınız." };
+
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("notifications")
+    .delete()
+    .eq("id", notificationId)
+    .eq("user_id", profile.id);
+
+  if (error) {
+    console.error("[notifications.deleteNotification]", error.message);
+    return { error: "Bildiriş silinmədi." };
+  }
+
+  revalidatePath("/notifications");
+  revalidatePath("/");
+  return { success: true };
+}
+
+export async function deleteAllNotifications() {
+  const profile = await getProfile();
+  if (!profile) return { error: "Daxil olmalısınız." };
+
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("notifications")
+    .delete()
+    .eq("user_id", profile.id);
+
+  if (error) {
+    console.error("[notifications.deleteAllNotifications]", error.message);
+    return { error: "Bildirişlər silinmədi." };
+  }
+
+  revalidatePath("/notifications");
+  revalidatePath("/");
+  return { success: true };
+}

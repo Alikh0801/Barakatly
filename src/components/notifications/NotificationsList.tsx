@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
+  deleteAllNotifications,
+  deleteNotification,
   markAllNotificationsRead,
   markNotificationRead,
 } from "@/lib/notifications/actions";
@@ -36,7 +38,7 @@ export function NotificationsList({
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-end">
+      <div className="flex justify-end gap-4">
         <button
           type="button"
           onClick={async () => {
@@ -46,6 +48,23 @@ export function NotificationsList({
           className="text-sm font-medium text-emerald-700 hover:underline"
         >
           Hamısını oxunmuş et
+        </button>
+        <button
+          type="button"
+          onClick={async () => {
+            if (
+              !window.confirm(
+                "Bütün bildirişləri silmək istəyirsiniz? Bu geri qaytarıla bilməz.",
+              )
+            ) {
+              return;
+            }
+            await deleteAllNotifications();
+            router.refresh();
+          }}
+          className="text-sm font-medium text-rose-600 hover:underline"
+        >
+          Hamısını sil
         </button>
       </div>
 
@@ -103,6 +122,18 @@ export function NotificationsList({
                       Oxundu
                     </button>
                   ) : null}
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      await deleteNotification(notification.id);
+                      router.refresh();
+                    }}
+                    aria-label="Bildirişi sil"
+                    title="Sil"
+                    className="text-sm text-zinc-400 hover:text-rose-600"
+                  >
+                    ✕
+                  </button>
                 </div>
               </div>
             </article>
