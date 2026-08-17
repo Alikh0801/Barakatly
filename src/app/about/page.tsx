@@ -31,12 +31,6 @@ export default async function AboutPage() {
           >
             Mağazaya bax
           </Link>
-          <Link
-            href="/farmers"
-            className="inline-flex items-center justify-center rounded-full bg-white px-5 py-2.5 text-sm font-semibold text-emerald-700 ring-1 ring-emerald-200 transition hover:bg-emerald-50"
-          >
-            Fermerlərimiz
-          </Link>
         </div>
       </section>
 
