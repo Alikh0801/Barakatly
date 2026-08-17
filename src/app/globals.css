@@ -35,6 +35,22 @@ textarea::placeholder {
   opacity: 1;
 }
 
+button:not(:disabled) {
+  cursor: pointer;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  a,
+  button:not(:disabled) {
+    transition: transform 0.15s ease-out;
+  }
+
+  a:hover,
+  button:not(:disabled):hover {
+    transform: scale(1.02);
+  }
+}
+
 @keyframes navigation-progress {
   0% {
     transform: translateX(-120%);
