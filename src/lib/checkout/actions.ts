@@ -1,5 +1,6 @@
 "use server";
 
+import { after } from "next/server";
 import { getSessionUser } from "@/lib/auth/session";
 import {
   DELIVERY_FEE,
@@ -7,6 +8,7 @@ import {
   RECEIPT_MIME_TYPES,
 } from "@/lib/checkout/constants";
 import { notifyAdmins } from "@/lib/notifications/helpers";
+import { isValidAzPhone, normalizeAzPhone } from "@/lib/phone/az";
 import { getDisplayPrice } from "@/lib/shop/format";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
@@ -43,10 +45,6 @@ function getReceiptExtension(file: File): string {
   return byType[file.type] ?? "bin";
 }
 
-function normalizePhone(phone: string): string {
-  return phone.replace(/\s+/g, "");
-}
-
 export async function placeOrder(
   _prevState: PlaceOrderState,
   formData: FormData
@@ -56,18 +54,19 @@ export async function placeOrder(
     return { error: "Sifariş üçün daxil olmalısınız." };
   }
 
-  const contactPhone = normalizePhone(
-    String(formData.get("contact_phone") ?? "").trim()
-  );
+  const contactPhoneRaw = String(formData.get("contact_phone") ?? "").trim();
   const deliveryAddress = String(
     formData.get("delivery_address_text") ?? ""
   ).trim();
   const bankId = String(formData.get("bank_id") ?? "").trim();
   const receipt = formData.get("receipt");
 
-  if (!contactPhone || contactPhone.length < 9) {
-    return { error: "Düzgün telefon nömrəsi daxil edin." };
+  if (!isValidAzPhone(contactPhoneRaw)) {
+    return {
+      error: "Telefon +994 ilə başlamalıdır (məs: +994501234567).",
+    };
   }
+  const contactPhone = normalizeAzPhone(contactPhoneRaw);
 
   if (!bankId) {
     return { error: "Bank seçin." };
@@ -253,45 +252,51 @@ export async function placeOrder(
     };
   }
 
-  // Decrement stock via service role (customers cannot update products via RLS).
+  // Stock decrement (service role — customers can't update products via RLS)
+  // and the order-created audit event both affect what the customer sees
+  // right after redirect, so run them concurrently but still await them.
   try {
     const admin = createAdminClient();
-    for (const line of validatedLines) {
-      const product = productMap.get(line.productId);
-      if (!product) continue;
-      const nextQty = Math.max(0, product.quantity_available - line.quantity);
-      const { error: stockError } = await admin
-        .from("products")
-        .update({
-          quantity_available: nextQty,
-          in_stock: nextQty > 0,
-        })
-        .eq("id", line.productId)
-        .gte("quantity_available", line.quantity);
+    await Promise.all([
+      ...validatedLines.map(async (line) => {
+        const product = productMap.get(line.productId);
+        if (!product) return;
+        const nextQty = Math.max(0, product.quantity_available - line.quantity);
+        const { error: stockError } = await admin
+          .from("products")
+          .update({
+            quantity_available: nextQty,
+            in_stock: nextQty > 0,
+          })
+          .eq("id", line.productId)
+          .gte("quantity_available", line.quantity);
 
-      if (stockError) {
-        console.error("[checkout.placeOrder] stock", stockError.message);
-      }
-    }
+        if (stockError) {
+          console.error("[checkout.placeOrder] stock", stockError.message);
+        }
+      }),
+      supabase.from("order_status_events").insert({
+        order_id: order.id,
+        status: "awaiting_confirmation",
+        changed_by: user.id,
+        note: "Sifariş yaradıldı",
+      }),
+    ]);
   } catch (error) {
     console.error("[checkout.placeOrder] stock admin", error);
   }
 
-  await supabase.from("order_status_events").insert({
-    order_id: order.id,
-    status: "awaiting_confirmation",
-    changed_by: user.id,
-    note: "Sifariş yaradıldı",
-  });
-
-  // Empty the cart now that it has become an order.
-  await supabase.from("cart_items").delete().eq("customer_id", user.id);
-
-  await notifyAdmins({
-    type: "payment_received",
-    title: "Yeni ödəniş + çek",
-    body: `${orderCode} sifarişi üçün ödəniş çeki yoxlama gözləyir.`,
-    metadata: { order_id: order.id },
+  // Clearing the cart and notifying admins don't change what the customer
+  // sees next, so defer them past the response instead of making them wait
+  // (Vercel's waitUntil keeps the invocation alive until these settle).
+  after(async () => {
+    await supabase.from("cart_items").delete().eq("customer_id", user.id);
+    await notifyAdmins({
+      type: "payment_received",
+      title: "Yeni ödəniş + çek",
+      body: `${orderCode} sifarişi üçün ödəniş çeki yoxlama gözləyir.`,
+      metadata: { order_id: order.id },
+    });
   });
 
   return { orderId: order.id };

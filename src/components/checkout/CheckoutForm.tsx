@@ -1,15 +1,75 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useActionState, useEffect } from "react";
+import { useActionState, useEffect, useState } from "react";
 import { placeOrder, type PlaceOrderState } from "@/lib/checkout/actions";
 import { DELIVERY_FEE } from "@/lib/checkout/constants";
 import { formatPrice, formatUnit } from "@/lib/shop/format";
 import type { CartLineItem } from "@/lib/cart/queries";
+import { AzPhoneInput } from "@/components/ui/AzPhoneInput";
 import { Spinner } from "@/components/ui/Spinner";
 import type { Bank } from "@/types";
 
 const initialState: PlaceOrderState = {};
+
+/** Shows only the first and last groups of a hyphenated PAN, e.g. "1234 •••• •••• 5678". */
+function maskPan(pan: string): string {
+  const groups = pan.split("-").filter(Boolean);
+  if (groups.length < 3) {
+    const digits = pan.replace(/\D/g, "");
+    if (digits.length <= 8) return pan;
+    return `${digits.slice(0, 4)} •••• •••• ${digits.slice(-4)}`;
+  }
+  return groups
+    .map((group, index) =>
+      index === 0 || index === groups.length - 1
+        ? group
+        : "•".repeat(group.length),
+    )
+    .join(" ");
+}
+
+function BankOption({ bank }: { bank: Bank }) {
+  const [copied, setCopied] = useState(false);
+
+  async function handleCopy(event: React.MouseEvent) {
+    event.preventDefault();
+    try {
+      await navigator.clipboard.writeText(bank.pan_number.replace(/\D/g, ""));
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 1800);
+    } catch {
+      // Clipboard API unavailable — nothing safe to fall back to.
+    }
+  }
+
+  return (
+    <label className="flex cursor-pointer items-start gap-3 rounded-2xl border border-zinc-200 p-4 transition has-checked:border-emerald-500 has-checked:bg-emerald-50/50">
+      <input
+        type="radio"
+        name="bank_id"
+        value={bank.id}
+        required
+        className="mt-1 h-4 w-4 border-zinc-300 text-emerald-600 focus:ring-emerald-500"
+      />
+      <div className="min-w-0 flex-1">
+        <div className="font-medium text-zinc-900">{bank.name}</div>
+        <div className="mt-1 flex flex-wrap items-center gap-2">
+          <span className="font-mono text-sm tracking-wider text-zinc-700">
+            {maskPan(bank.pan_number)}
+          </span>
+          <button
+            type="button"
+            onClick={handleCopy}
+            className="rounded-full bg-zinc-100 px-2.5 py-1 text-xs font-semibold text-zinc-700 transition hover:bg-zinc-200"
+          >
+            {copied ? "Kopyalandı ✓" : "Kartı kopyala"}
+          </button>
+        </div>
+      </div>
+    </label>
+  );
+}
 
 export function CheckoutForm({
   banks,
@@ -62,23 +122,13 @@ export function CheckoutForm({
             Əlaqə və çatdırılma
           </h2>
           <div className="mt-4 space-y-4">
-            <div>
-              <label
-                htmlFor="contact_phone"
-                className="block text-sm font-medium text-zinc-700"
-              >
-                Telefon *
-              </label>
-              <input
-                id="contact_phone"
-                name="contact_phone"
-                type="tel"
-                required
-                defaultValue={defaultPhone ?? ""}
-                placeholder="+994 50 000 00 00"
-                className="mt-1 w-full rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-base text-zinc-900 outline-none ring-emerald-500 focus:ring-2"
-              />
-            </div>
+            <AzPhoneInput
+              id="contact_phone"
+              name="contact_phone"
+              label="Telefon"
+              required
+              defaultValue={defaultPhone ?? ""}
+            />
             <div>
               <label
                 htmlFor="delivery_address_text"
@@ -104,24 +154,7 @@ export function CheckoutForm({
           </p>
           <div className="mt-4 space-y-3">
             {banks.map((bank) => (
-              <label
-                key={bank.id}
-                className="flex cursor-pointer items-start gap-3 rounded-2xl border border-zinc-200 p-4 transition has-checked:border-emerald-500 has-checked:bg-emerald-50/50"
-              >
-                <input
-                  type="radio"
-                  name="bank_id"
-                  value={bank.id}
-                  required
-                  className="mt-1 h-4 w-4 border-zinc-300 text-emerald-600 focus:ring-emerald-500"
-                />
-                <div>
-                  <div className="font-medium text-zinc-900">{bank.name}</div>
-                  <div className="mt-1 font-mono text-sm tracking-wider text-zinc-700">
-                    {bank.pan_number.replace(/-/g, " ")}
-                  </div>
-                </div>
-              </label>
+              <BankOption key={bank.id} bank={bank} />
             ))}
           </div>
         </section>

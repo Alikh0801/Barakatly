@@ -36,6 +36,10 @@ export async function sendAdminTelegram(text: string): Promise<void> {
 
   await Promise.all(
     chatIds.map(async (chatId) => {
+      // Cap each call so a slow/unreachable Telegram API can't stall whatever
+      // action triggered this notification.
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 5000);
       try {
         const res = await fetch(`${TELEGRAM_API}/bot${token}/sendMessage`, {
           method: "POST",
@@ -45,6 +49,7 @@ export async function sendAdminTelegram(text: string): Promise<void> {
             text,
             disable_web_page_preview: true,
           }),
+          signal: controller.signal,
         });
         if (!res.ok) {
           console.error(
@@ -55,6 +60,8 @@ export async function sendAdminTelegram(text: string): Promise<void> {
         }
       } catch (error) {
         console.error("[telegram] sendMessage error", error);
+      } finally {
+        clearTimeout(timeout);
       }
     }),
   );
