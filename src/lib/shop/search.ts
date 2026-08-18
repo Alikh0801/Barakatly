@@ -83,6 +83,7 @@ export async function searchCatalog(query: string): Promise<SearchResults> {
     return {
       id: farmer.id,
       farm_name: farmer.farm_name,
+      owner_name: null,
       description: farmer.description,
       location_text: farmer.location_text,
       verified_at: farmer.verified_at,
