@@ -64,7 +64,9 @@ export default async function FarmersPage() {
                     />
                   ) : (
                     <div className="inline-flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-[#1a3d2b] text-xl font-semibold text-[#d7f5e3]">
-                      {farmer.farm_name.slice(0, 1).toUpperCase()}
+                      {(farmer.owner_name || farmer.farm_name)
+                        .slice(0, 1)
+                        .toUpperCase()}
                     </div>
                   )}
                   <div className="min-w-0">
@@ -72,10 +74,13 @@ export default async function FarmersPage() {
                       <h2
                         className={`${displayFont.className} text-lg font-bold text-zinc-900 group-hover:text-[#1f5c3d]`}
                       >
-                        {farmer.farm_name}
+                        {farmer.owner_name || farmer.farm_name}
                       </h2>
                       {farmer.verified_at ? <VerifiedIcon /> : null}
                     </div>
+                    <p className="text-sm font-medium text-[#1f5c3d]">
+                      {farmer.farm_name}
+                    </p>
                     {farmer.location_text ? (
                       <p className="mt-1 text-sm text-zinc-500">
                         {farmer.location_text}

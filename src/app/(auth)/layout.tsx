@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import type { Viewport } from "next";
 
@@ -19,9 +20,13 @@ export default function AuthLayout({
             href="/"
             className="inline-flex items-center gap-2 font-semibold tracking-tight text-emerald-800"
           >
-            <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-emerald-600 text-white">
-              🌿
-            </span>
+            <Image
+              src="/logo/logo.png"
+              alt="Barakatly"
+              width={32}
+              height={32}
+              className="h-8 w-8 shrink-0 rounded-full object-cover ring-1 ring-black/5"
+            />
             Barakatly
           </Link>
           <Link

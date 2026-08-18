@@ -633,7 +633,15 @@ export interface Database {
         Relationships: [];
       };
     };
-    Views: Record<string, never>;
+    Views: {
+      public_farmer_names: {
+        Row: {
+          farmer_id: string;
+          owner_name: string | null;
+        };
+        Relationships: [];
+      };
+    };
     Functions: {
       generate_order_code: {
         Args: Record<string, never>;
