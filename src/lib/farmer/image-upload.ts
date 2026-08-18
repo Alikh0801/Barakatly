@@ -2,6 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/database";
 
 export const PRODUCT_IMAGE_MAX_BYTES = 5 * 1024 * 1024;
+export const MAX_PRODUCT_IMAGES = 5;
 export const PRODUCT_IMAGE_MIME_TYPES = [
   "image/jpeg",
   "image/png",

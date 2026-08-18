@@ -6,7 +6,7 @@ import { getAuthCallbackUrl, getSupabaseEnvError } from "@/lib/auth/urls";
 import { getProfile } from "@/lib/auth/session";
 import { requireApprovedFarmer } from "@/lib/farmer/auth";
 import { ensureFarmerRecord } from "@/lib/farmer/ensure";
-import { uploadProductImage } from "@/lib/farmer/image-upload";
+import { MAX_PRODUCT_IMAGES, uploadProductImage } from "@/lib/farmer/image-upload";
 import { uploadFarmerMedia } from "@/lib/farmer/media-upload";
 import {
   FARMER_ITEM_STATUS_TRANSITIONS,
@@ -382,7 +382,9 @@ export async function createProduct(
   const unitType = String(formData.get("unit_type") ?? "").trim() as UnitType;
   const farmerPrice = Number(formData.get("farmer_price") ?? 0);
   const quantity = Number(formData.get("quantity_available") ?? 0);
-  const image = formData.get("image");
+  const images = formData
+    .getAll("images")
+    .filter((value): value is File => value instanceof File && value.size > 0);
 
   if (!title || !description || !unitType) {
     return { error: "Bütün sahələr mütləqdir." };
@@ -396,8 +398,12 @@ export async function createProduct(
     return { error: "Qiymət və miqdar düzgün deyil." };
   }
 
-  if (!(image instanceof File) || image.size === 0) {
-    return { error: "Məhsul şəklini cihazınızdan seçin." };
+  if (images.length === 0) {
+    return { error: "Ən azı bir məhsul şəkli seçin." };
+  }
+
+  if (images.length > MAX_PRODUCT_IMAGES) {
+    return { error: `Ən çox ${MAX_PRODUCT_IMAGES} şəkil əlavə edə bilərsiniz.` };
   }
 
   const taxonomy = await resolveTaxonomy(formData, profile.id);
@@ -426,28 +432,30 @@ export async function createProduct(
     return { error: "Məhsul yaradıla bilmədi." };
   }
 
-  const uploaded = await uploadProductImage(
-    supabase,
-    profile.id,
-    product.id,
-    image,
+  const uploads = await Promise.all(
+    images.map((file) => uploadProductImage(supabase, profile.id, product.id, file)),
+  );
+  const failedUpload = uploads.find(
+    (result): result is { error: string } => "error" in result,
   );
 
-  if ("error" in uploaded) {
+  if (failedUpload) {
     await supabase.from("products").delete().eq("id", product.id);
-    return { error: uploaded.error };
+    return { error: failedUpload.error };
   }
 
-  const { error: imageError } = await supabase.from("product_images").insert({
-    product_id: product.id,
-    url: uploaded.url,
-    sort_order: 0,
-  });
+  const { error: imageError } = await supabase.from("product_images").insert(
+    uploads.map((result, index) => ({
+      product_id: product.id,
+      url: (result as { url: string }).url,
+      sort_order: index,
+    })),
+  );
 
   if (imageError) {
     console.error("[farmer.createProduct.image]", imageError.message);
     await supabase.from("products").delete().eq("id", product.id);
-    return { error: "Şəkil saxlanılmadı. Yenidən cəhd edin." };
+    return { error: "Şəkillər saxlanılmadı. Yenidən cəhd edin." };
   }
 
   await notifyAdmins({
@@ -479,10 +487,16 @@ export async function updateProduct(
   const unitType = String(formData.get("unit_type") ?? "").trim() as UnitType;
   const farmerPrice = Number(formData.get("farmer_price") ?? 0);
   const quantity = Number(formData.get("quantity_available") ?? 0);
-  const image = formData.get("image");
+  const images = formData
+    .getAll("images")
+    .filter((value): value is File => value instanceof File && value.size > 0);
 
   if (!productId || !title || !description || !unitType) {
     return { error: "Bütün sahələr mütləqdir." };
+  }
+
+  if (images.length > MAX_PRODUCT_IMAGES) {
+    return { error: `Ən çox ${MAX_PRODUCT_IMAGES} şəkil əlavə edə bilərsiniz.` };
   }
 
   const taxonomy = await resolveTaxonomy(formData, profile.id);
@@ -513,28 +527,30 @@ export async function updateProduct(
 
   await notifyNewTaxonomy(farmer.farm_name, taxonomy.createdLabels);
 
-  if (image instanceof File && image.size > 0) {
-    const uploaded = await uploadProductImage(
-      supabase,
-      profile.id,
-      productId,
-      image,
+  if (images.length > 0) {
+    const uploads = await Promise.all(
+      images.map((file) => uploadProductImage(supabase, profile.id, productId, file)),
+    );
+    const failedUpload = uploads.find(
+      (result): result is { error: string } => "error" in result,
     );
 
-    if ("error" in uploaded) {
-      return { error: uploaded.error };
+    if (failedUpload) {
+      return { error: failedUpload.error };
     }
 
     await supabase.from("product_images").delete().eq("product_id", productId);
-    const { error: imageError } = await supabase.from("product_images").insert({
-      product_id: productId,
-      url: uploaded.url,
-      sort_order: 0,
-    });
+    const { error: imageError } = await supabase.from("product_images").insert(
+      uploads.map((result, index) => ({
+        product_id: productId,
+        url: (result as { url: string }).url,
+        sort_order: index,
+      })),
+    );
 
     if (imageError) {
       console.error("[farmer.updateProduct.image]", imageError.message);
-      return { error: "Şəkil yenilənmədi." };
+      return { error: "Şəkillər yenilənmədi." };
     }
   }
 
@@ -701,8 +717,8 @@ export async function createFarmerBlogPost(
     return { error: "Ən azı bir şəkil və ya video seçin." };
   }
 
-  if (files.length > 6) {
-    return { error: "Bir paylaşıma ən çox 6 fayl əlavə etmək olar." };
+  if (files.length > 5) {
+    return { error: "Bir paylaşıma ən çox 5 fayl əlavə etmək olar." };
   }
 
   const supabase = await createClient();

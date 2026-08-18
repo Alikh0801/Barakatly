@@ -1,6 +1,13 @@
 "use client";
 
-import { useActionState, useEffect, useRef, useState, useTransition } from "react";
+import {
+  useActionState,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useTransition,
+} from "react";
 import Link from "next/link";
 import { GoogleAuthButton } from "@/components/auth/GoogleAuthButton";
 import { PasswordInput } from "@/components/auth/PasswordInput";
@@ -23,8 +30,14 @@ import {
   getProductStatusLabel,
 } from "@/lib/orders/labels";
 import { AZ_REGIONS } from "@/lib/az/regions";
+import { MAX_PRODUCT_IMAGES } from "@/lib/farmer/image-upload";
 import { formatDateTime } from "@/lib/format/date";
-import { formatPrice, formatUnit, unitLabel } from "@/lib/shop/format";
+import {
+  formatPrice,
+  formatUnit,
+  getProductImageUrl,
+  unitLabel,
+} from "@/lib/shop/format";
 import type { FarmerOrderItem, FarmerProduct } from "@/lib/farmer/queries";
 import type {
   Category,
@@ -37,7 +50,7 @@ import type {
 const initialState: FarmerActionState = {};
 const TURNSTILE_SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
 
-function RegionSelect({
+export function RegionSelect({
   id = "location_text",
   name = "location_text",
   defaultValue = "",
@@ -303,8 +316,15 @@ export function FarmerProductForm({
 }) {
   const action = product ? updateProduct : createProduct;
   const [state, formAction, pending] = useActionState(action, initialState);
-  const existingImageUrl = product?.product_images?.[0]?.url ?? "";
-  const [previewUrl, setPreviewUrl] = useState(existingImageUrl);
+  const existingImages = [...(product?.product_images ?? [])].sort(
+    (a, b) => a.sort_order - b.sort_order,
+  );
+  const [images, setImages] = useState<File[]>([]);
+  const imageInputRef = useRef<HTMLInputElement>(null);
+  const previews = useMemo(
+    () => images.map((file) => URL.createObjectURL(file)),
+    [images],
+  );
   const [unitType, setUnitType] = useState<UnitType>(
     (product?.unit_type as UnitType) ?? "kg",
   );
@@ -322,11 +342,22 @@ export function FarmerProductForm({
 
   useEffect(() => {
     return () => {
-      if (previewUrl.startsWith("blob:")) {
-        URL.revokeObjectURL(previewUrl);
-      }
+      previews.forEach((url) => URL.revokeObjectURL(url));
     };
-  }, [previewUrl]);
+  }, [previews]);
+
+  function syncImages(next: File[]) {
+    const limited = next.slice(0, MAX_PRODUCT_IMAGES);
+    setImages(limited);
+    if (!imageInputRef.current) return;
+    const transfer = new DataTransfer();
+    limited.forEach((file) => transfer.items.add(file));
+    imageInputRef.current.files = transfer.files;
+  }
+
+  function removeNewImage(index: number) {
+    syncImages(images.filter((_, i) => i !== index));
+  }
 
   return (
     <form
@@ -510,37 +541,80 @@ export function FarmerProductForm({
         </div>
       </div>
       <div>
-        <label htmlFor="image" className="block text-sm font-medium text-zinc-700">
-          Məhsul şəkli {product ? "(istəyə bağlı yeniləyin)" : "*"}
+        <label className="block text-sm font-medium text-zinc-700">
+          Məhsul şəkilləri {product ? "(istəyə bağlı yeniləyin)" : "*"}
         </label>
+        <p className="mt-1 text-xs text-zinc-500">
+          Ən azı 1, ən çox {MAX_PRODUCT_IMAGES} şəkil.
+          {product
+            ? " Yeni şəkil seçsəniz, mövcud bütün şəkillər əvəz olunacaq."
+            : ""}
+        </p>
+
         <input
-          id="image"
-          name="image"
+          ref={imageInputRef}
+          id="images"
+          name="images"
           type="file"
           accept="image/jpeg,image/png,image/webp"
-          required={!product}
+          multiple
+          required={!product && images.length === 0}
+          className="sr-only"
           onChange={(event) => {
-            const file = event.target.files?.[0];
-            if (!file) {
-              setPreviewUrl(existingImageUrl);
-              return;
-            }
-            const nextUrl = URL.createObjectURL(file);
-            setPreviewUrl((current) => {
-              if (current.startsWith("blob:")) URL.revokeObjectURL(current);
-              return nextUrl;
-            });
+            const selected = event.target.files
+              ? Array.from(event.target.files)
+              : [];
+            syncImages([...images, ...selected].slice(0, MAX_PRODUCT_IMAGES));
           }}
-          className="mt-1 block w-full rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-sm text-zinc-900 file:mr-3 file:rounded-lg file:border-0 file:bg-emerald-50 file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-emerald-800"
         />
-        {previewUrl ? (
-          <div className="mt-3 overflow-hidden rounded-2xl ring-1 ring-zinc-200">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={previewUrl}
-              alt="Məhsul şəkli önbaxışı"
-              className="h-48 w-full object-cover"
-            />
+        <button
+          type="button"
+          onClick={() => imageInputRef.current?.click()}
+          disabled={images.length >= MAX_PRODUCT_IMAGES}
+          className="mt-2 inline-flex items-center gap-2 rounded-lg bg-emerald-50 px-3 py-1.5 text-sm font-medium text-emerald-800 transition hover:bg-emerald-100 disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          Şəkil seç ({images.length}/{MAX_PRODUCT_IMAGES})
+        </button>
+
+        {previews.length > 0 ? (
+          <div className="mt-3 grid grid-cols-3 gap-2 sm:grid-cols-5">
+            {previews.map((url, index) => (
+              <div
+                key={url}
+                className="relative aspect-square overflow-hidden rounded-xl bg-zinc-100 ring-1 ring-zinc-200"
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={url}
+                  alt="Məhsul şəkli önbaxışı"
+                  className="h-full w-full object-cover"
+                />
+                <button
+                  type="button"
+                  onClick={() => removeNewImage(index)}
+                  className="absolute right-1 top-1 inline-flex h-6 w-6 items-center justify-center rounded-full bg-black/65 text-xs font-bold text-white"
+                  aria-label="Şəkli sil"
+                >
+                  ×
+                </button>
+              </div>
+            ))}
+          </div>
+        ) : existingImages.length > 0 ? (
+          <div className="mt-3 grid grid-cols-3 gap-2 sm:grid-cols-5">
+            {existingImages.map((image) => (
+              <div
+                key={image.id}
+                className="aspect-square overflow-hidden rounded-xl bg-zinc-100 ring-1 ring-zinc-200"
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={image.url}
+                  alt="Mövcud məhsul şəkli"
+                  className="h-full w-full object-cover"
+                />
+              </div>
+            ))}
           </div>
         ) : null}
       </div>
@@ -585,37 +659,54 @@ export function FarmerProductsList({ products }: { products: FarmerProduct[] }) 
 
   return (
     <div className="space-y-3">
-      {products.map((product) => (
-        <Link
-          key={product.id}
-          href={`/farmer/products/${product.id}`}
-          className="block rounded-2xl bg-white p-5 shadow-sm ring-1 ring-zinc-200 hover:shadow-md"
-        >
-          <div className="flex flex-wrap items-start justify-between gap-3">
-            <div>
-              <div className="font-semibold text-zinc-900">{product.title}</div>
-              <p className="mt-1 text-sm text-zinc-500">
-                {product.categories?.name_az ?? "Kateqoriya"}
-              </p>
-              <p className="mt-2 text-sm text-zinc-700">
-                Təklif: {formatPrice(product.farmer_price)}
-                {formatUnit(product.unit_type as UnitType)}
-                {product.final_price != null ? (
-                  <span className="ml-2 text-emerald-800">
-                    · Son qiymət: {formatPrice(product.final_price)}
-                    {formatUnit(product.unit_type as UnitType)}
-                  </span>
-                ) : (
-                  <span className="ml-2 text-amber-700">· Son qiymət gözlənilir</span>
-                )}
-              </p>
+      {products.map((product) => {
+        const imageUrl = getProductImageUrl(product.product_images ?? []);
+        return (
+          <Link
+            key={product.id}
+            href={`/farmer/products/${product.id}`}
+            className="flex items-start gap-4 rounded-2xl bg-white p-5 shadow-sm ring-1 ring-zinc-200 hover:shadow-md"
+          >
+            <div className="h-16 w-16 shrink-0 overflow-hidden rounded-xl bg-zinc-100 ring-1 ring-zinc-200">
+              {imageUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={imageUrl}
+                  alt={product.title}
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                <div className="flex h-full w-full items-center justify-center text-[10px] text-zinc-400">
+                  Şəkil yox
+                </div>
+              )}
             </div>
-            <span className="inline-flex rounded-full bg-zinc-100 px-2.5 py-0.5 text-xs font-medium text-zinc-700 ring-1 ring-zinc-200">
-              {getProductStatusLabel(product.status)}
-            </span>
-          </div>
-        </Link>
-      ))}
+            <div className="min-w-0 flex-1 flex flex-wrap items-start justify-between gap-3">
+              <div className="min-w-0">
+                <div className="font-semibold text-zinc-900">{product.title}</div>
+                <p className="mt-1 text-sm text-zinc-500">
+                  {product.categories?.name_az ?? "Kateqoriya"}
+                </p>
+                <p className="mt-2 text-sm text-zinc-700">
+                  Təklif: {formatPrice(product.farmer_price)}
+                  {formatUnit(product.unit_type as UnitType)}
+                  {product.final_price != null ? (
+                    <span className="ml-2 text-emerald-800">
+                      · Son qiymət: {formatPrice(product.final_price)}
+                      {formatUnit(product.unit_type as UnitType)}
+                    </span>
+                  ) : (
+                    <span className="ml-2 text-amber-700">· Son qiymət gözlənilir</span>
+                  )}
+                </p>
+              </div>
+              <span className="inline-flex shrink-0 rounded-full bg-zinc-100 px-2.5 py-0.5 text-xs font-medium text-zinc-700 ring-1 ring-zinc-200">
+                {getProductStatusLabel(product.status)}
+              </span>
+            </div>
+          </Link>
+        );
+      })}
     </div>
   );
 }

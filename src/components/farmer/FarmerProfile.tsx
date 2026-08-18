@@ -17,6 +17,7 @@ import { VerifiedIcon } from "@/components/ui/VerifiedIcon";
 import {
   FarmerOrdersList,
   FarmerProductsList,
+  RegionSelect,
 } from "@/components/farmer/FarmerPanels";
 import { AvatarField } from "@/components/farmer/AvatarField";
 import { ProductCard } from "@/components/shop/ProductCard";
@@ -522,17 +523,7 @@ function ProfileAboutForm({
         />
       </div>
 
-      <div>
-        <label htmlFor="location_text" className="block text-sm font-medium text-zinc-700">
-          Ünvan / yer
-        </label>
-        <input
-          id="location_text"
-          name="location_text"
-          defaultValue={farmer.location_text ?? ""}
-          className="mt-1 w-full rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-sm text-zinc-900"
-        />
-      </div>
+      <RegionSelect defaultValue={farmer.location_text ?? ""} />
 
       <div>
         <label htmlFor="description" className="block text-sm font-medium text-zinc-700">
@@ -610,7 +601,7 @@ function BlogComposer() {
   }, [state.success]);
 
   function syncFiles(next: File[]) {
-    const limited = next.slice(0, 6);
+    const limited = next.slice(0, 5);
     setFiles(limited);
     if (!fileInputRef.current) return;
     const transfer = new DataTransfer();
@@ -701,7 +692,7 @@ function BlogComposer() {
               const selected = event.target.files
                 ? Array.from(event.target.files)
                 : [];
-              syncFiles([...files, ...selected].slice(0, 6));
+              syncFiles([...files, ...selected].slice(0, 5));
             }}
           />
           <button
@@ -725,7 +716,7 @@ function BlogComposer() {
             Əlavə et
           </button>
           <span className="hidden text-xs text-zinc-400 sm:inline">
-            Şəkil və ya video · max 6
+            Şəkil və ya video · max 5
           </span>
         </div>
 
