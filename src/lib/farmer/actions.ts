@@ -680,13 +680,27 @@ export async function updateFarmerProfile(
     avatarUrl = uploaded.url;
   }
 
+  const proposedDescription = description || null;
+  const proposedLocationText = locationText || null;
+
+  const unchanged =
+    farmName === farmer.farm_name &&
+    proposedDescription === farmer.description &&
+    proposedLocationText === farmer.location_text &&
+    avatarUrl === farmer.avatar_url;
+
+  if (unchanged) {
+    return { success: "Dəyişiklik aşkarlanmadı." };
+  }
+
   const { error } = await supabase
     .from("farmers")
     .update({
-      farm_name: farmName,
-      description: description || null,
-      location_text: locationText || null,
-      avatar_url: avatarUrl,
+      pending_farm_name: farmName,
+      pending_description: proposedDescription,
+      pending_location_text: proposedLocationText,
+      pending_avatar_url: avatarUrl,
+      pending_submitted_at: new Date().toISOString(),
     })
     .eq("id", farmer.id);
 
@@ -695,12 +709,19 @@ export async function updateFarmerProfile(
     return { error: "Profil yenilənmədi." };
   }
 
-  revalidatePath("/farmer");
-  revalidatePath("/farmers");
-  revalidatePath(`/farmers/${farmer.id}`);
-  updateTag("farmers");
+  await notifyAdmins({
+    type: "farmer_profile_update",
+    title: "Fermer profilini yenilədi",
+    body: `${farmer.farm_name} profilində dəyişiklik etdi. Təsdiq gözləyir.`,
+    metadata: { farmer_id: farmer.id },
+  });
 
-  return { success: "Profil yeniləndi." };
+  revalidatePath("/farmer");
+
+  return {
+    success:
+      "Dəyişikliklər göndərildi. Admin təsdiqindən sonra profiliniz yenilənəcək.",
+  };
 }
 
 export async function createFarmerBlogPost(

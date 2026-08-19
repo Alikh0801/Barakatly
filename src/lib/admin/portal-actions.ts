@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
 import { requireAdmin } from "@/lib/admin/auth";
 import { notifyUser } from "@/lib/notifications/helpers";
 import { revalidateProductCatalog } from "@/lib/shop/revalidate";
@@ -108,6 +108,115 @@ export async function rejectFarmer(
   revalidatePath("/admin/farmers");
   revalidatePath("/admin", "layout");
   return { success: "Fermer rədd edildi." };
+}
+
+export async function approveFarmerProfileEdit(
+  _prev: AdminPortalActionState,
+  formData: FormData
+): Promise<AdminPortalActionState> {
+  await requireAdmin();
+  const farmerId = String(formData.get("farmer_id") ?? "");
+  if (!farmerId) return { error: "Fermer tapılmadı." };
+
+  const supabase = await createClient();
+  const { data: farmer } = await supabase
+    .from("farmers")
+    .select(
+      "id, profile_id, pending_farm_name, pending_description, pending_location_text, pending_avatar_url, pending_submitted_at",
+    )
+    .eq("id", farmerId)
+    .single();
+
+  if (!farmer || !farmer.pending_submitted_at || !farmer.pending_farm_name) {
+    return { error: "Gözləyən dəyişiklik tapılmadı." };
+  }
+
+  const { error } = await supabase
+    .from("farmers")
+    .update({
+      farm_name: farmer.pending_farm_name,
+      description: farmer.pending_description,
+      location_text: farmer.pending_location_text,
+      avatar_url: farmer.pending_avatar_url,
+      pending_farm_name: null,
+      pending_description: null,
+      pending_location_text: null,
+      pending_avatar_url: null,
+      pending_submitted_at: null,
+    })
+    .eq("id", farmerId);
+
+  if (error) {
+    console.error("[admin.approveFarmerProfileEdit]", error.message);
+    return { error: "Dəyişiklik təsdiqlənmədi." };
+  }
+
+  await notifyUser({
+    userId: farmer.profile_id,
+    type: "farmer_profile_update",
+    title: "Profil dəyişiklikləriniz təsdiqləndi",
+    body: "Göndərdiyiniz profil yenilikləri indi canlıdır.",
+    metadata: { farmer_id: farmerId },
+  });
+
+  revalidatePath("/admin/farmers");
+  revalidatePath("/admin", "layout");
+  revalidatePath("/farmer");
+  revalidatePath("/farmers");
+  revalidatePath(`/farmers/${farmerId}`);
+  updateTag("farmers");
+
+  return { success: "Dəyişikliklər təsdiqləndi və yayımlandı." };
+}
+
+export async function rejectFarmerProfileEdit(
+  _prev: AdminPortalActionState,
+  formData: FormData
+): Promise<AdminPortalActionState> {
+  await requireAdmin();
+  const farmerId = String(formData.get("farmer_id") ?? "");
+  if (!farmerId) return { error: "Fermer tapılmadı." };
+
+  const supabase = await createClient();
+  const { data: farmer } = await supabase
+    .from("farmers")
+    .select("id, profile_id, pending_submitted_at")
+    .eq("id", farmerId)
+    .single();
+
+  if (!farmer || !farmer.pending_submitted_at) {
+    return { error: "Gözləyən dəyişiklik tapılmadı." };
+  }
+
+  const { error } = await supabase
+    .from("farmers")
+    .update({
+      pending_farm_name: null,
+      pending_description: null,
+      pending_location_text: null,
+      pending_avatar_url: null,
+      pending_submitted_at: null,
+    })
+    .eq("id", farmerId);
+
+  if (error) {
+    console.error("[admin.rejectFarmerProfileEdit]", error.message);
+    return { error: "Dəyişiklik rədd edilmədi." };
+  }
+
+  await notifyUser({
+    userId: farmer.profile_id,
+    type: "farmer_profile_update",
+    title: "Profil dəyişiklikləriniz rədd edildi",
+    body: "Göndərdiyiniz profil yenilikləri təsdiqlənmədi. Zəhmət olmasa yenidən cəhd edin.",
+    metadata: { farmer_id: farmerId },
+  });
+
+  revalidatePath("/admin/farmers");
+  revalidatePath("/admin", "layout");
+  revalidatePath("/farmer");
+
+  return { success: "Dəyişikliklər rədd edildi." };
 }
 
 export async function suspendFarmer(

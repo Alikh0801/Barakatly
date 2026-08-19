@@ -14,6 +14,7 @@ export function adminLinkForType(type: NotificationType): string {
   const base = process.env.NEXT_PUBLIC_APP_URL ?? "https://barakatly.az";
   switch (type) {
     case "farmer_registration":
+    case "farmer_profile_update":
       return `${base}/admin/farmers`;
     case "product_submission":
       return `${base}/admin/products`;

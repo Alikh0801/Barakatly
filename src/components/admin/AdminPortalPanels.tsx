@@ -3,10 +3,12 @@
 import { useActionState, useEffect, useState } from "react";
 import {
   approveFarmer,
+  approveFarmerProfileEdit,
   approveProduct,
   createCourier,
   deleteFarmer,
   rejectFarmer,
+  rejectFarmerProfileEdit,
   rejectProduct,
   suspendFarmer,
   toggleCourierActive,
@@ -66,6 +68,9 @@ export function AdminFarmersPanel({ farmers }: { farmers: AdminFarmer[] }) {
 
   const pending = farmers.filter((farmer) => farmer.status === "pending");
   const others = farmers.filter((farmer) => farmer.status !== "pending");
+  const pendingEdits = farmers.filter(
+    (farmer) => farmer.pending_submitted_at,
+  );
 
   return (
     <div className="space-y-8">
@@ -86,6 +91,20 @@ export function AdminFarmersPanel({ farmers }: { farmers: AdminFarmer[] }) {
           ))
         )}
       </section>
+
+      {pendingEdits.length > 0 ? (
+        <section className="space-y-3">
+          <h2 className="text-lg font-semibold text-zinc-900">
+            Profil dəyişiklikləri gözləyir
+            <span className="ml-2 text-sm font-normal text-zinc-500">
+              ({pendingEdits.length})
+            </span>
+          </h2>
+          {pendingEdits.map((farmer) => (
+            <FarmerProfileEditCard key={farmer.id} farmer={farmer} />
+          ))}
+        </section>
+      ) : null}
 
       {others.length > 0 ? (
         <section className="space-y-3">
@@ -305,6 +324,158 @@ function FarmerCard({
           >
             {deletePending ? <Spinner className="h-3.5 w-3.5" /> : null}
             Fermeri sil
+          </button>
+        </form>
+      </div>
+    </article>
+  );
+}
+
+function ProfileFieldDiff({
+  label,
+  before,
+  after,
+}: {
+  label: string;
+  before: string | null;
+  after: string | null;
+}) {
+  const changed = before !== after;
+  return (
+    <div className="grid gap-1 sm:grid-cols-[140px_1fr] sm:gap-3">
+      <dt className="text-sm font-medium text-zinc-500">{label}</dt>
+      <dd className="text-sm text-zinc-900">
+        {changed ? (
+          <>
+            <span className="text-zinc-400 line-through">
+              {before || "—"}
+            </span>
+            <span className="mx-1.5 text-zinc-400">→</span>
+            <span className="font-medium text-emerald-700">
+              {after || "—"}
+            </span>
+          </>
+        ) : (
+          <span>{after || "—"}</span>
+        )}
+      </dd>
+    </div>
+  );
+}
+
+function FarmerProfileEditCard({ farmer }: { farmer: AdminFarmer }) {
+  const [approveState, approveAction, approvePending] = useActionState(
+    approveFarmerProfileEdit,
+    initialState
+  );
+  const [rejectState, rejectAction, rejectPending] = useActionState(
+    rejectFarmerProfileEdit,
+    initialState
+  );
+
+  const busy = approvePending || rejectPending;
+  const actionError = approveState.error || rejectState.error;
+  const actionSuccess = approveState.success || rejectState.success;
+
+  return (
+    <article className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-zinc-200">
+      {actionError ? (
+        <p className="mb-3 rounded-xl bg-rose-50 px-3 py-2 text-sm text-rose-700">
+          {actionError}
+        </p>
+      ) : null}
+      {actionSuccess ? (
+        <p className="mb-3 rounded-xl bg-emerald-50 px-3 py-2 text-sm text-emerald-800">
+          {actionSuccess}
+        </p>
+      ) : null}
+
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0">
+          <h3 className="break-words text-base font-semibold text-zinc-900">
+            {farmer.farm_name}
+          </h3>
+          <p className="mt-1 text-xs text-zinc-500">
+            Göndərildi:{" "}
+            {farmer.pending_submitted_at
+              ? formatDateTime(farmer.pending_submitted_at)
+              : "—"}
+          </p>
+        </div>
+        <span className="inline-flex rounded-full bg-amber-50 px-2.5 py-0.5 text-xs font-medium text-amber-800 ring-1 ring-amber-200">
+          Təsdiq gözləyir
+        </span>
+      </div>
+
+      <dl className="mt-4 space-y-3 rounded-xl bg-zinc-50 px-4 py-4 ring-1 ring-zinc-100">
+        <ProfileFieldDiff
+          label="Təsərrüfat adı"
+          before={farmer.farm_name}
+          after={farmer.pending_farm_name}
+        />
+        <ProfileFieldDiff
+          label="Yerləşmə"
+          before={farmer.location_text}
+          after={farmer.pending_location_text}
+        />
+        <ProfileFieldDiff
+          label="Bio"
+          before={farmer.description}
+          after={farmer.pending_description}
+        />
+        {farmer.avatar_url !== farmer.pending_avatar_url ? (
+          <div className="grid gap-1 sm:grid-cols-[140px_1fr] sm:gap-3">
+            <dt className="text-sm font-medium text-zinc-500">
+              Profil şəkli
+            </dt>
+            <dd className="flex items-center gap-3">
+              {farmer.avatar_url ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={farmer.avatar_url}
+                  alt=""
+                  className="h-12 w-12 rounded-full object-cover ring-1 ring-zinc-200"
+                />
+              ) : (
+                <span className="text-sm text-zinc-400">—</span>
+              )}
+              <span className="text-zinc-400">→</span>
+              {farmer.pending_avatar_url ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={farmer.pending_avatar_url}
+                  alt=""
+                  className="h-12 w-12 rounded-full object-cover ring-2 ring-emerald-300"
+                />
+              ) : (
+                <span className="text-sm text-zinc-400">—</span>
+              )}
+            </dd>
+          </div>
+        ) : null}
+      </dl>
+
+      <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+        <form action={approveAction} className="w-full sm:w-auto">
+          <input type="hidden" name="farmer_id" value={farmer.id} />
+          <button
+            type="submit"
+            disabled={busy}
+            className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-70 sm:w-auto"
+          >
+            {approvePending ? <Spinner className="h-3.5 w-3.5" /> : null}
+            Təsdiqlə
+          </button>
+        </form>
+        <form action={rejectAction} className="w-full sm:w-auto">
+          <input type="hidden" name="farmer_id" value={farmer.id} />
+          <button
+            type="submit"
+            disabled={busy}
+            className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-white px-4 py-2.5 text-sm font-semibold text-rose-700 ring-1 ring-rose-200 disabled:opacity-70 sm:w-auto"
+          >
+            {rejectPending ? <Spinner className="h-3.5 w-3.5" /> : null}
+            Rədd et
           </button>
         </form>
       </div>

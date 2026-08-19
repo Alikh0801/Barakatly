@@ -32,6 +32,7 @@ export type FarmerPostMediaType = "image" | "video";
 export type NotificationType =
   | "farmer_registration"
   | "farmer_approval"
+  | "farmer_profile_update"
   | "product_submission"
   | "product_approval"
   | "payment_received"
@@ -90,6 +91,11 @@ export interface Database {
           status: FarmerStatus;
           verified_at: string | null;
           avatar_url: string | null;
+          pending_farm_name: string | null;
+          pending_description: string | null;
+          pending_location_text: string | null;
+          pending_avatar_url: string | null;
+          pending_submitted_at: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -105,6 +111,11 @@ export interface Database {
           status?: FarmerStatus;
           verified_at?: string | null;
           avatar_url?: string | null;
+          pending_farm_name?: string | null;
+          pending_description?: string | null;
+          pending_location_text?: string | null;
+          pending_avatar_url?: string | null;
+          pending_submitted_at?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -120,6 +131,11 @@ export interface Database {
           status?: FarmerStatus;
           verified_at?: string | null;
           avatar_url?: string | null;
+          pending_farm_name?: string | null;
+          pending_description?: string | null;
+          pending_location_text?: string | null;
+          pending_avatar_url?: string | null;
+          pending_submitted_at?: string | null;
           created_at?: string;
           updated_at?: string;
         };

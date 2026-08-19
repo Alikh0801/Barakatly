@@ -182,6 +182,8 @@ export function getNotificationTypeLabel(type: NotificationType): string {
       return "Fermer";
     case "farmer_approval":
       return "Fermer";
+    case "farmer_profile_update":
+      return "Fermer";
     case "product_submission":
       return "Məhsul";
     case "product_approval":

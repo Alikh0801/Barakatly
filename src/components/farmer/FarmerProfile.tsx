@@ -497,6 +497,13 @@ function ProfileAboutForm({
       <h2 className={`${displayFont.className} text-xl font-bold text-zinc-900`}>
         Profili redaktə et
       </h2>
+      {farmer.pending_submitted_at ? (
+        <p className="rounded-xl bg-amber-50 px-3 py-2 text-sm text-amber-800 ring-1 ring-amber-200">
+          {formatDateTime(farmer.pending_submitted_at)} tarixində göndərdiyiniz
+          dəyişikliklər admin təsdiqini gözləyir. Təsdiqlənənə qədər profiliniz
+          köhnə məlumatlarla göstərilir.
+        </p>
+      ) : null}
       {state.error ? (
         <p className="rounded-xl bg-rose-50 px-3 py-2 text-sm text-rose-700">
           {state.error}
