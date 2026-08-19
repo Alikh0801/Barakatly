@@ -633,15 +633,7 @@ export interface Database {
         Relationships: [];
       };
     };
-    Views: {
-      public_farmer_names: {
-        Row: {
-          farmer_id: string;
-          owner_name: string | null;
-        };
-        Relationships: [];
-      };
-    };
+    Views: Record<string, never>;
     Functions: {
       generate_order_code: {
         Args: Record<string, never>;
@@ -650,6 +642,10 @@ export interface Database {
       is_admin: {
         Args: Record<string, never>;
         Returns: boolean;
+      };
+      list_approved_farmer_owner_names: {
+        Args: Record<string, never>;
+        Returns: { farmer_id: string; owner_name: string | null }[];
       };
     };
     Enums: {
