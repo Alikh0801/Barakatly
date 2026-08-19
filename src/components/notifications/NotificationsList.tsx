@@ -42,9 +42,9 @@ function NotificationRow({
       className={[
         "rounded-2xl p-5 shadow-sm transition",
         isDeleting ? "opacity-50" : "",
-        needsAction
+        needsAction && unread
           ? "bg-rose-50/60 ring-2 ring-rose-400"
-          : unread
+          : unread || needsAction
             ? "bg-emerald-50/60 ring-1 ring-emerald-200"
             : "bg-white ring-1 ring-zinc-200",
       ].join(" ")}
