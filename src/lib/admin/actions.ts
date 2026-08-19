@@ -187,8 +187,10 @@ export async function rejectPayment(
 ): Promise<ActionResult> {
   const admin = await requireAdmin();
   const paymentId = String(formData.get("payment_id") ?? "");
+  const reason = String(formData.get("reason") ?? "").trim();
 
   if (!paymentId) return { error: "Ödəniş tapılmadı." };
+  if (!reason) return { error: "Rədd səbəbini qeyd edin." };
 
   const supabase = await createClient();
   const { data: payment, error: paymentError } = await supabase
@@ -237,12 +239,12 @@ export async function rejectPayment(
     orderId: order.id,
     customerId: order.customer_id,
     status: "payment_rejected",
-    note: "Admin ödənişi rədd etdi",
+    note: `Admin ödənişi rədd etdi. Səbəb: ${reason}`,
     adminId: admin.id,
     notification: {
       type: "general",
       title: "Ödəniş rədd edildi",
-      body: `${order.order_code} sifarişi üçün ödəniş rədd edildi. Zəhmət olmasa yenidən cəhd edin və ya dəstəklə əlaqə saxlayın.`,
+      body: `${order.order_code} sifarişi üçün ödəniş rədd edildi. Səbəb: ${reason}`,
     },
   });
 
@@ -250,7 +252,7 @@ export async function rejectPayment(
     orderId: order.id,
     customerId: order.customer_id,
     status: "cancelled",
-    note: "Sifariş ödəniş rəddinə görə ləğv edildi",
+    note: `Sifariş ödəniş rəddinə görə ləğv edildi. Səbəb: ${reason}`,
     adminId: admin.id,
     notification: notificationForOrderStatus("cancelled"),
   });
@@ -272,9 +274,14 @@ export async function advanceOrderStatus(
   const admin = await requireAdmin();
   const orderId = String(formData.get("order_id") ?? "");
   const nextStatus = String(formData.get("next_status") ?? "") as OrderStatus;
+  const reason = String(formData.get("reason") ?? "").trim();
 
   if (!orderId || !nextStatus) {
     return { error: "Status seçin." };
+  }
+
+  if (nextStatus === "cancelled" && !reason) {
+    return { error: "Ləğv etmə səbəbini qeyd edin." };
   }
 
   const supabase = await createClient();
@@ -301,13 +308,22 @@ export async function advanceOrderStatus(
     return { error: "Status yenilənmədi." };
   }
 
+  const baseNotification = notificationForOrderStatus(nextStatus);
+  const notification =
+    nextStatus === "cancelled" && baseNotification
+      ? { ...baseNotification, body: `${baseNotification.body} Səbəb: ${reason}` }
+      : baseNotification;
+
   await insertEventAndNotify({
     orderId: order.id,
     customerId: order.customer_id,
     status: nextStatus,
-    note: `Status dəyişdi: ${getOrderStatusLabel(nextStatus)}`,
+    note:
+      nextStatus === "cancelled"
+        ? `Sifariş ləğv edildi. Səbəb: ${reason}`
+        : `Status dəyişdi: ${getOrderStatusLabel(nextStatus)}`,
     adminId: admin.id,
-    notification: notificationForOrderStatus(nextStatus),
+    notification,
   });
 
   revalidatePath("/admin", "layout");
@@ -329,14 +345,29 @@ export async function deleteOrders(
     .getAll("order_ids")
     .map((value) => String(value).trim())
     .filter(Boolean);
+  const reason = String(formData.get("reason") ?? "").trim();
 
   const uniqueIds = [...new Set(orderIds)];
   if (uniqueIds.length === 0) {
     return { error: "Silmək üçün sifariş seçin." };
   }
+  if (!reason) {
+    return { error: "Silmə səbəbini qeyd edin." };
+  }
 
   try {
     const adminClient = createAdminClient();
+
+    const { data: orders, error: fetchError } = await adminClient
+      .from("orders")
+      .select("id, customer_id, order_code")
+      .in("id", uniqueIds);
+
+    if (fetchError) {
+      console.error("[admin.deleteOrders.fetch]", fetchError.message);
+      return { error: "Sifarişlər tapılmadı." };
+    }
+
     const { error } = await adminClient
       .from("orders")
       .delete()
@@ -346,6 +377,18 @@ export async function deleteOrders(
       console.error("[admin.deleteOrders]", error.message);
       return { error: "Sifarişlər silinmədi." };
     }
+
+    await Promise.all(
+      (orders ?? []).map((order) =>
+        adminClient.from("notifications").insert({
+          user_id: order.customer_id,
+          title: "Sifarişiniz silindi",
+          body: `${order.order_code} sifarişi admin tərəfindən silindi. Səbəb: ${reason}`,
+          type: "general",
+          metadata: { order_code: order.order_code },
+        }),
+      ),
+    );
   } catch (error) {
     console.error("[admin.deleteOrders]", error);
     return { error: "Sifarişlər silinmədi. Service role yoxlanılsın." };

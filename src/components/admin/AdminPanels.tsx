@@ -29,6 +29,24 @@ type ActionResult = { error?: string; success?: string };
 
 const initialState: ActionResult = {};
 
+function ReasonInput({ id }: { id: string }) {
+  return (
+    <div>
+      <label htmlFor={id} className="sr-only">
+        Səbəb
+      </label>
+      <input
+        id={id}
+        name="reason"
+        type="text"
+        required
+        placeholder="Səbəbi qeyd edin..."
+        className="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-900"
+      />
+    </div>
+  );
+}
+
 type PendingPaymentWithReceipt = AdminPendingPayment & {
   receiptSignedUrl?: string | null;
 };
@@ -105,12 +123,13 @@ function PendingPaymentCard({ payment }: { payment: PendingPaymentWithReceipt })
             Təsdiqlə
           </button>
         </form>
-        <form action={rejectAction} className="w-full sm:w-auto">
+        <form action={rejectAction} className="flex w-full flex-col gap-2 sm:w-64">
           <input type="hidden" name="payment_id" value={payment.id} />
+          <ReasonInput id={`payment-reject-reason-${payment.id}`} />
           <button
             type="submit"
             disabled={confirmPending || rejectPending}
-            className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-white px-4 py-2.5 text-sm font-semibold text-rose-700 ring-1 ring-rose-200 transition hover:bg-rose-50 disabled:opacity-70 sm:w-auto"
+            className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-white px-4 py-2.5 text-sm font-semibold text-rose-700 ring-1 ring-rose-200 transition hover:bg-rose-50 disabled:opacity-70"
           >
             {rejectPending ? <Spinner className="h-3.5 w-3.5" /> : null}
             Rədd et
@@ -161,6 +180,9 @@ export function AdminOrdersPanel({
     initialState
   );
   const [selected, setSelected] = useState<string[]>([]);
+  const [cancelSelection, setCancelSelection] = useState<
+    Record<string, boolean>
+  >({});
   const [search, setSearch] = useState("");
   const deferredSearch = useDeferredValue(search);
   const filteredOrders = orders.filter((order) =>
@@ -239,7 +261,7 @@ export function AdminOrdersPanel({
         </div>
       ) : (
         <>
-          <div className="flex flex-col gap-3 rounded-2xl bg-white p-3 shadow-sm ring-1 ring-zinc-200 sm:flex-row sm:items-center sm:justify-between sm:px-4">
+          <div className="flex flex-col gap-3 rounded-2xl bg-white p-3 shadow-sm ring-1 ring-zinc-200 sm:px-4">
             <label className="inline-flex items-center gap-2 text-sm text-zinc-700">
               <input
                 type="checkbox"
@@ -253,32 +275,38 @@ export function AdminOrdersPanel({
               ) : null}
             </label>
 
-            <form
-              action={deleteAction}
-              onSubmit={(event) => {
-                if (
-                  !window.confirm(
-                    selected.length === 1
-                      ? "Bu sifarişi silmək istəyirsiniz?"
-                      : `${selected.length} sifarişi silmək istəyirsiniz?`
-                  )
-                ) {
-                  event.preventDefault();
-                }
-              }}
-            >
-              {selected.map((id) => (
-                <input key={id} type="hidden" name="order_ids" value={id} />
-              ))}
-              <button
-                type="submit"
-                disabled={!someSelected || deletePending}
-                className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-rose-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-rose-500 disabled:opacity-50 sm:w-auto"
+            {someSelected ? (
+              <form
+                action={deleteAction}
+                className="flex flex-col gap-2 sm:flex-row sm:items-center"
+                onSubmit={(event) => {
+                  if (
+                    !window.confirm(
+                      selected.length === 1
+                        ? "Bu sifarişi silmək istəyirsiniz?"
+                        : `${selected.length} sifarişi silmək istəyirsiniz?`
+                    )
+                  ) {
+                    event.preventDefault();
+                  }
+                }}
               >
-                {deletePending ? <Spinner className="h-3.5 w-3.5" /> : null}
-                Seçilənləri sil
-              </button>
-            </form>
+                {selected.map((id) => (
+                  <input key={id} type="hidden" name="order_ids" value={id} />
+                ))}
+                <div className="sm:w-64">
+                  <ReasonInput id="delete-orders-reason" />
+                </div>
+                <button
+                  type="submit"
+                  disabled={deletePending}
+                  className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-rose-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-rose-500 disabled:opacity-50 sm:w-auto"
+                >
+                  {deletePending ? <Spinner className="h-3.5 w-3.5" /> : null}
+                  Seçilənləri sil
+                </button>
+              </form>
+            ) : null}
           </div>
 
           {filteredOrders.map((order) => {
@@ -410,6 +438,12 @@ export function AdminOrdersPanel({
                             required
                             className="mt-1 w-full rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-base text-zinc-900 sm:text-sm"
                             defaultValue=""
+                            onChange={(event) =>
+                              setCancelSelection((prev) => ({
+                                ...prev,
+                                [order.id]: event.target.value === "cancelled",
+                              }))
+                            }
                           >
                             <option value="" disabled>
                               Seçin
@@ -421,6 +455,11 @@ export function AdminOrdersPanel({
                             ))}
                           </select>
                         </div>
+                        {cancelSelection[order.id] ? (
+                          <div className="w-full sm:w-64">
+                            <ReasonInput id={`cancel-reason-${order.id}`} />
+                          </div>
+                        ) : null}
                         <button
                           type="submit"
                           disabled={statusPending}

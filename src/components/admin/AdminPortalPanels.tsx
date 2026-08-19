@@ -42,6 +42,24 @@ import type { UnitType } from "@/types";
 
 const initialState: AdminPortalActionState = {};
 
+function ReasonInput({ id }: { id: string }) {
+  return (
+    <div>
+      <label htmlFor={id} className="sr-only">
+        Səbəb
+      </label>
+      <input
+        id={id}
+        name="reason"
+        type="text"
+        required
+        placeholder="Səbəbi qeyd edin..."
+        className="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-900"
+      />
+    </div>
+  );
+}
+
 function FarmerDetailRow({
   label,
   value,
@@ -261,12 +279,16 @@ function FarmerCard({
                 Təsdiqlə
               </button>
             </form>
-            <form action={rejectAction} className="w-full sm:w-auto">
+            <form
+              action={rejectAction}
+              className="flex w-full flex-col gap-2 sm:w-64"
+            >
               <input type="hidden" name="farmer_id" value={farmer.id} />
+              <ReasonInput id={`reject-reason-${farmer.id}`} />
               <button
                 type="submit"
                 disabled={busy}
-                className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-white px-4 py-2.5 text-sm font-semibold text-rose-700 ring-1 ring-rose-200 disabled:opacity-70 sm:w-auto"
+                className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-white px-4 py-2.5 text-sm font-semibold text-rose-700 ring-1 ring-rose-200 disabled:opacity-70"
               >
                 {rejectPending ? <Spinner className="h-3.5 w-3.5" /> : null}
                 Rədd et
@@ -290,12 +312,16 @@ function FarmerCard({
         ) : null}
 
         {farmer.status === "approved" ? (
-          <form action={suspendAction} className="w-full sm:w-auto">
+          <form
+            action={suspendAction}
+            className="flex w-full flex-col gap-2 sm:w-64"
+          >
             <input type="hidden" name="farmer_id" value={farmer.id} />
+            <ReasonInput id={`suspend-reason-${farmer.id}`} />
             <button
               type="submit"
               disabled={busy}
-              className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-white px-4 py-2.5 text-sm font-semibold text-orange-800 ring-1 ring-orange-200 disabled:opacity-70 sm:w-auto"
+              className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-white px-4 py-2.5 text-sm font-semibold text-orange-800 ring-1 ring-orange-200 disabled:opacity-70"
             >
               {suspendPending ? <Spinner className="h-3.5 w-3.5" /> : null}
               Deaktiv et
@@ -305,7 +331,7 @@ function FarmerCard({
 
         <form
           action={deleteAction}
-          className="w-full sm:w-auto"
+          className="flex w-full flex-col gap-2 sm:w-64"
           onSubmit={(event) => {
             if (
               !window.confirm(
@@ -317,6 +343,7 @@ function FarmerCard({
           }}
         >
           <input type="hidden" name="farmer_id" value={farmer.id} />
+          <ReasonInput id={`delete-reason-${farmer.id}`} />
           <button
             type="submit"
             disabled={busy}
@@ -467,12 +494,13 @@ function FarmerProfileEditCard({ farmer }: { farmer: AdminFarmer }) {
             Təsdiqlə
           </button>
         </form>
-        <form action={rejectAction} className="w-full sm:w-auto">
+        <form action={rejectAction} className="flex w-full flex-col gap-2 sm:w-64">
           <input type="hidden" name="farmer_id" value={farmer.id} />
+          <ReasonInput id={`edit-reject-reason-${farmer.id}`} />
           <button
             type="submit"
             disabled={busy}
-            className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-white px-4 py-2.5 text-sm font-semibold text-rose-700 ring-1 ring-rose-200 disabled:opacity-70 sm:w-auto"
+            className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-white px-4 py-2.5 text-sm font-semibold text-rose-700 ring-1 ring-rose-200 disabled:opacity-70"
           >
             {rejectPending ? <Spinner className="h-3.5 w-3.5" /> : null}
             Rədd et
@@ -740,12 +768,13 @@ function ProductCard({
             Təsdiqlə
           </button>
         </form>
-        <form action={rejectAction} className="w-full sm:w-auto">
+        <form action={rejectAction} className="flex w-full flex-col gap-2 sm:w-64">
           <input type="hidden" name="product_id" value={product.id} />
+          <ReasonInput id={`product-reject-reason-${product.id}`} />
           <button
             type="submit"
             disabled={approvePending || rejectPending}
-            className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-white px-5 py-2.5 text-sm font-semibold text-rose-700 ring-1 ring-rose-200 transition hover:bg-rose-50 disabled:opacity-70 sm:w-auto"
+            className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-white px-5 py-2.5 text-sm font-semibold text-rose-700 ring-1 ring-rose-200 transition hover:bg-rose-50 disabled:opacity-70"
           >
             {rejectPending ? <Spinner className="h-3.5 w-3.5" /> : <XIcon className="h-4 w-4" />}
             Rədd et

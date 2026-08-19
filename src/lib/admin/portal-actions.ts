@@ -79,7 +79,9 @@ export async function rejectFarmer(
 ): Promise<AdminPortalActionState> {
   await requireAdmin();
   const farmerId = String(formData.get("farmer_id") ?? "");
+  const reason = String(formData.get("reason") ?? "").trim();
   if (!farmerId) return { error: "Fermer tapılmadı." };
+  if (!reason) return { error: "Rədd səbəbini qeyd edin." };
 
   const supabase = await createClient();
   const { data: farmer } = await supabase
@@ -101,7 +103,7 @@ export async function rejectFarmer(
     userId: farmer.profile_id,
     type: "farmer_approval",
     title: "Fermer müraciəti rədd edildi",
-    body: `${farmer.farm_name} müraciətiniz rədd edildi. Yenidən müraciət etmək üçün dəstəklə əlaqə saxlayın.`,
+    body: `${farmer.farm_name} müraciətiniz rədd edildi. Səbəb: ${reason}`,
     metadata: { farmer_id: farmer.id },
   });
 
@@ -175,7 +177,9 @@ export async function rejectFarmerProfileEdit(
 ): Promise<AdminPortalActionState> {
   await requireAdmin();
   const farmerId = String(formData.get("farmer_id") ?? "");
+  const reason = String(formData.get("reason") ?? "").trim();
   if (!farmerId) return { error: "Fermer tapılmadı." };
+  if (!reason) return { error: "Rədd səbəbini qeyd edin." };
 
   const supabase = await createClient();
   const { data: farmer } = await supabase
@@ -208,7 +212,7 @@ export async function rejectFarmerProfileEdit(
     userId: farmer.profile_id,
     type: "farmer_profile_update",
     title: "Profil dəyişiklikləriniz rədd edildi",
-    body: "Göndərdiyiniz profil yenilikləri təsdiqlənmədi. Zəhmət olmasa yenidən cəhd edin.",
+    body: `Göndərdiyiniz profil yenilikləri təsdiqlənmədi. Səbəb: ${reason}`,
     metadata: { farmer_id: farmerId },
   });
 
@@ -225,7 +229,9 @@ export async function suspendFarmer(
 ): Promise<AdminPortalActionState> {
   await requireAdmin();
   const farmerId = String(formData.get("farmer_id") ?? "");
+  const reason = String(formData.get("reason") ?? "").trim();
   if (!farmerId) return { error: "Fermer tapılmadı." };
+  if (!reason) return { error: "Deaktiv etmə səbəbini qeyd edin." };
 
   const supabase = await createClient();
   const { data: farmer } = await supabase
@@ -251,7 +257,7 @@ export async function suspendFarmer(
     userId: farmer.profile_id,
     type: "farmer_approval",
     title: "Fermer hesabınız deaktiv edildi",
-    body: `${farmer.farm_name} hesabınız müvəqqəti dayandırılıb. Məhsullarınız satışda görünmür.`,
+    body: `${farmer.farm_name} hesabınız müvəqqəti dayandırılıb. Məhsullarınız satışda görünmür. Səbəb: ${reason}`,
     metadata: { farmer_id: farmer.id },
   });
 
@@ -269,7 +275,9 @@ export async function deleteFarmer(
 ): Promise<AdminPortalActionState> {
   await requireAdmin();
   const farmerId = String(formData.get("farmer_id") ?? "");
+  const reason = String(formData.get("reason") ?? "").trim();
   if (!farmerId) return { error: "Fermer tapılmadı." };
+  if (!reason) return { error: "Silmə səbəbini qeyd edin." };
 
   const supabase = await createClient();
   const { data: farmer } = await supabase
@@ -325,7 +333,7 @@ export async function deleteFarmer(
     userId: farmer.profile_id,
     type: "general",
     title: "Fermer hesabınız silindi",
-    body: `${farmer.farm_name} fermer profili admin tərəfindən silinib. Eyni hesabla yenidən fermer qeydiyyatından keçə bilərsiniz.`,
+    body: `${farmer.farm_name} fermer profili admin tərəfindən silinib. Səbəb: ${reason} Eyni hesabla yenidən fermer qeydiyyatından keçə bilərsiniz.`,
     metadata: { farmer_id: farmer.id },
   });
 
@@ -491,7 +499,9 @@ export async function rejectProduct(
 ): Promise<AdminPortalActionState> {
   await requireAdmin();
   const productId = String(formData.get("product_id") ?? "");
+  const reason = String(formData.get("reason") ?? "").trim();
   if (!productId) return { error: "Məhsul tapılmadı." };
+  if (!reason) return { error: "Rədd səbəbini qeyd edin." };
 
   const supabase = await createClient();
   const { data: product } = await supabase
@@ -518,7 +528,7 @@ export async function rejectProduct(
       userId: farmer.profile_id,
       type: "product_approval",
       title: "Məhsulunuz rədd edildi",
-      body: `"${product.title}" təsdiqlənmədi. Düzəliş edib yenidən göndərin.`,
+      body: `"${product.title}" təsdiqlənmədi. Səbəb: ${reason}`,
       metadata: { product_id: product.id },
     });
   }
