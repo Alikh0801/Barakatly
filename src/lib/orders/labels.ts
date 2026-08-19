@@ -166,6 +166,18 @@ export function getOrderStatusTone(status: OrderStatus) {
   }
 }
 
+const ADMIN_ACTION_NOTIFICATION_TYPES = new Set<NotificationType>([
+  "farmer_registration",
+  "farmer_profile_update",
+  "product_submission",
+  "payment_received",
+]);
+
+/** True for notifications about something still awaiting admin review. */
+export function isActionNeededNotification(type: NotificationType): boolean {
+  return ADMIN_ACTION_NOTIFICATION_TYPES.has(type);
+}
+
 export function getNotificationTypeLabel(type: NotificationType): string {
   switch (type) {
     case "payment_received":
