@@ -25,6 +25,17 @@ const navItems: NavItem[] = [
     ),
   },
   {
+    href: "/admin/banks",
+    label: "Kartlar",
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-4 w-4">
+        <rect x="3" y="5" width="18" height="14" rx="2" />
+        <path d="M3 10h18" strokeLinecap="round" />
+        <path d="M7 15h4" strokeLinecap="round" />
+      </svg>
+    ),
+  },
+  {
     href: "/admin/orders",
     label: "Sifarişlər",
     badgeKey: "orders",

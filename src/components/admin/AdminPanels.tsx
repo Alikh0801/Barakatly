@@ -143,10 +143,14 @@ export function PendingPaymentsPanel({
   );
 }
 
+type AdminOrderListItemWithReceipt = AdminOrderListItem & {
+  receiptSignedUrl?: string | null;
+};
+
 export function AdminOrdersPanel({
   orders,
 }: {
-  orders: AdminOrderListItem[];
+  orders: AdminOrderListItemWithReceipt[];
 }) {
   const [statusState, statusAction, statusPending] = useActionState(
     advanceOrderStatus,
@@ -360,6 +364,17 @@ export function AdminOrdersPanel({
                           ))}
                         </ul>
                       </div>
+                    ) : null}
+
+                    {order.receiptSignedUrl ? (
+                      <a
+                        href={order.receiptSignedUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-full bg-zinc-100 px-4 py-2.5 text-sm font-medium text-zinc-700 ring-1 ring-zinc-200 hover:bg-zinc-200 sm:w-auto"
+                      >
+                        Ödəniş çekini gör
+                      </a>
                     ) : null}
 
                     <details className="mt-4 rounded-xl bg-zinc-50 p-3 ring-1 ring-zinc-100">

@@ -72,8 +72,8 @@ export type AdminOrderItem = Pick<
 export type AdminOrderListItem = Order & {
   /** Unique FK → may be object or array depending on PostgREST embed shape. */
   payments:
-    | Pick<Payment, "id" | "status">
-    | Pick<Payment, "id" | "status">[]
+    | Pick<Payment, "id" | "status" | "receipt_url">
+    | Pick<Payment, "id" | "status" | "receipt_url">[]
     | null;
   customer: { full_name: string | null; email: string | null } | null;
   order_items: AdminOrderItem[] | null;
@@ -87,7 +87,7 @@ export async function getAdminOrders(): Promise<AdminOrderListItem[]> {
     .select(
       `
       *,
-      payments (id, status),
+      payments (id, status, receipt_url),
       customer:profiles!orders_customer_id_fkey (full_name, email),
       order_items (
         id,
