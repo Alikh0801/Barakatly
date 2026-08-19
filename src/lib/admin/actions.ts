@@ -345,29 +345,14 @@ export async function deleteOrders(
     .getAll("order_ids")
     .map((value) => String(value).trim())
     .filter(Boolean);
-  const reason = String(formData.get("reason") ?? "").trim();
 
   const uniqueIds = [...new Set(orderIds)];
   if (uniqueIds.length === 0) {
     return { error: "Silmək üçün sifariş seçin." };
   }
-  if (!reason) {
-    return { error: "Silmə səbəbini qeyd edin." };
-  }
 
   try {
     const adminClient = createAdminClient();
-
-    const { data: orders, error: fetchError } = await adminClient
-      .from("orders")
-      .select("id, customer_id, order_code")
-      .in("id", uniqueIds);
-
-    if (fetchError) {
-      console.error("[admin.deleteOrders.fetch]", fetchError.message);
-      return { error: "Sifarişlər tapılmadı." };
-    }
-
     const { error } = await adminClient
       .from("orders")
       .delete()
@@ -377,18 +362,6 @@ export async function deleteOrders(
       console.error("[admin.deleteOrders]", error.message);
       return { error: "Sifarişlər silinmədi." };
     }
-
-    await Promise.all(
-      (orders ?? []).map((order) =>
-        adminClient.from("notifications").insert({
-          user_id: order.customer_id,
-          title: "Sifarişiniz silindi",
-          body: `${order.order_code} sifarişi admin tərəfindən silindi. Səbəb: ${reason}`,
-          type: "general",
-          metadata: { order_code: order.order_code },
-        }),
-      ),
-    );
   } catch (error) {
     console.error("[admin.deleteOrders]", error);
     return { error: "Sifarişlər silinmədi. Service role yoxlanılsın." };

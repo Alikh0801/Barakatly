@@ -261,7 +261,7 @@ export function AdminOrdersPanel({
         </div>
       ) : (
         <>
-          <div className="flex flex-col gap-3 rounded-2xl bg-white p-3 shadow-sm ring-1 ring-zinc-200 sm:px-4">
+          <div className="flex flex-col gap-3 rounded-2xl bg-white p-3 shadow-sm ring-1 ring-zinc-200 sm:flex-row sm:items-center sm:justify-between sm:px-4">
             <label className="inline-flex items-center gap-2 text-sm text-zinc-700">
               <input
                 type="checkbox"
@@ -275,38 +275,32 @@ export function AdminOrdersPanel({
               ) : null}
             </label>
 
-            {someSelected ? (
-              <form
-                action={deleteAction}
-                className="flex flex-col gap-2 sm:flex-row sm:items-center"
-                onSubmit={(event) => {
-                  if (
-                    !window.confirm(
-                      selected.length === 1
-                        ? "Bu sifarişi silmək istəyirsiniz?"
-                        : `${selected.length} sifarişi silmək istəyirsiniz?`
-                    )
-                  ) {
-                    event.preventDefault();
-                  }
-                }}
+            <form
+              action={deleteAction}
+              onSubmit={(event) => {
+                if (
+                  !window.confirm(
+                    selected.length === 1
+                      ? "Bu sifarişi silmək istəyirsiniz?"
+                      : `${selected.length} sifarişi silmək istəyirsiniz?`
+                  )
+                ) {
+                  event.preventDefault();
+                }
+              }}
+            >
+              {selected.map((id) => (
+                <input key={id} type="hidden" name="order_ids" value={id} />
+              ))}
+              <button
+                type="submit"
+                disabled={!someSelected || deletePending}
+                className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-rose-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-rose-500 disabled:opacity-50 sm:w-auto"
               >
-                {selected.map((id) => (
-                  <input key={id} type="hidden" name="order_ids" value={id} />
-                ))}
-                <div className="sm:w-64">
-                  <ReasonInput id="delete-orders-reason" />
-                </div>
-                <button
-                  type="submit"
-                  disabled={deletePending}
-                  className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-rose-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-rose-500 disabled:opacity-50 sm:w-auto"
-                >
-                  {deletePending ? <Spinner className="h-3.5 w-3.5" /> : null}
-                  Seçilənləri sil
-                </button>
-              </form>
-            ) : null}
+                {deletePending ? <Spinner className="h-3.5 w-3.5" /> : null}
+                Seçilənləri sil
+              </button>
+            </form>
           </div>
 
           {filteredOrders.map((order) => {
