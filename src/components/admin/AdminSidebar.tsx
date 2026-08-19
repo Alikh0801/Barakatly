@@ -72,6 +72,7 @@ const navItems: NavItem[] = [
   {
     href: "/admin/categories",
     label: "Kateqoriyalar",
+    badgeKey: "categories",
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-4 w-4">
         <path d="M4 6h4v4H4V6Zm6 0h4v4h-4V6Zm6 0h4v4h-4V6ZM4 12h4v4H4v-4Zm6 0h4v4h-4v-4Zm6 0h4v4h-4v-4Z" strokeLinejoin="round" />
@@ -112,7 +113,7 @@ function formatBadge(count: number) {
 }
 
 export function AdminSidebar({
-  badges = { payments: 0, orders: 0, farmers: 0, products: 0 },
+  badges = { payments: 0, orders: 0, farmers: 0, products: 0, categories: 0 },
 }: {
   badges?: AdminNavBadges;
 }) {
@@ -137,7 +138,11 @@ export function AdminSidebar({
       ? formatBadge(badges[activeItem.badgeKey])
       : null;
   const totalPending =
-    badges.payments + badges.orders + badges.farmers + badges.products;
+    badges.payments +
+    badges.orders +
+    badges.farmers +
+    badges.products +
+    badges.categories;
 
   return (
     <>

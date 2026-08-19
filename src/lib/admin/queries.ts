@@ -271,11 +271,12 @@ export type AdminNavBadges = {
   orders: number;
   farmers: number;
   products: number;
+  categories: number;
 };
 
 async function countRows(
-  table: "payments" | "orders" | "farmers" | "products",
-  filters: { column: string; value: string }[],
+  table: "payments" | "orders" | "farmers" | "products" | "categories" | "subcategories",
+  filters: { column: string; value: string | boolean }[],
 ): Promise<number> {
   const supabase = await createClient();
   let query = supabase.from(table).select("id", { count: "exact", head: true });
@@ -292,16 +293,40 @@ async function countRows(
   return count ?? 0;
 }
 
+/** Farmers awaiting either initial approval or a profile-edit review. */
+async function countFarmersNeedingReview(): Promise<number> {
+  const supabase = await createClient();
+  const { count, error } = await supabase
+    .from("farmers")
+    .select("id", { count: "exact", head: true })
+    .or("status.eq.pending,pending_submitted_at.not.is.null");
+
+  if (error) {
+    console.error("[admin.count.farmers]", error.message);
+    return 0;
+  }
+  return count ?? 0;
+}
+
 /** Pending items needing admin action — shown on sidebar until resolved. */
 export async function getAdminNavBadges(): Promise<AdminNavBadges> {
-  const [payments, orders, farmers, products] = await Promise.all([
-    countRows("payments", [{ column: "status", value: "pending" }]),
-    countRows("orders", [
-      { column: "status", value: "awaiting_confirmation" },
-    ]),
-    countRows("farmers", [{ column: "status", value: "pending" }]),
-    countRows("products", [{ column: "status", value: "pending" }]),
-  ]);
+  const [payments, orders, farmers, products, unapprovedCategories, unapprovedSubcategories] =
+    await Promise.all([
+      countRows("payments", [{ column: "status", value: "pending" }]),
+      countRows("orders", [
+        { column: "status", value: "awaiting_confirmation" },
+      ]),
+      countFarmersNeedingReview(),
+      countRows("products", [{ column: "status", value: "pending" }]),
+      countRows("categories", [{ column: "approved", value: false }]),
+      countRows("subcategories", [{ column: "approved", value: false }]),
+    ]);
 
-  return { payments, orders, farmers, products };
+  return {
+    payments,
+    orders,
+    farmers,
+    products,
+    categories: unapprovedCategories + unapprovedSubcategories,
+  };
 }
