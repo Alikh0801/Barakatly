@@ -53,7 +53,7 @@ export const COURIER_ORDER_STATUS_TRANSITIONS: Record<
   farmer_accepted: [],
   preparing: [],
   awaiting_courier: ["picked_up"],
-  picked_up: ["delivered"],
+  picked_up: ["delivered", "cancelled"],
   delivered: [],
   cancelled: [],
 };
