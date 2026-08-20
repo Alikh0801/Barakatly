@@ -118,66 +118,6 @@ export function AdminHeroPanel({
           </label>
         </div>
 
-        <div className="space-y-4">
-          <h3 className="text-sm font-semibold text-zinc-900">Nişanlar</h3>
-          <div className="grid gap-4 sm:grid-cols-2">
-            <label className="block space-y-1.5">
-              <span className="text-xs font-medium text-zinc-600">
-                1-ci nişan
-              </span>
-              <input
-                name="chip1"
-                required
-                maxLength={60}
-                defaultValue={items.chip1}
-                className="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-base text-zinc-900 sm:text-sm"
-              />
-            </label>
-            <label className="block space-y-1.5">
-              <span className="text-xs font-medium text-zinc-600">
-                2-ci nişan
-              </span>
-              <input
-                name="chip2"
-                required
-                maxLength={60}
-                defaultValue={items.chip2}
-                className="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-base text-zinc-900 sm:text-sm"
-              />
-            </label>
-          </div>
-        </div>
-
-        <div className="space-y-4">
-          <h3 className="text-sm font-semibold text-zinc-900">Düymələr</h3>
-          <div className="grid gap-4 sm:grid-cols-2">
-            <label className="block space-y-1.5">
-              <span className="text-xs font-medium text-zinc-600">
-                Əsas düymə (Mağazaya bax)
-              </span>
-              <input
-                name="primary_cta_label"
-                required
-                maxLength={40}
-                defaultValue={items.primaryCtaLabel}
-                className="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-base text-zinc-900 sm:text-sm"
-              />
-            </label>
-            <label className="block space-y-1.5">
-              <span className="text-xs font-medium text-zinc-600">
-                İkinci düymə (Fermer ol)
-              </span>
-              <input
-                name="secondary_cta_label"
-                required
-                maxLength={40}
-                defaultValue={items.secondaryCtaLabel}
-                className="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-base text-zinc-900 sm:text-sm"
-              />
-            </label>
-          </div>
-        </div>
-
         <button
           type="submit"
           disabled={updatePending || resetPending}

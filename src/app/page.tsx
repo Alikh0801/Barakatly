@@ -25,10 +25,6 @@ export default async function Home({
         title={hero.title}
         highlight={hero.items.highlight}
         body={hero.body}
-        chip1={hero.items.chip1}
-        chip2={hero.items.chip2}
-        primaryCtaLabel={hero.items.primaryCtaLabel}
-        secondaryCtaLabel={hero.items.secondaryCtaLabel}
         imageUrl={hero.items.imageUrl}
       />
       <Suspense fallback={<CategorySectionSkeleton />}>

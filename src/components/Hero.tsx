@@ -28,19 +28,11 @@ export function Hero({
   title,
   highlight,
   body,
-  chip1,
-  chip2,
-  primaryCtaLabel,
-  secondaryCtaLabel,
   imageUrl,
 }: {
   title: string;
   highlight: string;
   body: string;
-  chip1: string;
-  chip2: string;
-  primaryCtaLabel: string;
-  secondaryCtaLabel: string;
   imageUrl: string;
 }) {
   return (
@@ -76,7 +68,7 @@ export function Hero({
                   strokeLinejoin="round"
                 />
               </svg>
-              {chip1}
+              100% təzə məhsul
             </Chip>
             <Chip tone="blue">
               <svg
@@ -97,7 +89,7 @@ export function Hero({
                   strokeLinejoin="round"
                 />
               </svg>
-              {chip2}
+              Təsdiqlənmiş fermerlər
             </Chip>
           </div>
 
@@ -134,13 +126,13 @@ export function Hero({
               href="/shop"
               className="inline-flex h-11 items-center justify-center rounded-xl bg-emerald-500 px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-400"
             >
-              {primaryCtaLabel}
+              Mağazaya bax
             </Link>
             <Link
               href="/farmers/apply"
               className="inline-flex h-11 items-center justify-center rounded-xl bg-white/10 px-5 text-sm font-semibold text-white ring-1 ring-white/20 backdrop-blur-sm transition hover:bg-white/15"
             >
-              {secondaryCtaLabel}
+              Fermer ol
             </Link>
           </div>
         </div>

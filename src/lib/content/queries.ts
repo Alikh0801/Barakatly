@@ -143,25 +143,10 @@ function parseHeroItems(value: unknown): HeroItems {
   const record = value as Record<string, unknown>;
   const highlight =
     String(record.highlight ?? "").trim() || HERO_DEFAULT_ITEMS.highlight;
-  const chip1 = String(record.chip1 ?? "").trim() || HERO_DEFAULT_ITEMS.chip1;
-  const chip2 = String(record.chip2 ?? "").trim() || HERO_DEFAULT_ITEMS.chip2;
-  const primaryCtaLabel =
-    String(record.primaryCtaLabel ?? "").trim() ||
-    HERO_DEFAULT_ITEMS.primaryCtaLabel;
-  const secondaryCtaLabel =
-    String(record.secondaryCtaLabel ?? "").trim() ||
-    HERO_DEFAULT_ITEMS.secondaryCtaLabel;
   const imageUrl =
     String(record.imageUrl ?? "").trim() || HERO_DEFAULT_ITEMS.imageUrl;
 
-  return {
-    highlight,
-    chip1,
-    chip2,
-    primaryCtaLabel,
-    secondaryCtaLabel,
-    imageUrl,
-  };
+  return { highlight, imageUrl };
 }
 
 async function fetchHeroContent(): Promise<HeroContent> {

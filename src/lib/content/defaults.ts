@@ -81,10 +81,6 @@ export const HERO_KEY = "hero" as const;
 
 export type HeroItems = {
   highlight: string;
-  chip1: string;
-  chip2: string;
-  primaryCtaLabel: string;
-  secondaryCtaLabel: string;
   imageUrl: string;
 };
 
@@ -93,10 +89,6 @@ export const HERO_DEFAULT_IMAGE_URL =
 
 export const HERO_DEFAULT_ITEMS: HeroItems = {
   highlight: "birbaşa süfrənizə.",
-  chip1: "100% təzə məhsul",
-  chip2: "Təsdiqlənmiş fermerlər",
-  primaryCtaLabel: "Mağazaya bax",
-  secondaryCtaLabel: "Fermer ol",
   imageUrl: HERO_DEFAULT_IMAGE_URL,
 };
 

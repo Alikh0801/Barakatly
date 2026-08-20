@@ -81,39 +81,18 @@ function parseHeroForm(
   const title = String(formData.get("title") ?? "").trim();
   const highlight = String(formData.get("highlight") ?? "").trim();
   const body = String(formData.get("body") ?? "").trim();
-  const chip1 = String(formData.get("chip1") ?? "").trim();
-  const chip2 = String(formData.get("chip2") ?? "").trim();
-  const primaryCtaLabel = String(formData.get("primary_cta_label") ?? "").trim();
-  const secondaryCtaLabel = String(
-    formData.get("secondary_cta_label") ?? "",
-  ).trim();
 
   if (!title) return "Başlığın 1-ci sətri tələb olunur.";
   if (!highlight) return "Başlığın 2-ci sətri tələb olunur.";
   if (!body) return "Alt mətn tələb olunur.";
-  if (!chip1) return "1-ci nişan mətni tələb olunur.";
-  if (!chip2) return "2-ci nişan mətni tələb olunur.";
-  if (!primaryCtaLabel) return "Əsas düymənin mətni tələb olunur.";
-  if (!secondaryCtaLabel) return "İkinci düymənin mətni tələb olunur.";
   if (title.length > 60) return "Başlığın 1-ci sətri çox uzundur.";
   if (highlight.length > 60) return "Başlığın 2-ci sətri çox uzundur.";
   if (body.length > 400) return "Alt mətn çox uzundur.";
-  if (chip1.length > 60) return "1-ci nişan mətni çox uzundur.";
-  if (chip2.length > 60) return "2-ci nişan mətni çox uzundur.";
-  if (primaryCtaLabel.length > 40) return "Əsas düymənin mətni çox uzundur.";
-  if (secondaryCtaLabel.length > 40) return "İkinci düymənin mətni çox uzundur.";
 
   return {
     title,
     body,
-    items: {
-      highlight,
-      chip1,
-      chip2,
-      primaryCtaLabel,
-      secondaryCtaLabel,
-      imageUrl: currentImageUrl,
-    },
+    items: { highlight, imageUrl: currentImageUrl },
   };
 }
 
