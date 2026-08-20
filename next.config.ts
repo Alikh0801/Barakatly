@@ -18,6 +18,12 @@ const nextConfig: NextConfig = {
       dynamic: 30,
       static: 180,
     },
+    // Checkout accepts payment receipts up to 5MB (RECEIPT_MAX_BYTES); the
+    // default Server Action body limit is 1MB, so uploads above that always
+    // failed with "Body exceeded 1 MB limit" before this override.
+    serverActions: {
+      bodySizeLimit: "6mb",
+    },
   },
   images: {
     formats: ["image/avif", "image/webp"],
