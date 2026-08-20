@@ -616,12 +616,30 @@ export async function toggleCourierActive(
   if (!courierId) return { error: "Kuryer tapılmadı." };
 
   const supabase = await createClient();
+  const { data: courier } = await supabase
+    .from("couriers")
+    .select("id, profile_id")
+    .eq("id", courierId)
+    .single();
+
+  if (!courier) return { error: "Kuryer tapılmadı." };
+
   const { error } = await supabase
     .from("couriers")
     .update({ is_active: !isActive })
     .eq("id", courierId);
 
   if (error) return { error: "Kuryer yenilənmədi." };
+
+  await notifyUser({
+    userId: courier.profile_id,
+    type: "general",
+    title: isActive ? "Hesabınız deaktiv edildi" : "Hesabınız aktivləşdirildi",
+    body: isActive
+      ? "Kuryer hesabınız admin tərəfindən müvəqqəti dayandırılıb. Yeni sifariş götürə bilməyəcəksiniz."
+      : "Kuryer hesabınız yenidən aktivləşdirilib. Sifariş növbəsinə daxil ola bilərsiniz.",
+    metadata: { courier_id: courier.id },
+  });
 
   revalidatePath("/admin/couriers");
   return { success: "Kuryer statusu yeniləndi." };
