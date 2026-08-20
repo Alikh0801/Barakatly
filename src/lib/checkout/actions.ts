@@ -68,6 +68,10 @@ export async function placeOrder(
   }
   const contactPhone = normalizeAzPhone(contactPhoneRaw);
 
+  if (!deliveryAddress) {
+    return { error: "Çatdırılma ünvanını daxil edin." };
+  }
+
   if (!bankId) {
     return { error: "Bank seçin." };
   }

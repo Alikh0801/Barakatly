@@ -115,7 +115,11 @@ export function CheckoutForm({
   }
 
   return (
-    <form action={formAction} className="grid gap-8 lg:grid-cols-[1fr_360px]">
+    <form
+      action={formAction}
+      noValidate
+      className="grid gap-8 lg:grid-cols-[1fr_360px]"
+    >
       <div className="space-y-6">
         <section className="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-zinc-200">
           <h2 className="text-lg font-semibold text-zinc-900">
@@ -134,12 +138,13 @@ export function CheckoutForm({
                 htmlFor="delivery_address_text"
                 className="block text-sm font-medium text-zinc-700"
               >
-                Çatdırılma ünvanı
+                Çatdırılma ünvanı *
               </label>
               <textarea
                 id="delivery_address_text"
                 name="delivery_address_text"
                 rows={3}
+                required
                 placeholder="Küçə, bina, mənzil..."
                 className="mt-1 w-full rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-base text-zinc-900 outline-none ring-emerald-500 focus:ring-2"
               />
