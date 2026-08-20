@@ -9,6 +9,7 @@ const ITEM_STATUS_RANK: Record<OrderItemStatus, number> = {
   awaiting_pickup: 4,
   picked_up: 5,
   delivered: 6,
+  cancelled: 0,
 };
 
 type ProgressItem = { status: OrderItemStatus };

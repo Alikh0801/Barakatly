@@ -26,7 +26,8 @@ export type OrderItemStatus =
   | "ready"
   | "awaiting_pickup"
   | "picked_up"
-  | "delivered";
+  | "delivered"
+  | "cancelled";
 export type PaymentStatus = "pending" | "confirmed" | "rejected";
 export type FarmerPostMediaType = "image" | "video";
 export type NotificationType =
@@ -662,6 +663,18 @@ export interface Database {
       list_approved_farmer_owner_names: {
         Args: Record<string, never>;
         Returns: { farmer_id: string; owner_name: string | null }[];
+      };
+      place_order: {
+        Args: {
+          p_customer_id: string;
+          p_contact_phone: string;
+          p_delivery_address_text: string | null;
+          p_bank_id: string;
+          p_receipt_url: string;
+          p_delivery_fee: number;
+          p_items: Json;
+        };
+        Returns: { order_id: string; order_code: string }[];
       };
     };
     Enums: {

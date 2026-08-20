@@ -9,10 +9,7 @@ import {
 } from "@/lib/checkout/constants";
 import { notifyAdmins } from "@/lib/notifications/helpers";
 import { isValidAzPhone, normalizeAzPhone } from "@/lib/phone/az";
-import { getDisplayPrice } from "@/lib/shop/format";
-import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
-import type { UnitType } from "@/types";
 
 export type CheckoutCartItem = {
   productId: string;
@@ -24,16 +21,6 @@ export type PlaceOrderState = {
   orderId?: string;
 };
 
-type ValidatedLine = {
-  productId: string;
-  farmerId: string;
-  title: string;
-  quantity: number;
-  unitType: UnitType;
-  unitPrice: number;
-  lineTotal: number;
-};
-
 function getReceiptExtension(file: File): string {
   const byType: Record<string, string> = {
     "image/jpeg": "jpg",
@@ -43,6 +30,19 @@ function getReceiptExtension(file: File): string {
   };
 
   return byType[file.type] ?? "bin";
+}
+
+/** Turns place_order()'s raised exceptions into customer-facing messages. */
+function describePlaceOrderError(message: string): string {
+  if (message === "EMPTY_CART") return "Səbətiniz boşdur.";
+  if (message === "PRODUCT_NOT_FOUND") {
+    return "Səbətdəki bəzi məhsullar artıq mövcud deyil.";
+  }
+  if (message.startsWith("OUT_OF_STOCK:")) {
+    const title = message.slice("OUT_OF_STOCK:".length);
+    return `"${title}" üçün kifayət qədər miqdar yoxdur.`;
+  }
+  return "Sifariş yaradıla bilmədi. Yenidən cəhd edin.";
 }
 
 export async function placeOrder(
@@ -111,52 +111,21 @@ export async function placeOrder(
 
   const productIds = [...new Set(cartItems.map((item) => item.productId))];
 
-  const { data: products, error: productsError } = await supabase
-    .from("products")
-    .select(
-      "id, title, unit_type, final_price, farmer_price, quantity_available, in_stock, status, farmer_id"
-    )
-    .in("id", productIds)
-    .eq("status", "approved");
+  // A farmer cannot order their own products — checked here since it's not
+  // a stock concern and doesn't need to be inside the atomic order function.
+  const [{ data: cartProducts }, { data: ownFarmer }] = await Promise.all([
+    supabase.from("products").select("id, farmer_id").in("id", productIds),
+    supabase
+      .from("farmers")
+      .select("id")
+      .eq("profile_id", user.id)
+      .maybeSingle(),
+  ]);
 
-  if (productsError || !products?.length) {
-    return { error: "Məhsullar tapılmadı və ya artıq mövcud deyil." };
-  }
-
-  const productMap = new Map(products.map((product) => [product.id, product]));
-  const validatedLines: ValidatedLine[] = [];
-
-  for (const item of cartItems) {
-    const product = productMap.get(item.productId);
-    if (!product) {
-      return { error: "Səbətdəki bəzi məhsullar artıq mövcud deyil." };
-    }
-    if (!product.in_stock || product.quantity_available < item.quantity) {
-      return {
-        error: `"${product.title}" üçün kifayət qədər miqdar yoxdur.`,
-      };
-    }
-
-    const unitPrice = getDisplayPrice(product.final_price, product.farmer_price);
-    validatedLines.push({
-      productId: product.id,
-      farmerId: product.farmer_id,
-      title: product.title,
-      quantity: item.quantity,
-      unitType: product.unit_type,
-      unitPrice,
-      lineTotal: unitPrice * item.quantity,
-    });
-  }
-
-  // A farmer cannot order their own products.
-  const { data: ownFarmer } = await supabase
-    .from("farmers")
-    .select("id")
-    .eq("profile_id", user.id)
-    .maybeSingle();
-
-  if (ownFarmer && validatedLines.some((line) => line.farmerId === ownFarmer.id)) {
+  if (
+    ownFarmer &&
+    (cartProducts ?? []).some((product) => product.farmer_id === ownFarmer.id)
+  ) {
     return {
       error: "Öz məhsulunuza sifariş verə bilməzsiniz. Onu səbətdən çıxarın.",
     };
@@ -173,9 +142,6 @@ export async function placeOrder(
     return { error: "Seçilmiş bank tapılmadı." };
   }
 
-  const subtotal = validatedLines.reduce((sum, line) => sum + line.lineTotal, 0);
-  const totalAmount = subtotal + DELIVERY_FEE;
-
   const receiptPath = `${user.id}/${Date.now()}-${crypto.randomUUID()}.${getReceiptExtension(receipt)}`;
   const { error: uploadError } = await supabase.storage
     .from("payment-receipts")
@@ -189,102 +155,33 @@ export async function placeOrder(
     return { error: "Çek yüklənmədi. Yenidən cəhd edin." };
   }
 
-  const { data: orderCode, error: codeError } = await supabase.rpc(
-    "generate_order_code"
+  // Product validation, pricing, order/items/payment creation, and the stock
+  // decrement all happen atomically inside place_order() — either everything
+  // commits together or nothing does, so a stock shortfall can never leave
+  // behind an order that oversold a product.
+  const { data: placed, error: placeError } = await supabase.rpc(
+    "place_order",
+    {
+      p_customer_id: user.id,
+      p_contact_phone: contactPhone,
+      p_delivery_address_text: deliveryAddress || null,
+      p_bank_id: bankId,
+      p_receipt_url: receiptPath,
+      p_delivery_fee: DELIVERY_FEE,
+      p_items: cartItems.map((item) => ({
+        product_id: item.productId,
+        quantity: item.quantity,
+      })),
+    }
   );
 
-  if (codeError || !orderCode) {
-    console.error("[checkout.placeOrder] order code", codeError?.message);
-    return { error: "Sifariş kodu yaradıla bilmədi." };
+  if (placeError || !placed?.[0]) {
+    console.error("[checkout.placeOrder] rpc", placeError?.message);
+    await supabase.storage.from("payment-receipts").remove([receiptPath]);
+    return { error: describePlaceOrderError(placeError?.message ?? "") };
   }
 
-  const { data: order, error: orderError } = await supabase
-    .from("orders")
-    .insert({
-      order_code: orderCode,
-      customer_id: user.id,
-      contact_phone: contactPhone,
-      delivery_address_text: deliveryAddress || null,
-      subtotal,
-      delivery_fee: DELIVERY_FEE,
-      total_amount: totalAmount,
-      status: "awaiting_confirmation",
-    })
-    .select("id")
-    .single();
-
-  if (orderError || !order) {
-    console.error("[checkout.placeOrder] order", orderError?.message);
-    return { error: "Sifariş yaradıla bilmədi." };
-  }
-
-  const { error: itemsError } = await supabase.from("order_items").insert(
-    validatedLines.map((line) => ({
-      order_id: order.id,
-      farmer_id: line.farmerId,
-      product_id: line.productId,
-      product_title: line.title,
-      quantity: line.quantity,
-      unit_type: line.unitType,
-      unit_price: line.unitPrice,
-      line_total: line.lineTotal,
-      status: "new" as const,
-    }))
-  );
-
-  if (itemsError) {
-    console.error("[checkout.placeOrder] items", itemsError.message);
-    return { error: "Sifariş məhsulları əlavə edilə bilmədi." };
-  }
-
-  const { error: paymentError } = await supabase.from("payments").insert({
-    order_id: order.id,
-    bank_id: bankId,
-    receipt_url: receiptPath,
-    status: "pending",
-  });
-
-  if (paymentError) {
-    console.error("[checkout.placeOrder] payment", paymentError.message);
-    return {
-      error:
-        "Ödəniş qeydi yaradıla bilmədi. Dəstək ilə əlaqə saxlayın və sifariş kodunu qeyd edin.",
-    };
-  }
-
-  // Stock decrement (service role — customers can't update products via RLS)
-  // and the order-created audit event both affect what the customer sees
-  // right after redirect, so run them concurrently but still await them.
-  try {
-    const admin = createAdminClient();
-    await Promise.all([
-      ...validatedLines.map(async (line) => {
-        const product = productMap.get(line.productId);
-        if (!product) return;
-        const nextQty = Math.max(0, product.quantity_available - line.quantity);
-        const { error: stockError } = await admin
-          .from("products")
-          .update({
-            quantity_available: nextQty,
-            in_stock: nextQty > 0,
-          })
-          .eq("id", line.productId)
-          .gte("quantity_available", line.quantity);
-
-        if (stockError) {
-          console.error("[checkout.placeOrder] stock", stockError.message);
-        }
-      }),
-      supabase.from("order_status_events").insert({
-        order_id: order.id,
-        status: "awaiting_confirmation",
-        changed_by: user.id,
-        note: "Sifariş yaradıldı",
-      }),
-    ]);
-  } catch (error) {
-    console.error("[checkout.placeOrder] stock admin", error);
-  }
+  const { order_id: orderId, order_code: orderCode } = placed[0];
 
   // Clearing the cart and notifying admins don't change what the customer
   // sees next, so defer them past the response instead of making them wait
@@ -295,9 +192,9 @@ export async function placeOrder(
       type: "payment_received",
       title: "Yeni ödəniş + çek",
       body: `${orderCode} sifarişi üçün ödəniş çeki yoxlama gözləyir.`,
-      metadata: { order_id: order.id },
+      metadata: { order_id: orderId },
     });
   });
 
-  return { orderId: order.id };
+  return { orderId };
 }

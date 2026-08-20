@@ -41,6 +41,7 @@ export const FARMER_ITEM_STATUS_TRANSITIONS: Record<
   awaiting_pickup: ["picked_up"],
   picked_up: [],
   delivered: [],
+  cancelled: [],
 };
 
 export const COURIER_ORDER_STATUS_TRANSITIONS: Record<
@@ -101,6 +102,8 @@ export function getOrderItemStatusLabel(status: OrderItemStatus): string {
       return "Kuryer tərəfindən götürüldü";
     case "delivered":
       return "Çatdırıldı";
+    case "cancelled":
+      return "Ləğv edildi";
     default:
       return status;
   }
