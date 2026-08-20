@@ -6,7 +6,8 @@ import {
   COURIER_ORDER_STATUS_TRANSITIONS,
   getOrderStatusLabel,
 } from "@/lib/orders/labels";
-import { insertEventAndNotify } from "@/lib/notifications/helpers";
+import { insertEventAndNotify, notifyUser } from "@/lib/notifications/helpers";
+import { getOrderFarmerProfileIds } from "@/lib/orders/farmers";
 import { createClient } from "@/lib/supabase/server";
 import type { NotificationType, OrderItemStatus, OrderStatus } from "@/types";
 
@@ -37,11 +38,29 @@ function notificationForStatus(status: OrderStatus): {
   return null;
 }
 
+function farmerNotificationForStatus(
+  status: OrderStatus,
+): { title: string; body: string } | null {
+  if (status === "picked_up") {
+    return {
+      title: "Sifariş kuryerə təhvil verildi",
+      body: "Kuryer sifarişi götürdü və çatdırmağa yola düşdü.",
+    };
+  }
+  if (status === "delivered") {
+    return {
+      title: "Sifariş çatdırıldı",
+      body: "Kuryer sifarişi müştəriyə çatdırdı.",
+    };
+  }
+  return null;
+}
+
 export async function advanceCourierOrder(
   _prev: CourierActionState,
   formData: FormData
 ): Promise<CourierActionState> {
-  const { profile } = await requireCourier();
+  const { profile, courier } = await requireCourier();
   const orderId = String(formData.get("order_id") ?? "").trim();
   const nextStatus = String(formData.get("next_status") ?? "") as OrderStatus;
 
@@ -52,7 +71,7 @@ export async function advanceCourierOrder(
   const supabase = await createClient();
   const { data: order, error } = await supabase
     .from("orders")
-    .select("id, customer_id, status, order_code")
+    .select("id, customer_id, status, order_code, courier_id")
     .eq("id", orderId)
     .single();
 
@@ -60,36 +79,44 @@ export async function advanceCourierOrder(
     return { error: "Sifariş tapılmadı." };
   }
 
+  if (order.courier_id && order.courier_id !== courier.id) {
+    return { error: "Bu sifariş artıq başqa kuryer tərəfindən götürülüb." };
+  }
+
   const allowed = COURIER_ORDER_STATUS_TRANSITIONS[order.status] ?? [];
   if (!allowed.includes(nextStatus)) {
     return { error: "Bu status keçidinə icazə verilmir." };
   }
 
-  const { error: updateError } = await supabase
+  // Claim the order on the courier's own row too — RLS only allows this
+  // update to affect a row that's unclaimed or already claimed by this
+  // courier, so a second courier racing for the same order gets 0 rows
+  // back here instead of silently overwriting the first courier's claim.
+  const { data: updatedOrders, error: updateError } = await supabase
     .from("orders")
-    .update({ status: nextStatus })
-    .eq("id", orderId);
+    .update({ status: nextStatus, courier_id: courier.id })
+    .eq("id", orderId)
+    .select("id");
 
   if (updateError) {
     console.error("[courier.advanceCourierOrder]", updateError.message);
     return { error: "Status yenilənmədi." };
   }
 
+  if (!updatedOrders || updatedOrders.length === 0) {
+    return { error: "Bu sifariş artıq başqa kuryer tərəfindən götürülüb." };
+  }
+
   const itemStatus: OrderItemStatus =
     nextStatus === "delivered" ? "delivered" : "picked_up";
+  const priorItemStatuses: OrderItemStatus[] =
+    nextStatus === "delivered" ? ["picked_up"] : ["ready", "awaiting_pickup"];
 
   await supabase
     .from("order_items")
     .update({ status: itemStatus })
     .eq("order_id", orderId)
-    .in("status", [
-      "awaiting_pickup",
-      "ready",
-      "picked_up",
-      "preparing",
-      "accepted",
-      "new",
-    ]);
+    .in("status", priorItemStatuses);
 
   await insertEventAndNotify({
     orderId: order.id,
@@ -100,11 +127,30 @@ export async function advanceCourierOrder(
     notification: notificationForStatus(nextStatus),
   });
 
+  const farmerNotification = farmerNotificationForStatus(nextStatus);
+  if (farmerNotification) {
+    const farmerProfileIds = await getOrderFarmerProfileIds(supabase, order.id);
+    await Promise.all(
+      farmerProfileIds.map((profileId) =>
+        notifyUser({
+          userId: profileId,
+          type:
+            nextStatus === "delivered" ? "order_delivered" : "order_picked_up",
+          title: farmerNotification.title,
+          body: `${order.order_code}: ${farmerNotification.body}`,
+          metadata: { order_id: order.id },
+        }),
+      ),
+    );
+  }
+
   revalidatePath("/courier");
   revalidatePath("/orders");
   revalidatePath(`/orders/${order.id}`);
   revalidatePath("/admin/orders");
   revalidatePath("/notifications");
+  revalidatePath("/farmer");
+  revalidatePath("/farmer/orders");
 
   return { success: `${order.order_code} statusu yeniləndi.` };
 }

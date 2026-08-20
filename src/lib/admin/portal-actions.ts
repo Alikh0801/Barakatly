@@ -290,7 +290,9 @@ export async function deleteFarmer(
 
   const admin = createAdminClient();
 
-  // Hard delete farmer row (cascades products, images, blog, order_items).
+  // Hard delete farmer row (cascades products, images, blog). Blocked by FK
+  // if the farmer has any order_items — deleting them would destroy order
+  // history, so those farmers must be deactivated instead of deleted.
   const { error: deleteError } = await admin
     .from("farmers")
     .delete()
@@ -298,7 +300,10 @@ export async function deleteFarmer(
 
   if (deleteError) {
     console.error("[admin.deleteFarmer]", deleteError.message);
-    return { error: "Fermer silinmədi. Sifariş tarixçəsi və ya digər bağlı məlumatlar mane ola bilər." };
+    return {
+      error:
+        "Fermer silinmədi, çünki sifariş tarixçəsi var. Sifariş tarixçəsini qorumaq üçün silmək əvəzinə \"Deaktiv et\" seçimindən istifadə edin.",
+    };
   }
 
   // Keep auth account; demote profile and clear farmer metadata so they can

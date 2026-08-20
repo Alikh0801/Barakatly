@@ -423,6 +423,7 @@ export interface Database {
           subtotal: number;
           delivery_fee: number;
           total_amount: number;
+          courier_id: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -439,6 +440,7 @@ export interface Database {
           subtotal?: number;
           delivery_fee?: number;
           total_amount?: number;
+          courier_id?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -455,6 +457,7 @@ export interface Database {
           subtotal?: number;
           delivery_fee?: number;
           total_amount?: number;
+          courier_id?: string | null;
           created_at?: string;
           updated_at?: string;
         };

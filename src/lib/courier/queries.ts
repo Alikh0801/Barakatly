@@ -1,3 +1,4 @@
+import { requireCourier } from "@/lib/courier/auth";
 import { createClient } from "@/lib/supabase/server";
 import type { Order, OrderItem } from "@/types";
 
@@ -13,6 +14,7 @@ export type CourierOrder = Omit<Order, "total_amount" | "subtotal" | "delivery_f
 };
 
 export async function getCourierQueue(): Promise<CourierOrder[]> {
+  const { courier } = await requireCourier();
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("orders")
@@ -26,6 +28,7 @@ export async function getCourierQueue(): Promise<CourierOrder[]> {
       delivery_lat,
       delivery_lng,
       status,
+      courier_id,
       created_at,
       updated_at,
       order_items (
@@ -46,5 +49,10 @@ export async function getCourierQueue(): Promise<CourierOrder[]> {
     return [];
   }
 
-  return (data ?? []) as unknown as CourierOrder[];
+  // Unclaimed orders are visible to every courier; once claimed (picked_up),
+  // only the courier holding it should see it in their own queue.
+  const orders = (data ?? []) as unknown as CourierOrder[];
+  return orders.filter(
+    (order) => !order.courier_id || order.courier_id === courier.id,
+  );
 }
