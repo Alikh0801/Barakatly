@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { requireAdmin } from "@/lib/admin/auth";
 import { ADMIN_STATUS_TRANSITIONS } from "@/lib/orders/labels";
 import { getOrderStatusLabel } from "@/lib/checkout/labels";
+import { notifyUser } from "@/lib/notifications/helpers";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import type { NotificationType, OrderStatus } from "@/types";
@@ -171,12 +172,45 @@ export async function confirmPayment(
     notification: notificationForOrderStatus("confirmed"),
   });
 
+  // Order items only become visible on farmer dashboards once the order
+  // leaves "awaiting_confirmation" (see getFarmerOrderItems) — let each
+  // involved farmer know their part of it is now ready to prepare.
+  const { data: orderItems } = await supabase
+    .from("order_items")
+    .select("farmers(profile_id)")
+    .eq("order_id", order.id);
+
+  const farmerProfileIds = new Set(
+    (orderItems ?? [])
+      .map((item) => {
+        const farmer = Array.isArray(item.farmers)
+          ? item.farmers[0]
+          : item.farmers;
+        return farmer?.profile_id ?? null;
+      })
+      .filter((id): id is string => Boolean(id)),
+  );
+
+  await Promise.all(
+    [...farmerProfileIds].map((profileId) =>
+      notifyUser({
+        userId: profileId,
+        type: "general",
+        title: "Yeni sifariş hazırdır",
+        body: `${order.order_code} sifarişi ödəniş təsdiqindən keçdi. Hazırlığa başlaya bilərsiniz.`,
+        metadata: { order_id: order.id },
+      }),
+    ),
+  );
+
   revalidatePath("/admin", "layout");
   revalidatePath("/admin/payments");
   revalidatePath("/admin/orders");
   revalidatePath("/orders");
   revalidatePath(`/orders/${order.id}`);
   revalidatePath("/notifications");
+  revalidatePath("/farmer");
+  revalidatePath("/farmer/orders");
 
   return { success: "Ödəniş təsdiqləndi." };
 }
