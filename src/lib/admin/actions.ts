@@ -4,10 +4,11 @@ import { revalidatePath } from "next/cache";
 import { requireAdmin } from "@/lib/admin/auth";
 import { ADMIN_STATUS_TRANSITIONS } from "@/lib/orders/labels";
 import { getOrderStatusLabel } from "@/lib/checkout/labels";
+import { getOrderFarmerProfileIds } from "@/lib/orders/farmers";
 import { notifyUser } from "@/lib/notifications/helpers";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
-import type { NotificationType, OrderStatus } from "@/types";
+import type { NotificationType, OrderItemStatus, OrderStatus } from "@/types";
 
 type ActionResult = { error?: string; success?: string };
 
@@ -96,29 +97,6 @@ async function insertEventAndNotify(params: {
   }
 }
 
-/** Distinct profile_ids of every farmer with at least one item on this order. */
-async function getOrderFarmerProfileIds(
-  supabase: Awaited<ReturnType<typeof createClient>>,
-  orderId: string,
-): Promise<string[]> {
-  const { data: orderItems } = await supabase
-    .from("order_items")
-    .select("farmers(profile_id)")
-    .eq("order_id", orderId);
-
-  const profileIds = new Set(
-    (orderItems ?? [])
-      .map((item) => {
-        const farmer = Array.isArray(item.farmers)
-          ? item.farmers[0]
-          : item.farmers;
-        return farmer?.profile_id ?? null;
-      })
-      .filter((id): id is string => Boolean(id)),
-  );
-
-  return [...profileIds];
-}
 
 export async function confirmPayment(
   _prev: ActionResult,
@@ -340,6 +318,28 @@ export async function advanceOrderStatus(
   const allowed = ADMIN_STATUS_TRANSITIONS[order.status] ?? [];
   if (!allowed.includes(nextStatus)) {
     return { error: "Bu status keçidinə icazə verilmir." };
+  }
+
+  // Don't let an order into the courier queue while some farmer's items
+  // aren't actually ready yet — a courier could otherwise be sent to pick
+  // up a shipment that's only partially prepared.
+  if (nextStatus === "awaiting_courier") {
+    const { data: items } = await supabase
+      .from("order_items")
+      .select("status")
+      .eq("order_id", orderId)
+      .neq("status", "cancelled");
+
+    const readyStatuses: OrderItemStatus[] = ["ready", "awaiting_pickup"];
+    const notReady = (items ?? []).some(
+      (item) => !readyStatuses.includes(item.status),
+    );
+
+    if (notReady) {
+      return {
+        error: "Bütün fermerlər hazırlığı bitirməyib. Kuryerə göndərmək üçün gözləyin.",
+      };
+    }
   }
 
   const { error: updateError } = await supabase
