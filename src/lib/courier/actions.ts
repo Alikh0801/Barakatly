@@ -16,7 +16,10 @@ export type CourierActionState = {
   success?: string;
 };
 
-function notificationForStatus(status: OrderStatus): {
+function notificationForStatus(
+  status: OrderStatus,
+  failureReason?: string,
+): {
   type: NotificationType;
   title: string;
   body: string;
@@ -35,11 +38,19 @@ function notificationForStatus(status: OrderStatus): {
       body: "Sifarişiniz uğurla çatdırıldı. Barakatly-ni seçdiyiniz üçün təşəkkürlər!",
     };
   }
+  if (status === "cancelled" && failureReason) {
+    return {
+      type: "general",
+      title: "Sifariş çatdırılmadı",
+      body: `Kuryer sifarişinizi çatdıra bilmədi. Səbəb: ${failureReason} Suallarınız varsa bizimlə əlaqə saxlayın.`,
+    };
+  }
   return null;
 }
 
 function farmerNotificationForStatus(
   status: OrderStatus,
+  failureReason?: string,
 ): { title: string; body: string } | null {
   if (status === "picked_up") {
     return {
@@ -53,6 +64,12 @@ function farmerNotificationForStatus(
       body: "Kuryer sifarişi müştəriyə çatdırdı.",
     };
   }
+  if (status === "cancelled" && failureReason) {
+    return {
+      title: "Sifariş çatdırılmadı",
+      body: `Kuryer çatdıra bilmədi və sifariş ləğv edildi. Səbəb: ${failureReason}`,
+    };
+  }
   return null;
 }
 
@@ -63,9 +80,14 @@ export async function advanceCourierOrder(
   const { profile, courier } = await requireCourier();
   const orderId = String(formData.get("order_id") ?? "").trim();
   const nextStatus = String(formData.get("next_status") ?? "") as OrderStatus;
+  const reason = String(formData.get("reason") ?? "").trim();
 
   if (!orderId || !nextStatus) {
     return { error: "Status seçin." };
+  }
+
+  if (nextStatus === "cancelled" && !reason) {
+    return { error: "Çatdırıla bilmədiyi səbəbi qeyd edin." };
   }
 
   const supabase = await createClient();
@@ -107,27 +129,37 @@ export async function advanceCourierOrder(
     return { error: "Bu sifariş artıq başqa kuryer tərəfindən götürülüb." };
   }
 
-  const itemStatus: OrderItemStatus =
-    nextStatus === "delivered" ? "delivered" : "picked_up";
-  const priorItemStatuses: OrderItemStatus[] =
-    nextStatus === "delivered" ? ["picked_up"] : ["ready", "awaiting_pickup"];
+  // A failed delivery is reported as an order cancellation — the
+  // orders_cancel_cascade trigger (024/025) picks it up automatically,
+  // cascading order_items to "cancelled" and restoring product stock, no
+  // matter which code path set the status. Only picked_up/delivered need
+  // the manual item-status bump here.
+  if (nextStatus !== "cancelled") {
+    const itemStatus: OrderItemStatus =
+      nextStatus === "delivered" ? "delivered" : "picked_up";
+    const priorItemStatuses: OrderItemStatus[] =
+      nextStatus === "delivered" ? ["picked_up"] : ["ready", "awaiting_pickup"];
 
-  await supabase
-    .from("order_items")
-    .update({ status: itemStatus })
-    .eq("order_id", orderId)
-    .in("status", priorItemStatuses);
+    await supabase
+      .from("order_items")
+      .update({ status: itemStatus })
+      .eq("order_id", orderId)
+      .in("status", priorItemStatuses);
+  }
 
   await insertEventAndNotify({
     orderId: order.id,
     customerId: order.customer_id,
     status: nextStatus,
-    note: `Kuryer: ${getOrderStatusLabel(nextStatus)}`,
+    note:
+      nextStatus === "cancelled"
+        ? `Kuryer: çatdırıla bilmədi. Səbəb: ${reason}`
+        : `Kuryer: ${getOrderStatusLabel(nextStatus)}`,
     changedBy: profile.id,
-    notification: notificationForStatus(nextStatus),
+    notification: notificationForStatus(nextStatus, reason),
   });
 
-  const farmerNotification = farmerNotificationForStatus(nextStatus);
+  const farmerNotification = farmerNotificationForStatus(nextStatus, reason);
   if (farmerNotification) {
     const farmerProfileIds = await getOrderFarmerProfileIds(supabase, order.id);
     await Promise.all(
@@ -135,7 +167,11 @@ export async function advanceCourierOrder(
         notifyUser({
           userId: profileId,
           type:
-            nextStatus === "delivered" ? "order_delivered" : "order_picked_up",
+            nextStatus === "delivered"
+              ? "order_delivered"
+              : nextStatus === "cancelled"
+                ? "general"
+                : "order_picked_up",
           title: farmerNotification.title,
           body: `${order.order_code}: ${farmerNotification.body}`,
           metadata: { order_id: order.id },
