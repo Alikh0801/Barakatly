@@ -96,6 +96,30 @@ async function insertEventAndNotify(params: {
   }
 }
 
+/** Distinct profile_ids of every farmer with at least one item on this order. */
+async function getOrderFarmerProfileIds(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  orderId: string,
+): Promise<string[]> {
+  const { data: orderItems } = await supabase
+    .from("order_items")
+    .select("farmers(profile_id)")
+    .eq("order_id", orderId);
+
+  const profileIds = new Set(
+    (orderItems ?? [])
+      .map((item) => {
+        const farmer = Array.isArray(item.farmers)
+          ? item.farmers[0]
+          : item.farmers;
+        return farmer?.profile_id ?? null;
+      })
+      .filter((id): id is string => Boolean(id)),
+  );
+
+  return [...profileIds];
+}
+
 export async function confirmPayment(
   _prev: ActionResult,
   formData: FormData
@@ -175,24 +199,10 @@ export async function confirmPayment(
   // Order items only become visible on farmer dashboards once the order
   // leaves "awaiting_confirmation" (see getFarmerOrderItems) — let each
   // involved farmer know their part of it is now ready to prepare.
-  const { data: orderItems } = await supabase
-    .from("order_items")
-    .select("farmers(profile_id)")
-    .eq("order_id", order.id);
-
-  const farmerProfileIds = new Set(
-    (orderItems ?? [])
-      .map((item) => {
-        const farmer = Array.isArray(item.farmers)
-          ? item.farmers[0]
-          : item.farmers;
-        return farmer?.profile_id ?? null;
-      })
-      .filter((id): id is string => Boolean(id)),
-  );
+  const farmerProfileIds = await getOrderFarmerProfileIds(supabase, order.id);
 
   await Promise.all(
-    [...farmerProfileIds].map((profileId) =>
+    farmerProfileIds.map((profileId) =>
       notifyUser({
         userId: profileId,
         type: "general",
@@ -360,11 +370,30 @@ export async function advanceOrderStatus(
     notification,
   });
 
+  // A cancellation past "awaiting_confirmation" means farmers already saw
+  // this order (and may be actively preparing it) — tell them it's off.
+  if (nextStatus === "cancelled") {
+    const farmerProfileIds = await getOrderFarmerProfileIds(supabase, order.id);
+    await Promise.all(
+      farmerProfileIds.map((profileId) =>
+        notifyUser({
+          userId: profileId,
+          type: "general",
+          title: "Sifariş ləğv edildi",
+          body: `${order.order_code} sifarişi admin tərəfindən ləğv edildi. Səbəb: ${reason}`,
+          metadata: { order_id: order.id },
+        }),
+      ),
+    );
+  }
+
   revalidatePath("/admin", "layout");
   revalidatePath("/admin/orders");
   revalidatePath("/orders");
   revalidatePath(`/orders/${order.id}`);
   revalidatePath("/notifications");
+  revalidatePath("/farmer");
+  revalidatePath("/farmer/orders");
 
   return { success: `${order.order_code} statusu yeniləndi.` };
 }
