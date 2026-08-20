@@ -77,6 +77,36 @@ export const FAQ_DEFAULT = {
   items: FAQ_DEFAULT_ITEMS,
 } as const;
 
+export const HERO_KEY = "hero" as const;
+
+export type HeroItems = {
+  highlight: string;
+  chip1: string;
+  chip2: string;
+  primaryCtaLabel: string;
+  secondaryCtaLabel: string;
+  imageUrl: string;
+};
+
+export const HERO_DEFAULT_IMAGE_URL =
+  "https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=2400&q=80";
+
+export const HERO_DEFAULT_ITEMS: HeroItems = {
+  highlight: "birbaşa süfrənizə.",
+  chip1: "100% təzə məhsul",
+  chip2: "Təsdiqlənmiş fermerlər",
+  primaryCtaLabel: "Mağazaya bax",
+  secondaryCtaLabel: "Fermer ol",
+  imageUrl: HERO_DEFAULT_IMAGE_URL,
+};
+
+export const HERO_DEFAULT = {
+  key: HERO_KEY,
+  title: "Fermerdən,",
+  body: "Mövsümi məhsulları birbaşa yerli fermerlərdən kəşf edin. Daha sağlam qidalanaraq icmanızı dəstəkləyin.",
+  items: HERO_DEFAULT_ITEMS,
+} as const;
+
 export const ABOUT_KEY = "about" as const;
 
 export type AboutValue = {

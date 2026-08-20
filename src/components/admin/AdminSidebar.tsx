@@ -101,6 +101,16 @@ const navItems: NavItem[] = [
       </svg>
     ),
   },
+  {
+    href: "/admin/hero",
+    label: "Hero",
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-4 w-4">
+        <path d="M3 16.5 8.5 11l3.5 3.5L18 8l3 3" strokeLinecap="round" strokeLinejoin="round" />
+        <rect x="3" y="5" width="18" height="14" rx="2" />
+      </svg>
+    ),
+  },
 ];
 
 function isActive(pathname: string, item: NavItem) {

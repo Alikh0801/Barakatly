@@ -24,14 +24,31 @@ function Chip({
   );
 }
 
-export function Hero() {
+export function Hero({
+  title,
+  highlight,
+  body,
+  chip1,
+  chip2,
+  primaryCtaLabel,
+  secondaryCtaLabel,
+  imageUrl,
+}: {
+  title: string;
+  highlight: string;
+  body: string;
+  chip1: string;
+  chip2: string;
+  primaryCtaLabel: string;
+  secondaryCtaLabel: string;
+  imageUrl: string;
+}) {
   return (
     <section className="relative isolate min-h-dvh overflow-x-hidden">
       <div
         className="absolute inset-0 bg-cover bg-center"
         style={{
-          backgroundImage:
-            "url(https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=2400&q=80)",
+          backgroundImage: `url(${imageUrl})`,
         }}
       />
       <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/45 to-black/10" />
@@ -59,7 +76,7 @@ export function Hero() {
                   strokeLinejoin="round"
                 />
               </svg>
-              100% təzə məhsul
+              {chip1}
             </Chip>
             <Chip tone="blue">
               <svg
@@ -80,19 +97,18 @@ export function Hero() {
                   strokeLinejoin="round"
                 />
               </svg>
-              Təsdiqlənmiş fermerlər
+              {chip2}
             </Chip>
           </div>
 
           <h1 className="mt-5 text-3xl font-semibold leading-tight tracking-tight text-white drop-shadow-sm sm:text-4xl md:text-5xl">
-            Fermerdən,
+            {title}
             <br />
-            <span className="text-emerald-300">birbaşa süfrənizə.</span>
+            <span className="text-emerald-300">{highlight}</span>
           </h1>
 
           <p className="mt-4 max-w-xl text-sm leading-6 text-white/80 sm:text-base">
-            Mövsümi məhsulları birbaşa yerli fermerlərdən kəşf edin. Daha sağlam
-            qidalanaraq icmanızı dəstəkləyin.
+            {body}
           </p>
 
           <form
@@ -118,13 +134,13 @@ export function Hero() {
               href="/shop"
               className="inline-flex h-11 items-center justify-center rounded-xl bg-emerald-500 px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-400"
             >
-              Mağazaya bax
+              {primaryCtaLabel}
             </Link>
             <Link
               href="/farmers/apply"
               className="inline-flex h-11 items-center justify-center rounded-xl bg-white/10 px-5 text-sm font-semibold text-white ring-1 ring-white/20 backdrop-blur-sm transition hover:bg-white/15"
             >
-              Fermer ol
+              {secondaryCtaLabel}
             </Link>
           </div>
         </div>

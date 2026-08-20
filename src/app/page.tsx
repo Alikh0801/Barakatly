@@ -8,6 +8,7 @@ import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
 import { WhyChooseSection } from "@/components/WhyChooseSection";
 import { CategorySectionSkeleton } from "@/components/skeletons/CategorySectionSkeleton";
+import { getHeroContent } from "@/lib/content/queries";
 
 export default async function Home({
   searchParams,
@@ -15,11 +16,21 @@ export default async function Home({
   searchParams: Promise<{ category?: string }>;
 }) {
   const params = await searchParams;
+  const hero = await getHeroContent();
 
   return (
     <div className="flex min-h-full flex-col">
       <SiteHeader />
-      <Hero />
+      <Hero
+        title={hero.title}
+        highlight={hero.items.highlight}
+        body={hero.body}
+        chip1={hero.items.chip1}
+        chip2={hero.items.chip2}
+        primaryCtaLabel={hero.items.primaryCtaLabel}
+        secondaryCtaLabel={hero.items.secondaryCtaLabel}
+        imageUrl={hero.items.imageUrl}
+      />
       <Suspense fallback={<CategorySectionSkeleton />}>
         <Reveal>
           <CategorySection categorySlug={params.category} />

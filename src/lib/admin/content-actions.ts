@@ -2,6 +2,7 @@
 
 import { revalidatePath, updateTag } from "next/cache";
 import { requireAdmin } from "@/lib/admin/auth";
+import { uploadHeroImage } from "@/lib/admin/hero-image-upload";
 import {
   ABOUT_DEFAULT,
   ABOUT_DEFAULT_ITEMS,
@@ -10,12 +11,16 @@ import {
   FAQ_DEFAULT,
   FAQ_DEFAULT_ITEMS,
   FAQ_KEY,
+  HERO_DEFAULT,
+  HERO_DEFAULT_ITEMS,
+  HERO_KEY,
   WHY_BARAKATLY_DEFAULT,
   WHY_BARAKATLY_DEFAULT_FEATURES,
   WHY_BARAKATLY_KEY,
   type AboutItems,
   type AboutValue,
   type FaqItem,
+  type HeroItems,
   type WhyBarakatlyFeature,
 } from "@/lib/content/defaults";
 import { createClient } from "@/lib/supabase/server";
@@ -58,6 +63,135 @@ function revalidateWhyContent() {
   updateTag("why-barakatly");
   revalidatePath("/");
   revalidatePath("/admin/content");
+}
+
+function revalidateHeroContent() {
+  updateTag("site-content");
+  updateTag("hero");
+  revalidatePath("/");
+  revalidatePath("/admin/hero");
+}
+
+type HeroFormResult = { title: string; body: string; items: HeroItems };
+
+function parseHeroForm(
+  formData: FormData,
+  currentImageUrl: string,
+): HeroFormResult | string {
+  const title = String(formData.get("title") ?? "").trim();
+  const highlight = String(formData.get("highlight") ?? "").trim();
+  const body = String(formData.get("body") ?? "").trim();
+  const chip1 = String(formData.get("chip1") ?? "").trim();
+  const chip2 = String(formData.get("chip2") ?? "").trim();
+  const primaryCtaLabel = String(formData.get("primary_cta_label") ?? "").trim();
+  const secondaryCtaLabel = String(
+    formData.get("secondary_cta_label") ?? "",
+  ).trim();
+
+  if (!title) return "Başlığın 1-ci sətri tələb olunur.";
+  if (!highlight) return "Başlığın 2-ci sətri tələb olunur.";
+  if (!body) return "Alt mətn tələb olunur.";
+  if (!chip1) return "1-ci nişan mətni tələb olunur.";
+  if (!chip2) return "2-ci nişan mətni tələb olunur.";
+  if (!primaryCtaLabel) return "Əsas düymənin mətni tələb olunur.";
+  if (!secondaryCtaLabel) return "İkinci düymənin mətni tələb olunur.";
+  if (title.length > 60) return "Başlığın 1-ci sətri çox uzundur.";
+  if (highlight.length > 60) return "Başlığın 2-ci sətri çox uzundur.";
+  if (body.length > 400) return "Alt mətn çox uzundur.";
+  if (chip1.length > 60) return "1-ci nişan mətni çox uzundur.";
+  if (chip2.length > 60) return "2-ci nişan mətni çox uzundur.";
+  if (primaryCtaLabel.length > 40) return "Əsas düymənin mətni çox uzundur.";
+  if (secondaryCtaLabel.length > 40) return "İkinci düymənin mətni çox uzundur.";
+
+  return {
+    title,
+    body,
+    items: {
+      highlight,
+      chip1,
+      chip2,
+      primaryCtaLabel,
+      secondaryCtaLabel,
+      imageUrl: currentImageUrl,
+    },
+  };
+}
+
+export async function updateHeroContent(
+  _prev: AdminContentActionState,
+  formData: FormData
+): Promise<AdminContentActionState> {
+  await requireAdmin();
+
+  const supabase = await createClient();
+  const { data: existing } = await supabase
+    .from("site_content")
+    .select("items")
+    .eq("key", HERO_KEY)
+    .maybeSingle();
+
+  const existingItems = existing?.items as Partial<HeroItems> | null;
+  let imageUrl = existingItems?.imageUrl || HERO_DEFAULT_ITEMS.imageUrl;
+
+  const image = formData.get("image");
+  if (image instanceof File && image.size > 0) {
+    const uploaded = await uploadHeroImage(supabase, image);
+    if ("error" in uploaded) return { error: uploaded.error };
+    imageUrl = uploaded.url;
+  }
+
+  const parsed = parseHeroForm(formData, imageUrl);
+  if (typeof parsed === "string") return { error: parsed };
+
+  const { error } = await supabase.from("site_content").upsert(
+    {
+      key: HERO_KEY,
+      title: parsed.title,
+      body: parsed.body,
+      items: parsed.items,
+    },
+    { onConflict: "key" }
+  );
+
+  if (error) {
+    console.error("[admin.updateHeroContent]", error.message);
+    if (error.message.toLowerCase().includes("site_content")) {
+      return {
+        error:
+          "site_content cədvəli tapılmadı. Supabase-də 009_site_content.sql işə salın.",
+      };
+    }
+    return { error: "Hero bölməsi yenilənmədi." };
+  }
+
+  revalidateHeroContent();
+  return { success: "Hero bölməsi yeniləndi." };
+}
+
+export async function resetHeroContent(
+  _prev: AdminContentActionState,
+  _formData: FormData
+): Promise<AdminContentActionState> {
+  await requireAdmin();
+
+  const supabase = await createClient();
+  const { error } = await supabase.from("site_content").upsert(
+    {
+      key: HERO_KEY,
+      title: HERO_DEFAULT.title,
+      body: HERO_DEFAULT.body,
+      items: { ...HERO_DEFAULT_ITEMS },
+    },
+    { onConflict: "key" }
+  );
+
+  if (error) {
+    console.error("[admin.resetHeroContent]", error.message);
+    return { error: "Default Hero məzmunu bərpa edilmədi." };
+  }
+
+  revalidateHeroContent();
+  return { success: "Default Hero məzmunu bərpa olundu." };
 }
 
 function revalidateFaqContent() {

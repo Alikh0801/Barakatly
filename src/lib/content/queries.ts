@@ -7,12 +7,16 @@ import {
   FAQ_DEFAULT,
   FAQ_DEFAULT_ITEMS,
   FAQ_KEY,
+  HERO_DEFAULT,
+  HERO_DEFAULT_ITEMS,
+  HERO_KEY,
   WHY_BARAKATLY_DEFAULT,
   WHY_BARAKATLY_DEFAULT_FEATURES,
   WHY_BARAKATLY_KEY,
   type AboutItems,
   type AboutValue,
   type FaqItem,
+  type HeroItems,
   type WhyBarakatlyFeature,
 } from "@/lib/content/defaults";
 import { createPublicClient } from "@/lib/supabase/public";
@@ -119,6 +123,121 @@ export async function getAdminWhyBarakatlyContent(): Promise<WhyBarakatlyContent
     title: data.title,
     body: data.body,
     items: parseFeatures(data.items),
+    updated_at: data.updated_at,
+  };
+}
+
+export type HeroContent = {
+  key: string;
+  title: string;
+  body: string;
+  items: HeroItems;
+  updated_at?: string;
+};
+
+function parseHeroItems(value: unknown): HeroItems {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return { ...HERO_DEFAULT_ITEMS };
+  }
+
+  const record = value as Record<string, unknown>;
+  const highlight =
+    String(record.highlight ?? "").trim() || HERO_DEFAULT_ITEMS.highlight;
+  const chip1 = String(record.chip1 ?? "").trim() || HERO_DEFAULT_ITEMS.chip1;
+  const chip2 = String(record.chip2 ?? "").trim() || HERO_DEFAULT_ITEMS.chip2;
+  const primaryCtaLabel =
+    String(record.primaryCtaLabel ?? "").trim() ||
+    HERO_DEFAULT_ITEMS.primaryCtaLabel;
+  const secondaryCtaLabel =
+    String(record.secondaryCtaLabel ?? "").trim() ||
+    HERO_DEFAULT_ITEMS.secondaryCtaLabel;
+  const imageUrl =
+    String(record.imageUrl ?? "").trim() || HERO_DEFAULT_ITEMS.imageUrl;
+
+  return {
+    highlight,
+    chip1,
+    chip2,
+    primaryCtaLabel,
+    secondaryCtaLabel,
+    imageUrl,
+  };
+}
+
+async function fetchHeroContent(): Promise<HeroContent> {
+  const supabase = createPublicClient();
+  const { data, error } = await supabase
+    .from("site_content")
+    .select("key, title, body, items")
+    .eq("key", HERO_KEY)
+    .maybeSingle();
+
+  if (error) {
+    console.error("[content.getHero]", error.message);
+    return {
+      key: HERO_DEFAULT.key,
+      title: HERO_DEFAULT.title,
+      body: HERO_DEFAULT.body,
+      items: { ...HERO_DEFAULT_ITEMS },
+    };
+  }
+
+  if (!data) {
+    return {
+      key: HERO_DEFAULT.key,
+      title: HERO_DEFAULT.title,
+      body: HERO_DEFAULT.body,
+      items: { ...HERO_DEFAULT_ITEMS },
+    };
+  }
+
+  return {
+    key: data.key,
+    title: data.title,
+    body: data.body,
+    items: parseHeroItems(data.items),
+  };
+}
+
+export const getHeroContent = unstable_cache(fetchHeroContent, ["hero-content"], {
+  revalidate: 300,
+  tags: ["site-content", "hero"],
+});
+
+export async function getAdminHeroContent(): Promise<HeroContent> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("site_content")
+    .select("key, title, body, items, updated_at")
+    .eq("key", HERO_KEY)
+    .maybeSingle();
+
+  if (error) {
+    console.error("[admin.getHero]", error.message);
+    return {
+      key: HERO_DEFAULT.key,
+      title: HERO_DEFAULT.title,
+      body: HERO_DEFAULT.body,
+      items: { ...HERO_DEFAULT_ITEMS },
+      updated_at: new Date(0).toISOString(),
+    };
+  }
+
+  if (!data) {
+    return {
+      key: HERO_DEFAULT.key,
+      title: HERO_DEFAULT.title,
+      body: HERO_DEFAULT.body,
+      items: { ...HERO_DEFAULT_ITEMS },
+      updated_at: new Date(0).toISOString(),
+    };
+  }
+
+  return {
+    key: data.key,
+    title: data.title,
+    body: data.body,
+    items: parseHeroItems(data.items),
     updated_at: data.updated_at,
   };
 }
