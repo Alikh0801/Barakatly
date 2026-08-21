@@ -7,6 +7,7 @@ import { DELIVERY_FEE } from "@/lib/checkout/constants";
 import { formatPrice, formatUnit } from "@/lib/shop/format";
 import type { CartLineItem } from "@/lib/cart/queries";
 import { AzPhoneInput } from "@/components/ui/AzPhoneInput";
+import { FileSelectField } from "@/components/ui/FileSelectField";
 import { Spinner } from "@/components/ui/Spinner";
 import type { Bank } from "@/types";
 
@@ -170,14 +171,12 @@ export function CheckoutForm({
             Bank köçürməsinin ekran görüntüsünü və ya PDF çekini yükləyin (max 5
             MB).
           </p>
-          <input
-            id="receipt"
-            name="receipt"
-            type="file"
-            required
-            accept="image/jpeg,image/png,image/webp,application/pdf"
-            className="mt-4 block w-full text-sm text-zinc-600 file:mr-4 file:rounded-full file:border-0 file:bg-emerald-50 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-emerald-700 hover:file:bg-emerald-100"
-          />
+          <div className="mt-4">
+            <FileSelectField
+              name="receipt"
+              accept="image/jpeg,image/png,image/webp,application/pdf"
+            />
+          </div>
         </section>
       </div>
 

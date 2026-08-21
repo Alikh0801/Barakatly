@@ -7,6 +7,7 @@ import {
   type AdminContentActionState,
 } from "@/lib/admin/content-actions";
 import type { HeroItems } from "@/lib/content/defaults";
+import { FileSelectField } from "@/components/ui/FileSelectField";
 import { Spinner } from "@/components/ui/Spinner";
 
 const initialState: AdminContentActionState = {};
@@ -60,21 +61,12 @@ export function AdminHeroPanel({
               className="h-full w-full object-cover"
             />
           </div>
-          <label className="block space-y-1.5">
-            <span className="text-xs font-medium text-zinc-600">
-              Yeni şəkil (cihazdan yüklə)
-            </span>
-            <input
-              name="image"
-              type="file"
-              accept="image/jpeg,image/png,image/webp"
-              className="w-full text-sm text-zinc-600 file:mr-3 file:rounded-full file:border-0 file:bg-emerald-50 file:px-3 file:py-2 file:text-sm file:font-semibold file:text-emerald-700 hover:file:bg-emerald-100"
-            />
-            <span className="block text-xs text-zinc-500">
-              JPEG, PNG və ya WebP, maksimum 5 MB. Boş buraxsanız mövcud şəkil
-              qalır.
-            </span>
-          </label>
+          <FileSelectField
+            name="image"
+            accept="image/jpeg,image/png,image/webp"
+            caption="Yeni şəkil"
+            hint="JPEG, PNG və ya WebP, maksimum 5 MB. Boş buraxsanız mövcud şəkil qalır."
+          />
         </div>
 
         <div className="space-y-4">
