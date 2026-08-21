@@ -53,7 +53,6 @@ export default async function ProductDetailPage({
 
   if (!product) notFound();
 
-  const imageUrl = getProductImageUrl(product.product_images);
   const price = getDisplayPrice(product.final_price, product.farmer_price);
   const farmer = product.farmer;
 
@@ -69,7 +68,7 @@ export default async function ProductDetailPage({
 
       <div className="mt-8 grid items-start gap-10 lg:grid-cols-2 lg:gap-12">
         <div className="overflow-hidden rounded-3xl bg-zinc-100 ring-1 ring-zinc-200 lg:sticky lg:top-24">
-          <ProductDetailImage src={imageUrl} alt={product.title} />
+          <ProductDetailImage images={product.product_images} alt={product.title} />
         </div>
 
         <div>
