@@ -342,8 +342,8 @@ function StatTile({
   label: string;
 }) {
   return (
-    <div className="flex items-center gap-3 rounded-2xl bg-zinc-50 px-3.5 py-3 ring-1 ring-zinc-100 sm:px-4">
-      <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-700">
+    <div className="flex items-center gap-2 rounded-2xl bg-zinc-50 px-2.5 py-3 ring-1 ring-zinc-100 sm:gap-3 sm:px-4">
+      <span className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-700 sm:h-9 sm:w-9">
         {icon}
       </span>
       <div className="min-w-0">
@@ -352,7 +352,7 @@ function StatTile({
         >
           {value}
         </div>
-        <div className="truncate text-[11px] font-medium uppercase tracking-wide text-zinc-500">
+        <div className="text-[11px] font-medium leading-tight text-zinc-500 sm:truncate sm:uppercase sm:tracking-wide">
           {label}
         </div>
       </div>
