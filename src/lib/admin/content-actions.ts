@@ -2,12 +2,15 @@
 
 import { revalidatePath, updateTag } from "next/cache";
 import { requireAdmin } from "@/lib/admin/auth";
-import { uploadHeroImage } from "@/lib/admin/hero-image-upload";
+import { uploadSiteImage } from "@/lib/admin/site-image-upload";
 import {
   ABOUT_DEFAULT,
   ABOUT_DEFAULT_ITEMS,
   ABOUT_DEFAULT_VALUES,
   ABOUT_KEY,
+  AUTH_IMAGE_DEFAULT,
+  AUTH_IMAGE_DEFAULT_ITEMS,
+  AUTH_IMAGE_KEY,
   FAQ_DEFAULT,
   FAQ_DEFAULT_ITEMS,
   FAQ_KEY,
@@ -19,6 +22,7 @@ import {
   WHY_BARAKATLY_KEY,
   type AboutItems,
   type AboutValue,
+  type AuthImageItems,
   type FaqItem,
   type HeroItems,
   type WhyBarakatlyFeature,
@@ -114,7 +118,7 @@ export async function updateHeroContent(
 
   const image = formData.get("image");
   if (image instanceof File && image.size > 0) {
-    const uploaded = await uploadHeroImage(supabase, image);
+    const uploaded = await uploadSiteImage(supabase, image, "hero");
     if ("error" in uploaded) return { error: uploaded.error };
     imageUrl = uploaded.url;
   }
@@ -171,6 +175,82 @@ export async function resetHeroContent(
 
   revalidateHeroContent();
   return { success: "Default Hero məzmunu bərpa olundu." };
+}
+
+function revalidateAuthImageContent() {
+  updateTag("site-content");
+  updateTag("auth-image");
+  revalidatePath("/signin");
+  revalidatePath("/signup");
+  revalidatePath("/admin/hero");
+}
+
+export async function updateAuthImageContent(
+  _prev: AdminContentActionState,
+  formData: FormData
+): Promise<AdminContentActionState> {
+  await requireAdmin();
+
+  const image = formData.get("image");
+  if (!(image instanceof File) || image.size === 0) {
+    return { error: "Şəkil seçin." };
+  }
+
+  const supabase = await createClient();
+  const uploaded = await uploadSiteImage(supabase, image, "auth");
+  if ("error" in uploaded) return { error: uploaded.error };
+
+  const items: AuthImageItems = { imageUrl: uploaded.url };
+
+  const { error } = await supabase.from("site_content").upsert(
+    {
+      key: AUTH_IMAGE_KEY,
+      title: AUTH_IMAGE_DEFAULT.title,
+      body: AUTH_IMAGE_DEFAULT.body,
+      items,
+    },
+    { onConflict: "key" }
+  );
+
+  if (error) {
+    console.error("[admin.updateAuthImageContent]", error.message);
+    if (error.message.toLowerCase().includes("site_content")) {
+      return {
+        error:
+          "site_content cədvəli tapılmadı. Supabase-də 009_site_content.sql işə salın.",
+      };
+    }
+    return { error: "Giriş şəkli yenilənmədi." };
+  }
+
+  revalidateAuthImageContent();
+  return { success: "Giriş şəkli yeniləndi." };
+}
+
+export async function resetAuthImageContent(
+  _prev: AdminContentActionState,
+  _formData: FormData
+): Promise<AdminContentActionState> {
+  await requireAdmin();
+
+  const supabase = await createClient();
+  const { error } = await supabase.from("site_content").upsert(
+    {
+      key: AUTH_IMAGE_KEY,
+      title: AUTH_IMAGE_DEFAULT.title,
+      body: AUTH_IMAGE_DEFAULT.body,
+      items: { ...AUTH_IMAGE_DEFAULT_ITEMS },
+    },
+    { onConflict: "key" }
+  );
+
+  if (error) {
+    console.error("[admin.resetAuthImageContent]", error.message);
+    return { error: "Default giriş şəkli bərpa edilmədi." };
+  }
+
+  revalidateAuthImageContent();
+  return { success: "Default giriş şəkli bərpa olundu." };
 }
 
 function revalidateFaqContent() {

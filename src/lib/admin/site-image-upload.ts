@@ -11,14 +11,17 @@ function getImageExtension(file: File): string {
   return byType[file.type] ?? "jpg";
 }
 
-export async function uploadHeroImage(
+/** Uploads an admin-managed site image (hero, auth page, categories, ...)
+ * to the shared product-images bucket under its own folder. */
+export async function uploadSiteImage(
   supabase: SupabaseClient<Database>,
   file: File,
+  folder: string,
 ): Promise<{ url: string } | { error: string }> {
   const validationError = validateProductImage(file);
   if (validationError) return { error: validationError };
 
-  const path = `hero/${Date.now()}-${crypto.randomUUID()}.${getImageExtension(file)}`;
+  const path = `${folder}/${Date.now()}-${crypto.randomUUID()}.${getImageExtension(file)}`;
 
   const { error: uploadError } = await supabase.storage
     .from("product-images")
@@ -28,7 +31,7 @@ export async function uploadHeroImage(
     });
 
   if (uploadError) {
-    console.error("[admin.uploadHeroImage]", uploadError.message);
+    console.error("[admin.uploadSiteImage]", uploadError.message);
     return { error: "Şəkil yüklənə bilmədi. Yenidən cəhd edin." };
   }
 

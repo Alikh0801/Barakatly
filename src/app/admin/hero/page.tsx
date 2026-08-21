@@ -1,16 +1,20 @@
+import { AdminAuthImagePanel } from "@/components/admin/AdminAuthImagePanel";
 import { AdminHeroPanel } from "@/components/admin/AdminHeroPanel";
 import { AdminPageShell } from "@/components/admin/AdminPageShell";
-import { getAdminHeroContent } from "@/lib/content/queries";
+import { getAdminAuthImageContent, getAdminHeroContent } from "@/lib/content/queries";
 
 export const metadata = { title: "Hero — Admin" };
 
 export default async function AdminHeroPage() {
-  const heroContent = await getAdminHeroContent();
+  const [heroContent, authImageContent] = await Promise.all([
+    getAdminHeroContent(),
+    getAdminAuthImageContent(),
+  ]);
 
   return (
     <AdminPageShell
       title="Hero"
-      description="Ana səhifənin ilk bölməsindəki fon şəklini və mətnləri idarə edin"
+      description="Ana səhifənin ilk bölməsi və giriş səhifəsindəki şəkil/mətnləri idarə edin"
     >
       <div className="grid gap-6 xl:grid-cols-2">
         <AdminHeroPanel
@@ -18,6 +22,7 @@ export default async function AdminHeroPage() {
           body={heroContent.body}
           items={heroContent.items}
         />
+        <AdminAuthImagePanel items={authImageContent.items} />
       </div>
     </AdminPageShell>
   );

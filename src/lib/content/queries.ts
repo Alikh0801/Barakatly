@@ -4,6 +4,9 @@ import {
   ABOUT_DEFAULT_ITEMS,
   ABOUT_DEFAULT_VALUES,
   ABOUT_KEY,
+  AUTH_IMAGE_DEFAULT,
+  AUTH_IMAGE_DEFAULT_ITEMS,
+  AUTH_IMAGE_KEY,
   FAQ_DEFAULT,
   FAQ_DEFAULT_ITEMS,
   FAQ_KEY,
@@ -15,6 +18,7 @@ import {
   WHY_BARAKATLY_KEY,
   type AboutItems,
   type AboutValue,
+  type AuthImageItems,
   type FaqItem,
   type HeroItems,
   type WhyBarakatlyFeature,
@@ -223,6 +227,82 @@ export async function getAdminHeroContent(): Promise<HeroContent> {
     title: data.title,
     body: data.body,
     items: parseHeroItems(data.items),
+    updated_at: data.updated_at,
+  };
+}
+
+export type AuthImageContent = {
+  key: string;
+  items: AuthImageItems;
+  updated_at?: string;
+};
+
+function parseAuthImageItems(value: unknown): AuthImageItems {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return { ...AUTH_IMAGE_DEFAULT_ITEMS };
+  }
+
+  const record = value as Record<string, unknown>;
+  const imageUrl =
+    String(record.imageUrl ?? "").trim() || AUTH_IMAGE_DEFAULT_ITEMS.imageUrl;
+
+  return { imageUrl };
+}
+
+async function fetchAuthImageContent(): Promise<AuthImageContent> {
+  const supabase = createPublicClient();
+  const { data, error } = await supabase
+    .from("site_content")
+    .select("key, items")
+    .eq("key", AUTH_IMAGE_KEY)
+    .maybeSingle();
+
+  if (error) {
+    console.error("[content.getAuthImage]", error.message);
+    return { key: AUTH_IMAGE_DEFAULT.key, items: { ...AUTH_IMAGE_DEFAULT_ITEMS } };
+  }
+
+  if (!data) {
+    return { key: AUTH_IMAGE_DEFAULT.key, items: { ...AUTH_IMAGE_DEFAULT_ITEMS } };
+  }
+
+  return { key: data.key, items: parseAuthImageItems(data.items) };
+}
+
+export const getAuthImageContent = unstable_cache(
+  fetchAuthImageContent,
+  ["auth-image-content"],
+  { revalidate: 300, tags: ["site-content", "auth-image"] },
+);
+
+export async function getAdminAuthImageContent(): Promise<AuthImageContent> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("site_content")
+    .select("key, items, updated_at")
+    .eq("key", AUTH_IMAGE_KEY)
+    .maybeSingle();
+
+  if (error) {
+    console.error("[admin.getAuthImage]", error.message);
+    return {
+      key: AUTH_IMAGE_DEFAULT.key,
+      items: { ...AUTH_IMAGE_DEFAULT_ITEMS },
+      updated_at: new Date(0).toISOString(),
+    };
+  }
+
+  if (!data) {
+    return {
+      key: AUTH_IMAGE_DEFAULT.key,
+      items: { ...AUTH_IMAGE_DEFAULT_ITEMS },
+      updated_at: new Date(0).toISOString(),
+    };
+  }
+
+  return {
+    key: data.key,
+    items: parseAuthImageItems(data.items),
     updated_at: data.updated_at,
   };
 }

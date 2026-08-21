@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import type { Viewport } from "next";
+import { getAuthImageContent } from "@/lib/content/queries";
 
 export const viewport: Viewport = {
   width: "device-width",
@@ -29,16 +30,18 @@ function TrustChip({ children }: { children: React.ReactNode }) {
   );
 }
 
-export default function AuthLayout({
+export default async function AuthLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const authImage = await getAuthImageContent();
+
   return (
     <div className="grid min-h-dvh bg-white md:grid-cols-2">
       <div className="relative hidden md:block">
         <Image
-          src="/hero/kend.jpg"
+          src={authImage.items.imageUrl}
           alt="Barakatly — fermerdən süfrəyə"
           fill
           priority

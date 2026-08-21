@@ -99,6 +99,25 @@ export const HERO_DEFAULT = {
   items: HERO_DEFAULT_ITEMS,
 } as const;
 
+export const AUTH_IMAGE_KEY = "auth_image" as const;
+
+export type AuthImageItems = {
+  imageUrl: string;
+};
+
+export const AUTH_IMAGE_DEFAULT_URL = "/hero/kend.jpg";
+
+export const AUTH_IMAGE_DEFAULT_ITEMS: AuthImageItems = {
+  imageUrl: AUTH_IMAGE_DEFAULT_URL,
+};
+
+export const AUTH_IMAGE_DEFAULT = {
+  key: AUTH_IMAGE_KEY,
+  title: "Giriş şəkli",
+  body: "",
+  items: AUTH_IMAGE_DEFAULT_ITEMS,
+} as const;
+
 export const ABOUT_KEY = "about" as const;
 
 export type AboutValue = {
