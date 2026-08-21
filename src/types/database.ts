@@ -36,6 +36,7 @@ export type NotificationType =
   | "farmer_profile_update"
   | "product_submission"
   | "product_approval"
+  | "category_submission"
   | "payment_received"
   | "order_confirmed"
   | "order_prepared"

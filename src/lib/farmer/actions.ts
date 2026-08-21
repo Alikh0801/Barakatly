@@ -69,7 +69,13 @@ async function uniqueSubcategorySlug(
 }
 
 type ResolvedTaxonomy =
-  | { categoryId: string; subcategoryId: string; createdLabels: string[] }
+  | {
+      categoryId: string;
+      subcategoryId: string;
+      createdLabels: string[];
+      createdCategoryId?: string;
+      createdSubcategoryId?: string;
+    }
   | { error: string };
 
 /**
@@ -90,6 +96,8 @@ async function resolveTaxonomy(
 
   const admin = createAdminClient();
   const createdLabels: string[] = [];
+  let createdCategoryId: string | undefined;
+  let createdSubcategoryId: string | undefined;
 
   let categoryId = categoryIdRaw;
   if (categoryIdRaw === "__new__") {
@@ -111,6 +119,7 @@ async function resolveTaxonomy(
       return { error: "Yeni kateqoriya yaradıla bilmədi." };
     }
     categoryId = data.id;
+    createdCategoryId = data.id;
     createdLabels.push(`kateqoriya "${newCategoryName}"`);
   } else if (!categoryIdRaw) {
     return { error: "Kateqoriya seçin." };
@@ -142,6 +151,7 @@ async function resolveTaxonomy(
       return { error: "Yeni alt-kateqoriya yaradıla bilmədi." };
     }
     subcategoryId = data.id;
+    createdSubcategoryId = data.id;
     createdLabels.push(`alt-kateqoriya "${newSubcategoryName}"`);
   } else if (!subcategoryIdRaw) {
     return { error: "Alt-kateqoriya seçin." };
@@ -149,15 +159,32 @@ async function resolveTaxonomy(
     subcategoryId = subcategoryIdRaw;
   }
 
-  return { categoryId, subcategoryId, createdLabels };
+  return {
+    categoryId,
+    subcategoryId,
+    createdLabels,
+    createdCategoryId,
+    createdSubcategoryId,
+  };
 }
 
-async function notifyNewTaxonomy(farmName: string, labels: string[]) {
+async function notifyNewTaxonomy(
+  farmName: string,
+  labels: string[],
+  createdCategoryId?: string,
+  createdSubcategoryId?: string,
+) {
   if (labels.length === 0) return;
+
+  const metadata: Record<string, string> = {};
+  if (createdCategoryId) metadata.category_id = createdCategoryId;
+  if (createdSubcategoryId) metadata.subcategory_id = createdSubcategoryId;
+
   await notifyAdmins({
-    type: "general",
+    type: "category_submission",
     title: "Yeni kateqoriya təsdiq gözləyir",
     body: `${farmName} yeni ${labels.join(" və ")} əlavə etdi. Təsdiq üçün Kateqoriyalar panelinə baxın.`,
+    metadata,
   });
 }
 
@@ -465,7 +492,12 @@ export async function createProduct(
     metadata: { product_id: product.id },
   });
 
-  await notifyNewTaxonomy(farmer.farm_name, taxonomy.createdLabels);
+  await notifyNewTaxonomy(
+    farmer.farm_name,
+    taxonomy.createdLabels,
+    taxonomy.createdCategoryId,
+    taxonomy.createdSubcategoryId,
+  );
 
   revalidatePath("/farmer/products");
   revalidatePath("/farmer");
@@ -525,7 +557,12 @@ export async function updateProduct(
     return { error: "Məhsul yenilənmədi." };
   }
 
-  await notifyNewTaxonomy(farmer.farm_name, taxonomy.createdLabels);
+  await notifyNewTaxonomy(
+    farmer.farm_name,
+    taxonomy.createdLabels,
+    taxonomy.createdCategoryId,
+    taxonomy.createdSubcategoryId,
+  );
 
   if (images.length > 0) {
     const uploads = await Promise.all(

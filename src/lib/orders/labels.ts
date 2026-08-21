@@ -173,6 +173,7 @@ const ADMIN_ACTION_NOTIFICATION_TYPES = new Set<NotificationType>([
   "farmer_registration",
   "farmer_profile_update",
   "product_submission",
+  "category_submission",
   "payment_received",
 ]);
 
@@ -203,6 +204,8 @@ export function getNotificationTypeLabel(type: NotificationType): string {
       return "Məhsul";
     case "product_approval":
       return "Məhsul";
+    case "category_submission":
+      return "Kateqoriya";
     default:
       return "Bildiriş";
   }

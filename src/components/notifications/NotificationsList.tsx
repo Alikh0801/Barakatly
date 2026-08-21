@@ -13,10 +13,7 @@ import {
   getNotificationActionLabel,
   getNotificationHref,
 } from "@/lib/notifications/links";
-import {
-  getNotificationTypeLabel,
-  isActionNeededNotification,
-} from "@/lib/orders/labels";
+import { getNotificationTypeLabel } from "@/lib/orders/labels";
 import type { Notification, UserRole } from "@/types";
 import { formatDateTime } from "@/lib/format/date";
 import { Spinner } from "@/components/ui/Spinner";
@@ -24,9 +21,11 @@ import { Spinner } from "@/components/ui/Spinner";
 function NotificationRow({
   notification,
   viewerRole,
+  needsAction,
 }: {
   notification: Notification;
   viewerRole: UserRole;
+  needsAction: boolean;
 }) {
   const router = useRouter();
   const [isMarkingRead, startMarkRead] = useTransition();
@@ -35,16 +34,15 @@ function NotificationRow({
   const href = getNotificationHref(notification, viewerRole);
   const actionLabel = getNotificationActionLabel(notification, viewerRole);
   const unread = !notification.read_at;
-  const needsAction = isActionNeededNotification(notification.type);
 
   return (
     <article
       className={[
         "rounded-2xl p-5 shadow-sm transition",
         isDeleting ? "opacity-50" : "",
-        needsAction && unread
+        needsAction
           ? "bg-rose-50/60 ring-2 ring-rose-400"
-          : unread || needsAction
+          : unread
             ? "bg-emerald-50/60 ring-1 ring-emerald-200"
             : "bg-white ring-1 ring-zinc-200",
       ].join(" ")}
@@ -112,10 +110,13 @@ function NotificationRow({
 export function NotificationsList({
   notifications,
   viewerRole,
+  pendingActionIds,
 }: {
   notifications: Notification[];
   viewerRole: UserRole;
+  pendingActionIds: string[];
 }) {
+  const pendingActionSet = new Set(pendingActionIds);
   const router = useRouter();
   const [isMarkingAll, startMarkAll] = useTransition();
   const [isDeletingAll, startDeleteAll] = useTransition();
@@ -177,6 +178,7 @@ export function NotificationsList({
             key={notification.id}
             notification={notification}
             viewerRole={viewerRole}
+            needsAction={pendingActionSet.has(notification.id)}
           />
         ))}
       </div>
