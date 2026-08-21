@@ -15,7 +15,7 @@ export default async function SignInPage({
   const next = params.next?.startsWith("/") ? params.next : undefined;
 
   return (
-    <div className="w-full max-w-md rounded-3xl bg-white p-5 shadow-sm ring-1 ring-zinc-200 sm:p-8">
+    <div className="w-full max-w-md rounded-3xl bg-white p-5 shadow-xl shadow-zinc-200/60 ring-1 ring-zinc-200/70 sm:p-8">
       <div className="text-center">
         <h1 className="text-2xl font-semibold tracking-tight text-zinc-900">
           Daxil ol
