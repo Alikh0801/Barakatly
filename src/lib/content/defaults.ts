@@ -102,19 +102,21 @@ export const HERO_DEFAULT = {
 export const AUTH_IMAGE_KEY = "auth_image" as const;
 
 export type AuthImageItems = {
+  highlight: string;
   imageUrl: string;
 };
 
 export const AUTH_IMAGE_DEFAULT_URL = "/hero/kend.jpg";
 
 export const AUTH_IMAGE_DEFAULT_ITEMS: AuthImageItems = {
+  highlight: "birbaşa süfrənizə.",
   imageUrl: AUTH_IMAGE_DEFAULT_URL,
 };
 
 export const AUTH_IMAGE_DEFAULT = {
   key: AUTH_IMAGE_KEY,
-  title: "Giriş şəkli",
-  body: "",
+  title: "Fermerdən,",
+  body: "Yerli fermerlərdən təzə məhsulları kəşf edin, sifariş verin və icmanızı dəstəkləyin.",
   items: AUTH_IMAGE_DEFAULT_ITEMS,
 } as const;
 

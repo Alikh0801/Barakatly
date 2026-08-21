@@ -233,6 +233,8 @@ export async function getAdminHeroContent(): Promise<HeroContent> {
 
 export type AuthImageContent = {
   key: string;
+  title: string;
+  body: string;
   items: AuthImageItems;
   updated_at?: string;
 };
@@ -243,30 +245,47 @@ function parseAuthImageItems(value: unknown): AuthImageItems {
   }
 
   const record = value as Record<string, unknown>;
+  const highlight =
+    String(record.highlight ?? "").trim() || AUTH_IMAGE_DEFAULT_ITEMS.highlight;
   const imageUrl =
     String(record.imageUrl ?? "").trim() || AUTH_IMAGE_DEFAULT_ITEMS.imageUrl;
 
-  return { imageUrl };
+  return { highlight, imageUrl };
 }
 
 async function fetchAuthImageContent(): Promise<AuthImageContent> {
   const supabase = createPublicClient();
   const { data, error } = await supabase
     .from("site_content")
-    .select("key, items")
+    .select("key, title, body, items")
     .eq("key", AUTH_IMAGE_KEY)
     .maybeSingle();
 
   if (error) {
     console.error("[content.getAuthImage]", error.message);
-    return { key: AUTH_IMAGE_DEFAULT.key, items: { ...AUTH_IMAGE_DEFAULT_ITEMS } };
+    return {
+      key: AUTH_IMAGE_DEFAULT.key,
+      title: AUTH_IMAGE_DEFAULT.title,
+      body: AUTH_IMAGE_DEFAULT.body,
+      items: { ...AUTH_IMAGE_DEFAULT_ITEMS },
+    };
   }
 
   if (!data) {
-    return { key: AUTH_IMAGE_DEFAULT.key, items: { ...AUTH_IMAGE_DEFAULT_ITEMS } };
+    return {
+      key: AUTH_IMAGE_DEFAULT.key,
+      title: AUTH_IMAGE_DEFAULT.title,
+      body: AUTH_IMAGE_DEFAULT.body,
+      items: { ...AUTH_IMAGE_DEFAULT_ITEMS },
+    };
   }
 
-  return { key: data.key, items: parseAuthImageItems(data.items) };
+  return {
+    key: data.key,
+    title: data.title,
+    body: data.body,
+    items: parseAuthImageItems(data.items),
+  };
 }
 
 export const getAuthImageContent = unstable_cache(
@@ -279,7 +298,7 @@ export async function getAdminAuthImageContent(): Promise<AuthImageContent> {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("site_content")
-    .select("key, items, updated_at")
+    .select("key, title, body, items, updated_at")
     .eq("key", AUTH_IMAGE_KEY)
     .maybeSingle();
 
@@ -287,6 +306,8 @@ export async function getAdminAuthImageContent(): Promise<AuthImageContent> {
     console.error("[admin.getAuthImage]", error.message);
     return {
       key: AUTH_IMAGE_DEFAULT.key,
+      title: AUTH_IMAGE_DEFAULT.title,
+      body: AUTH_IMAGE_DEFAULT.body,
       items: { ...AUTH_IMAGE_DEFAULT_ITEMS },
       updated_at: new Date(0).toISOString(),
     };
@@ -295,6 +316,8 @@ export async function getAdminAuthImageContent(): Promise<AuthImageContent> {
   if (!data) {
     return {
       key: AUTH_IMAGE_DEFAULT.key,
+      title: AUTH_IMAGE_DEFAULT.title,
+      body: AUTH_IMAGE_DEFAULT.body,
       items: { ...AUTH_IMAGE_DEFAULT_ITEMS },
       updated_at: new Date(0).toISOString(),
     };
@@ -302,6 +325,8 @@ export async function getAdminAuthImageContent(): Promise<AuthImageContent> {
 
   return {
     key: data.key,
+    title: data.title,
+    body: data.body,
     items: parseAuthImageItems(data.items),
     updated_at: data.updated_at,
   };

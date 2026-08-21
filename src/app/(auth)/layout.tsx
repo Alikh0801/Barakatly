@@ -72,13 +72,12 @@ export default async function AuthLayout({
               <TrustChip>Təsdiqlənmiş fermerlər</TrustChip>
             </div>
             <h2 className="mt-6 text-3xl font-semibold leading-tight tracking-tight text-white lg:text-[2.5rem]">
-              Fermerdən,
+              {authImage.title}
               <br />
-              <span className="text-emerald-300">birbaşa süfrənizə.</span>
+              <span className="text-emerald-300">{authImage.items.highlight}</span>
             </h2>
             <p className="mt-4 max-w-sm text-sm leading-6 text-white/75 lg:text-[15px]">
-              Yerli fermerlərdən təzə məhsulları kəşf edin, sifariş verin və
-              icmanızı dəstəkləyin.
+              {authImage.body}
             </p>
           </div>
         </div>

@@ -185,29 +185,62 @@ function revalidateAuthImageContent() {
   revalidatePath("/admin/hero");
 }
 
+type AuthImageFormResult = { title: string; body: string; items: AuthImageItems };
+
+function parseAuthImageForm(
+  formData: FormData,
+  currentImageUrl: string,
+): AuthImageFormResult | string {
+  const title = String(formData.get("title") ?? "").trim();
+  const highlight = String(formData.get("highlight") ?? "").trim();
+  const body = String(formData.get("body") ?? "").trim();
+
+  if (!title) return "Başlığın 1-ci sətri tələb olunur.";
+  if (!highlight) return "Başlığın 2-ci sətri tələb olunur.";
+  if (!body) return "Alt mətn tələb olunur.";
+  if (title.length > 60) return "Başlığın 1-ci sətri çox uzundur.";
+  if (highlight.length > 60) return "Başlığın 2-ci sətri çox uzundur.";
+  if (body.length > 300) return "Alt mətn çox uzundur.";
+
+  return {
+    title,
+    body,
+    items: { highlight, imageUrl: currentImageUrl },
+  };
+}
+
 export async function updateAuthImageContent(
   _prev: AdminContentActionState,
   formData: FormData
 ): Promise<AdminContentActionState> {
   await requireAdmin();
 
+  const supabase = await createClient();
+  const { data: existing } = await supabase
+    .from("site_content")
+    .select("items")
+    .eq("key", AUTH_IMAGE_KEY)
+    .maybeSingle();
+
+  const existingItems = existing?.items as Partial<AuthImageItems> | null;
+  let imageUrl = existingItems?.imageUrl || AUTH_IMAGE_DEFAULT_ITEMS.imageUrl;
+
   const image = formData.get("image");
-  if (!(image instanceof File) || image.size === 0) {
-    return { error: "Şəkil seçin." };
+  if (image instanceof File && image.size > 0) {
+    const uploaded = await uploadSiteImage(supabase, image, "auth");
+    if ("error" in uploaded) return { error: uploaded.error };
+    imageUrl = uploaded.url;
   }
 
-  const supabase = await createClient();
-  const uploaded = await uploadSiteImage(supabase, image, "auth");
-  if ("error" in uploaded) return { error: uploaded.error };
-
-  const items: AuthImageItems = { imageUrl: uploaded.url };
+  const parsed = parseAuthImageForm(formData, imageUrl);
+  if (typeof parsed === "string") return { error: parsed };
 
   const { error } = await supabase.from("site_content").upsert(
     {
       key: AUTH_IMAGE_KEY,
-      title: AUTH_IMAGE_DEFAULT.title,
-      body: AUTH_IMAGE_DEFAULT.body,
-      items,
+      title: parsed.title,
+      body: parsed.body,
+      items: parsed.items,
     },
     { onConflict: "key" }
   );
@@ -224,7 +257,7 @@ export async function updateAuthImageContent(
   }
 
   revalidateAuthImageContent();
-  return { success: "Giriş şəkli yeniləndi." };
+  return { success: "Giriş səhifəsi yeniləndi." };
 }
 
 export async function resetAuthImageContent(

@@ -22,7 +22,11 @@ export default async function AdminHeroPage() {
           body={heroContent.body}
           items={heroContent.items}
         />
-        <AdminAuthImagePanel items={authImageContent.items} />
+        <AdminAuthImagePanel
+          title={authImageContent.title}
+          body={authImageContent.body}
+          items={authImageContent.items}
+        />
       </div>
     </AdminPageShell>
   );

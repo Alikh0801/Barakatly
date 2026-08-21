@@ -11,7 +11,15 @@ import { Spinner } from "@/components/ui/Spinner";
 
 const initialState: AdminContentActionState = {};
 
-export function AdminAuthImagePanel({ items }: { items: AuthImageItems }) {
+export function AdminAuthImagePanel({
+  title,
+  body,
+  items,
+}: {
+  title: string;
+  body: string;
+  items: AuthImageItems;
+}) {
   const [updateState, updateAction, updatePending] = useActionState(
     updateAuthImageContent,
     initialState
@@ -24,9 +32,9 @@ export function AdminAuthImagePanel({ items }: { items: AuthImageItems }) {
   return (
     <div className="space-y-4 rounded-2xl bg-white p-4 shadow-sm sm:p-5 ring-1 ring-zinc-200 xl:col-span-2">
       <div>
-        <h2 className="text-lg font-semibold text-zinc-900">Giriş səhifəsi şəkli</h2>
+        <h2 className="text-lg font-semibold text-zinc-900">Giriş səhifəsi</h2>
         <p className="mt-1 text-sm text-zinc-600">
-          Daxil ol və qeydiyyat səhifələrindəki şəkli dəyişin.
+          Daxil ol və qeydiyyat səhifələrindəki şəkli və mətnləri dəyişin.
         </p>
       </div>
 
@@ -41,30 +49,74 @@ export function AdminAuthImagePanel({ items }: { items: AuthImageItems }) {
         </p>
       )}
 
-      <form action={updateAction} className="space-y-4">
-        <div className="aspect-[4/5] w-full max-w-xs overflow-hidden rounded-xl bg-zinc-100 ring-1 ring-zinc-200">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={items.imageUrl}
-            alt="Giriş səhifəsi şəkli"
-            className="h-full w-full object-cover"
-          />
+      <form action={updateAction} className="space-y-6">
+        <div className="space-y-4">
+          <h3 className="text-sm font-semibold text-zinc-900">Şəkil</h3>
+          <div className="aspect-[4/5] w-full max-w-xs overflow-hidden rounded-xl bg-zinc-100 ring-1 ring-zinc-200">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={items.imageUrl}
+              alt="Giriş səhifəsi şəkli"
+              className="h-full w-full object-cover"
+            />
+          </div>
+          <label className="block space-y-1.5">
+            <span className="text-xs font-medium text-zinc-600">
+              Yeni şəkil (cihazdan yüklə)
+            </span>
+            <input
+              name="image"
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              className="w-full text-sm text-zinc-600 file:mr-3 file:rounded-full file:border-0 file:bg-emerald-50 file:px-3 file:py-2 file:text-sm file:font-semibold file:text-emerald-700 hover:file:bg-emerald-100"
+            />
+            <span className="block text-xs text-zinc-500">
+              JPEG, PNG və ya WebP, maksimum 5 MB. Boş buraxsanız mövcud şəkil
+              qalır.
+            </span>
+          </label>
         </div>
-        <label className="block space-y-1.5">
-          <span className="text-xs font-medium text-zinc-600">
-            Yeni şəkil (cihazdan yüklə)
-          </span>
-          <input
-            name="image"
-            type="file"
-            required
-            accept="image/jpeg,image/png,image/webp"
-            className="w-full text-sm text-zinc-600 file:mr-3 file:rounded-full file:border-0 file:bg-emerald-50 file:px-3 file:py-2 file:text-sm file:font-semibold file:text-emerald-700 hover:file:bg-emerald-100"
-          />
-          <span className="block text-xs text-zinc-500">
-            JPEG, PNG və ya WebP, maksimum 5 MB.
-          </span>
-        </label>
+
+        <div className="space-y-4">
+          <h3 className="text-sm font-semibold text-zinc-900">Başlıq</h3>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <label className="block space-y-1.5">
+              <span className="text-xs font-medium text-zinc-600">
+                1-ci sətir
+              </span>
+              <input
+                name="title"
+                required
+                maxLength={60}
+                defaultValue={title}
+                className="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-base text-zinc-900 sm:text-sm"
+              />
+            </label>
+            <label className="block space-y-1.5">
+              <span className="text-xs font-medium text-zinc-600">
+                2-ci sətir (rəngli vurğu)
+              </span>
+              <input
+                name="highlight"
+                required
+                maxLength={60}
+                defaultValue={items.highlight}
+                className="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-base text-zinc-900 sm:text-sm"
+              />
+            </label>
+          </div>
+          <label className="block space-y-1.5">
+            <span className="text-xs font-medium text-zinc-600">Alt mətn</span>
+            <textarea
+              name="body"
+              required
+              maxLength={300}
+              rows={3}
+              defaultValue={body}
+              className="w-full resize-y rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-base text-zinc-900 sm:text-sm"
+            />
+          </label>
+        </div>
 
         <button
           type="submit"
@@ -83,7 +135,7 @@ export function AdminAuthImagePanel({ items }: { items: AuthImageItems }) {
           className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-semibold text-zinc-700 ring-1 ring-zinc-200 disabled:opacity-70"
         >
           {resetPending ? <Spinner className="h-3.5 w-3.5" /> : null}
-          Default şəklə qaytar
+          Default mətnə və şəklə qaytar
         </button>
       </form>
     </div>
