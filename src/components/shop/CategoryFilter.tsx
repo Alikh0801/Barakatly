@@ -9,46 +9,46 @@ export function CategoryFilter({
   activeSlug?: string;
 }) {
   return (
-    <div className="-mx-4 overflow-x-auto px-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden md:mx-0 md:overflow-visible md:px-0">
-      <div className="flex w-max min-w-full flex-nowrap justify-center gap-2 md:w-auto md:min-w-0 md:flex-wrap md:justify-start">
+    <div className="space-y-1">
+      <Link
+        href="/shop"
+        prefetch
+        className={[
+          "flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-sm font-medium transition",
+          !activeSlug
+            ? "bg-emerald-50 text-emerald-800"
+            : "text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900",
+        ].join(" ")}
+      >
+        Hamısı
+      </Link>
+      {categories.map((category) => (
         <Link
-          href="/shop"
+          key={category.id}
+          href={`/shop?category=${category.slug}`}
           prefetch
           className={[
-            "inline-flex shrink-0 items-center rounded-full px-4 py-2 text-sm font-medium ring-1 transition",
-            !activeSlug
-              ? "bg-emerald-600 text-white ring-emerald-600"
-              : "bg-white text-zinc-700 ring-zinc-200 hover:bg-emerald-50",
+            "flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-sm font-medium transition",
+            activeSlug === category.slug
+              ? "bg-emerald-50 text-emerald-800"
+              : "text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900",
           ].join(" ")}
         >
-          Hamısı
+          {category.image_url ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={category.image_url}
+              alt=""
+              className="h-5 w-5 shrink-0 rounded-full object-cover"
+            />
+          ) : category.icon ? (
+            <span aria-hidden="true" className="shrink-0">
+              {category.icon}
+            </span>
+          ) : null}
+          <span className="truncate">{category.name_az}</span>
         </Link>
-        {categories.map((category) => (
-          <Link
-            key={category.id}
-            href={`/shop?category=${category.slug}`}
-            prefetch
-            className={[
-              "inline-flex shrink-0 items-center gap-1.5 rounded-full px-4 py-2 text-sm font-medium ring-1 transition",
-              activeSlug === category.slug
-                ? "bg-emerald-600 text-white ring-emerald-600"
-                : "bg-white text-zinc-700 ring-zinc-200 hover:bg-emerald-50",
-            ].join(" ")}
-          >
-            {category.image_url ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={category.image_url}
-                alt=""
-                className="h-5 w-5 rounded-full object-cover"
-              />
-            ) : category.icon ? (
-              <span aria-hidden="true">{category.icon}</span>
-            ) : null}
-            {category.name_az}
-          </Link>
-        ))}
-      </div>
+      ))}
     </div>
   );
 }

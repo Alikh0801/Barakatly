@@ -22,8 +22,8 @@ export {
 } from "./OrdersSkeleton";
 export { ProductDetailSkeleton } from "./ProductDetailSkeleton";
 export {
-  CategoryFilterSkeleton,
   ProductCardSkeleton,
   ProductGridSkeleton,
+  ShopFiltersSkeleton,
   ShopPageSkeleton,
 } from "./ShopSkeleton";
