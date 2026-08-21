@@ -70,6 +70,7 @@ export async function approveFarmer(
   revalidatePath("/admin/farmers");
   revalidatePath("/admin", "layout");
   revalidatePath("/farmer");
+  revalidatePath("/notifications");
   return { success: "Fermer təsdiqləndi." };
 }
 
@@ -109,6 +110,7 @@ export async function rejectFarmer(
 
   revalidatePath("/admin/farmers");
   revalidatePath("/admin", "layout");
+  revalidatePath("/notifications");
   return { success: "Fermer rədd edildi." };
 }
 
@@ -166,6 +168,7 @@ export async function approveFarmerProfileEdit(
   revalidatePath("/farmer");
   revalidatePath("/farmers");
   revalidatePath(`/farmers/${farmerId}`);
+  revalidatePath("/notifications");
   updateTag("farmers");
 
   return { success: "Dəyişikliklər təsdiqləndi və yayımlandı." };
@@ -219,6 +222,7 @@ export async function rejectFarmerProfileEdit(
   revalidatePath("/admin/farmers");
   revalidatePath("/admin", "layout");
   revalidatePath("/farmer");
+  revalidatePath("/notifications");
 
   return { success: "Dəyişikliklər rədd edildi." };
 }
@@ -266,6 +270,7 @@ export async function suspendFarmer(
   revalidatePath("/admin", "layout");
   revalidatePath("/farmer");
   revalidatePath("/farmers");
+  revalidatePath("/notifications");
   return { success: "Fermer deaktiv edildi." };
 }
 
@@ -348,6 +353,7 @@ export async function deleteFarmer(
   revalidatePath("/farmer");
   revalidatePath("/farmers");
   revalidatePath("/shop");
+  revalidatePath("/notifications");
   return { success: "Fermer bazadan silindi." };
 }
 
@@ -398,6 +404,7 @@ export async function approveProduct(
   revalidatePath("/admin/products");
   revalidatePath("/admin", "layout");
   revalidatePath("/farmer/products");
+  revalidatePath("/notifications");
   revalidateProductCatalog(productId);
   return { success: "Məhsul təsdiqləndi." };
 }
@@ -448,6 +455,7 @@ export async function updateProductFinalPrice(
   revalidatePath("/admin/products");
   revalidatePath("/admin", "layout");
   revalidatePath("/farmer/products");
+  revalidatePath("/notifications");
   revalidateProductCatalog(productId);
   return { success: "Son qiymət yeniləndi." };
 }
@@ -541,6 +549,7 @@ export async function rejectProduct(
   revalidatePath("/admin/products");
   revalidatePath("/admin", "layout");
   revalidatePath("/farmer/products");
+  revalidatePath("/notifications");
   revalidateProductCatalog(productId);
   return { success: "Məhsul rədd edildi." };
 }
@@ -642,5 +651,6 @@ export async function toggleCourierActive(
   });
 
   revalidatePath("/admin/couriers");
+  revalidatePath("/notifications");
   return { success: "Kuryer statusu yeniləndi." };
 }

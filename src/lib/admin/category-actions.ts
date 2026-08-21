@@ -197,6 +197,7 @@ export async function approveCategory(
   }
 
   revalidateCategories();
+  revalidatePath("/notifications");
   return { success: "Kateqoriya təsdiqləndi." };
 }
 
@@ -288,6 +289,7 @@ export async function approveSubcategory(
   }
 
   revalidateCategories();
+  revalidatePath("/notifications");
   return { success: "Alt kateqoriya təsdiqləndi." };
 }
 
