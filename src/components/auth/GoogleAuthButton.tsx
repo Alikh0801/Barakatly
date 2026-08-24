@@ -101,7 +101,7 @@ export function GoogleAuthButton({ next }: { next?: string }) {
     setError("");
 
     const safeNext =
-      next && next.startsWith("/") && !next.startsWith("//") ? next : "/";
+      next && next.startsWith("/") && !next.startsWith("//") ? next : "/shop";
 
     const supabase = createClient();
     const { data, error: oauthError } = await supabase.auth.signInWithOAuth({

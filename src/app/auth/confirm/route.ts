@@ -7,7 +7,7 @@ export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
   const tokenHash = searchParams.get("token_hash");
   const type = searchParams.get("type") as EmailOtpType | null;
-  const next = searchParams.get("next") ?? "/";
+  const next = searchParams.get("next") ?? "/shop";
 
   if (!tokenHash || !type) {
     return NextResponse.redirect(`${origin}/signin?error=auth`);
@@ -34,6 +34,6 @@ export async function GET(request: Request) {
   }
 
   const safeNext =
-    next.startsWith("/") && !next.startsWith("//") ? next : "/";
+    next.startsWith("/") && !next.startsWith("//") ? next : "/shop";
   return NextResponse.redirect(`${origin}${safeNext}`);
 }

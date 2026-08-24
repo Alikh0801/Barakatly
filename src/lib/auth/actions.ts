@@ -46,7 +46,7 @@ export async function signIn(
   }
 
   const safeNext =
-    next.startsWith("/") && !next.startsWith("//") ? next : "/";
+    next.startsWith("/") && !next.startsWith("//") ? next : "/shop";
   redirect(safeNext);
 }
 
@@ -107,7 +107,7 @@ export async function signUp(
     return { otpEmail: email };
   }
 
-  redirect("/");
+  redirect("/shop");
 }
 
 export async function verifySignupOtp(
@@ -153,7 +153,7 @@ export async function verifySignupOtp(
       metadata: { farmer_id: farmer.id },
     });
   }
-  redirect("/");
+  redirect("/shop");
 }
 
 export async function resendSignupOtp(
