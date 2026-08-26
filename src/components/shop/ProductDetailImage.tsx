@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useRef, useState, type TouchEvent } from "react";
+import { useEffect, useRef, useState, type TouchEvent } from "react";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { ProductImagePlaceholder } from "@/components/shop/ProductImagePlaceholder";
 
@@ -28,6 +28,19 @@ function ArrowIcon({ direction }: { direction: "left" | "right" }) {
   );
 }
 
+function CloseIcon() {
+  return (
+    <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" className="h-5 w-5">
+      <path
+        d="M5 5l10 10M15 5 5 15"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
 export function ProductDetailImage({
   images,
   alt,
@@ -38,7 +51,28 @@ export function ProductDetailImage({
   const sorted = [...images].sort((a, b) => a.sort_order - b.sort_order);
   const [activeIndex, setActiveIndex] = useState(0);
   const [loaded, setLoaded] = useState(false);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
   const touchStartX = useRef<number | null>(null);
+
+  function showImage(index: number) {
+    const next = (index + sorted.length) % sorted.length;
+    setActiveIndex(next);
+    setLoaded(false);
+  }
+
+  useEffect(() => {
+    if (!lightboxOpen) return;
+
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") setLightboxOpen(false);
+      if (event.key === "ArrowLeft") showImage(activeIndex - 1);
+      if (event.key === "ArrowRight") showImage(activeIndex + 1);
+    }
+
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lightboxOpen, activeIndex]);
 
   if (sorted.length === 0) {
     return <ProductImagePlaceholder className="min-h-[280px] w-full" />;
@@ -47,17 +81,11 @@ export function ProductDetailImage({
   const active = sorted[Math.min(activeIndex, sorted.length - 1)];
   const hasMultiple = sorted.length > 1;
 
-  function showImage(index: number) {
-    const next = (index + sorted.length) % sorted.length;
-    setActiveIndex(next);
-    setLoaded(false);
-  }
-
-  function handleTouchStart(event: TouchEvent<HTMLDivElement>) {
+  function handleTouchStart(event: TouchEvent) {
     touchStartX.current = event.touches[0]?.clientX ?? null;
   }
 
-  function handleTouchEnd(event: TouchEvent<HTMLDivElement>) {
+  function handleTouchEnd(event: TouchEvent) {
     if (touchStartX.current === null) return;
     const endX = event.changedTouches[0]?.clientX ?? touchStartX.current;
     const delta = endX - touchStartX.current;
@@ -71,7 +99,7 @@ export function ProductDetailImage({
   return (
     <div>
       <div
-        className="relative aspect-square w-full max-w-[480px] mx-auto bg-zinc-50 lg:aspect-[4/3]"
+        className="relative aspect-[4/3] w-full max-w-[420px] mx-auto bg-zinc-50"
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
       >
@@ -84,10 +112,11 @@ export function ProductDetailImage({
           alt={alt}
           fill
           priority
-          sizes="(max-width: 1024px) 100vw, 480px"
+          sizes="(max-width: 1024px) 100vw, 420px"
           onLoad={() => setLoaded(true)}
+          onClick={() => setLightboxOpen(true)}
           className={[
-            "object-cover transition-opacity duration-300",
+            "cursor-zoom-in object-contain transition-opacity duration-300",
             loaded ? "opacity-100" : "opacity-0",
           ].join(" ")}
         />
@@ -150,6 +179,61 @@ export function ProductDetailImage({
               />
             </button>
           ))}
+        </div>
+      ) : null}
+
+      {lightboxOpen ? (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label={alt}
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 p-4"
+          onClick={() => setLightboxOpen(false)}
+        >
+          <button
+            type="button"
+            onClick={() => setLightboxOpen(false)}
+            aria-label="Bağla"
+            className="absolute right-4 top-4 inline-flex h-11 w-11 items-center justify-center rounded-full bg-white/10 text-white ring-1 ring-white/20 transition hover:bg-white/20"
+          >
+            <CloseIcon />
+          </button>
+
+          <div
+            className="relative h-full w-full max-w-5xl"
+            onClick={(event) => event.stopPropagation()}
+            onTouchStart={handleTouchStart}
+            onTouchEnd={handleTouchEnd}
+          >
+            <Image
+              src={active.url}
+              alt={alt}
+              fill
+              sizes="100vw"
+              className="object-contain"
+            />
+
+            {hasMultiple ? (
+              <>
+                <button
+                  type="button"
+                  onClick={() => showImage(activeIndex - 1)}
+                  aria-label="Əvvəlki şəkil"
+                  className="absolute left-2 top-1/2 inline-flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-white/10 text-white ring-1 ring-white/20 transition hover:bg-white/20 sm:left-4"
+                >
+                  <ArrowIcon direction="left" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => showImage(activeIndex + 1)}
+                  aria-label="Növbəti şəkil"
+                  className="absolute right-2 top-1/2 inline-flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-white/10 text-white ring-1 ring-white/20 transition hover:bg-white/20 sm:right-4"
+                >
+                  <ArrowIcon direction="right" />
+                </button>
+              </>
+            ) : null}
+          </div>
         </div>
       ) : null}
     </div>
