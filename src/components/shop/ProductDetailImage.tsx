@@ -9,6 +9,25 @@ type ProductImage = { url: string; sort_order: number };
 
 const SWIPE_THRESHOLD_PX = 40;
 
+function ArrowIcon({ direction }: { direction: "left" | "right" }) {
+  return (
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 20 20"
+      fill="none"
+      className="h-5 w-5"
+    >
+      <path
+        d={direction === "left" ? "M12.5 5 7.5 10l5 5" : "M7.5 5l5 5-5 5"}
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
 function CloseIcon() {
   return (
     <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" className="h-5 w-5">
@@ -102,6 +121,27 @@ export function ProductDetailImage({
             loaded ? "opacity-100" : "opacity-0",
           ].join(" ")}
         />
+
+        {hasMultiple ? (
+          <>
+            <button
+              type="button"
+              onClick={() => showImage(activeIndex - 1)}
+              aria-label="Əvvəlki şəkil"
+              className="absolute left-2 top-1/2 inline-flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-zinc-700 shadow-sm ring-1 ring-black/5 transition hover:bg-white"
+            >
+              <ArrowIcon direction="left" />
+            </button>
+            <button
+              type="button"
+              onClick={() => showImage(activeIndex + 1)}
+              aria-label="Növbəti şəkil"
+              className="absolute right-2 top-1/2 inline-flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-zinc-700 shadow-sm ring-1 ring-black/5 transition hover:bg-white"
+            >
+              <ArrowIcon direction="right" />
+            </button>
+          </>
+        ) : null}
       </div>
 
       {hasMultiple ? (
@@ -162,6 +202,27 @@ export function ProductDetailImage({
               sizes="100vw"
               className="object-contain"
             />
+
+            {hasMultiple ? (
+              <>
+                <button
+                  type="button"
+                  onClick={() => showImage(activeIndex - 1)}
+                  aria-label="Əvvəlki şəkil"
+                  className="absolute left-2 top-1/2 inline-flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-white/10 text-white ring-1 ring-white/20 transition hover:bg-white/20 sm:left-4"
+                >
+                  <ArrowIcon direction="left" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => showImage(activeIndex + 1)}
+                  aria-label="Növbəti şəkil"
+                  className="absolute right-2 top-1/2 inline-flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-white/10 text-white ring-1 ring-white/20 transition hover:bg-white/20 sm:right-4"
+                >
+                  <ArrowIcon direction="right" />
+                </button>
+              </>
+            ) : null}
           </div>
         </div>
       ) : null}
