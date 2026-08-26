@@ -99,25 +99,24 @@ export function ProductDetailImage({
   return (
     <div>
       <div
-        className="relative w-full min-h-[280px] bg-zinc-50"
+        className="relative aspect-[4/3] w-full bg-zinc-50"
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
       >
         {!loaded ? (
-          <Skeleton className="absolute inset-0 min-h-[280px] w-full rounded-none" />
+          <Skeleton className="absolute inset-0 rounded-none" />
         ) : null}
         <Image
           key={active.url}
           src={active.url}
           alt={alt}
-          width={1200}
-          height={900}
+          fill
           priority
           sizes="(max-width: 1024px) 100vw, 50vw"
           onLoad={() => setLoaded(true)}
           onClick={() => setLightboxOpen(true)}
           className={[
-            "mx-auto block h-auto w-full cursor-zoom-in object-contain transition-opacity duration-300",
+            "cursor-zoom-in object-contain transition-opacity duration-300",
             loaded ? "opacity-100" : "opacity-0",
           ].join(" ")}
         />
