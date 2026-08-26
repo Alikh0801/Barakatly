@@ -3,15 +3,20 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { ProductDetailImage } from "@/components/shop/ProductDetailImage";
 import { ProductPurchasePanel } from "@/components/shop/ProductPurchasePanel";
+import { ProductTabs } from "@/components/shop/ProductTabs";
+import { SimilarProducts } from "@/components/shop/SimilarProducts";
 import { VerifiedIcon } from "@/components/ui/VerifiedIcon";
-import { getProductById } from "@/lib/shop/queries";
+import { getProductById, getSimilarProductsByCategory } from "@/lib/shop/queries";
+import { getPublicFarmerProducts } from "@/lib/farmers/queries";
 import {
   formatPrice,
   formatUnit,
   getDisplayPrice,
   getProductImageUrl,
-  unitLabel,
 } from "@/lib/shop/format";
+
+const STATIC_RATING_AVERAGE = 4.8;
+const STATIC_RATING_TOTAL = 128;
 
 export async function generateMetadata({
   params,
@@ -43,6 +48,33 @@ export async function generateMetadata({
   };
 }
 
+function StarIcon() {
+  return (
+    <svg viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4" aria-hidden="true">
+      <path d="M10 2.5l2.35 4.76 5.25.76-3.8 3.7.9 5.23L10 14.5l-4.7 2.45.9-5.23-3.8-3.7 5.25-.76L10 2.5Z" />
+    </svg>
+  );
+}
+
+function ShieldIcon() {
+  return (
+    <svg
+      viewBox="0 0 20 20"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      className="h-4 w-4"
+      aria-hidden="true"
+    >
+      <path
+        d="M10 2.5l6 2.2v4.3c0 4-2.6 6.9-6 8.5-3.4-1.6-6-4.5-6-8.5V4.7l6-2.2Z"
+        strokeLinejoin="round"
+      />
+      <path d="m7.3 10 1.9 1.9 3.5-3.8" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
 export default async function ProductDetailPage({
   params,
 }: {
@@ -56,31 +88,71 @@ export default async function ProductDetailPage({
   const price = getDisplayPrice(product.final_price, product.farmer_price);
   const farmer = product.farmer;
 
+  const farmerProducts = farmer ? await getPublicFarmerProducts(farmer.id) : [];
+  const farmerOtherProducts = farmerProducts.filter((p) => p.id !== product.id);
+
+  const similarProducts =
+    farmerOtherProducts.length > 0
+      ? farmerOtherProducts.slice(0, 4)
+      : product.category
+        ? await getSimilarProductsByCategory(product.category.slug, product.id)
+        : [];
+
+  const similarHref =
+    farmerOtherProducts.length > 0 && farmer
+      ? `/farmers/${farmer.id}`
+      : product.category
+        ? `/shop?category=${product.category.slug}`
+        : "/shop";
+
   return (
     <div className="mx-auto w-full max-w-6xl px-4 py-10 md:px-6 md:py-12">
-      <Link
-        href="/shop"
-        prefetch
-        className="text-sm font-medium text-emerald-700 hover:underline"
-      >
-        ← Mağazaya qayıt
-      </Link>
+      <nav className="flex flex-wrap items-center gap-1.5 text-sm text-zinc-500">
+        <Link href="/shop" prefetch className="hover:text-zinc-800">
+          Mağaza
+        </Link>
+        {product.category ? (
+          <>
+            <span className="text-zinc-300">/</span>
+            <Link
+              href={`/shop?category=${product.category.slug}`}
+              prefetch
+              className="hover:text-zinc-800"
+            >
+              {product.category.name_az}
+            </Link>
+          </>
+        ) : null}
+        <span className="text-zinc-300">/</span>
+        <span className="truncate text-zinc-700">{product.title}</span>
+      </nav>
 
-      <div className="mt-8 grid items-start gap-10 lg:grid-cols-2 lg:gap-12">
+      <div className="mt-6 grid items-start gap-10 lg:grid-cols-2 lg:gap-12">
         <div className="overflow-hidden rounded-3xl bg-zinc-100 ring-1 ring-zinc-200 lg:sticky lg:top-24">
           <ProductDetailImage images={product.product_images} alt={product.title} />
         </div>
 
         <div>
-          {product.category ? (
-            <span className="inline-flex rounded-full bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-700 ring-1 ring-emerald-200">
-              {product.category.name_az}
+          <div className="flex flex-wrap items-center gap-2 text-sm text-zinc-500">
+            <span className="inline-flex items-center gap-1 font-medium text-amber-600">
+              <StarIcon />
+              {STATIC_RATING_AVERAGE.toFixed(1)}
             </span>
-          ) : null}
+            <span className="text-zinc-300">·</span>
+            <span>{STATIC_RATING_TOTAL} rəy</span>
+            <span className="text-zinc-300">·</span>
+            <span>{product.sold_count} satış</span>
+          </div>
 
-          <h1 className="mt-4 text-3xl font-semibold tracking-tight text-zinc-900 md:text-4xl">
+          <h1 className="mt-2 text-3xl font-semibold tracking-tight text-zinc-900 md:text-4xl">
             {product.title}
           </h1>
+
+          {product.description ? (
+            <p className="mt-2 line-clamp-2 text-sm leading-6 text-zinc-500">
+              {product.description}
+            </p>
+          ) : null}
 
           <div className="mt-5 flex items-baseline gap-2">
             <span className="text-3xl font-semibold text-zinc-900">
@@ -91,67 +163,65 @@ export default async function ProductDetailPage({
             </span>
           </div>
 
-          {product.description ? (
-            <div className="mt-6">
-              <h2 className="text-sm font-semibold text-zinc-900">Təsvir</h2>
-              <p className="mt-2 whitespace-pre-line text-sm leading-7 text-zinc-600 md:text-base">
-                {product.description}
-              </p>
-            </div>
-          ) : (
-            <p className="mt-6 text-sm text-zinc-500">
-              Bu məhsul üçün təsvir hələ əlavə olunmayıb.
-            </p>
-          )}
+          <ProductPurchasePanel product={product} />
 
-          <section className="mt-8 border-t border-zinc-200 pt-6">
-            <h2 className="text-sm font-semibold text-zinc-900">
-              Satıcı məlumatı
-            </h2>
+          <p className="mt-4 inline-flex items-center gap-1.5 text-xs text-zinc-500">
+            <ShieldIcon />
+            Təhlükəsiz ödəniş · Fermerdən birbaşa göndərilir
+          </p>
+
+          <section className="mt-8 rounded-2xl bg-zinc-50 p-4 ring-1 ring-zinc-100">
             {farmer ? (
-              <div className="mt-3 space-y-3">
-                <div className="flex flex-wrap items-center gap-2">
-                  <Link
-                    href={`/farmers/${farmer.id}`}
-                    prefetch
-                    className="text-base font-semibold text-emerald-800 hover:underline"
-                  >
-                    {farmer.farm_name}
-                  </Link>
-                  {farmer.verified_at ? (
-                    <span className="inline-flex items-center gap-1 text-xs font-medium text-emerald-700">
-                      <VerifiedIcon className="h-4 w-4" />
-                      Təsdiqlənib
+              <div className="flex items-center gap-3">
+                <span className="inline-flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full bg-emerald-100 text-sm font-semibold text-emerald-800">
+                  {farmer.avatar_url ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={farmer.avatar_url}
+                      alt=""
+                      className="h-full w-full object-cover"
+                    />
+                  ) : (
+                    farmer.farm_name.slice(0, 2).toUpperCase()
+                  )}
+                </span>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-1.5">
+                    <span className="truncate text-sm font-semibold text-zinc-900">
+                      {farmer.farm_name}
                     </span>
+                    {farmer.verified_at ? (
+                      <VerifiedIcon className="h-4 w-4 shrink-0" />
+                    ) : null}
+                  </div>
+                  {farmer.location_text ? (
+                    <p className="truncate text-xs text-zinc-500">
+                      {farmer.location_text}
+                    </p>
                   ) : null}
                 </div>
-                {farmer.location_text ? (
-                  <p className="text-sm text-zinc-600">{farmer.location_text}</p>
-                ) : null}
-                {farmer.description ? (
-                  <p className="text-sm leading-6 text-zinc-600">
-                    {farmer.description}
-                  </p>
-                ) : null}
-                <dl className="grid gap-2 text-sm sm:grid-cols-2">
-                  <div>
-                    <dt className="text-zinc-500">Mövcud miqdar</dt>
-                    <dd className="mt-0.5 font-medium text-zinc-900">
-                      {product.quantity_available} {unitLabel(product.unit_type)}
-                    </dd>
-                  </div>
-                </dl>
+                <Link
+                  href={`/farmers/${farmer.id}`}
+                  prefetch
+                  className="shrink-0 rounded-full bg-white px-3.5 py-2 text-xs font-semibold text-zinc-700 ring-1 ring-zinc-200 transition hover:bg-zinc-100"
+                >
+                  Profil
+                </Link>
               </div>
             ) : (
-              <p className="mt-3 text-sm text-zinc-500">
-                Satıcı məlumatı mövcud deyil.
-              </p>
+              <p className="text-sm text-zinc-500">Satıcı məlumatı mövcud deyil.</p>
             )}
           </section>
-
-          <ProductPurchasePanel product={product} />
         </div>
       </div>
+
+      <ProductTabs description={product.description} />
+
+      <SimilarProducts
+        title="Bənzər məhsullar"
+        products={similarProducts}
+        viewAllHref={similarHref}
+      />
     </div>
   );
 }

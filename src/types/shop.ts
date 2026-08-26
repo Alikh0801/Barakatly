@@ -34,6 +34,7 @@ export type ProductDetail = Omit<ProductListItem, "farmer"> & {
     description: string | null;
     location_text: string | null;
     verified_at: string | null;
+    avatar_url: string | null;
     status: string;
   } | null;
 };
