@@ -4,12 +4,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { addToCart } from "@/lib/cart/actions";
 import type { ProductDetail } from "@/types/shop";
-import {
-  formatPrice,
-  formatUnit,
-  getDisplayPrice,
-  unitLabel,
-} from "@/lib/shop/format";
+import { formatPrice, getDisplayPrice, unitLabel } from "@/lib/shop/format";
 
 export function ProductPurchasePanel({ product }: { product: ProductDetail }) {
   const router = useRouter();
@@ -61,58 +56,54 @@ export function ProductPurchasePanel({ product }: { product: ProductDetail }) {
   }
 
   return (
-    <div className="mt-8 space-y-5">
-      <div>
-        <div className="text-sm font-medium text-zinc-700">Say</div>
-        <div className="mt-2 flex flex-wrap items-center gap-3">
-          <div className="inline-flex items-center rounded-xl bg-white ring-1 ring-zinc-200">
-            <button
-              type="button"
-              onClick={decrease}
-              disabled={outOfStock || quantity <= 1}
-              className="h-11 w-11 text-lg font-semibold text-zinc-700 transition hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-40"
-              aria-label="Azalt"
-            >
-              −
-            </button>
-            <span className="min-w-10 text-center text-base font-semibold text-zinc-900">
-              {quantity}
-            </span>
-            <button
-              type="button"
-              onClick={increase}
-              disabled={outOfStock || quantity >= maxQty}
-              className="h-11 w-11 text-lg font-semibold text-zinc-700 transition hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-40"
-              aria-label="Artır"
-            >
-              +
-            </button>
-          </div>
-          <p className="text-sm text-zinc-500">
-            Maksimum {product.quantity_available} {unitLabel(product.unit_type)}
-          </p>
+    <div className="mt-6 rounded-2xl bg-zinc-50 p-5 ring-1 ring-zinc-100">
+      <div className="flex items-center justify-between gap-3">
+        <span className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
+          Miqdar
+        </span>
+        <div className="inline-flex items-center rounded-xl bg-white ring-1 ring-zinc-200">
+          <button
+            type="button"
+            onClick={decrease}
+            disabled={outOfStock || quantity <= 1}
+            className="h-10 w-10 text-lg font-semibold text-zinc-700 transition hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-40"
+            aria-label="Azalt"
+          >
+            −
+          </button>
+          <span className="min-w-9 text-center text-base font-semibold text-zinc-900">
+            {quantity}
+          </span>
+          <button
+            type="button"
+            onClick={increase}
+            disabled={outOfStock || quantity >= maxQty}
+            className="h-10 w-10 text-lg font-semibold text-zinc-700 transition hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-40"
+            aria-label="Artır"
+          >
+            +
+          </button>
         </div>
       </div>
+      <p className="mt-1.5 text-sm text-zinc-500">
+        {outOfStock
+          ? "Stokda yoxdur"
+          : `Anbarda ${product.quantity_available} ${unitLabel(product.unit_type)} qalıb`}
+      </p>
 
-      <div className="flex items-baseline justify-between gap-3">
-        <div>
-          <div className="text-sm text-zinc-500">Cəmi</div>
-          <div className="mt-1 text-2xl font-semibold text-zinc-900">
-            {formatPrice(lineTotal)}
-          </div>
-        </div>
-        <div className="text-right text-sm text-zinc-500">
-          {formatPrice(price)}
-          {formatUnit(product.unit_type)}
+      <div className="mt-4 border-t border-zinc-200 pt-4">
+        <div className="text-sm text-zinc-500">Cəmi</div>
+        <div className="mt-1 text-2xl font-semibold text-zinc-900">
+          {formatPrice(lineTotal)}
         </div>
       </div>
 
       {outOfStock ? (
-        <p className="rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-800 ring-1 ring-amber-200">
+        <p className="mt-4 rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-800 ring-1 ring-amber-200">
           Bu məhsul hazırda stokda yoxdur.
         </p>
       ) : (
-        <div className="grid gap-3 sm:grid-cols-2">
+        <div className="mt-4 grid gap-3 sm:grid-cols-2">
           <button
             type="button"
             onClick={handleAddToCart}
