@@ -12,10 +12,13 @@ const geistSans = Geist({
   display: "swap",
 });
 
+// font-mono only appears in admin, checkout and order pages. Preloading it
+// from the root layout put a competing font request in front of every LCP.
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
   display: "swap",
+  preload: false,
 });
 
 const appUrl = getAppUrl();

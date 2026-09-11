@@ -44,7 +44,9 @@ export default async function AuthLayout({
           src={authImage.items.imageUrl}
           alt="Barakatly — fermerdən süfrəyə"
           fill
-          priority
+          // eager rather than preload: this panel is hidden below md, and a
+          // preload <link> would pull it on phones that never show it.
+          loading="eager"
           sizes="50vw"
           className="object-cover"
         />

@@ -11,7 +11,7 @@ export function ImageWithSkeleton({
   skeletonClassName = "",
   fill = true,
   sizes = "(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw",
-  priority = false,
+  preload = false,
 }: {
   src: string;
   alt: string;
@@ -20,7 +20,7 @@ export function ImageWithSkeleton({
   /** Stretch the image to fill the parent box. */
   fill?: boolean;
   sizes?: string;
-  priority?: boolean;
+  preload?: boolean;
 }) {
   const [loaded, setLoaded] = useState(false);
 
@@ -48,7 +48,7 @@ export function ImageWithSkeleton({
         alt={alt}
         fill={fill}
         sizes={sizes}
-        priority={priority}
+        preload={preload}
         onLoad={() => setLoaded(true)}
         className={[
           fill ? "z-10 object-cover" : "relative z-10",

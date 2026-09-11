@@ -111,7 +111,7 @@ export function ProductDetailImage({
           src={active.url}
           alt={alt}
           fill
-          priority
+          preload
           sizes="(max-width: 1024px) 100vw, 50vw"
           onLoad={() => setLoaded(true)}
           onClick={() => setLightboxOpen(true)}

@@ -61,7 +61,7 @@ export function SiteHeader({
             alt="Barakatly"
             width={36}
             height={36}
-            priority
+            loading="eager"
             className="h-9 w-9 shrink-0 rounded-full object-cover ring-1 ring-black/5"
           />
           <span

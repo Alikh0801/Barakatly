@@ -99,13 +99,13 @@ button:not(:disabled) {
   }
 }
 
-@keyframes hero-fade-up {
+/* Deliberately transform-only: an opacity ramp on the hero copy keeps the
+   LCP text "unpainted" for the length of the animation. */
+@keyframes hero-rise {
   from {
-    opacity: 0;
     transform: translateY(18px);
   }
   to {
-    opacity: 1;
     transform: translateY(0);
   }
 }
