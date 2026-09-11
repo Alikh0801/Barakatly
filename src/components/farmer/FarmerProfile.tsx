@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { Syne } from "next/font/google";
 import { useActionState, useEffect, useRef, useState } from "react";
@@ -172,11 +173,14 @@ function FarmerAvatar({
   className?: string;
 }) {
   if (url) {
+    // 96 is the largest size any caller renders (sm:h-24). The class name
+    // still drives the displayed size; these only set the srcset and ratio.
     return (
-      // eslint-disable-next-line @next/next/no-img-element
-      <img
+      <Image
         src={url}
         alt={name}
+        width={96}
+        height={96}
         className={`rounded-full object-cover ${className}`}
       />
     );

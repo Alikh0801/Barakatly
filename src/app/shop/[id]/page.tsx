@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
@@ -175,10 +176,11 @@ export default async function ProductDetailPage({
               <div className="flex items-center gap-3">
                 <span className="inline-flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full bg-emerald-100 text-sm font-semibold text-emerald-800">
                   {farmer.avatar_url ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
+                    <Image
                       src={farmer.avatar_url}
                       alt=""
+                      width={44}
+                      height={44}
                       className="h-full w-full object-cover"
                     />
                   ) : (

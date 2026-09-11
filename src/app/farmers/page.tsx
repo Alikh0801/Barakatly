@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import type { Metadata } from "next";
 import { Syne } from "next/font/google";
@@ -56,10 +57,11 @@ export default async function FarmersPage() {
               >
                 <div className="flex items-start gap-3">
                   {farmer.avatar_url ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
+                    <Image
                       src={farmer.avatar_url}
                       alt=""
+                      width={64}
+                      height={64}
                       className="h-16 w-16 shrink-0 rounded-full object-cover ring-2 ring-zinc-100"
                     />
                   ) : (
