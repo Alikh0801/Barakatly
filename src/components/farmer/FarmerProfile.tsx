@@ -573,43 +573,67 @@ function ProfileAboutForm({
   );
 }
 
+type ComposerPreview = {
+  file: File;
+  url: string;
+  kind: "image" | "video";
+  name: string;
+};
+
 function BlogComposer() {
   const [state, action, pending] = useActionState(
     createFarmerBlogPost,
     initialState
   );
-  const [files, setFiles] = useState<File[]>([]);
-  const [previews, setPreviews] = useState<
-    { url: string; kind: "image" | "video"; name: string }[]
-  >([]);
+  const [previews, setPreviews] = useState<ComposerPreview[]>([]);
+  const [lastSuccess, setLastSuccess] = useState(state.success);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const liveUrlsRef = useRef<string[]>([]);
 
-  useEffect(() => {
-    const next = files.map((file) => ({
-      url: URL.createObjectURL(file),
-      kind: file.type.startsWith("video/")
-        ? ("video" as const)
-        : ("image" as const),
-      name: file.name,
-    }));
-    setPreviews(next);
-    return () => {
-      next.forEach((item) => URL.revokeObjectURL(item.url));
-    };
-  }, [files]);
-
-  useEffect(() => {
-    if (state.success) {
-      setFiles([]);
-      if (fileInputRef.current) {
-        fileInputRef.current.value = "";
-      }
+  if (state.success !== lastSuccess) {
+    setLastSuccess(state.success);
+    if (state.success && previews.length > 0) {
+      setPreviews([]);
     }
-  }, [state.success]);
+  }
+
+  // Single owner of object-URL lifetime: anything that dropped out of the
+  // preview list since the last render gets revoked here.
+  useEffect(() => {
+    const current = previews.map((preview) => preview.url);
+    for (const url of liveUrlsRef.current) {
+      if (!current.includes(url)) URL.revokeObjectURL(url);
+    }
+    liveUrlsRef.current = current;
+
+    if (current.length === 0 && fileInputRef.current?.value) {
+      fileInputRef.current.value = "";
+    }
+  }, [previews]);
+
+  useEffect(() => {
+    return () => {
+      for (const url of liveUrlsRef.current) URL.revokeObjectURL(url);
+      liveUrlsRef.current = [];
+    };
+  }, []);
 
   function syncFiles(next: File[]) {
     const limited = next.slice(0, 5);
-    setFiles(limited);
+    const nextPreviews = limited.map((file) => {
+      const existing = previews.find((preview) => preview.file === file);
+      if (existing) return existing;
+      return {
+        file,
+        url: URL.createObjectURL(file),
+        kind: file.type.startsWith("video/")
+          ? ("video" as const)
+          : ("image" as const),
+        name: file.name,
+      };
+    });
+    setPreviews(nextPreviews);
+
     if (!fileInputRef.current) return;
     const transfer = new DataTransfer();
     limited.forEach((file) => transfer.items.add(file));
@@ -617,7 +641,9 @@ function BlogComposer() {
   }
 
   function removeFile(index: number) {
-    syncFiles(files.filter((_, i) => i !== index));
+    syncFiles(
+      previews.filter((_, i) => i !== index).map((preview) => preview.file)
+    );
   }
 
   return (
@@ -693,13 +719,18 @@ function BlogComposer() {
             name="media"
             accept="image/jpeg,image/png,image/webp,video/mp4,video/webm,video/quicktime"
             multiple
-            required={files.length === 0}
+            required={previews.length === 0}
             className="sr-only"
             onChange={(event) => {
               const selected = event.target.files
                 ? Array.from(event.target.files)
                 : [];
-              syncFiles([...files, ...selected].slice(0, 5));
+              syncFiles(
+                [...previews.map((preview) => preview.file), ...selected].slice(
+                  0,
+                  5
+                )
+              );
             }}
           />
           <button
@@ -729,7 +760,7 @@ function BlogComposer() {
 
         <button
           type="submit"
-          disabled={pending || files.length === 0}
+          disabled={pending || previews.length === 0}
           className="inline-flex items-center gap-2 rounded-full bg-[#1f5c3d] px-5 py-2 text-sm font-semibold text-white disabled:opacity-50"
         >
           {pending ? <Spinner className="h-3.5 w-3.5" /> : null}

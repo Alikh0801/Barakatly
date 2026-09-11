@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useDeferredValue, useEffect, useState } from "react";
+import { useActionState, useDeferredValue, useState } from "react";
 import {
   advanceOrderStatus,
   confirmPayment,
@@ -179,7 +179,10 @@ export function AdminOrdersPanel({
     deleteOrders,
     initialState
   );
-  const [selected, setSelected] = useState<string[]>([]);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [lastDeleteSuccess, setLastDeleteSuccess] = useState(
+    deleteState.success
+  );
   const [cancelSelection, setCancelSelection] = useState<
     Record<string, boolean>
   >({});
@@ -189,33 +192,30 @@ export function AdminOrdersPanel({
     matchesAdminOrderQuery(order, deferredSearch)
   );
 
-  useEffect(() => {
-    if (deleteState.success) {
-      setSelected([]);
+  if (deleteState.success !== lastDeleteSuccess) {
+    setLastDeleteSuccess(deleteState.success);
+    if (deleteState.success && selectedIds.length > 0) {
+      setSelectedIds([]);
     }
-  }, [deleteState.success]);
+  }
 
-  useEffect(() => {
-    const visibleIds = new Set(
-      orders
-        .filter((order) => matchesAdminOrderQuery(order, deferredSearch))
-        .map((order) => order.id)
-    );
-    setSelected((prev) => prev.filter((id) => visibleIds.has(id)));
-  }, [deferredSearch, orders]);
+  // Selection is stored raw and narrowed to what is currently visible, so a
+  // hidden order can never be submitted to the delete action.
+  const visibleIds = new Set(filteredOrders.map((order) => order.id));
+  const selected = selectedIds.filter((id) => visibleIds.has(id));
 
   const allSelected =
     filteredOrders.length > 0 && selected.length === filteredOrders.length;
   const someSelected = selected.length > 0;
 
   function toggleAll() {
-    setSelected(
+    setSelectedIds(
       allSelected ? [] : filteredOrders.map((order) => order.id)
     );
   }
 
   function toggleOne(orderId: string) {
-    setSelected((prev) =>
+    setSelectedIds((prev) =>
       prev.includes(orderId)
         ? prev.filter((id) => id !== orderId)
         : [...prev, orderId]
