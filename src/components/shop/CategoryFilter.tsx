@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import type { CategoryItem } from "@/types/shop";
 
@@ -35,10 +36,11 @@ export function CategoryFilter({
           ].join(" ")}
         >
           {category.image_url ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
+            <Image
               src={category.image_url}
               alt=""
+              width={20}
+              height={20}
               className="h-5 w-5 shrink-0 rounded-full object-cover"
             />
           ) : category.icon ? (

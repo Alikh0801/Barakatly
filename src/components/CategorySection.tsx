@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { ProductCard } from "@/components/shop/ProductCard";
 import { getCategories, getProducts } from "@/lib/shop/queries";
@@ -93,10 +94,13 @@ export async function CategorySection({
                     ].join(" ")}
                   >
                     {category.image_url ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
+                      // Fixed render size, so no `sizes`: Next emits a 1x/2x
+                      // srcset, which is all a 72px tile needs.
+                      <Image
                         src={category.image_url}
                         alt=""
+                        width={72}
+                        height={72}
                         className="h-full w-full object-cover"
                       />
                     ) : (
