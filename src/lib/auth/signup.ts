@@ -35,6 +35,17 @@ export async function emailAlreadyRegistered(email: string): Promise<boolean> {
   }
 }
 
+/** Supabase: hesab var, şifrə düzgündür, amma email hələ təsdiqlənməyib. */
+export function isEmailNotConfirmed(message: string): boolean {
+  return message.toLowerCase().includes("email not confirmed");
+}
+
+/** Supabase email göndərmə limitinə çatıb (kod artıq göndərilmiş olur). */
+export function isEmailRateLimited(message: string): boolean {
+  const normalized = message.toLowerCase();
+  return normalized.includes("rate limit") || normalized.includes("too many");
+}
+
 export function translateAuthError(message: string): string {
   const normalized = message.toLowerCase();
 

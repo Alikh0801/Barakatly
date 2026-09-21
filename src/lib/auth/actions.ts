@@ -5,6 +5,8 @@ import { redirect } from "next/navigation";
 import {
   emailAlreadyRegistered,
   isDuplicateSignUpUser,
+  isEmailNotConfirmed,
+  isEmailRateLimited,
   translateAuthError,
 } from "@/lib/auth/signup";
 import { getSupabaseEnvError } from "@/lib/auth/urls";
@@ -42,6 +44,12 @@ export async function signIn(
   });
 
   if (error) {
+    // Şifrə düzgündür, amma email hələ təsdiqlənməyib: istifadəçi qeydiyyatda
+    // gələn kodu yaza bilmədən səhifəni bağlayıb. Onu OTP addımına qaytar —
+    // kod hələ də etibarlıdır, orada "yenidən göndər" də var.
+    if (isEmailNotConfirmed(error.message)) {
+      return { otpEmail: email };
+    }
     return { error: translateAuthError(error.message) };
   }
 
@@ -74,13 +82,26 @@ export async function signUp(
     return { error: "Şifrələr uyğun gəlmir." };
   }
 
-  if (await emailAlreadyRegistered(email)) {
-    return { error: "Bu email artıq qeydiyyatdadır. Daxil olun." };
-  }
-
   const captchaToken = String(formData.get("captchaToken") ?? "").trim();
 
   const supabase = await createClient();
+
+  if (await emailAlreadyRegistered(email)) {
+    // Hesab var. Email hələ təsdiqlənməyibsə resend uğurlu olur (və ya limitə
+    // düşür — bu da kodun göndərildiyini bildirir): belə halda xəta əvəzinə
+    // istifadəçini OTP addımına apar. Təsdiqlənmiş hesabda resend xəta verir.
+    const { error: resendError } = await supabase.auth.resend({
+      type: "signup",
+      email,
+      options: captchaToken ? { captchaToken } : undefined,
+    });
+
+    if (!resendError || isEmailRateLimited(resendError.message)) {
+      return { otpEmail: email };
+    }
+
+    return { error: "Bu email artıq qeydiyyatdadır. Daxil olun." };
+  }
 
   const { data, error } = await supabase.auth.signUp({
     email,
@@ -119,6 +140,7 @@ export async function verifySignupOtp(
 
   const email = String(formData.get("email") ?? "").trim();
   const token = String(formData.get("token") ?? "").trim();
+  const next = String(formData.get("next") ?? "").trim();
 
   if (!email) {
     return { error: "Email tapılmadı. Yenidən qeydiyyatdan keçin." };
@@ -153,7 +175,9 @@ export async function verifySignupOtp(
       metadata: { farmer_id: farmer.id },
     });
   }
-  redirect("/");
+
+  const safeNext = next.startsWith("/") && !next.startsWith("//") ? next : "/";
+  redirect(safeNext);
 }
 
 export async function resendSignupOtp(
@@ -164,12 +188,17 @@ export async function resendSignupOtp(
   if (envError) return { error: envError };
 
   const email = String(formData.get("email") ?? "").trim();
+  const captchaToken = String(formData.get("captchaToken") ?? "").trim();
   if (!email) {
     return { error: "Email tapılmadı. Yenidən qeydiyyatdan keçin." };
   }
 
   const supabase = await createClient();
-  const { error } = await supabase.auth.resend({ type: "signup", email });
+  const { error } = await supabase.auth.resend({
+    type: "signup",
+    email,
+    options: captchaToken ? { captchaToken } : undefined,
+  });
 
   if (error) {
     console.error("[auth.resendSignupOtp]", error.message);

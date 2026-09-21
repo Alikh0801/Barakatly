@@ -6,6 +6,7 @@ import { signIn, type AuthActionState } from "@/lib/auth/actions";
 import { GoogleAuthButton } from "@/components/auth/GoogleAuthButton";
 import { PasswordInput } from "@/components/auth/PasswordInput";
 import { Turnstile, type TurnstileHandle } from "@/components/auth/Turnstile";
+import { VerifyOtpForm } from "@/components/auth/VerifyOtpForm";
 import { Spinner } from "@/components/ui/Spinner";
 
 const initialState: AuthActionState = {};
@@ -36,6 +37,12 @@ export function SignInForm({ next }: { next?: string }) {
     }
 
     startTransition(() => formAction(formData));
+  }
+
+  // Email hələ təsdiqlənməyibsə giriş OTP addımına keçir — qeydiyyatda kodu
+  // yaza bilməyən istifadəçi bura qayıda bilir.
+  if (state.otpEmail) {
+    return <VerifyOtpForm email={state.otpEmail} next={next} />;
   }
 
   return (

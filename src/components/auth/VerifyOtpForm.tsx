@@ -1,16 +1,24 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useRef, useState, useTransition } from "react";
 import {
   resendSignupOtp,
   verifySignupOtp,
   type AuthActionState,
 } from "@/lib/auth/actions";
+import { Turnstile, type TurnstileHandle } from "@/components/auth/Turnstile";
 import { Spinner } from "@/components/ui/Spinner";
 
 const initialState: AuthActionState = {};
+const TURNSTILE_SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
 
-export function VerifyOtpForm({ email }: { email: string }) {
+export function VerifyOtpForm({
+  email,
+  next,
+}: {
+  email: string;
+  next?: string;
+}) {
   const [state, formAction, pending] = useActionState(
     verifySignupOtp,
     initialState
@@ -19,16 +27,46 @@ export function VerifyOtpForm({ email }: { email: string }) {
     resendSignupOtp,
     initialState
   );
+  const [isResending, startResend] = useTransition();
+  const [resendCaptchaError, setResendCaptchaError] = useState("");
+  const turnstileRef = useRef<TurnstileHandle>(null);
+
+  const resendBusy = resendPending || isResending;
+
+  // Supabase captcha protection also covers the resend endpoint, so this needs
+  // its own fresh token.
+  async function handleResend(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setResendCaptchaError("");
+    const formData = new FormData();
+    formData.set("email", email);
+
+    if (TURNSTILE_SITE_KEY) {
+      const token = await turnstileRef.current?.getToken();
+      if (!token) {
+        setResendCaptchaError(
+          "Təhlükəsizlik yoxlaması tamamlanmadı. Yenidən cəhd edin."
+        );
+        return;
+      }
+      formData.set("captchaToken", token);
+    }
+
+    startResend(() => resendAction(formData));
+  }
 
   return (
     <div className="space-y-4">
       <p className="text-sm text-zinc-600">
-        <span className="font-semibold text-zinc-900">{email}</span>{" "}
-        ünvanına 6 rəqəmli təsdiq kodu göndərdik. Kodu aşağıda daxil edin.
+        Hesabınızı təsdiqləmək üçün{" "}
+        <span className="font-semibold text-zinc-900">{email}</span> ünvanına
+        göndərilən 6 rəqəmli kodu daxil edin. Kod əlinizdə yoxdursa, aşağıdan
+        yenidən göndərə bilərsiniz.
       </p>
 
       <form action={formAction} className="space-y-4">
         <input type="hidden" name="email" value={email} />
+        {next ? <input type="hidden" name="next" value={next} /> : null}
         <div>
           <label htmlFor="token" className="block text-sm font-medium text-zinc-700">
             Təsdiq kodu
@@ -68,19 +106,28 @@ export function VerifyOtpForm({ email }: { email: string }) {
         </button>
       </form>
 
-      <form action={resendAction}>
-        <input type="hidden" name="email" value={email} />
+      <form onSubmit={handleResend}>
+        {TURNSTILE_SITE_KEY ? (
+          <div className="mb-3">
+            <Turnstile ref={turnstileRef} siteKey={TURNSTILE_SITE_KEY} />
+          </div>
+        ) : null}
         {resendState.success ? (
           <p className="mb-2 text-center text-sm text-emerald-700">
             {resendState.success}
           </p>
         ) : null}
+        {resendState.error || resendCaptchaError ? (
+          <p className="mb-2 text-center text-sm text-rose-700">
+            {resendCaptchaError || resendState.error}
+          </p>
+        ) : null}
         <button
           type="submit"
-          disabled={resendPending}
+          disabled={resendBusy}
           className="w-full text-center text-sm font-semibold text-emerald-700 hover:underline disabled:opacity-70"
         >
-          {resendPending ? "Göndərilir..." : "Kodu yenidən göndər"}
+          {resendBusy ? "Göndərilir..." : "Kodu yenidən göndər"}
         </button>
       </form>
     </div>
