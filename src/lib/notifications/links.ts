@@ -34,6 +34,8 @@ export function getNotificationHref(
         return "/admin/farmers";
       case "product_submission":
         return "/admin/products";
+      case "category_submission":
+        return "/admin/categories";
       case "order_confirmed":
       case "order_prepared":
       case "order_picked_up":
@@ -74,6 +76,8 @@ export function getNotificationActionLabel(
         return "Fermerlərə bax";
       case "product_submission":
         return "Məhsullara bax";
+      case "category_submission":
+        return "Kateqoriyalara bax";
       default:
         return "Sifarişlərə bax";
     }

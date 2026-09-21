@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { SolidPageShell } from "@/components/layout/SolidPageShell";
 import { NotificationsList } from "@/components/notifications/NotificationsList";
 import { getNotifications } from "@/lib/notifications/queries";
+import { resolvePendingActionNotificationIds } from "@/lib/notifications/pending";
 import { getProfile } from "@/lib/auth/session";
 
 export const metadata = {
@@ -29,6 +30,7 @@ export default async function NotificationsPage() {
   }
 
   const notifications = await getNotifications();
+  const pendingActionIds = await resolvePendingActionNotificationIds(notifications);
   const back = backLinkForRole(profile.role);
 
   return (
@@ -44,6 +46,7 @@ export default async function NotificationsPage() {
           <NotificationsList
             notifications={notifications}
             viewerRole={profile.role}
+            pendingActionIds={[...pendingActionIds]}
           />
         </div>
         <div className="mt-8">

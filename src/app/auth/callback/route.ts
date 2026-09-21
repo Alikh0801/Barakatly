@@ -14,7 +14,7 @@ async function finalizeAuthSession(origin: string, next: string) {
   }
 
   const safeNext =
-    next.startsWith("/") && !next.startsWith("//") ? next : "/";
+    next.startsWith("/") && !next.startsWith("//") ? next : "/shop";
   return NextResponse.redirect(`${origin}${safeNext}`);
 }
 
@@ -23,7 +23,7 @@ export async function GET(request: Request) {
   const code = searchParams.get("code");
   const tokenHash = searchParams.get("token_hash");
   const type = searchParams.get("type") as EmailOtpType | null;
-  const next = searchParams.get("next") ?? "/";
+  const next = searchParams.get("next") ?? "/shop";
 
   const supabase = await createClient();
 

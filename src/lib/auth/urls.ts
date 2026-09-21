@@ -29,10 +29,6 @@ export function getAuthCallbackUrl() {
   return `${getAppUrl()}/auth/callback`;
 }
 
-export function getAuthConfirmUrl() {
-  return `${getAppUrl()}/auth/confirm`;
-}
-
 function hasSupabaseEnv() {
   return Boolean(
     process.env.NEXT_PUBLIC_SUPABASE_URL &&

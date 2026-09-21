@@ -725,6 +725,8 @@ function farmerItemStatusTone(status: OrderItemStatus) {
       return "bg-zinc-100 text-zinc-700 ring-zinc-200";
     case "delivered":
       return "bg-emerald-50 text-emerald-900 ring-emerald-200";
+    case "cancelled":
+      return "bg-rose-50 text-rose-900 ring-rose-200";
     default:
       return "bg-zinc-100 text-zinc-700 ring-zinc-200";
   }

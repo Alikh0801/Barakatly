@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import {
   advanceCourierOrder,
   type CourierActionState,
@@ -17,12 +17,38 @@ import type { OrderStatus } from "@/types";
 
 const initialState: CourierActionState = {};
 
+function ReasonInput({ id }: { id: string }) {
+  return (
+    <div>
+      <label htmlFor={id} className="sr-only">
+        Səbəb
+      </label>
+      <input
+        id={id}
+        name="reason"
+        type="text"
+        required
+        placeholder="Çatdırıla bilmədiyi səbəbi qeyd edin..."
+        className="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-900"
+      />
+    </div>
+  );
+}
+
+function getCourierStatusOptionLabel(status: OrderStatus): string {
+  if (status === "cancelled") return "Çatdırıla bilmədi";
+  return getOrderStatusLabel(status);
+}
+
 function CourierOrderCard({ order }: { order: CourierOrder }) {
   const [state, action, pending] = useActionState(
     advanceCourierOrder,
     initialState
   );
   const nextStatuses = COURIER_ORDER_STATUS_TRANSITIONS[order.status] ?? [];
+  const [selectedStatus, setSelectedStatus] = useState<OrderStatus | "">(
+    nextStatuses[0] ?? ""
+  );
 
   const farmers = new Map<string, { name: string; location: string | null; items: string[] }>();
   for (const item of order.order_items) {
@@ -95,14 +121,22 @@ function CourierOrderCard({ order }: { order: CourierOrder }) {
             name="next_status"
             required
             defaultValue={nextStatuses[0]}
+            onChange={(event) =>
+              setSelectedStatus(event.target.value as OrderStatus)
+            }
             className="rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-900"
           >
             {nextStatuses.map((status) => (
               <option key={status} value={status}>
-                {getOrderStatusLabel(status as OrderStatus)}
+                {getCourierStatusOptionLabel(status as OrderStatus)}
               </option>
             ))}
           </select>
+          {selectedStatus === "cancelled" ? (
+            <div className="w-full sm:w-64">
+              <ReasonInput id={`courier-fail-reason-${order.id}`} />
+            </div>
+          ) : null}
           <button
             type="submit"
             disabled={pending}

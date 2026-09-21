@@ -13,6 +13,7 @@ import {
 import type { AdminPortalActionState } from "@/lib/admin/portal-actions";
 import type { AdminCategory } from "@/lib/admin/queries";
 import type { Subcategory } from "@/types";
+import { FileSelectField } from "@/components/ui/FileSelectField";
 import { Spinner } from "@/components/ui/Spinner";
 
 const initialState: AdminPortalActionState = {};
@@ -56,17 +57,13 @@ export function AdminCategoriesPanel({
               className="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-base text-zinc-900 sm:text-sm"
             />
           </label>
-          <label className="block space-y-1.5 sm:col-span-2 lg:col-span-1">
-            <span className="text-xs font-medium text-zinc-600">
-              Şəkil (cihazdan yüklə)
-            </span>
-            <input
+          <div className="sm:col-span-2 lg:col-span-1">
+            <FileSelectField
               name="image"
-              type="file"
               accept="image/jpeg,image/png,image/webp"
-              className="w-full text-sm text-zinc-600 file:mr-3 file:rounded-full file:border-0 file:bg-emerald-50 file:px-3 file:py-2 file:text-sm file:font-semibold file:text-emerald-700 hover:file:bg-emerald-100"
+              caption="Şəkil"
             />
-          </label>
+          </div>
         </div>
         {createState.error ? (
           <p className="rounded-xl bg-rose-50 px-3 py-2 text-sm text-rose-700">
@@ -190,19 +187,15 @@ function CategoryCard({ category }: { category: AdminCategory }) {
                 className="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-base text-zinc-900 sm:text-sm"
               />
             </label>
-            <label className="block space-y-1.5 sm:col-span-2 lg:col-span-1">
-              <span className="text-xs font-medium text-zinc-600">
-                {category.image_url
-                  ? "Yeni şəkil (dəyişmək üçün)"
-                  : "Şəkil (cihazdan yüklə)"}
-              </span>
-              <input
+            <div className="sm:col-span-2 lg:col-span-1">
+              <FileSelectField
                 name="image"
-                type="file"
                 accept="image/jpeg,image/png,image/webp"
-                className="w-full text-sm text-zinc-600 file:mr-3 file:rounded-full file:border-0 file:bg-emerald-50 file:px-3 file:py-2 file:text-sm file:font-semibold file:text-emerald-700 hover:file:bg-emerald-100"
+                caption={
+                  category.image_url ? "Yeni şəkil (dəyişmək üçün)" : "Şəkil"
+                }
               />
-            </label>
+            </div>
           </div>
         </div>
         <p className="text-xs text-zinc-500">Slug: {category.slug}</p>

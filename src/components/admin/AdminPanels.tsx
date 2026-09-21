@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useDeferredValue, useEffect, useState } from "react";
+import { useActionState, useDeferredValue, useState } from "react";
 import {
   advanceOrderStatus,
   confirmPayment,
@@ -28,6 +28,24 @@ import type { OrderStatus } from "@/types";
 type ActionResult = { error?: string; success?: string };
 
 const initialState: ActionResult = {};
+
+function ReasonInput({ id }: { id: string }) {
+  return (
+    <div>
+      <label htmlFor={id} className="sr-only">
+        Səbəb
+      </label>
+      <input
+        id={id}
+        name="reason"
+        type="text"
+        required
+        placeholder="Səbəbi qeyd edin..."
+        className="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-900"
+      />
+    </div>
+  );
+}
 
 type PendingPaymentWithReceipt = AdminPendingPayment & {
   receiptSignedUrl?: string | null;
@@ -105,12 +123,13 @@ function PendingPaymentCard({ payment }: { payment: PendingPaymentWithReceipt })
             Təsdiqlə
           </button>
         </form>
-        <form action={rejectAction} className="w-full sm:w-auto">
+        <form action={rejectAction} className="flex w-full flex-col gap-2 sm:w-64">
           <input type="hidden" name="payment_id" value={payment.id} />
+          <ReasonInput id={`payment-reject-reason-${payment.id}`} />
           <button
             type="submit"
             disabled={confirmPending || rejectPending}
-            className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-white px-4 py-2.5 text-sm font-semibold text-rose-700 ring-1 ring-rose-200 transition hover:bg-rose-50 disabled:opacity-70 sm:w-auto"
+            className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-white px-4 py-2.5 text-sm font-semibold text-rose-700 ring-1 ring-rose-200 transition hover:bg-rose-50 disabled:opacity-70"
           >
             {rejectPending ? <Spinner className="h-3.5 w-3.5" /> : null}
             Rədd et
@@ -143,10 +162,14 @@ export function PendingPaymentsPanel({
   );
 }
 
+type AdminOrderListItemWithReceipt = AdminOrderListItem & {
+  receiptSignedUrl?: string | null;
+};
+
 export function AdminOrdersPanel({
   orders,
 }: {
-  orders: AdminOrderListItem[];
+  orders: AdminOrderListItemWithReceipt[];
 }) {
   const [statusState, statusAction, statusPending] = useActionState(
     advanceOrderStatus,
@@ -156,40 +179,43 @@ export function AdminOrdersPanel({
     deleteOrders,
     initialState
   );
-  const [selected, setSelected] = useState<string[]>([]);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [lastDeleteSuccess, setLastDeleteSuccess] = useState(
+    deleteState.success
+  );
+  const [cancelSelection, setCancelSelection] = useState<
+    Record<string, boolean>
+  >({});
   const [search, setSearch] = useState("");
   const deferredSearch = useDeferredValue(search);
   const filteredOrders = orders.filter((order) =>
     matchesAdminOrderQuery(order, deferredSearch)
   );
 
-  useEffect(() => {
-    if (deleteState.success) {
-      setSelected([]);
+  if (deleteState.success !== lastDeleteSuccess) {
+    setLastDeleteSuccess(deleteState.success);
+    if (deleteState.success && selectedIds.length > 0) {
+      setSelectedIds([]);
     }
-  }, [deleteState.success]);
+  }
 
-  useEffect(() => {
-    const visibleIds = new Set(
-      orders
-        .filter((order) => matchesAdminOrderQuery(order, deferredSearch))
-        .map((order) => order.id)
-    );
-    setSelected((prev) => prev.filter((id) => visibleIds.has(id)));
-  }, [deferredSearch, orders]);
+  // Selection is stored raw and narrowed to what is currently visible, so a
+  // hidden order can never be submitted to the delete action.
+  const visibleIds = new Set(filteredOrders.map((order) => order.id));
+  const selected = selectedIds.filter((id) => visibleIds.has(id));
 
   const allSelected =
     filteredOrders.length > 0 && selected.length === filteredOrders.length;
   const someSelected = selected.length > 0;
 
   function toggleAll() {
-    setSelected(
+    setSelectedIds(
       allSelected ? [] : filteredOrders.map((order) => order.id)
     );
   }
 
   function toggleOne(orderId: string) {
-    setSelected((prev) =>
+    setSelectedIds((prev) =>
       prev.includes(orderId)
         ? prev.filter((id) => id !== orderId)
         : [...prev, orderId]
@@ -362,6 +388,17 @@ export function AdminOrdersPanel({
                       </div>
                     ) : null}
 
+                    {order.receiptSignedUrl ? (
+                      <a
+                        href={order.receiptSignedUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-full bg-zinc-100 px-4 py-2.5 text-sm font-medium text-zinc-700 ring-1 ring-zinc-200 hover:bg-zinc-200 sm:w-auto"
+                      >
+                        Ödəniş çekini gör
+                      </a>
+                    ) : null}
+
                     <details className="mt-4 rounded-xl bg-zinc-50 p-3 ring-1 ring-zinc-100">
                       <summary className="cursor-pointer text-sm font-medium text-zinc-800">
                         Sifariş keçmişi
@@ -395,6 +432,12 @@ export function AdminOrdersPanel({
                             required
                             className="mt-1 w-full rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-base text-zinc-900 sm:text-sm"
                             defaultValue=""
+                            onChange={(event) =>
+                              setCancelSelection((prev) => ({
+                                ...prev,
+                                [order.id]: event.target.value === "cancelled",
+                              }))
+                            }
                           >
                             <option value="" disabled>
                               Seçin
@@ -406,6 +449,11 @@ export function AdminOrdersPanel({
                             ))}
                           </select>
                         </div>
+                        {cancelSelection[order.id] ? (
+                          <div className="w-full sm:w-64">
+                            <ReasonInput id={`cancel-reason-${order.id}`} />
+                          </div>
+                        ) : null}
                         <button
                           type="submit"
                           disabled={statusPending}

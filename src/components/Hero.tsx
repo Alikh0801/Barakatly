@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 
 function Chip({
@@ -24,21 +25,37 @@ function Chip({
   );
 }
 
-export function Hero() {
+export function Hero({
+  title,
+  highlight,
+  body,
+  imageUrl,
+}: {
+  title: string;
+  highlight: string;
+  body: string;
+  imageUrl: string;
+}) {
   return (
     <section className="relative isolate min-h-dvh overflow-x-hidden">
-      <div
-        className="absolute inset-0 bg-cover bg-center"
-        style={{
-          backgroundImage:
-            "url(https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=2400&q=80)",
-        }}
+      {/* The LCP element. A CSS background-image would skip the optimizer
+          entirely — no AVIF/WebP, no srcset, no preload — so a 1MB upload
+          reached every phone at full size. */}
+      <Image
+        src={imageUrl}
+        alt=""
+        fill
+        preload
+        sizes="100vw"
+        className="object-cover object-center"
       />
       <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/45 to-black/10" />
       <div className="absolute inset-0 bg-black/15" />
 
       <div className="relative mx-auto flex min-h-dvh w-full max-w-6xl flex-col items-center justify-center px-4 py-24 md:items-start md:px-6">
-        <div className="w-full max-w-2xl text-center motion-safe:opacity-0 motion-safe:animate-[hero-fade-up_0.8s_cubic-bezier(0.16,1,0.3,1)_0.05s_forwards] md:text-left">
+        {/* Transform-only entrance. Starting at opacity 0 meant Lighthouse
+            counted the headline as unpainted for the whole animation. */}
+        <div className="w-full max-w-2xl text-center motion-safe:animate-[hero-rise_0.8s_cubic-bezier(0.16,1,0.3,1)_forwards] md:text-left">
           <div className="flex flex-wrap items-center justify-center gap-2 md:justify-start">
             <Chip tone="emerald">
               <svg
@@ -85,14 +102,13 @@ export function Hero() {
           </div>
 
           <h1 className="mt-5 text-3xl font-semibold leading-tight tracking-tight text-white drop-shadow-sm sm:text-4xl md:text-5xl">
-            Fermerdən,
+            {title}
             <br />
-            <span className="text-emerald-300">birbaşa süfrənizə.</span>
+            <span className="text-emerald-300">{highlight}</span>
           </h1>
 
           <p className="mt-4 max-w-xl text-sm leading-6 text-white/80 sm:text-base">
-            Mövsümi məhsulları birbaşa yerli fermerlərdən kəşf edin. Daha sağlam
-            qidalanaraq icmanızı dəstəkləyin.
+            {body}
           </p>
 
           <form

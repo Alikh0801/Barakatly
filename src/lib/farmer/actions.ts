@@ -69,7 +69,13 @@ async function uniqueSubcategorySlug(
 }
 
 type ResolvedTaxonomy =
-  | { categoryId: string; subcategoryId: string; createdLabels: string[] }
+  | {
+      categoryId: string;
+      subcategoryId: string;
+      createdLabels: string[];
+      createdCategoryId?: string;
+      createdSubcategoryId?: string;
+    }
   | { error: string };
 
 /**
@@ -90,6 +96,8 @@ async function resolveTaxonomy(
 
   const admin = createAdminClient();
   const createdLabels: string[] = [];
+  let createdCategoryId: string | undefined;
+  let createdSubcategoryId: string | undefined;
 
   let categoryId = categoryIdRaw;
   if (categoryIdRaw === "__new__") {
@@ -111,6 +119,7 @@ async function resolveTaxonomy(
       return { error: "Yeni kateqoriya yaradıla bilmədi." };
     }
     categoryId = data.id;
+    createdCategoryId = data.id;
     createdLabels.push(`kateqoriya "${newCategoryName}"`);
   } else if (!categoryIdRaw) {
     return { error: "Kateqoriya seçin." };
@@ -142,6 +151,7 @@ async function resolveTaxonomy(
       return { error: "Yeni alt-kateqoriya yaradıla bilmədi." };
     }
     subcategoryId = data.id;
+    createdSubcategoryId = data.id;
     createdLabels.push(`alt-kateqoriya "${newSubcategoryName}"`);
   } else if (!subcategoryIdRaw) {
     return { error: "Alt-kateqoriya seçin." };
@@ -149,15 +159,32 @@ async function resolveTaxonomy(
     subcategoryId = subcategoryIdRaw;
   }
 
-  return { categoryId, subcategoryId, createdLabels };
+  return {
+    categoryId,
+    subcategoryId,
+    createdLabels,
+    createdCategoryId,
+    createdSubcategoryId,
+  };
 }
 
-async function notifyNewTaxonomy(farmName: string, labels: string[]) {
+async function notifyNewTaxonomy(
+  farmName: string,
+  labels: string[],
+  createdCategoryId?: string,
+  createdSubcategoryId?: string,
+) {
   if (labels.length === 0) return;
+
+  const metadata: Record<string, string> = {};
+  if (createdCategoryId) metadata.category_id = createdCategoryId;
+  if (createdSubcategoryId) metadata.subcategory_id = createdSubcategoryId;
+
   await notifyAdmins({
-    type: "general",
+    type: "category_submission",
     title: "Yeni kateqoriya təsdiq gözləyir",
     body: `${farmName} yeni ${labels.join(" və ")} əlavə etdi. Təsdiq üçün Kateqoriyalar panelinə baxın.`,
+    metadata,
   });
 }
 
@@ -465,7 +492,12 @@ export async function createProduct(
     metadata: { product_id: product.id },
   });
 
-  await notifyNewTaxonomy(farmer.farm_name, taxonomy.createdLabels);
+  await notifyNewTaxonomy(
+    farmer.farm_name,
+    taxonomy.createdLabels,
+    taxonomy.createdCategoryId,
+    taxonomy.createdSubcategoryId,
+  );
 
   revalidatePath("/farmer/products");
   revalidatePath("/farmer");
@@ -525,7 +557,12 @@ export async function updateProduct(
     return { error: "Məhsul yenilənmədi." };
   }
 
-  await notifyNewTaxonomy(farmer.farm_name, taxonomy.createdLabels);
+  await notifyNewTaxonomy(
+    farmer.farm_name,
+    taxonomy.createdLabels,
+    taxonomy.createdCategoryId,
+    taxonomy.createdSubcategoryId,
+  );
 
   if (images.length > 0) {
     const uploads = await Promise.all(
@@ -680,13 +717,27 @@ export async function updateFarmerProfile(
     avatarUrl = uploaded.url;
   }
 
+  const proposedDescription = description || null;
+  const proposedLocationText = locationText || null;
+
+  const unchanged =
+    farmName === farmer.farm_name &&
+    proposedDescription === farmer.description &&
+    proposedLocationText === farmer.location_text &&
+    avatarUrl === farmer.avatar_url;
+
+  if (unchanged) {
+    return { success: "Dəyişiklik aşkarlanmadı." };
+  }
+
   const { error } = await supabase
     .from("farmers")
     .update({
-      farm_name: farmName,
-      description: description || null,
-      location_text: locationText || null,
-      avatar_url: avatarUrl,
+      pending_farm_name: farmName,
+      pending_description: proposedDescription,
+      pending_location_text: proposedLocationText,
+      pending_avatar_url: avatarUrl,
+      pending_submitted_at: new Date().toISOString(),
     })
     .eq("id", farmer.id);
 
@@ -695,12 +746,19 @@ export async function updateFarmerProfile(
     return { error: "Profil yenilənmədi." };
   }
 
-  revalidatePath("/farmer");
-  revalidatePath("/farmers");
-  revalidatePath(`/farmers/${farmer.id}`);
-  updateTag("farmers");
+  await notifyAdmins({
+    type: "farmer_profile_update",
+    title: "Fermer profilini yenilədi",
+    body: `${farmer.farm_name} profilində dəyişiklik etdi. Təsdiq gözləyir.`,
+    metadata: { farmer_id: farmer.id },
+  });
 
-  return { success: "Profil yeniləndi." };
+  revalidatePath("/farmer");
+
+  return {
+    success:
+      "Dəyişikliklər göndərildi. Admin təsdiqindən sonra profiliniz yenilənəcək.",
+  };
 }
 
 export async function createFarmerBlogPost(

@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
 import { requireAdmin } from "@/lib/admin/auth";
 import { notifyUser } from "@/lib/notifications/helpers";
 import { revalidateProductCatalog } from "@/lib/shop/revalidate";
@@ -70,6 +70,7 @@ export async function approveFarmer(
   revalidatePath("/admin/farmers");
   revalidatePath("/admin", "layout");
   revalidatePath("/farmer");
+  revalidatePath("/notifications");
   return { success: "Fermer təsdiqləndi." };
 }
 
@@ -79,7 +80,9 @@ export async function rejectFarmer(
 ): Promise<AdminPortalActionState> {
   await requireAdmin();
   const farmerId = String(formData.get("farmer_id") ?? "");
+  const reason = String(formData.get("reason") ?? "").trim();
   if (!farmerId) return { error: "Fermer tapılmadı." };
+  if (!reason) return { error: "Rədd səbəbini qeyd edin." };
 
   const supabase = await createClient();
   const { data: farmer } = await supabase
@@ -101,13 +104,127 @@ export async function rejectFarmer(
     userId: farmer.profile_id,
     type: "farmer_approval",
     title: "Fermer müraciəti rədd edildi",
-    body: `${farmer.farm_name} müraciətiniz rədd edildi. Yenidən müraciət etmək üçün dəstəklə əlaqə saxlayın.`,
+    body: `${farmer.farm_name} müraciətiniz rədd edildi. Səbəb: ${reason}`,
     metadata: { farmer_id: farmer.id },
   });
 
   revalidatePath("/admin/farmers");
   revalidatePath("/admin", "layout");
+  revalidatePath("/notifications");
   return { success: "Fermer rədd edildi." };
+}
+
+export async function approveFarmerProfileEdit(
+  _prev: AdminPortalActionState,
+  formData: FormData
+): Promise<AdminPortalActionState> {
+  await requireAdmin();
+  const farmerId = String(formData.get("farmer_id") ?? "");
+  if (!farmerId) return { error: "Fermer tapılmadı." };
+
+  const supabase = await createClient();
+  const { data: farmer } = await supabase
+    .from("farmers")
+    .select(
+      "id, profile_id, pending_farm_name, pending_description, pending_location_text, pending_avatar_url, pending_submitted_at",
+    )
+    .eq("id", farmerId)
+    .single();
+
+  if (!farmer || !farmer.pending_submitted_at || !farmer.pending_farm_name) {
+    return { error: "Gözləyən dəyişiklik tapılmadı." };
+  }
+
+  const { error } = await supabase
+    .from("farmers")
+    .update({
+      farm_name: farmer.pending_farm_name,
+      description: farmer.pending_description,
+      location_text: farmer.pending_location_text,
+      avatar_url: farmer.pending_avatar_url,
+      pending_farm_name: null,
+      pending_description: null,
+      pending_location_text: null,
+      pending_avatar_url: null,
+      pending_submitted_at: null,
+    })
+    .eq("id", farmerId);
+
+  if (error) {
+    console.error("[admin.approveFarmerProfileEdit]", error.message);
+    return { error: "Dəyişiklik təsdiqlənmədi." };
+  }
+
+  await notifyUser({
+    userId: farmer.profile_id,
+    type: "farmer_profile_update",
+    title: "Profil dəyişiklikləriniz təsdiqləndi",
+    body: "Göndərdiyiniz profil yenilikləri indi canlıdır.",
+    metadata: { farmer_id: farmerId },
+  });
+
+  revalidatePath("/admin/farmers");
+  revalidatePath("/admin", "layout");
+  revalidatePath("/farmer");
+  revalidatePath("/farmers");
+  revalidatePath(`/farmers/${farmerId}`);
+  revalidatePath("/notifications");
+  updateTag("farmers");
+
+  return { success: "Dəyişikliklər təsdiqləndi və yayımlandı." };
+}
+
+export async function rejectFarmerProfileEdit(
+  _prev: AdminPortalActionState,
+  formData: FormData
+): Promise<AdminPortalActionState> {
+  await requireAdmin();
+  const farmerId = String(formData.get("farmer_id") ?? "");
+  const reason = String(formData.get("reason") ?? "").trim();
+  if (!farmerId) return { error: "Fermer tapılmadı." };
+  if (!reason) return { error: "Rədd səbəbini qeyd edin." };
+
+  const supabase = await createClient();
+  const { data: farmer } = await supabase
+    .from("farmers")
+    .select("id, profile_id, pending_submitted_at")
+    .eq("id", farmerId)
+    .single();
+
+  if (!farmer || !farmer.pending_submitted_at) {
+    return { error: "Gözləyən dəyişiklik tapılmadı." };
+  }
+
+  const { error } = await supabase
+    .from("farmers")
+    .update({
+      pending_farm_name: null,
+      pending_description: null,
+      pending_location_text: null,
+      pending_avatar_url: null,
+      pending_submitted_at: null,
+    })
+    .eq("id", farmerId);
+
+  if (error) {
+    console.error("[admin.rejectFarmerProfileEdit]", error.message);
+    return { error: "Dəyişiklik rədd edilmədi." };
+  }
+
+  await notifyUser({
+    userId: farmer.profile_id,
+    type: "farmer_profile_update",
+    title: "Profil dəyişiklikləriniz rədd edildi",
+    body: `Göndərdiyiniz profil yenilikləri təsdiqlənmədi. Səbəb: ${reason}`,
+    metadata: { farmer_id: farmerId },
+  });
+
+  revalidatePath("/admin/farmers");
+  revalidatePath("/admin", "layout");
+  revalidatePath("/farmer");
+  revalidatePath("/notifications");
+
+  return { success: "Dəyişikliklər rədd edildi." };
 }
 
 export async function suspendFarmer(
@@ -116,7 +233,9 @@ export async function suspendFarmer(
 ): Promise<AdminPortalActionState> {
   await requireAdmin();
   const farmerId = String(formData.get("farmer_id") ?? "");
+  const reason = String(formData.get("reason") ?? "").trim();
   if (!farmerId) return { error: "Fermer tapılmadı." };
+  if (!reason) return { error: "Deaktiv etmə səbəbini qeyd edin." };
 
   const supabase = await createClient();
   const { data: farmer } = await supabase
@@ -142,7 +261,7 @@ export async function suspendFarmer(
     userId: farmer.profile_id,
     type: "farmer_approval",
     title: "Fermer hesabınız deaktiv edildi",
-    body: `${farmer.farm_name} hesabınız müvəqqəti dayandırılıb. Məhsullarınız satışda görünmür.`,
+    body: `${farmer.farm_name} hesabınız müvəqqəti dayandırılıb. Məhsullarınız satışda görünmür. Səbəb: ${reason}`,
     metadata: { farmer_id: farmer.id },
   });
 
@@ -151,6 +270,7 @@ export async function suspendFarmer(
   revalidatePath("/admin", "layout");
   revalidatePath("/farmer");
   revalidatePath("/farmers");
+  revalidatePath("/notifications");
   return { success: "Fermer deaktiv edildi." };
 }
 
@@ -160,7 +280,9 @@ export async function deleteFarmer(
 ): Promise<AdminPortalActionState> {
   await requireAdmin();
   const farmerId = String(formData.get("farmer_id") ?? "");
+  const reason = String(formData.get("reason") ?? "").trim();
   if (!farmerId) return { error: "Fermer tapılmadı." };
+  if (!reason) return { error: "Silmə səbəbini qeyd edin." };
 
   const supabase = await createClient();
   const { data: farmer } = await supabase
@@ -173,7 +295,9 @@ export async function deleteFarmer(
 
   const admin = createAdminClient();
 
-  // Hard delete farmer row (cascades products, images, blog, order_items).
+  // Hard delete farmer row (cascades products, images, blog). Blocked by FK
+  // if the farmer has any order_items — deleting them would destroy order
+  // history, so those farmers must be deactivated instead of deleted.
   const { error: deleteError } = await admin
     .from("farmers")
     .delete()
@@ -181,7 +305,10 @@ export async function deleteFarmer(
 
   if (deleteError) {
     console.error("[admin.deleteFarmer]", deleteError.message);
-    return { error: "Fermer silinmədi. Sifariş tarixçəsi və ya digər bağlı məlumatlar mane ola bilər." };
+    return {
+      error:
+        "Fermer silinmədi, çünki sifariş tarixçəsi var. Sifariş tarixçəsini qorumaq üçün silmək əvəzinə \"Deaktiv et\" seçimindən istifadə edin.",
+    };
   }
 
   // Keep auth account; demote profile and clear farmer metadata so they can
@@ -216,7 +343,7 @@ export async function deleteFarmer(
     userId: farmer.profile_id,
     type: "general",
     title: "Fermer hesabınız silindi",
-    body: `${farmer.farm_name} fermer profili admin tərəfindən silinib. Eyni hesabla yenidən fermer qeydiyyatından keçə bilərsiniz.`,
+    body: `${farmer.farm_name} fermer profili admin tərəfindən silinib. Səbəb: ${reason} Eyni hesabla yenidən fermer qeydiyyatından keçə bilərsiniz.`,
     metadata: { farmer_id: farmer.id },
   });
 
@@ -226,6 +353,7 @@ export async function deleteFarmer(
   revalidatePath("/farmer");
   revalidatePath("/farmers");
   revalidatePath("/shop");
+  revalidatePath("/notifications");
   return { success: "Fermer bazadan silindi." };
 }
 
@@ -276,6 +404,7 @@ export async function approveProduct(
   revalidatePath("/admin/products");
   revalidatePath("/admin", "layout");
   revalidatePath("/farmer/products");
+  revalidatePath("/notifications");
   revalidateProductCatalog(productId);
   return { success: "Məhsul təsdiqləndi." };
 }
@@ -326,6 +455,7 @@ export async function updateProductFinalPrice(
   revalidatePath("/admin/products");
   revalidatePath("/admin", "layout");
   revalidatePath("/farmer/products");
+  revalidatePath("/notifications");
   revalidateProductCatalog(productId);
   return { success: "Son qiymət yeniləndi." };
 }
@@ -382,7 +512,9 @@ export async function rejectProduct(
 ): Promise<AdminPortalActionState> {
   await requireAdmin();
   const productId = String(formData.get("product_id") ?? "");
+  const reason = String(formData.get("reason") ?? "").trim();
   if (!productId) return { error: "Məhsul tapılmadı." };
+  if (!reason) return { error: "Rədd səbəbini qeyd edin." };
 
   const supabase = await createClient();
   const { data: product } = await supabase
@@ -409,7 +541,7 @@ export async function rejectProduct(
       userId: farmer.profile_id,
       type: "product_approval",
       title: "Məhsulunuz rədd edildi",
-      body: `"${product.title}" təsdiqlənmədi. Düzəliş edib yenidən göndərin.`,
+      body: `"${product.title}" təsdiqlənmədi. Səbəb: ${reason}`,
       metadata: { product_id: product.id },
     });
   }
@@ -417,6 +549,7 @@ export async function rejectProduct(
   revalidatePath("/admin/products");
   revalidatePath("/admin", "layout");
   revalidatePath("/farmer/products");
+  revalidatePath("/notifications");
   revalidateProductCatalog(productId);
   return { success: "Məhsul rədd edildi." };
 }
@@ -492,6 +625,14 @@ export async function toggleCourierActive(
   if (!courierId) return { error: "Kuryer tapılmadı." };
 
   const supabase = await createClient();
+  const { data: courier } = await supabase
+    .from("couriers")
+    .select("id, profile_id")
+    .eq("id", courierId)
+    .single();
+
+  if (!courier) return { error: "Kuryer tapılmadı." };
+
   const { error } = await supabase
     .from("couriers")
     .update({ is_active: !isActive })
@@ -499,6 +640,17 @@ export async function toggleCourierActive(
 
   if (error) return { error: "Kuryer yenilənmədi." };
 
+  await notifyUser({
+    userId: courier.profile_id,
+    type: "general",
+    title: isActive ? "Hesabınız deaktiv edildi" : "Hesabınız aktivləşdirildi",
+    body: isActive
+      ? "Kuryer hesabınız admin tərəfindən müvəqqəti dayandırılıb. Yeni sifariş götürə bilməyəcəksiniz."
+      : "Kuryer hesabınız yenidən aktivləşdirilib. Sifariş növbəsinə daxil ola bilərsiniz.",
+    metadata: { courier_id: courier.id },
+  });
+
   revalidatePath("/admin/couriers");
+  revalidatePath("/notifications");
   return { success: "Kuryer statusu yeniləndi." };
 }

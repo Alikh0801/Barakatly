@@ -26,14 +26,17 @@ export type OrderItemStatus =
   | "ready"
   | "awaiting_pickup"
   | "picked_up"
-  | "delivered";
+  | "delivered"
+  | "cancelled";
 export type PaymentStatus = "pending" | "confirmed" | "rejected";
 export type FarmerPostMediaType = "image" | "video";
 export type NotificationType =
   | "farmer_registration"
   | "farmer_approval"
+  | "farmer_profile_update"
   | "product_submission"
   | "product_approval"
+  | "category_submission"
   | "payment_received"
   | "order_confirmed"
   | "order_prepared"
@@ -90,6 +93,11 @@ export interface Database {
           status: FarmerStatus;
           verified_at: string | null;
           avatar_url: string | null;
+          pending_farm_name: string | null;
+          pending_description: string | null;
+          pending_location_text: string | null;
+          pending_avatar_url: string | null;
+          pending_submitted_at: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -105,6 +113,11 @@ export interface Database {
           status?: FarmerStatus;
           verified_at?: string | null;
           avatar_url?: string | null;
+          pending_farm_name?: string | null;
+          pending_description?: string | null;
+          pending_location_text?: string | null;
+          pending_avatar_url?: string | null;
+          pending_submitted_at?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -120,6 +133,11 @@ export interface Database {
           status?: FarmerStatus;
           verified_at?: string | null;
           avatar_url?: string | null;
+          pending_farm_name?: string | null;
+          pending_description?: string | null;
+          pending_location_text?: string | null;
+          pending_avatar_url?: string | null;
+          pending_submitted_at?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -406,6 +424,7 @@ export interface Database {
           subtotal: number;
           delivery_fee: number;
           total_amount: number;
+          courier_id: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -422,6 +441,7 @@ export interface Database {
           subtotal?: number;
           delivery_fee?: number;
           total_amount?: number;
+          courier_id?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -438,6 +458,7 @@ export interface Database {
           subtotal?: number;
           delivery_fee?: number;
           total_amount?: number;
+          courier_id?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -633,15 +654,7 @@ export interface Database {
         Relationships: [];
       };
     };
-    Views: {
-      public_farmer_names: {
-        Row: {
-          farmer_id: string;
-          owner_name: string | null;
-        };
-        Relationships: [];
-      };
-    };
+    Views: Record<string, never>;
     Functions: {
       generate_order_code: {
         Args: Record<string, never>;
@@ -650,6 +663,22 @@ export interface Database {
       is_admin: {
         Args: Record<string, never>;
         Returns: boolean;
+      };
+      list_approved_farmer_owner_names: {
+        Args: Record<string, never>;
+        Returns: { farmer_id: string; owner_name: string | null }[];
+      };
+      place_order: {
+        Args: {
+          p_customer_id: string;
+          p_contact_phone: string;
+          p_delivery_address_text: string | null;
+          p_bank_id: string;
+          p_receipt_url: string;
+          p_delivery_fee: number;
+          p_items: Json;
+        };
+        Returns: { order_id: string; order_code: string }[];
       };
     };
     Enums: {

@@ -73,9 +73,9 @@ function mapPublicFarmer(
 async function fetchOwnerNames(
   supabase: ReturnType<typeof createPublicClient>,
 ): Promise<Map<string, string | null>> {
-  const { data, error } = await supabase
-    .from("public_farmer_names")
-    .select("farmer_id, owner_name");
+  const { data, error } = await supabase.rpc(
+    "list_approved_farmer_owner_names",
+  );
 
   if (error) {
     console.error("[farmers.fetchOwnerNames]", error.message);
@@ -143,19 +143,11 @@ async function fetchPublicFarmerById(id: string): Promise<PublicFarmer | null> {
 
   if (!data) return null;
 
-  const { data: nameRow, error: nameError } = await supabase
-    .from("public_farmer_names")
-    .select("owner_name")
-    .eq("farmer_id", id)
-    .maybeSingle();
-
-  if (nameError) {
-    console.error("[farmers.getPublicFarmerById.ownerName]", nameError.message);
-  }
+  const ownerNames = await fetchOwnerNames(supabase);
 
   return mapPublicFarmer(
     data as unknown as Parameters<typeof mapPublicFarmer>[0],
-    nameRow?.owner_name ?? null,
+    ownerNames.get(id) ?? null,
   );
 }
 

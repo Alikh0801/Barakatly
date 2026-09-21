@@ -120,11 +120,10 @@ export function AvatarField({
     setDisplayUrl(next);
   }
 
+  // `image` is cleared by removePhoto/cancelEditor, the only paths that reset
+  // sourceUrl to null, so this effect only has to handle loading.
   useEffect(() => {
-    if (!sourceUrl) {
-      setImage(null);
-      return;
-    }
+    if (!sourceUrl) return;
     let cancelled = false;
     loadImage(sourceUrl)
       .then((loaded) => {

@@ -4,9 +4,11 @@ import { revalidatePath } from "next/cache";
 import { requireAdmin } from "@/lib/admin/auth";
 import { ADMIN_STATUS_TRANSITIONS } from "@/lib/orders/labels";
 import { getOrderStatusLabel } from "@/lib/checkout/labels";
+import { getOrderFarmerProfileIds } from "@/lib/orders/farmers";
+import { notifyUser } from "@/lib/notifications/helpers";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
-import type { NotificationType, OrderStatus } from "@/types";
+import type { NotificationType, OrderItemStatus, OrderStatus } from "@/types";
 
 type ActionResult = { error?: string; success?: string };
 
@@ -95,6 +97,7 @@ async function insertEventAndNotify(params: {
   }
 }
 
+
 export async function confirmPayment(
   _prev: ActionResult,
   formData: FormData
@@ -171,12 +174,31 @@ export async function confirmPayment(
     notification: notificationForOrderStatus("confirmed"),
   });
 
+  // Order items only become visible on farmer dashboards once the order
+  // leaves "awaiting_confirmation" (see getFarmerOrderItems) — let each
+  // involved farmer know their part of it is now ready to prepare.
+  const farmerProfileIds = await getOrderFarmerProfileIds(supabase, order.id);
+
+  await Promise.all(
+    farmerProfileIds.map((profileId) =>
+      notifyUser({
+        userId: profileId,
+        type: "general",
+        title: "Yeni sifariş hazırdır",
+        body: `${order.order_code} sifarişi ödəniş təsdiqindən keçdi. Hazırlığa başlaya bilərsiniz.`,
+        metadata: { order_id: order.id },
+      }),
+    ),
+  );
+
   revalidatePath("/admin", "layout");
   revalidatePath("/admin/payments");
   revalidatePath("/admin/orders");
   revalidatePath("/orders");
   revalidatePath(`/orders/${order.id}`);
   revalidatePath("/notifications");
+  revalidatePath("/farmer");
+  revalidatePath("/farmer/orders");
 
   return { success: "Ödəniş təsdiqləndi." };
 }
@@ -187,8 +209,10 @@ export async function rejectPayment(
 ): Promise<ActionResult> {
   const admin = await requireAdmin();
   const paymentId = String(formData.get("payment_id") ?? "");
+  const reason = String(formData.get("reason") ?? "").trim();
 
   if (!paymentId) return { error: "Ödəniş tapılmadı." };
+  if (!reason) return { error: "Rədd səbəbini qeyd edin." };
 
   const supabase = await createClient();
   const { data: payment, error: paymentError } = await supabase
@@ -237,12 +261,12 @@ export async function rejectPayment(
     orderId: order.id,
     customerId: order.customer_id,
     status: "payment_rejected",
-    note: "Admin ödənişi rədd etdi",
+    note: `Admin ödənişi rədd etdi. Səbəb: ${reason}`,
     adminId: admin.id,
     notification: {
       type: "general",
       title: "Ödəniş rədd edildi",
-      body: `${order.order_code} sifarişi üçün ödəniş rədd edildi. Zəhmət olmasa yenidən cəhd edin və ya dəstəklə əlaqə saxlayın.`,
+      body: `${order.order_code} sifarişi üçün ödəniş rədd edildi. Səbəb: ${reason}`,
     },
   });
 
@@ -250,7 +274,7 @@ export async function rejectPayment(
     orderId: order.id,
     customerId: order.customer_id,
     status: "cancelled",
-    note: "Sifariş ödəniş rəddinə görə ləğv edildi",
+    note: `Sifariş ödəniş rəddinə görə ləğv edildi. Səbəb: ${reason}`,
     adminId: admin.id,
     notification: notificationForOrderStatus("cancelled"),
   });
@@ -272,9 +296,14 @@ export async function advanceOrderStatus(
   const admin = await requireAdmin();
   const orderId = String(formData.get("order_id") ?? "");
   const nextStatus = String(formData.get("next_status") ?? "") as OrderStatus;
+  const reason = String(formData.get("reason") ?? "").trim();
 
   if (!orderId || !nextStatus) {
     return { error: "Status seçin." };
+  }
+
+  if (nextStatus === "cancelled" && !reason) {
+    return { error: "Ləğv etmə səbəbini qeyd edin." };
   }
 
   const supabase = await createClient();
@@ -291,6 +320,28 @@ export async function advanceOrderStatus(
     return { error: "Bu status keçidinə icazə verilmir." };
   }
 
+  // Don't let an order into the courier queue while some farmer's items
+  // aren't actually ready yet — a courier could otherwise be sent to pick
+  // up a shipment that's only partially prepared.
+  if (nextStatus === "awaiting_courier") {
+    const { data: items } = await supabase
+      .from("order_items")
+      .select("status")
+      .eq("order_id", orderId)
+      .neq("status", "cancelled");
+
+    const readyStatuses: OrderItemStatus[] = ["ready", "awaiting_pickup"];
+    const notReady = (items ?? []).some(
+      (item) => !readyStatuses.includes(item.status),
+    );
+
+    if (notReady) {
+      return {
+        error: "Bütün fermerlər hazırlığı bitirməyib. Kuryerə göndərmək üçün gözləyin.",
+      };
+    }
+  }
+
   const { error: updateError } = await supabase
     .from("orders")
     .update({ status: nextStatus })
@@ -301,20 +352,48 @@ export async function advanceOrderStatus(
     return { error: "Status yenilənmədi." };
   }
 
+  const baseNotification = notificationForOrderStatus(nextStatus);
+  const notification =
+    nextStatus === "cancelled" && baseNotification
+      ? { ...baseNotification, body: `${baseNotification.body} Səbəb: ${reason}` }
+      : baseNotification;
+
   await insertEventAndNotify({
     orderId: order.id,
     customerId: order.customer_id,
     status: nextStatus,
-    note: `Status dəyişdi: ${getOrderStatusLabel(nextStatus)}`,
+    note:
+      nextStatus === "cancelled"
+        ? `Sifariş ləğv edildi. Səbəb: ${reason}`
+        : `Status dəyişdi: ${getOrderStatusLabel(nextStatus)}`,
     adminId: admin.id,
-    notification: notificationForOrderStatus(nextStatus),
+    notification,
   });
+
+  // A cancellation past "awaiting_confirmation" means farmers already saw
+  // this order (and may be actively preparing it) — tell them it's off.
+  if (nextStatus === "cancelled") {
+    const farmerProfileIds = await getOrderFarmerProfileIds(supabase, order.id);
+    await Promise.all(
+      farmerProfileIds.map((profileId) =>
+        notifyUser({
+          userId: profileId,
+          type: "general",
+          title: "Sifariş ləğv edildi",
+          body: `${order.order_code} sifarişi admin tərəfindən ləğv edildi. Səbəb: ${reason}`,
+          metadata: { order_id: order.id },
+        }),
+      ),
+    );
+  }
 
   revalidatePath("/admin", "layout");
   revalidatePath("/admin/orders");
   revalidatePath("/orders");
   revalidatePath(`/orders/${order.id}`);
   revalidatePath("/notifications");
+  revalidatePath("/farmer");
+  revalidatePath("/farmer/orders");
 
   return { success: `${order.order_code} statusu yeniləndi.` };
 }

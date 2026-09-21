@@ -25,6 +25,17 @@ const navItems: NavItem[] = [
     ),
   },
   {
+    href: "/admin/banks",
+    label: "Kartlar",
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-4 w-4">
+        <rect x="3" y="5" width="18" height="14" rx="2" />
+        <path d="M3 10h18" strokeLinecap="round" />
+        <path d="M7 15h4" strokeLinecap="round" />
+      </svg>
+    ),
+  },
+  {
     href: "/admin/orders",
     label: "Sifarişlər",
     badgeKey: "orders",
@@ -61,6 +72,7 @@ const navItems: NavItem[] = [
   {
     href: "/admin/categories",
     label: "Kateqoriyalar",
+    badgeKey: "categories",
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-4 w-4">
         <path d="M4 6h4v4H4V6Zm6 0h4v4h-4V6Zm6 0h4v4h-4V6ZM4 12h4v4H4v-4Zm6 0h4v4h-4v-4Zm6 0h4v4h-4v-4Z" strokeLinejoin="round" />
@@ -89,6 +101,16 @@ const navItems: NavItem[] = [
       </svg>
     ),
   },
+  {
+    href: "/admin/hero",
+    label: "Hero",
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-4 w-4">
+        <path d="M3 16.5 8.5 11l3.5 3.5L18 8l3 3" strokeLinecap="round" strokeLinejoin="round" />
+        <rect x="3" y="5" width="18" height="14" rx="2" />
+      </svg>
+    ),
+  },
 ];
 
 function isActive(pathname: string, item: NavItem) {
@@ -101,16 +123,18 @@ function formatBadge(count: number) {
 }
 
 export function AdminSidebar({
-  badges = { payments: 0, orders: 0, farmers: 0, products: 0 },
+  badges = { payments: 0, orders: 0, farmers: 0, products: 0, categories: 0 },
 }: {
   badges?: AdminNavBadges;
 }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
+  const [lastPathname, setLastPathname] = useState(pathname);
 
-  useEffect(() => {
-    setOpen(false);
-  }, [pathname]);
+  if (pathname !== lastPathname) {
+    setLastPathname(pathname);
+    if (open) setOpen(false);
+  }
 
   useEffect(() => {
     document.body.style.overflow = open ? "hidden" : "";
@@ -126,7 +150,11 @@ export function AdminSidebar({
       ? formatBadge(badges[activeItem.badgeKey])
       : null;
   const totalPending =
-    badges.payments + badges.orders + badges.farmers + badges.products;
+    badges.payments +
+    badges.orders +
+    badges.farmers +
+    badges.products +
+    badges.categories;
 
   return (
     <>

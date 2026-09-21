@@ -21,9 +21,11 @@ import { Spinner } from "@/components/ui/Spinner";
 function NotificationRow({
   notification,
   viewerRole,
+  needsAction,
 }: {
   notification: Notification;
   viewerRole: UserRole;
+  needsAction: boolean;
 }) {
   const router = useRouter();
   const [isMarkingRead, startMarkRead] = useTransition();
@@ -36,11 +38,13 @@ function NotificationRow({
   return (
     <article
       className={[
-        "rounded-2xl p-5 shadow-sm ring-1 transition",
+        "rounded-2xl p-5 shadow-sm transition",
         isDeleting ? "opacity-50" : "",
-        unread
-          ? "bg-emerald-50/60 ring-emerald-200"
-          : "bg-white ring-zinc-200",
+        needsAction
+          ? "bg-rose-50/60 ring-2 ring-rose-400"
+          : unread
+            ? "bg-emerald-50/60 ring-1 ring-emerald-200"
+            : "bg-white ring-1 ring-zinc-200",
       ].join(" ")}
     >
       <div className="flex flex-wrap items-start justify-between gap-3">
@@ -106,10 +110,13 @@ function NotificationRow({
 export function NotificationsList({
   notifications,
   viewerRole,
+  pendingActionIds,
 }: {
   notifications: Notification[];
   viewerRole: UserRole;
+  pendingActionIds: string[];
 }) {
+  const pendingActionSet = new Set(pendingActionIds);
   const router = useRouter();
   const [isMarkingAll, startMarkAll] = useTransition();
   const [isDeletingAll, startDeleteAll] = useTransition();
@@ -171,6 +178,7 @@ export function NotificationsList({
             key={notification.id}
             notification={notification}
             viewerRole={viewerRole}
+            needsAction={pendingActionSet.has(notification.id)}
           />
         ))}
       </div>

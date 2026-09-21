@@ -1,7 +1,6 @@
-import { AdminBanksPanel } from "@/components/admin/AdminBanksPanel";
 import { AdminPageShell } from "@/components/admin/AdminPageShell";
 import { PendingPaymentsPanel } from "@/components/admin/AdminPanels";
-import { getAdminBanks, getPendingPayments } from "@/lib/admin/queries";
+import { getPendingPayments } from "@/lib/admin/queries";
 import { createClient } from "@/lib/supabase/server";
 
 export const metadata = {
@@ -9,10 +8,7 @@ export const metadata = {
 };
 
 export default async function AdminPaymentsPage() {
-  const [payments, banks] = await Promise.all([
-    getPendingPayments(),
-    getAdminBanks(),
-  ]);
+  const payments = await getPendingPayments();
   const supabase = await createClient();
 
   const paymentsWithReceipts = await Promise.all(
@@ -31,25 +27,9 @@ export default async function AdminPaymentsPage() {
   return (
     <AdminPageShell
       title="Ödənişlər"
-      description="Kart məlumatlarını idarə edin və gözləyən çekləri yoxlayın"
+      description="Gözləyən çekləri yoxlayın, təsdiqləyin və ya rədd edin"
     >
-      <div className="space-y-8 sm:space-y-10">
-        <section>
-          <AdminBanksPanel banks={banks} />
-        </section>
-
-        <section>
-          <h2 className="text-lg font-semibold text-zinc-900 sm:text-xl">
-            Gözləyən ödənişlər
-          </h2>
-          <p className="mt-1 text-sm text-zinc-600">
-            Çekləri yoxlayın, təsdiqləyin və ya rədd edin
-          </p>
-          <div className="mt-5">
-            <PendingPaymentsPanel payments={paymentsWithReceipts} />
-          </div>
-        </section>
-      </div>
+      <PendingPaymentsPanel payments={paymentsWithReceipts} />
     </AdminPageShell>
   );
 }

@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { Syne } from "next/font/google";
 import { useActionState, useEffect, useRef, useState } from "react";
@@ -172,11 +173,14 @@ function FarmerAvatar({
   className?: string;
 }) {
   if (url) {
+    // 96 is the largest size any caller renders (sm:h-24). The class name
+    // still drives the displayed size; these only set the srcset and ratio.
     return (
-      // eslint-disable-next-line @next/next/no-img-element
-      <img
+      <Image
         src={url}
         alt={name}
+        width={96}
+        height={96}
         className={`rounded-full object-cover ${className}`}
       />
     );
@@ -342,8 +346,8 @@ function StatTile({
   label: string;
 }) {
   return (
-    <div className="flex items-center gap-3 rounded-2xl bg-zinc-50 px-3.5 py-3 ring-1 ring-zinc-100 sm:px-4">
-      <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-700">
+    <div className="flex items-center gap-2 rounded-2xl bg-zinc-50 px-2.5 py-3 ring-1 ring-zinc-100 sm:gap-3 sm:px-4">
+      <span className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-700 sm:h-9 sm:w-9">
         {icon}
       </span>
       <div className="min-w-0">
@@ -352,7 +356,7 @@ function StatTile({
         >
           {value}
         </div>
-        <div className="truncate text-[11px] font-medium uppercase tracking-wide text-zinc-500">
+        <div className="text-[11px] font-medium leading-tight text-zinc-500 sm:truncate sm:uppercase sm:tracking-wide">
           {label}
         </div>
       </div>
@@ -497,6 +501,13 @@ function ProfileAboutForm({
       <h2 className={`${displayFont.className} text-xl font-bold text-zinc-900`}>
         Profili redaktə et
       </h2>
+      {farmer.pending_submitted_at ? (
+        <p className="rounded-xl bg-amber-50 px-3 py-2 text-sm text-amber-800 ring-1 ring-amber-200">
+          {formatDateTime(farmer.pending_submitted_at)} tarixində göndərdiyiniz
+          dəyişikliklər admin təsdiqini gözləyir. Təsdiqlənənə qədər profiliniz
+          köhnə məlumatlarla göstərilir.
+        </p>
+      ) : null}
       {state.error ? (
         <p className="rounded-xl bg-rose-50 px-3 py-2 text-sm text-rose-700">
           {state.error}
@@ -566,43 +577,67 @@ function ProfileAboutForm({
   );
 }
 
+type ComposerPreview = {
+  file: File;
+  url: string;
+  kind: "image" | "video";
+  name: string;
+};
+
 function BlogComposer() {
   const [state, action, pending] = useActionState(
     createFarmerBlogPost,
     initialState
   );
-  const [files, setFiles] = useState<File[]>([]);
-  const [previews, setPreviews] = useState<
-    { url: string; kind: "image" | "video"; name: string }[]
-  >([]);
+  const [previews, setPreviews] = useState<ComposerPreview[]>([]);
+  const [lastSuccess, setLastSuccess] = useState(state.success);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const liveUrlsRef = useRef<string[]>([]);
 
-  useEffect(() => {
-    const next = files.map((file) => ({
-      url: URL.createObjectURL(file),
-      kind: file.type.startsWith("video/")
-        ? ("video" as const)
-        : ("image" as const),
-      name: file.name,
-    }));
-    setPreviews(next);
-    return () => {
-      next.forEach((item) => URL.revokeObjectURL(item.url));
-    };
-  }, [files]);
-
-  useEffect(() => {
-    if (state.success) {
-      setFiles([]);
-      if (fileInputRef.current) {
-        fileInputRef.current.value = "";
-      }
+  if (state.success !== lastSuccess) {
+    setLastSuccess(state.success);
+    if (state.success && previews.length > 0) {
+      setPreviews([]);
     }
-  }, [state.success]);
+  }
+
+  // Single owner of object-URL lifetime: anything that dropped out of the
+  // preview list since the last render gets revoked here.
+  useEffect(() => {
+    const current = previews.map((preview) => preview.url);
+    for (const url of liveUrlsRef.current) {
+      if (!current.includes(url)) URL.revokeObjectURL(url);
+    }
+    liveUrlsRef.current = current;
+
+    if (current.length === 0 && fileInputRef.current?.value) {
+      fileInputRef.current.value = "";
+    }
+  }, [previews]);
+
+  useEffect(() => {
+    return () => {
+      for (const url of liveUrlsRef.current) URL.revokeObjectURL(url);
+      liveUrlsRef.current = [];
+    };
+  }, []);
 
   function syncFiles(next: File[]) {
     const limited = next.slice(0, 5);
-    setFiles(limited);
+    const nextPreviews = limited.map((file) => {
+      const existing = previews.find((preview) => preview.file === file);
+      if (existing) return existing;
+      return {
+        file,
+        url: URL.createObjectURL(file),
+        kind: file.type.startsWith("video/")
+          ? ("video" as const)
+          : ("image" as const),
+        name: file.name,
+      };
+    });
+    setPreviews(nextPreviews);
+
     if (!fileInputRef.current) return;
     const transfer = new DataTransfer();
     limited.forEach((file) => transfer.items.add(file));
@@ -610,7 +645,9 @@ function BlogComposer() {
   }
 
   function removeFile(index: number) {
-    syncFiles(files.filter((_, i) => i !== index));
+    syncFiles(
+      previews.filter((_, i) => i !== index).map((preview) => preview.file)
+    );
   }
 
   return (
@@ -686,13 +723,18 @@ function BlogComposer() {
             name="media"
             accept="image/jpeg,image/png,image/webp,video/mp4,video/webm,video/quicktime"
             multiple
-            required={files.length === 0}
+            required={previews.length === 0}
             className="sr-only"
             onChange={(event) => {
               const selected = event.target.files
                 ? Array.from(event.target.files)
                 : [];
-              syncFiles([...files, ...selected].slice(0, 5));
+              syncFiles(
+                [...previews.map((preview) => preview.file), ...selected].slice(
+                  0,
+                  5
+                )
+              );
             }}
           />
           <button
@@ -722,7 +764,7 @@ function BlogComposer() {
 
         <button
           type="submit"
-          disabled={pending || files.length === 0}
+          disabled={pending || previews.length === 0}
           className="inline-flex items-center gap-2 rounded-full bg-[#1f5c3d] px-5 py-2 text-sm font-semibold text-white disabled:opacity-50"
         >
           {pending ? <Spinner className="h-3.5 w-3.5" /> : null}

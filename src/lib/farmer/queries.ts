@@ -77,7 +77,7 @@ export async function getFarmerOrderItems(
     .select(
       `
       *,
-      orders (
+      orders!inner (
         id,
         order_code,
         status,
@@ -87,6 +87,9 @@ export async function getFarmerOrderItems(
     `
     )
     .eq("farmer_id", farmerId)
+    // Hide orders whose payment the admin hasn't confirmed yet — farmers
+    // should only see (and start preparing) orders that are actually paid.
+    .neq("orders.status", "awaiting_confirmation")
     .order("created_at", { ascending: false })
     .limit(50);
 

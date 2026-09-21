@@ -41,6 +41,7 @@ export const FARMER_ITEM_STATUS_TRANSITIONS: Record<
   awaiting_pickup: ["picked_up"],
   picked_up: [],
   delivered: [],
+  cancelled: [],
 };
 
 export const COURIER_ORDER_STATUS_TRANSITIONS: Record<
@@ -52,7 +53,7 @@ export const COURIER_ORDER_STATUS_TRANSITIONS: Record<
   farmer_accepted: [],
   preparing: [],
   awaiting_courier: ["picked_up"],
-  picked_up: ["delivered"],
+  picked_up: ["delivered", "cancelled"],
   delivered: [],
   cancelled: [],
 };
@@ -101,6 +102,8 @@ export function getOrderItemStatusLabel(status: OrderItemStatus): string {
       return "Kuryer tərəfindən götürüldü";
     case "delivered":
       return "Çatdırıldı";
+    case "cancelled":
+      return "Ləğv edildi";
     default:
       return status;
   }
@@ -166,6 +169,19 @@ export function getOrderStatusTone(status: OrderStatus) {
   }
 }
 
+const ADMIN_ACTION_NOTIFICATION_TYPES = new Set<NotificationType>([
+  "farmer_registration",
+  "farmer_profile_update",
+  "product_submission",
+  "category_submission",
+  "payment_received",
+]);
+
+/** True for notifications about something still awaiting admin review. */
+export function isActionNeededNotification(type: NotificationType): boolean {
+  return ADMIN_ACTION_NOTIFICATION_TYPES.has(type);
+}
+
 export function getNotificationTypeLabel(type: NotificationType): string {
   switch (type) {
     case "payment_received":
@@ -182,10 +198,14 @@ export function getNotificationTypeLabel(type: NotificationType): string {
       return "Fermer";
     case "farmer_approval":
       return "Fermer";
+    case "farmer_profile_update":
+      return "Fermer";
     case "product_submission":
       return "Məhsul";
     case "product_approval":
       return "Məhsul";
+    case "category_submission":
+      return "Kateqoriya";
     default:
       return "Bildiriş";
   }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { Spinner } from "@/components/ui/Spinner";
 
@@ -27,6 +27,71 @@ function GoogleIcon() {
   );
 }
 
+function GoogleRedirectHint() {
+  const [open, setOpen] = useState(false);
+  const rootRef = useRef<HTMLDivElement>(null);
+  const tooltipId = useId();
+
+  useEffect(() => {
+    if (!open) return;
+
+    function onPointerDown(event: MouseEvent) {
+      if (!rootRef.current?.contains(event.target as Node)) {
+        setOpen(false);
+      }
+    }
+
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") setOpen(false);
+    }
+
+    document.addEventListener("mousedown", onPointerDown);
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", onPointerDown);
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, [open]);
+
+  return (
+    <div ref={rootRef} className="relative shrink-0">
+      <button
+        type="button"
+        aria-haspopup="dialog"
+        aria-expanded={open}
+        aria-controls={tooltipId}
+        aria-label="Google ilə giriş haqqında məlumat"
+        onClick={() => setOpen((value) => !value)}
+        className="inline-flex h-9 w-9 items-center justify-center rounded-full text-zinc-400 ring-1 ring-zinc-200 transition hover:bg-zinc-50 hover:text-zinc-600"
+      >
+        <svg viewBox="0 0 20 20" fill="none" aria-hidden="true" className="h-4 w-4">
+          <circle cx="10" cy="10" r="8.25" stroke="currentColor" strokeWidth="1.4" />
+          <path
+            d="M7.7 7.6c.2-.9 1-1.5 2.1-1.5 1.2 0 2.1.7 2.1 1.8 0 .9-.5 1.3-1.3 1.8-.7.4-1 .7-1 1.4v.2"
+            stroke="currentColor"
+            strokeWidth="1.4"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+          <circle cx="9.6" cy="14" r="0.9" fill="currentColor" />
+        </svg>
+      </button>
+
+      {open ? (
+        <div
+          id={tooltipId}
+          role="dialog"
+          className="absolute right-0 z-50 mt-2 w-72 rounded-2xl border border-zinc-200/80 bg-white p-3.5 text-left text-sm leading-6 text-zinc-600 shadow-[0_16px_40px_-20px_rgba(24,24,27,0.45)]"
+        >
+          Google giriş zamanı ünvan çubuğunda saytımızın adı yerinə texniki
+          bir domen (...supabase.co) görünə bilər. Bu normaldır — hesabınızın
+          təhlükəsizliyini təmin edən doğrulanmış xidmətdir.
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 export function GoogleAuthButton({ next }: { next?: string }) {
   const [pending, setPending] = useState(false);
   const [error, setError] = useState("");
@@ -36,7 +101,7 @@ export function GoogleAuthButton({ next }: { next?: string }) {
     setError("");
 
     const safeNext =
-      next && next.startsWith("/") && !next.startsWith("//") ? next : "/";
+      next && next.startsWith("/") && !next.startsWith("//") ? next : "/shop";
 
     const supabase = createClient();
     const { data, error: oauthError } = await supabase.auth.signInWithOAuth({
@@ -59,15 +124,18 @@ export function GoogleAuthButton({ next }: { next?: string }) {
 
   return (
     <div>
-      <button
-        type="button"
-        onClick={handleClick}
-        disabled={pending}
-        className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-zinc-200 bg-white px-4 py-2.5 text-sm font-semibold text-zinc-700 transition hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-70"
-      >
-        {pending ? <Spinner className="h-4 w-4" /> : <GoogleIcon />}
-        Google ilə davam et
-      </button>
+      <div className="flex items-center gap-2">
+        <button
+          type="button"
+          onClick={handleClick}
+          disabled={pending}
+          className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-zinc-200 bg-white px-4 py-2.5 text-sm font-semibold text-zinc-700 transition hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-70"
+        >
+          {pending ? <Spinner className="h-4 w-4" /> : <GoogleIcon />}
+          Google ilə davam et
+        </button>
+        <GoogleRedirectHint />
+      </div>
       {error ? (
         <p className="mt-2 text-center text-sm text-rose-600">{error}</p>
       ) : null}

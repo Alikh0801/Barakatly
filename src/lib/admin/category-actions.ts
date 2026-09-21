@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { requireAdmin } from "@/lib/admin/auth";
 import { uploadCategoryImage } from "@/lib/admin/category-image-upload";
 import { slugifyAz } from "@/lib/admin/slug";
+import { notifyUser } from "@/lib/notifications/helpers";
 import { revalidateCategories } from "@/lib/shop/revalidate";
 import { createClient } from "@/lib/supabase/server";
 import type { AdminPortalActionState } from "@/lib/admin/portal-actions";
@@ -169,6 +170,12 @@ export async function approveCategory(
   if (!id) return { error: "Kateqoriya tapılmadı." };
 
   const supabase = await createClient();
+  const { data: category } = await supabase
+    .from("categories")
+    .select("id, name_az, created_by")
+    .eq("id", id)
+    .single();
+
   const { error } = await supabase
     .from("categories")
     .update({ approved: true })
@@ -179,7 +186,18 @@ export async function approveCategory(
     return { error: "Kateqoriya təsdiqlənmədi." };
   }
 
+  if (category?.created_by) {
+    await notifyUser({
+      userId: category.created_by,
+      type: "general",
+      title: "Kateqoriya təklifiniz təsdiqləndi",
+      body: `"${category.name_az}" kateqoriyası admin tərəfindən təsdiqləndi və indi məhsul əlavə edərkən seçilə bilər.`,
+      metadata: { category_id: id },
+    });
+  }
+
   revalidateCategories();
+  revalidatePath("/notifications");
   return { success: "Kateqoriya təsdiqləndi." };
 }
 
@@ -244,6 +262,12 @@ export async function approveSubcategory(
   if (!id) return { error: "Alt kateqoriya tapılmadı." };
 
   const supabase = await createClient();
+  const { data: subcategory } = await supabase
+    .from("subcategories")
+    .select("id, name_az, created_by")
+    .eq("id", id)
+    .single();
+
   const { error } = await supabase
     .from("subcategories")
     .update({ approved: true })
@@ -254,7 +278,18 @@ export async function approveSubcategory(
     return { error: "Alt kateqoriya təsdiqlənmədi." };
   }
 
+  if (subcategory?.created_by) {
+    await notifyUser({
+      userId: subcategory.created_by,
+      type: "general",
+      title: "Alt kateqoriya təklifiniz təsdiqləndi",
+      body: `"${subcategory.name_az}" alt kateqoriyası admin tərəfindən təsdiqləndi və indi məhsul əlavə edərkən seçilə bilər.`,
+      metadata: { subcategory_id: id },
+    });
+  }
+
   revalidateCategories();
+  revalidatePath("/notifications");
   return { success: "Alt kateqoriya təsdiqləndi." };
 }
 

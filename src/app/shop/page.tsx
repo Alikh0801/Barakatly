@@ -1,9 +1,7 @@
 import { Suspense } from "react";
 import { ShopContent } from "@/components/shop/ShopContent";
-import {
-  CategoryFilterSkeleton,
-  ProductGridSkeleton,
-} from "@/components/skeletons";
+import { ProductGridSkeleton, ShopFiltersSkeleton } from "@/components/skeletons";
+import { Skeleton } from "@/components/ui/Skeleton";
 
 export const metadata = {
   title: "Mağaza — BARAKATLY",
@@ -12,10 +10,11 @@ export const metadata = {
 function ShopDataSkeleton() {
   return (
     <>
-      <div className="mt-8">
-        <CategoryFilterSkeleton />
-      </div>
-      <div className="mt-8">
+      <Skeleton className="mt-8 h-12 w-full rounded-xl" />
+      <div className="mt-6 lg:grid lg:grid-cols-[280px_1fr] lg:items-start lg:gap-8">
+        <div className="mb-6 hidden lg:mb-0 lg:block">
+          <ShopFiltersSkeleton />
+        </div>
         <ProductGridSkeleton />
       </div>
     </>

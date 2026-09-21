@@ -21,7 +21,7 @@ export async function notifyAdmins(params: {
       return;
     }
 
-    await admin.from("notifications").insert(
+    const { error: insertError } = await admin.from("notifications").insert(
       admins.map((adminUser) => ({
         user_id: adminUser.id,
         title: params.title,
@@ -30,6 +30,10 @@ export async function notifyAdmins(params: {
         metadata: params.metadata ?? {},
       })),
     );
+
+    if (insertError) {
+      console.error("[notifications.notifyAdmins.insert]", insertError.message);
+    }
 
     // Also push to Telegram (no-op if Telegram isn't configured).
     await sendAdminTelegram(
@@ -55,22 +59,35 @@ export async function insertEventAndNotify(params: {
 }) {
   const supabase = await createClient();
 
-  await supabase.from("order_status_events").insert({
-    order_id: params.orderId,
-    order_item_id: params.orderItemId ?? null,
-    status: params.status,
-    changed_by: params.changedBy,
-    note: params.note,
-  });
+  const { error: eventError } = await supabase
+    .from("order_status_events")
+    .insert({
+      order_id: params.orderId,
+      order_item_id: params.orderItemId ?? null,
+      status: params.status,
+      changed_by: params.changedBy,
+      note: params.note,
+    });
+
+  if (eventError) {
+    console.error("[notifications.insertEventAndNotify.event]", eventError.message);
+  }
 
   if (params.notification) {
-    await supabase.from("notifications").insert({
+    const { error: notifyError } = await supabase.from("notifications").insert({
       user_id: params.customerId,
       title: params.notification.title,
       body: params.notification.body,
       type: params.notification.type,
       metadata: { order_id: params.orderId },
     });
+
+    if (notifyError) {
+      console.error(
+        "[notifications.insertEventAndNotify.notify]",
+        notifyError.message,
+      );
+    }
   }
 }
 
@@ -82,11 +99,15 @@ export async function notifyUser(params: {
   metadata?: Record<string, string>;
 }) {
   const supabase = await createClient();
-  await supabase.from("notifications").insert({
+  const { error } = await supabase.from("notifications").insert({
     user_id: params.userId,
     title: params.title,
     body: params.body,
     type: params.type,
     metadata: params.metadata ?? {},
   });
+
+  if (error) {
+    console.error("[notifications.notifyUser]", error.message);
+  }
 }

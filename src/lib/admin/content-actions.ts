@@ -2,20 +2,29 @@
 
 import { revalidatePath, updateTag } from "next/cache";
 import { requireAdmin } from "@/lib/admin/auth";
+import { uploadSiteImage } from "@/lib/admin/site-image-upload";
 import {
   ABOUT_DEFAULT,
   ABOUT_DEFAULT_ITEMS,
   ABOUT_DEFAULT_VALUES,
   ABOUT_KEY,
+  AUTH_IMAGE_DEFAULT,
+  AUTH_IMAGE_DEFAULT_ITEMS,
+  AUTH_IMAGE_KEY,
   FAQ_DEFAULT,
   FAQ_DEFAULT_ITEMS,
   FAQ_KEY,
+  HERO_DEFAULT,
+  HERO_DEFAULT_ITEMS,
+  HERO_KEY,
   WHY_BARAKATLY_DEFAULT,
   WHY_BARAKATLY_DEFAULT_FEATURES,
   WHY_BARAKATLY_KEY,
   type AboutItems,
   type AboutValue,
+  type AuthImageItems,
   type FaqItem,
+  type HeroItems,
   type WhyBarakatlyFeature,
 } from "@/lib/content/defaults";
 import { createClient } from "@/lib/supabase/server";
@@ -58,6 +67,223 @@ function revalidateWhyContent() {
   updateTag("why-barakatly");
   revalidatePath("/");
   revalidatePath("/admin/content");
+}
+
+function revalidateHeroContent() {
+  updateTag("site-content");
+  updateTag("hero");
+  revalidatePath("/");
+  revalidatePath("/admin/hero");
+}
+
+type HeroFormResult = { title: string; body: string; items: HeroItems };
+
+function parseHeroForm(
+  formData: FormData,
+  currentImageUrl: string,
+): HeroFormResult | string {
+  const title = String(formData.get("title") ?? "").trim();
+  const highlight = String(formData.get("highlight") ?? "").trim();
+  const body = String(formData.get("body") ?? "").trim();
+
+  if (!title) return "Başlığın 1-ci sətri tələb olunur.";
+  if (!highlight) return "Başlığın 2-ci sətri tələb olunur.";
+  if (!body) return "Alt mətn tələb olunur.";
+  if (title.length > 60) return "Başlığın 1-ci sətri çox uzundur.";
+  if (highlight.length > 60) return "Başlığın 2-ci sətri çox uzundur.";
+  if (body.length > 400) return "Alt mətn çox uzundur.";
+
+  return {
+    title,
+    body,
+    items: { highlight, imageUrl: currentImageUrl },
+  };
+}
+
+export async function updateHeroContent(
+  _prev: AdminContentActionState,
+  formData: FormData
+): Promise<AdminContentActionState> {
+  await requireAdmin();
+
+  const supabase = await createClient();
+  const { data: existing } = await supabase
+    .from("site_content")
+    .select("items")
+    .eq("key", HERO_KEY)
+    .maybeSingle();
+
+  const existingItems = existing?.items as Partial<HeroItems> | null;
+  let imageUrl = existingItems?.imageUrl || HERO_DEFAULT_ITEMS.imageUrl;
+
+  const image = formData.get("image");
+  if (image instanceof File && image.size > 0) {
+    const uploaded = await uploadSiteImage(supabase, image, "hero");
+    if ("error" in uploaded) return { error: uploaded.error };
+    imageUrl = uploaded.url;
+  }
+
+  const parsed = parseHeroForm(formData, imageUrl);
+  if (typeof parsed === "string") return { error: parsed };
+
+  const { error } = await supabase.from("site_content").upsert(
+    {
+      key: HERO_KEY,
+      title: parsed.title,
+      body: parsed.body,
+      items: parsed.items,
+    },
+    { onConflict: "key" }
+  );
+
+  if (error) {
+    console.error("[admin.updateHeroContent]", error.message);
+    if (error.message.toLowerCase().includes("site_content")) {
+      return {
+        error:
+          "site_content cədvəli tapılmadı. Supabase-də 009_site_content.sql işə salın.",
+      };
+    }
+    return { error: "Hero bölməsi yenilənmədi." };
+  }
+
+  revalidateHeroContent();
+  return { success: "Hero bölməsi yeniləndi." };
+}
+
+export async function resetHeroContent(
+  _prev: AdminContentActionState,
+  _formData: FormData
+): Promise<AdminContentActionState> {
+  await requireAdmin();
+
+  const supabase = await createClient();
+  const { error } = await supabase.from("site_content").upsert(
+    {
+      key: HERO_KEY,
+      title: HERO_DEFAULT.title,
+      body: HERO_DEFAULT.body,
+      items: { ...HERO_DEFAULT_ITEMS },
+    },
+    { onConflict: "key" }
+  );
+
+  if (error) {
+    console.error("[admin.resetHeroContent]", error.message);
+    return { error: "Default Hero məzmunu bərpa edilmədi." };
+  }
+
+  revalidateHeroContent();
+  return { success: "Default Hero məzmunu bərpa olundu." };
+}
+
+function revalidateAuthImageContent() {
+  updateTag("site-content");
+  updateTag("auth-image");
+  revalidatePath("/signin");
+  revalidatePath("/signup");
+  revalidatePath("/admin/hero");
+}
+
+type AuthImageFormResult = { title: string; body: string; items: AuthImageItems };
+
+function parseAuthImageForm(
+  formData: FormData,
+  currentImageUrl: string,
+): AuthImageFormResult | string {
+  const title = String(formData.get("title") ?? "").trim();
+  const highlight = String(formData.get("highlight") ?? "").trim();
+  const body = String(formData.get("body") ?? "").trim();
+
+  if (!title) return "Başlığın 1-ci sətri tələb olunur.";
+  if (!highlight) return "Başlığın 2-ci sətri tələb olunur.";
+  if (!body) return "Alt mətn tələb olunur.";
+  if (title.length > 60) return "Başlığın 1-ci sətri çox uzundur.";
+  if (highlight.length > 60) return "Başlığın 2-ci sətri çox uzundur.";
+  if (body.length > 300) return "Alt mətn çox uzundur.";
+
+  return {
+    title,
+    body,
+    items: { highlight, imageUrl: currentImageUrl },
+  };
+}
+
+export async function updateAuthImageContent(
+  _prev: AdminContentActionState,
+  formData: FormData
+): Promise<AdminContentActionState> {
+  await requireAdmin();
+
+  const supabase = await createClient();
+  const { data: existing } = await supabase
+    .from("site_content")
+    .select("items")
+    .eq("key", AUTH_IMAGE_KEY)
+    .maybeSingle();
+
+  const existingItems = existing?.items as Partial<AuthImageItems> | null;
+  let imageUrl = existingItems?.imageUrl || AUTH_IMAGE_DEFAULT_ITEMS.imageUrl;
+
+  const image = formData.get("image");
+  if (image instanceof File && image.size > 0) {
+    const uploaded = await uploadSiteImage(supabase, image, "auth");
+    if ("error" in uploaded) return { error: uploaded.error };
+    imageUrl = uploaded.url;
+  }
+
+  const parsed = parseAuthImageForm(formData, imageUrl);
+  if (typeof parsed === "string") return { error: parsed };
+
+  const { error } = await supabase.from("site_content").upsert(
+    {
+      key: AUTH_IMAGE_KEY,
+      title: parsed.title,
+      body: parsed.body,
+      items: parsed.items,
+    },
+    { onConflict: "key" }
+  );
+
+  if (error) {
+    console.error("[admin.updateAuthImageContent]", error.message);
+    if (error.message.toLowerCase().includes("site_content")) {
+      return {
+        error:
+          "site_content cədvəli tapılmadı. Supabase-də 009_site_content.sql işə salın.",
+      };
+    }
+    return { error: "Giriş şəkli yenilənmədi." };
+  }
+
+  revalidateAuthImageContent();
+  return { success: "Giriş səhifəsi yeniləndi." };
+}
+
+export async function resetAuthImageContent(
+  _prev: AdminContentActionState,
+  _formData: FormData
+): Promise<AdminContentActionState> {
+  await requireAdmin();
+
+  const supabase = await createClient();
+  const { error } = await supabase.from("site_content").upsert(
+    {
+      key: AUTH_IMAGE_KEY,
+      title: AUTH_IMAGE_DEFAULT.title,
+      body: AUTH_IMAGE_DEFAULT.body,
+      items: { ...AUTH_IMAGE_DEFAULT_ITEMS },
+    },
+    { onConflict: "key" }
+  );
+
+  if (error) {
+    console.error("[admin.resetAuthImageContent]", error.message);
+    return { error: "Default giriş şəkli bərpa edilmədi." };
+  }
+
+  revalidateAuthImageContent();
+  return { success: "Default giriş şəkli bərpa olundu." };
 }
 
 function revalidateFaqContent() {
