@@ -1,12 +1,14 @@
 "use client";
 
 import {
+  startTransition,
   useActionState,
   useEffect,
   useMemo,
   useRef,
   useState,
   useTransition,
+  type FormEvent,
 } from "react";
 import Link from "next/link";
 import { GoogleAuthButton } from "@/components/auth/GoogleAuthButton";
@@ -30,7 +32,11 @@ import {
   getProductStatusLabel,
 } from "@/lib/orders/labels";
 import { AZ_REGIONS } from "@/lib/az/regions";
-import { MAX_PRODUCT_IMAGES } from "@/lib/farmer/image-upload";
+import {
+  MAX_PRODUCT_IMAGES,
+  validateProductImage,
+} from "@/lib/farmer/image-upload";
+import { uploadProductImages } from "@/lib/farmer/upload-product-images";
 import { formatDateTime } from "@/lib/format/date";
 import {
   formatPrice,
@@ -309,13 +315,21 @@ export function FarmerProductForm({
   categories,
   subcategories,
   product,
+  userId,
 }: {
   categories: Category[];
   subcategories: Subcategory[];
   product?: FarmerProduct;
+  userId: string;
 }) {
   const action = product ? updateProduct : createProduct;
   const [state, formAction, pending] = useActionState(action, initialState);
+  const [uploading, setUploading] = useState(false);
+  const [imageError, setImageError] = useState<string | null>(null);
+  // File → storage path, so a retry after a failed save re-sends the paths
+  // instead of uploading the same photos again.
+  const [uploadCache] = useState(() => new Map<File, string>());
+  const busy = uploading || pending;
   const existingImages = [...(product?.product_images ?? [])].sort(
     (a, b) => a.sort_order - b.sort_order,
   );
@@ -359,9 +373,34 @@ export function FarmerProductForm({
     syncImages(images.filter((_, i) => i !== index));
   }
 
+  // Photos go browser → Storage first; the action only gets their paths.
+  // Dispatching by hand (instead of <form action>) also stops React from
+  // resetting the form after a failed save.
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (busy) return;
+
+    const formData = new FormData(event.currentTarget);
+    formData.delete("images");
+    setImageError(null);
+
+    if (images.length > 0) {
+      setUploading(true);
+      const result = await uploadProductImages(images, userId, uploadCache);
+      setUploading(false);
+      if ("error" in result) {
+        setImageError(result.error);
+        return;
+      }
+      result.paths.forEach((path) => formData.append("image_paths", path));
+    }
+
+    startTransition(() => formAction(formData));
+  }
+
   return (
     <form
-      action={formAction}
+      onSubmit={handleSubmit}
       className="space-y-4 rounded-3xl bg-white p-6 shadow-sm ring-1 ring-zinc-200"
     >
       {product ? <input type="hidden" name="product_id" value={product.id} /> : null}
@@ -545,7 +584,8 @@ export function FarmerProductForm({
           Məhsul şəkilləri {product ? "(istəyə bağlı yeniləyin)" : "*"}
         </label>
         <p className="mt-1 text-xs text-zinc-500">
-          Ən azı 1, ən çox {MAX_PRODUCT_IMAGES} şəkil.
+          Ən azı 1, ən çox {MAX_PRODUCT_IMAGES} şəkil, hər biri ən çox 5 MB
+          (JPEG, PNG, WebP).
           {product
             ? " Yeni şəkil seçsəniz, mövcud bütün şəkillər əvəz olunacaq."
             : ""}
@@ -564,7 +604,18 @@ export function FarmerProductForm({
             const selected = event.target.files
               ? Array.from(event.target.files)
               : [];
-            syncImages([...images, ...selected].slice(0, MAX_PRODUCT_IMAGES));
+            // Reject oversized or wrong-type files at pick time, with the
+            // reason shown right here rather than after a failed save.
+            const rejected = selected
+              .map((file) => ({ file, error: validateProductImage(file) }))
+              .filter((entry) => entry.error);
+            setImageError(
+              rejected.length > 0
+                ? rejected.map((entry) => `${entry.file.name}: ${entry.error}`).join(" ")
+                : null,
+            );
+            const accepted = selected.filter((file) => !validateProductImage(file));
+            syncImages([...images, ...accepted].slice(0, MAX_PRODUCT_IMAGES));
           }}
         />
         <button
@@ -575,6 +626,11 @@ export function FarmerProductForm({
         >
           Şəkil seç ({images.length}/{MAX_PRODUCT_IMAGES})
         </button>
+        {imageError ? (
+          <p role="alert" className="mt-2 text-sm text-rose-600">
+            {imageError}
+          </p>
+        ) : null}
 
         {previews.length > 0 ? (
           <div className="mt-3 grid grid-cols-3 gap-2 sm:grid-cols-5">
@@ -632,11 +688,15 @@ export function FarmerProductForm({
 
       <button
         type="submit"
-        disabled={pending}
+        disabled={busy}
         className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-emerald-500 disabled:opacity-70"
       >
-        {pending ? <Spinner className="h-4 w-4" /> : null}
-        {product ? "Yenilə və təsdiqə göndər" : "Məhsul əlavə et"}
+        {busy ? <Spinner className="h-4 w-4" /> : null}
+        {uploading
+          ? "Şəkillər yüklənir..."
+          : product
+            ? "Yenilə və təsdiqə göndər"
+            : "Məhsul əlavə et"}
       </button>
     </form>
   );

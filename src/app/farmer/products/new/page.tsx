@@ -8,7 +8,7 @@ import {
 export const metadata = { title: "Yeni məhsul — Fermer" };
 
 export default async function FarmerNewProductPage() {
-  await requireApprovedFarmer();
+  const { profile } = await requireApprovedFarmer();
   const [categories, subcategories] = await Promise.all([
     getShopCategories(),
     getShopSubcategories(),
@@ -24,6 +24,7 @@ export default async function FarmerNewProductPage() {
         <FarmerProductForm
           categories={categories}
           subcategories={subcategories}
+          userId={profile.id}
         />
       </div>
     </div>

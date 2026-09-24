@@ -6,7 +6,10 @@ import { getAuthCallbackUrl, getSupabaseEnvError } from "@/lib/auth/urls";
 import { getProfile } from "@/lib/auth/session";
 import { requireApprovedFarmer } from "@/lib/farmer/auth";
 import { ensureFarmerRecord } from "@/lib/farmer/ensure";
-import { MAX_PRODUCT_IMAGES, uploadProductImage } from "@/lib/farmer/image-upload";
+import {
+  MAX_PRODUCT_IMAGES,
+  resolveUploadedProductImages,
+} from "@/lib/farmer/image-upload";
 import { uploadFarmerMedia } from "@/lib/farmer/media-upload";
 import {
   FARMER_ITEM_STATUS_TRANSITIONS,
@@ -413,9 +416,12 @@ export async function createProduct(
   const unitType = String(formData.get("unit_type") ?? "").trim() as UnitType;
   const farmerPrice = Number(formData.get("farmer_price") ?? 0);
   const quantity = Number(formData.get("quantity_available") ?? 0);
-  const images = formData
-    .getAll("images")
-    .filter((value): value is File => value instanceof File && value.size > 0);
+  // Storage paths of photos the browser already uploaded (see
+  // resolveUploadedProductImages for why the files are not sent here).
+  const imagePaths = formData
+    .getAll("image_paths")
+    .map((value) => String(value).trim())
+    .filter(Boolean);
 
   if (!title || !description || !unitType) {
     return { error: "Bütün sahələr mütləqdir." };
@@ -429,18 +435,24 @@ export async function createProduct(
     return { error: "Qiymət və miqdar düzgün deyil." };
   }
 
-  if (images.length === 0) {
+  if (imagePaths.length === 0) {
     return { error: "Ən azı bir məhsul şəkli seçin." };
   }
 
-  if (images.length > MAX_PRODUCT_IMAGES) {
+  if (imagePaths.length > MAX_PRODUCT_IMAGES) {
     return { error: `Ən çox ${MAX_PRODUCT_IMAGES} şəkil əlavə edə bilərsiniz.` };
   }
+
+  const supabase = await createClient();
+
+  // Checked before the product row exists, so a bad image never leaves a
+  // half-created product behind.
+  const images = await resolveUploadedProductImages(supabase, profile.id, imagePaths);
+  if ("error" in images) return { error: images.error };
 
   const taxonomy = await resolveTaxonomy(formData, profile.id);
   if ("error" in taxonomy) return { error: taxonomy.error };
 
-  const supabase = await createClient();
   const { data: product, error } = await supabase
     .from("products")
     .insert({
@@ -463,22 +475,10 @@ export async function createProduct(
     return { error: "Məhsul yaradıla bilmədi." };
   }
 
-  const uploads = await Promise.all(
-    images.map((file) => uploadProductImage(supabase, profile.id, product.id, file)),
-  );
-  const failedUpload = uploads.find(
-    (result): result is { error: string } => "error" in result,
-  );
-
-  if (failedUpload) {
-    await supabase.from("products").delete().eq("id", product.id);
-    return { error: failedUpload.error };
-  }
-
   const { error: imageError } = await supabase.from("product_images").insert(
-    uploads.map((result, index) => ({
+    images.urls.map((url, index) => ({
       product_id: product.id,
-      url: (result as { url: string }).url,
+      url,
       sort_order: index,
     })),
   );
@@ -523,22 +523,35 @@ export async function updateProduct(
   const unitType = String(formData.get("unit_type") ?? "").trim() as UnitType;
   const farmerPrice = Number(formData.get("farmer_price") ?? 0);
   const quantity = Number(formData.get("quantity_available") ?? 0);
-  const images = formData
-    .getAll("images")
-    .filter((value): value is File => value instanceof File && value.size > 0);
+  // Storage paths of photos the browser already uploaded (see
+  // resolveUploadedProductImages for why the files are not sent here).
+  const imagePaths = formData
+    .getAll("image_paths")
+    .map((value) => String(value).trim())
+    .filter(Boolean);
 
   if (!productId || !title || !description || !unitType) {
     return { error: "Bütün sahələr mütləqdir." };
   }
 
-  if (images.length > MAX_PRODUCT_IMAGES) {
+  if (imagePaths.length > MAX_PRODUCT_IMAGES) {
     return { error: `Ən çox ${MAX_PRODUCT_IMAGES} şəkil əlavə edə bilərsiniz.` };
+  }
+
+  const supabase = await createClient();
+
+  // New photos are optional on edit; when sent, verify them before touching
+  // the product so a bad image cannot leave it half-updated.
+  let newImageUrls: string[] = [];
+  if (imagePaths.length > 0) {
+    const images = await resolveUploadedProductImages(supabase, profile.id, imagePaths);
+    if ("error" in images) return { error: images.error };
+    newImageUrls = images.urls;
   }
 
   const taxonomy = await resolveTaxonomy(formData, profile.id);
   if ("error" in taxonomy) return { error: taxonomy.error };
 
-  const supabase = await createClient();
   const { error } = await supabase
     .from("products")
     .update({
@@ -568,23 +581,12 @@ export async function updateProduct(
     taxonomy.createdSubcategoryId,
   );
 
-  if (images.length > 0) {
-    const uploads = await Promise.all(
-      images.map((file) => uploadProductImage(supabase, profile.id, productId, file)),
-    );
-    const failedUpload = uploads.find(
-      (result): result is { error: string } => "error" in result,
-    );
-
-    if (failedUpload) {
-      return { error: failedUpload.error };
-    }
-
+  if (newImageUrls.length > 0) {
     await supabase.from("product_images").delete().eq("product_id", productId);
     const { error: imageError } = await supabase.from("product_images").insert(
-      uploads.map((result, index) => ({
+      newImageUrls.map((url, index) => ({
         product_id: productId,
-        url: (result as { url: string }).url,
+        url,
         sort_order: index,
       })),
     );

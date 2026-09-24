@@ -15,7 +15,7 @@ export default async function FarmerEditProductPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const { farmer } = await requireApprovedFarmer();
+  const { farmer, profile } = await requireApprovedFarmer();
   const [product, categories, subcategories] = await Promise.all([
     getFarmerProductById(farmer.id, id),
     getShopCategories(),
@@ -35,6 +35,7 @@ export default async function FarmerEditProductPage({
           categories={categories}
           subcategories={subcategories}
           product={product}
+          userId={profile.id}
         />
       </div>
     </div>
