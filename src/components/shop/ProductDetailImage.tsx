@@ -1,7 +1,13 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useRef, useState, type TouchEvent } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+  type MouseEvent,
+  type TouchEvent,
+} from "react";
 import { createPortal } from "react-dom";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { ProductImagePlaceholder } from "@/components/shop/ProductImagePlaceholder";
@@ -26,6 +32,30 @@ function ArrowIcon({ direction }: { direction: "left" | "right" }) {
         strokeLinejoin="round"
       />
     </svg>
+  );
+}
+
+/**
+ * Whether a click landed on the visible picture. With `fill` + object-contain
+ * the <img> box covers the whole stage, letterbox bars included, so the
+ * element target alone cannot tell the picture from the empty space.
+ */
+function isOnRenderedImage(event: MouseEvent, img: HTMLImageElement): boolean {
+  const { naturalWidth, naturalHeight } = img;
+  if (!naturalWidth || !naturalHeight) return true;
+
+  const box = img.getBoundingClientRect();
+  const scale = Math.min(box.width / naturalWidth, box.height / naturalHeight);
+  const width = naturalWidth * scale;
+  const height = naturalHeight * scale;
+  const left = box.left + (box.width - width) / 2;
+  const top = box.top + (box.height - height) / 2;
+
+  return (
+    event.clientX >= left &&
+    event.clientX <= left + width &&
+    event.clientY >= top &&
+    event.clientY <= top + height
   );
 }
 
@@ -54,6 +84,7 @@ export function ProductDetailImage({
   const [loaded, setLoaded] = useState(false);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const touchStartX = useRef<number | null>(null);
+  const lightboxImageRef = useRef<HTMLImageElement>(null);
 
   function showImage(index: number) {
     const next = (index + sorted.length) % sorted.length;
@@ -201,24 +232,34 @@ export function ProductDetailImage({
           aria-modal="true"
           aria-label={alt}
           className="fixed inset-0 z-[100] flex items-center justify-center overscroll-contain bg-black/90 p-4"
-          onClick={() => setLightboxOpen(false)}
+          // One close rule for the whole overlay: anything but a button or
+          // the picture itself closes it. The stage used to swallow every
+          // click, and on phones it spans the whole screen — so neither the
+          // empty space nor the X (painted underneath it) could close it.
+          onClick={(event) => {
+            const target = event.target as Element;
+            if (target.closest("button")) return;
+            const img = lightboxImageRef.current;
+            if (img && target === img && isOnRenderedImage(event, img)) return;
+            setLightboxOpen(false);
+          }}
         >
           <button
             type="button"
             onClick={() => setLightboxOpen(false)}
             aria-label="Bağla"
-            className="absolute right-4 top-4 inline-flex h-11 w-11 items-center justify-center rounded-full bg-white/10 text-white ring-1 ring-white/20 transition hover:bg-white/20"
+            className="absolute right-4 top-4 z-10 inline-flex h-11 w-11 items-center justify-center rounded-full bg-white/10 text-white ring-1 ring-white/20 transition hover:bg-white/20"
           >
             <CloseIcon />
           </button>
 
           <div
             className="relative h-full w-full max-w-5xl"
-            onClick={(event) => event.stopPropagation()}
             onTouchStart={handleTouchStart}
             onTouchEnd={handleTouchEnd}
           >
             <Image
+              ref={lightboxImageRef}
               src={active.url}
               alt={alt}
               fill
