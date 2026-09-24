@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { useEffect, useRef, useState, type TouchEvent } from "react";
+import { createPortal } from "react-dom";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { ProductImagePlaceholder } from "@/components/shop/ProductImagePlaceholder";
 
@@ -73,6 +74,25 @@ export function ProductDetailImage({
     return () => document.removeEventListener("keydown", onKeyDown);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lightboxOpen, activeIndex]);
+
+  // Lock the page behind the lightbox. The scrollbar gutter is padded back
+  // so the page does not jump sideways when the scrollbar disappears.
+  useEffect(() => {
+    if (!lightboxOpen) return;
+
+    const { body, documentElement } = document;
+    const previousOverflow = body.style.overflow;
+    const previousPadding = body.style.paddingRight;
+    const scrollbarWidth = window.innerWidth - documentElement.clientWidth;
+
+    body.style.overflow = "hidden";
+    if (scrollbarWidth > 0) body.style.paddingRight = `${scrollbarWidth}px`;
+
+    return () => {
+      body.style.overflow = previousOverflow;
+      body.style.paddingRight = previousPadding;
+    };
+  }, [lightboxOpen]);
 
   if (sorted.length === 0) {
     return <ProductImagePlaceholder className="min-h-[280px] w-full" />;
@@ -171,12 +191,16 @@ export function ProductDetailImage({
         </div>
       ) : null}
 
-      {lightboxOpen ? (
+      {/* Portaled to <body>: the gallery sits in a sticky, overflow-hidden
+          card, and sticky makes its own stacking context — rendered in
+          place, the page header (z-30) painted over the top of the image. */}
+      {lightboxOpen
+        ? createPortal(
         <div
           role="dialog"
           aria-modal="true"
           aria-label={alt}
-          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 p-4"
+          className="fixed inset-0 z-[100] flex items-center justify-center overscroll-contain bg-black/90 p-4"
           onClick={() => setLightboxOpen(false)}
         >
           <button
@@ -223,8 +247,10 @@ export function ProductDetailImage({
               </>
             ) : null}
           </div>
-        </div>
-      ) : null}
+        </div>,
+            document.body,
+          )
+        : null}
     </div>
   );
 }
