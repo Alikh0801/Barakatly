@@ -10,7 +10,10 @@ import {
   MAX_PRODUCT_IMAGES,
   resolveUploadedProductImages,
 } from "@/lib/farmer/image-upload";
-import { uploadFarmerMedia } from "@/lib/farmer/media-upload";
+import {
+  resolveUploadedPostMedia,
+  uploadFarmerMedia,
+} from "@/lib/farmer/media-upload";
 import {
   FARMER_ITEM_STATUS_TRANSITIONS,
   getOrderItemStatusLabel,
@@ -773,19 +776,28 @@ export async function createFarmerBlogPost(
 ): Promise<FarmerActionState> {
   const { profile, farmer } = await requireApprovedFarmer();
   const caption = String(formData.get("caption") ?? "").trim();
-  const files = formData
-    .getAll("media")
-    .filter((value): value is File => value instanceof File && value.size > 0);
+  // Storage paths of media the browser already uploaded (see
+  // resolveUploadedPostMedia for why the files are not sent here).
+  const mediaPaths = formData
+    .getAll("media_paths")
+    .map((value) => String(value).trim())
+    .filter(Boolean);
 
-  if (files.length === 0) {
+  if (mediaPaths.length === 0) {
     return { error: "Ən azı bir şəkil və ya video seçin." };
   }
 
-  if (files.length > 5) {
+  if (mediaPaths.length > 5) {
     return { error: "Bir paylaşıma ən çox 5 fayl əlavə etmək olar." };
   }
 
   const supabase = await createClient();
+
+  // Checked before the post row exists, so bad media never leaves an empty
+  // post behind.
+  const media = await resolveUploadedPostMedia(supabase, profile.id, mediaPaths);
+  if ("error" in media) return { error: media.error };
+
   const { data: post, error: postError } = await supabase
     .from("farmer_posts")
     .insert({
@@ -800,35 +812,14 @@ export async function createFarmerBlogPost(
     return { error: "Paylaşım yaradıla bilmədi." };
   }
 
-  const mediaRows: {
-    post_id: string;
-    media_type: "image" | "video";
-    url: string;
-    sort_order: number;
-  }[] = [];
-
-  for (const [index, file] of files.entries()) {
-    const uploaded = await uploadFarmerMedia(
-      supabase,
-      profile.id,
-      `posts/${post.id}`,
-      file
-    );
-    if ("error" in uploaded) {
-      await supabase.from("farmer_posts").delete().eq("id", post.id);
-      return { error: uploaded.error };
-    }
-    mediaRows.push({
+  const { error: mediaError } = await supabase.from("farmer_post_media").insert(
+    media.items.map((item, index) => ({
       post_id: post.id,
-      media_type: uploaded.mediaType,
-      url: uploaded.url,
+      media_type: item.mediaType,
+      url: item.url,
       sort_order: index,
-    });
-  }
-
-  const { error: mediaError } = await supabase
-    .from("farmer_post_media")
-    .insert(mediaRows);
+    })),
+  );
 
   if (mediaError) {
     console.error("[farmer.createFarmerBlogPost.media]", mediaError.message);

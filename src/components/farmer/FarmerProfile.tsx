@@ -3,7 +3,14 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Syne } from "next/font/google";
-import { useActionState, useEffect, useRef, useState } from "react";
+import {
+  startTransition,
+  useActionState,
+  useEffect,
+  useRef,
+  useState,
+  type FormEvent,
+} from "react";
 import {
   createFarmerBlogPost,
   deleteFarmerBlogPost,
@@ -30,6 +37,8 @@ import type {
 import type { ProductListItem } from "@/types/shop";
 import type { Farmer, Profile } from "@/types";
 import { formatDate, formatDateTime } from "@/lib/format/date";
+import { validateFarmerMedia } from "@/lib/farmer/media-upload";
+import { uploadPostMedia } from "@/lib/farmer/upload-post-media";
 
 const displayFont = Syne({
   subsets: ["latin"],
@@ -584,20 +593,33 @@ type ComposerPreview = {
   name: string;
 };
 
-function BlogComposer() {
+function BlogComposer({ userId }: { userId: string }) {
   const [state, action, pending] = useActionState(
     createFarmerBlogPost,
     initialState
   );
   const [previews, setPreviews] = useState<ComposerPreview[]>([]);
+  const [caption, setCaption] = useState("");
   const [lastSuccess, setLastSuccess] = useState(state.success);
+  const [mediaError, setMediaError] = useState<string | null>(null);
+  const [progress, setProgress] = useState<{ done: number; total: number } | null>(
+    null,
+  );
+  // File → storage path, so a retry after a failed post re-sends the paths
+  // instead of uploading the same (possibly 50 MB) videos again.
+  const [uploadCache] = useState(() => new Map<File, string>());
   const fileInputRef = useRef<HTMLInputElement>(null);
   const liveUrlsRef = useRef<string[]>([]);
+  const uploading = progress !== null;
+  const busy = uploading || pending;
 
+  // The action is dispatched by hand, so React no longer resets the form —
+  // which also means clearing it after a successful post is up to us.
   if (state.success !== lastSuccess) {
     setLastSuccess(state.success);
-    if (state.success && previews.length > 0) {
-      setPreviews([]);
+    if (state.success) {
+      if (previews.length > 0) setPreviews([]);
+      setCaption("");
     }
   }
 
@@ -610,10 +632,11 @@ function BlogComposer() {
     }
     liveUrlsRef.current = current;
 
-    if (current.length === 0 && fileInputRef.current?.value) {
-      fileInputRef.current.value = "";
+    if (current.length === 0) {
+      uploadCache.clear();
+      if (fileInputRef.current?.value) fileInputRef.current.value = "";
     }
-  }, [previews]);
+  }, [previews, uploadCache]);
 
   useEffect(() => {
     return () => {
@@ -650,9 +673,35 @@ function BlogComposer() {
     );
   }
 
+  // Media goes browser → Storage first; the action only gets the paths.
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (busy || previews.length === 0) return;
+    setMediaError(null);
+
+    setProgress({ done: 0, total: previews.length });
+    const result = await uploadPostMedia(
+      previews.map((preview) => preview.file),
+      userId,
+      uploadCache,
+      (done, total) => setProgress({ done, total }),
+    );
+    setProgress(null);
+
+    if ("error" in result) {
+      setMediaError(result.error);
+      return;
+    }
+
+    const formData = new FormData();
+    formData.set("caption", caption);
+    result.paths.forEach((path) => formData.append("media_paths", path));
+    startTransition(() => action(formData));
+  }
+
   return (
     <form
-      action={action}
+      onSubmit={handleSubmit}
       className="overflow-hidden rounded-[1.5rem] bg-white shadow-sm ring-1 ring-zinc-200"
     >
       <div className="border-b border-zinc-100 px-4 py-3 sm:px-5">
@@ -676,6 +725,8 @@ function BlogComposer() {
         <textarea
           name="caption"
           rows={3}
+          value={caption}
+          onChange={(event) => setCaption(event.target.value)}
           placeholder="Bu gün təsərrüfatda nələr baş verir?"
           className="w-full resize-none border-0 bg-transparent text-sm text-zinc-900 outline-none placeholder:text-zinc-400"
         />
@@ -713,6 +764,11 @@ function BlogComposer() {
             ))}
           </div>
         ) : null}
+        {mediaError ? (
+          <p role="alert" className="mb-2 text-sm text-rose-600">
+            {mediaError}
+          </p>
+        ) : null}
       </div>
 
       <div className="flex items-center justify-between gap-3 border-t border-zinc-100 px-3 py-2.5 sm:px-4">
@@ -729,8 +785,19 @@ function BlogComposer() {
               const selected = event.target.files
                 ? Array.from(event.target.files)
                 : [];
+              // Refuse oversized or unsupported files at pick time, with the
+              // file name and reason, instead of after a failed upload.
+              const rejected = selected
+                .map((file) => ({ file, error: validateFarmerMedia(file) }))
+                .filter((entry) => entry.error);
+              setMediaError(
+                rejected.length > 0
+                  ? rejected.map((entry) => `${entry.file.name}: ${entry.error}`).join(" ")
+                  : null,
+              );
+              const accepted = selected.filter((file) => !validateFarmerMedia(file));
               syncFiles(
-                [...previews.map((preview) => preview.file), ...selected].slice(
+                [...previews.map((preview) => preview.file), ...accepted].slice(
                   0,
                   5
                 )
@@ -758,17 +825,17 @@ function BlogComposer() {
             Əlavə et
           </button>
           <span className="hidden text-xs text-zinc-400 sm:inline">
-            Şəkil və ya video · max 5
+            Şəkil və ya video · max 5 · hər biri 50 MB-a qədər
           </span>
         </div>
 
         <button
           type="submit"
-          disabled={pending || previews.length === 0}
+          disabled={busy || previews.length === 0}
           className="inline-flex items-center gap-2 rounded-full bg-[#1f5c3d] px-5 py-2 text-sm font-semibold text-white disabled:opacity-50"
         >
-          {pending ? <Spinner className="h-3.5 w-3.5" /> : null}
-          Paylaş
+          {busy ? <Spinner className="h-3.5 w-3.5" /> : null}
+          {progress ? `Yüklənir ${progress.done}/${progress.total}` : "Paylaş"}
         </button>
       </div>
     </form>
@@ -954,7 +1021,7 @@ export function FarmerProfileDashboard({
 
       <div className="mt-5">
         <div className={tab === "posts" ? "space-y-5" : "hidden"}>
-          <BlogComposer />
+          <BlogComposer userId={profile.id} />
           <FarmerBlogFeed posts={posts} canManage />
         </div>
 
