@@ -5,10 +5,17 @@ import { getSessionUser } from "@/lib/auth/session";
 import {
   DELIVERY_FEE,
   RECEIPT_MAX_BYTES,
-  RECEIPT_MIME_TYPES,
+  RECEIPT_TOO_LARGE_ERROR,
+  RECEIPT_TYPE_ERROR,
+  isOwnReceiptPath,
+  isReceiptMimeType,
 } from "@/lib/checkout/constants";
 import { notifyAdmins } from "@/lib/notifications/helpers";
-import { isValidAzPhone, normalizeAzPhone } from "@/lib/phone/az";
+import {
+  AZ_PHONE_FORMAT_ERROR,
+  isValidAzPhone,
+  normalizeAzPhone,
+} from "@/lib/phone/az";
 import { createClient } from "@/lib/supabase/server";
 
 export type CheckoutCartItem = {
@@ -20,17 +27,6 @@ export type PlaceOrderState = {
   error?: string;
   orderId?: string;
 };
-
-function getReceiptExtension(file: File): string {
-  const byType: Record<string, string> = {
-    "image/jpeg": "jpg",
-    "image/png": "png",
-    "image/webp": "webp",
-    "application/pdf": "pdf",
-  };
-
-  return byType[file.type] ?? "bin";
-}
 
 /** Turns place_order()'s raised exceptions into customer-facing messages. */
 function describePlaceOrderError(message: string): string {
@@ -59,11 +55,14 @@ export async function placeOrder(
     formData.get("delivery_address_text") ?? ""
   ).trim();
   const bankId = String(formData.get("bank_id") ?? "").trim();
-  const receipt = formData.get("receipt");
+  // The browser uploads the receipt straight to Storage and sends only its
+  // path — a file in the request body would hit Vercel's ~4.5 MB function
+  // payload cap (413) long before the 7 MB receipt limit.
+  const receiptPath = String(formData.get("receipt_path") ?? "").trim();
 
   if (!isValidAzPhone(contactPhoneRaw)) {
     return {
-      error: "Telefon +994 ilə başlamalıdır (məs: +994501234567).",
+      error: AZ_PHONE_FORMAT_ERROR,
     };
   }
   const contactPhone = normalizeAzPhone(contactPhoneRaw);
@@ -76,23 +75,31 @@ export async function placeOrder(
     return { error: "Bank seçin." };
   }
 
-  if (!(receipt instanceof File) || receipt.size === 0) {
+  if (!receiptPath) {
     return { error: "Ödəniş çekini yükləyin." };
   }
 
-  if (receipt.size > RECEIPT_MAX_BYTES) {
-    return { error: "Çek faylı 5 MB-dan böyük ola bilməz." };
-  }
-
-  if (
-    !RECEIPT_MIME_TYPES.includes(
-      receipt.type as (typeof RECEIPT_MIME_TYPES)[number]
-    )
-  ) {
-    return { error: "Çek JPEG, PNG, WebP və ya PDF formatında olmalıdır." };
+  // The path is client-supplied: it must point into this user's own folder,
+  // and the object must really exist with an allowed type and size.
+  if (!isOwnReceiptPath(receiptPath, user.id)) {
+    return { error: "Çek tapılmadı. Yenidən yükləyin." };
   }
 
   const supabase = await createClient();
+
+  const { data: receiptInfo, error: receiptInfoError } = await supabase.storage
+    .from("payment-receipts")
+    .info(receiptPath);
+
+  if (receiptInfoError || !receiptInfo) {
+    return { error: "Çek tapılmadı. Yenidən yükləyin." };
+  }
+  if ((receiptInfo.size ?? 0) > RECEIPT_MAX_BYTES) {
+    return { error: RECEIPT_TOO_LARGE_ERROR };
+  }
+  if (!isReceiptMimeType(receiptInfo.contentType ?? "")) {
+    return { error: RECEIPT_TYPE_ERROR };
+  }
 
   // Read the cart straight from the server so the client cannot tamper with it.
   const { data: cartRows, error: cartError } = await supabase
@@ -146,19 +153,6 @@ export async function placeOrder(
     return { error: "Seçilmiş bank tapılmadı." };
   }
 
-  const receiptPath = `${user.id}/${Date.now()}-${crypto.randomUUID()}.${getReceiptExtension(receipt)}`;
-  const { error: uploadError } = await supabase.storage
-    .from("payment-receipts")
-    .upload(receiptPath, receipt, {
-      contentType: receipt.type,
-      upsert: false,
-    });
-
-  if (uploadError) {
-    console.error("[checkout.placeOrder] upload", uploadError.message);
-    return { error: "Çek yüklənmədi. Yenidən cəhd edin." };
-  }
-
   // Product validation, pricing, order/items/payment creation, and the stock
   // decrement all happen atomically inside place_order() — either everything
   // commits together or nothing does, so a stock shortfall can never leave
@@ -180,8 +174,9 @@ export async function placeOrder(
   );
 
   if (placeError || !placed?.[0]) {
+    // The receipt is left in place: the form keeps the same file selected
+    // and re-sends this path on retry instead of uploading it again.
     console.error("[checkout.placeOrder] rpc", placeError?.message);
-    await supabase.storage.from("payment-receipts").remove([receiptPath]);
     return { error: describePlaceOrderError(placeError?.message ?? "") };
   }
 

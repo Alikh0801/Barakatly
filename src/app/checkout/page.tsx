@@ -40,6 +40,7 @@ export default async function CheckoutPage() {
             banks={banks}
             defaultPhone={profile.phone}
             items={items}
+            userId={profile.id}
           />
         </div>
       </div>

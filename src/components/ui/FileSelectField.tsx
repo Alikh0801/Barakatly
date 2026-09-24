@@ -17,6 +17,8 @@ export function FileSelectField({
   caption,
   hint,
   buttonLabel = "Cihazdan seç",
+  error,
+  onFileChange,
 }: {
   name: string;
   accept?: string;
@@ -24,6 +26,9 @@ export function FileSelectField({
   caption?: string;
   hint?: string;
   buttonLabel?: string;
+  /** Shown under the field in place of the hint. */
+  error?: string | null;
+  onFileChange?: (file: File | null) => void;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [fileName, setFileName] = useState<string | null>(null);
@@ -42,8 +47,11 @@ export function FileSelectField({
         accept={accept}
         required={required}
         className="sr-only"
+        aria-invalid={error ? true : undefined}
         onChange={(event) => {
-          setFileName(event.target.files?.[0]?.name ?? null);
+          const file = event.target.files?.[0] ?? null;
+          setFileName(file?.name ?? null);
+          onFileChange?.(file);
         }}
       />
       <div className="flex flex-wrap items-center gap-3">
@@ -58,7 +66,13 @@ export function FileSelectField({
           {fileName ?? "Fayl seçilməyib"}
         </span>
       </div>
-      {hint ? <span className="block text-xs text-zinc-500">{hint}</span> : null}
+      {error ? (
+        <span role="alert" className="block text-sm text-rose-600">
+          {error}
+        </span>
+      ) : hint ? (
+        <span className="block text-xs text-zinc-500">{hint}</span>
+      ) : null}
     </div>
   );
 }

@@ -22,7 +22,11 @@ import {
   isDuplicateSignUpUser,
   translateAuthError,
 } from "@/lib/auth/signup";
-import { isValidAzPhone, normalizeAzPhone } from "@/lib/phone/az";
+import {
+  AZ_PHONE_FORMAT_ERROR,
+  isValidAzPhone,
+  normalizeAzPhone,
+} from "@/lib/phone/az";
 import { isPhoneTakenByAnother } from "@/lib/phone/uniqueness";
 import { revalidateProductCatalog } from "@/lib/shop/revalidate";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -227,7 +231,7 @@ export async function signUpFarmer(
 
   if (!isValidAzPhone(phone)) {
     return {
-      error: "Telefon +994 ilə başlamalıdır (məs: +994501234567).",
+      error: AZ_PHONE_FORMAT_ERROR,
     };
   }
 
@@ -346,7 +350,7 @@ export async function completeFarmerProfile(
 
   if (!phone || !isValidAzPhone(phone)) {
     return {
-      error: "Telefon +994 ilə başlamalıdır (məs: +994501234567).",
+      error: AZ_PHONE_FORMAT_ERROR,
     };
   }
 

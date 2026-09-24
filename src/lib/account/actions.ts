@@ -3,6 +3,7 @@
 import { refresh, revalidatePath } from "next/cache";
 import { getSessionUser } from "@/lib/auth/session";
 import {
+  AZ_PHONE_FORMAT_ERROR,
   azPhoneLocalPart,
   isValidAzPhone,
   normalizeAzPhone,
@@ -37,7 +38,7 @@ export async function updateAccountProfile(
   let phone: string | null = null;
   if (azPhoneLocalPart(phoneRaw)) {
     if (!isValidAzPhone(phoneRaw)) {
-      return { error: "Telefon +994 ilə başlamalıdır (məs: +994501234567)." };
+      return { error: AZ_PHONE_FORMAT_ERROR };
     }
     phone = normalizeAzPhone(phoneRaw);
 
