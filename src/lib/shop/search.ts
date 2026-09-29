@@ -1,3 +1,4 @@
+import { escapeLike } from "@/lib/supabase/like";
 import { createPublicClient } from "@/lib/supabase/public";
 import type { ProductListItem } from "@/types/shop";
 import type { PublicFarmer } from "@/lib/farmers/queries";
@@ -15,7 +16,14 @@ export async function searchCatalog(query: string): Promise<SearchResults> {
   }
 
   const supabase = createPublicClient();
-  const pattern = `%${q.replace(/[%_]/g, "")}%`;
+  // Escape, never strip: stripping turned a query of just "%" or "_" into
+  // the pattern "%%", which matched every row.
+  const pattern = `%${escapeLike(q)}%`;
+  // `*` can only be approximated in a PostgREST pattern (see escapeLike),
+  // so for those queries re-check the rows for the literal text.
+  const needle = q.toLowerCase();
+  const matchesLiterally = (text: string | null | undefined) =>
+    !q.includes("*") || (text ?? "").toLowerCase().includes(needle);
 
   const [productsResult, farmersResult] = await Promise.all([
     supabase
@@ -78,7 +86,9 @@ export async function searchCatalog(query: string): Promise<SearchResults> {
     console.error("[shop.searchCatalog.farmers]", farmersResult.error.message);
   }
 
-  const farmers: PublicFarmer[] = (farmersResult.data ?? []).map((farmer) => {
+  const farmers: PublicFarmer[] = (farmersResult.data ?? [])
+    .filter((farmer) => matchesLiterally(farmer.farm_name))
+    .map((farmer) => {
     const products = Array.isArray(farmer.products) ? farmer.products : [];
     return {
       id: farmer.id,
@@ -96,7 +106,8 @@ export async function searchCatalog(query: string): Promise<SearchResults> {
   return {
     query: q,
     products: ((productsResult.data ?? []) as unknown as ProductListItem[]).filter(
-      (product) => product.farmer?.status === "approved",
+      (product) =>
+        product.farmer?.status === "approved" && matchesLiterally(product.title),
     ),
     farmers,
   };

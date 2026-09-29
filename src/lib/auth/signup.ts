@@ -1,5 +1,6 @@
 import type { User } from "@supabase/supabase-js";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { escapeLike } from "@/lib/supabase/like";
 
 /**
  * Supabase signUp returns a user with empty identities when the email
@@ -20,7 +21,9 @@ export async function emailAlreadyRegistered(email: string): Promise<boolean> {
     const { data, error } = await admin
       .from("profiles")
       .select("id")
-      .ilike("email", normalized)
+      // Case-insensitive but literal: an unescaped "_" in the address would
+      // match any character, so ali_xov@… collided with ali.xov@….
+      .ilike("email", escapeLike(normalized))
       .maybeSingle();
 
     if (error) {
