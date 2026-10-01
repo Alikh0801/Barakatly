@@ -49,6 +49,12 @@ button:not(:disabled) {
   button:not(:disabled):hover {
     transform: scale(1.02);
   }
+
+  /* Opt-out for controls that must not move, e.g. the lightbox arrows.
+     Lives here because this unlayered rule outranks Tailwind utilities. */
+  button[data-static-hover]:not(:disabled):hover {
+    transform: none;
+  }
 }
 
 @keyframes navigation-progress {

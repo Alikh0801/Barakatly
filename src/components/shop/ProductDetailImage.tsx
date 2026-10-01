@@ -1,15 +1,10 @@
 "use client";
 
 import Image from "next/image";
-import {
-  useEffect,
-  useRef,
-  useState,
-  type MouseEvent,
-  type TouchEvent,
-} from "react";
+import { useEffect, useRef, useState, type TouchEvent } from "react";
 import { createPortal } from "react-dom";
 import { Skeleton } from "@/components/ui/Skeleton";
+import { Spinner } from "@/components/ui/Spinner";
 import { ProductImagePlaceholder } from "@/components/shop/ProductImagePlaceholder";
 
 type ProductImage = { url: string; sort_order: number };
@@ -32,30 +27,6 @@ function ArrowIcon({ direction }: { direction: "left" | "right" }) {
         strokeLinejoin="round"
       />
     </svg>
-  );
-}
-
-/**
- * Whether a click landed on the visible picture. With `fill` + object-contain
- * the <img> box covers the whole stage, letterbox bars included, so the
- * element target alone cannot tell the picture from the empty space.
- */
-function isOnRenderedImage(event: MouseEvent, img: HTMLImageElement): boolean {
-  const { naturalWidth, naturalHeight } = img;
-  if (!naturalWidth || !naturalHeight) return true;
-
-  const box = img.getBoundingClientRect();
-  const scale = Math.min(box.width / naturalWidth, box.height / naturalHeight);
-  const width = naturalWidth * scale;
-  const height = naturalHeight * scale;
-  const left = box.left + (box.width - width) / 2;
-  const top = box.top + (box.height - height) / 2;
-
-  return (
-    event.clientX >= left &&
-    event.clientX <= left + width &&
-    event.clientY >= top &&
-    event.clientY <= top + height
   );
 }
 
@@ -84,7 +55,8 @@ export function ProductDetailImage({
   const [loaded, setLoaded] = useState(false);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const touchStartX = useRef<number | null>(null);
-  const lightboxImageRef = useRef<HTMLImageElement>(null);
+  // Which lightbox image has finished loading; any other shows a spinner.
+  const [lightboxLoadedUrl, setLightboxLoadedUrl] = useState<string | null>(null);
 
   function showImage(index: number) {
     const next = (index + sorted.length) % sorted.length;
@@ -227,68 +199,123 @@ export function ProductDetailImage({
           place, the page header (z-30) painted over the top of the image. */}
       {lightboxOpen
         ? createPortal(
-        <div
-          role="dialog"
-          aria-modal="true"
-          aria-label={alt}
-          className="fixed inset-0 z-[100] flex items-center justify-center overscroll-contain bg-black/90 p-4"
-          // One close rule for the whole overlay: anything but a button or
-          // the picture itself closes it. The stage used to swallow every
-          // click, and on phones it spans the whole screen — so neither the
-          // empty space nor the X (painted underneath it) could close it.
-          onClick={(event) => {
-            const target = event.target as Element;
-            if (target.closest("button")) return;
-            const img = lightboxImageRef.current;
-            if (img && target === img && isOnRenderedImage(event, img)) return;
-            setLightboxOpen(false);
-          }}
-        >
-          <button
-            type="button"
-            onClick={() => setLightboxOpen(false)}
-            aria-label="Bağla"
-            className="absolute right-4 top-4 z-10 inline-flex h-11 w-11 items-center justify-center rounded-full bg-white/10 text-white ring-1 ring-white/20 transition hover:bg-white/20"
-          >
-            <CloseIcon />
-          </button>
+            <div
+              role="dialog"
+              aria-modal="true"
+              aria-label={alt}
+              className="fixed inset-0 z-[100] flex flex-col items-center justify-center gap-4 overscroll-contain bg-black/90 px-4 py-16"
+              // Anything outside the frame, its thumbnails and the buttons
+              // closes the lightbox; on phones the X is the other way out.
+              onClick={(event) => {
+                if ((event.target as Element).closest("[data-lightbox-keep]")) return;
+                setLightboxOpen(false);
+              }}
+            >
+              <button
+                type="button"
+                onClick={() => setLightboxOpen(false)}
+                aria-label="Bağla"
+                className="absolute right-4 top-4 z-10 inline-flex h-11 w-11 items-center justify-center rounded-full bg-white/10 text-white ring-1 ring-white/20 transition hover:bg-white/20"
+              >
+                <CloseIcon />
+              </button>
 
-          <div
-            className="relative h-full w-full max-w-5xl"
-            onTouchStart={handleTouchStart}
-            onTouchEnd={handleTouchEnd}
-          >
-            <Image
-              ref={lightboxImageRef}
-              src={active.url}
-              alt={alt}
-              fill
-              sizes="100vw"
-              className="object-contain"
-            />
+              {/* One fixed 4:3 frame for every photo, sized to the viewport
+                  (leaving room for the X above and the thumbnails below), so
+                  a tall photo no longer shows up smaller than a wide one and
+                  the arrows never move. The photo itself stays uncropped;
+                  a blurred copy fills the bars around it. */}
+              <div
+                data-lightbox-keep
+                className="relative aspect-[4/3] max-w-full overflow-hidden rounded-2xl bg-zinc-900 shadow-2xl ring-1 ring-white/10"
+                style={{
+                  width: hasMultiple
+                    ? "min(100%, 1100px, calc((100dvh - 13rem) * 4 / 3))"
+                    : "min(100%, 1100px, calc((100dvh - 9rem) * 4 / 3))",
+                }}
+                onTouchStart={handleTouchStart}
+                onTouchEnd={handleTouchEnd}
+              >
+                <Image
+                  key={`backdrop-${active.url}`}
+                  src={active.url}
+                  alt=""
+                  aria-hidden="true"
+                  fill
+                  sizes="96px"
+                  className="scale-110 object-cover opacity-50 blur-2xl"
+                />
+                <div className="absolute inset-0 bg-black/30" aria-hidden="true" />
+                {lightboxLoadedUrl !== active.url ? (
+                  <span className="absolute inset-0 flex items-center justify-center text-white/80">
+                    <Spinner className="h-6 w-6" />
+                  </span>
+                ) : null}
+                <Image
+                  key={active.url}
+                  src={active.url}
+                  alt={alt}
+                  fill
+                  sizes="(max-width: 1100px) 100vw, 1100px"
+                  onLoad={() => setLightboxLoadedUrl(active.url)}
+                  className={[
+                    "object-contain transition-opacity duration-300",
+                    lightboxLoadedUrl === active.url ? "opacity-100" : "opacity-0",
+                  ].join(" ")}
+                />
 
-            {hasMultiple ? (
-              <>
-                <button
-                  type="button"
-                  onClick={() => showImage(activeIndex - 1)}
-                  aria-label="Əvvəlki şəkil"
-                  className="absolute left-2 top-1/2 inline-flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-white/10 text-white ring-1 ring-white/20 transition hover:bg-white/20 sm:left-4"
+                {hasMultiple ? (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => showImage(activeIndex - 1)}
+                      aria-label="Əvvəlki şəkil"
+                      data-static-hover
+                      className="absolute left-3 top-1/2 inline-flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-zinc-800 shadow-lg ring-1 ring-black/10 transition hover:bg-white"
+                    >
+                      <ArrowIcon direction="left" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => showImage(activeIndex + 1)}
+                      aria-label="Növbəti şəkil"
+                      data-static-hover
+                      className="absolute right-3 top-1/2 inline-flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-zinc-800 shadow-lg ring-1 ring-black/10 transition hover:bg-white"
+                    >
+                      <ArrowIcon direction="right" />
+                    </button>
+                    <span className="absolute bottom-3 left-1/2 -translate-x-1/2 rounded-full bg-black/55 px-3 py-1 text-xs font-medium tabular-nums text-white">
+                      {activeIndex + 1} / {sorted.length}
+                    </span>
+                  </>
+                ) : null}
+              </div>
+
+              {hasMultiple ? (
+                <div
+                  data-lightbox-keep
+                  className="flex max-w-full gap-2 overflow-x-auto px-1 py-1"
                 >
-                  <ArrowIcon direction="left" />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => showImage(activeIndex + 1)}
-                  aria-label="Növbəti şəkil"
-                  className="absolute right-2 top-1/2 inline-flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-white/10 text-white ring-1 ring-white/20 transition hover:bg-white/20 sm:right-4"
-                >
-                  <ArrowIcon direction="right" />
-                </button>
-              </>
-            ) : null}
-          </div>
-        </div>,
+                  {sorted.map((image, index) => (
+                    <button
+                      key={image.url}
+                      type="button"
+                      onClick={() => showImage(index)}
+                      aria-label={`${alt} — şəkil ${index + 1}`}
+                      aria-current={index === activeIndex}
+                      className={[
+                        "relative h-14 w-14 shrink-0 overflow-hidden rounded-lg ring-2 transition",
+                        index === activeIndex
+                          ? "opacity-100 ring-white"
+                          : "opacity-50 ring-transparent hover:opacity-80",
+                      ].join(" ")}
+                    >
+                      <Image src={image.url} alt="" fill sizes="56px" className="object-cover" />
+                    </button>
+                  ))}
+                </div>
+              ) : null}
+            </div>,
             document.body,
           )
         : null}
