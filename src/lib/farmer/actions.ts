@@ -36,6 +36,7 @@ import {
 import { isPhoneTakenByAnother } from "@/lib/phone/uniqueness";
 import { revalidateProductCatalog } from "@/lib/shop/revalidate";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { getFarmerOrderHeaders } from "@/lib/farmer/queries";
 import { createClient } from "@/lib/supabase/server";
 import { slugifyAz } from "@/lib/admin/slug";
 import type { OrderItemStatus, UnitType } from "@/types";
@@ -629,13 +630,27 @@ export async function updateOrderItemStatus(
   const supabase = await createClient();
   const { data: item, error } = await supabase
     .from("order_items")
-    .select("*, orders(id, customer_id, order_code, status)")
+    .select("*")
     .eq("id", itemId)
     .eq("farmer_id", farmer.id)
     .single();
 
   if (error || !item) {
     return { error: "Sifariş məhsulu tapılmadı." };
+  }
+
+  // Farmers cannot read `orders` directly, so the old `orders(...)` embed was
+  // always null and every update skipped the status event and both
+  // notifications. See getFarmerOrderHeaders.
+  const order = (await getFarmerOrderHeaders(farmer.id, [item.order_id])).get(
+    item.order_id,
+  );
+  if (!order) {
+    return { error: "Sifariş tapılmadı." };
+  }
+  // The list hides unpaid orders; refuse a hand-crafted request for one too.
+  if (order.status === "awaiting_confirmation") {
+    return { error: "Bu sifarişin ödənişi hələ təsdiqlənməyib." };
   }
 
   const allowed = FARMER_ITEM_STATUS_TRANSITIONS[item.status] ?? [];
@@ -652,36 +667,33 @@ export async function updateOrderItemStatus(
     return { error: "Status yenilənmədi." };
   }
 
-  const order = Array.isArray(item.orders) ? item.orders[0] : item.orders;
   const statusLabel = getOrderItemStatusLabel(nextStatus);
 
-  if (order) {
-    await insertEventAndNotify({
-      orderId: order.id,
-      customerId: order.customer_id,
-      orderItemId: itemId,
-      status: nextStatus,
-      note: `${item.product_title}: ${statusLabel}`,
-      changedBy: profile.id,
-      notification: {
-        type: "general",
-        title: "Sifariş yeniləndi",
-        body: `${order.order_code} — ${item.product_title} indi: ${statusLabel}.`,
-      },
-    });
-
-    await notifyAdmins({
+  await insertEventAndNotify({
+    orderId: order.id,
+    customerId: order.customer_id,
+    orderItemId: itemId,
+    status: nextStatus,
+    note: `${item.product_title}: ${statusLabel}`,
+    changedBy: profile.id,
+    notification: {
       type: "general",
-      title: "Fermer sifariş statusunu yenilədi",
-      body: `${order.order_code} — ${item.product_title}: ${statusLabel}. Sifariş statusunu yoxlayın.`,
-      metadata: {
-        order_id: order.id,
-        order_code: order.order_code,
-        order_item_id: itemId,
-        item_status: nextStatus,
-      },
-    });
-  }
+      title: "Sifariş yeniləndi",
+      body: `${order.order_code} — ${item.product_title} indi: ${statusLabel}.`,
+    },
+  });
+
+  await notifyAdmins({
+    type: "general",
+    title: "Fermer sifariş statusunu yenilədi",
+    body: `${order.order_code} — ${item.product_title}: ${statusLabel}. Sifariş statusunu yoxlayın.`,
+    metadata: {
+      order_id: order.id,
+      order_code: order.order_code,
+      order_item_id: itemId,
+      item_status: nextStatus,
+    },
+  });
 
   revalidatePath("/farmer/orders");
   revalidatePath("/farmer");
