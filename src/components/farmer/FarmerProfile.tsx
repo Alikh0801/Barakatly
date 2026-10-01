@@ -38,7 +38,15 @@ import type { ProductListItem } from "@/types/shop";
 import type { Farmer, Profile } from "@/types";
 import { formatDate, formatDateTime } from "@/lib/format/date";
 import { validateFarmerMedia } from "@/lib/farmer/media-upload";
-import { uploadPostMedia } from "@/lib/farmer/upload-post-media";
+import { uploadPostMediaFile } from "@/lib/farmer/upload-post-media";
+import { useBackgroundUploads } from "@/lib/files/use-background-uploads";
+import {
+  FileReviewDialog,
+  releaseReviewItems,
+  toReviewItems,
+  type ReviewItem,
+} from "@/components/ui/FileReviewDialog";
+import { UploadStatusBadge } from "@/components/ui/UploadStatusBadge";
 import { addFilesWithinLimit, limitExceededMessage } from "@/lib/files/select-limit";
 
 const MAX_POST_MEDIA = 5;
@@ -606,16 +614,15 @@ function BlogComposer({ userId }: { userId: string }) {
   const [lastSuccess, setLastSuccess] = useState(state.success);
   const [mediaError, setMediaError] = useState<string | null>(null);
   const [mediaLimitNotice, setMediaLimitNotice] = useState<string | null>(null);
-  const [progress, setProgress] = useState<{ done: number; total: number } | null>(
-    null,
-  );
-  // File → storage path, so a retry after a failed post re-sends the paths
-  // instead of uploading the same (possibly 50 MB) videos again.
-  const [uploadCache] = useState(() => new Map<File, string>());
+  // Freshly picked files wait here for review in FileReviewDialog; nothing
+  // is uploaded before the farmer confirms them.
+  const [pendingReview, setPendingReview] = useState<ReviewItem[] | null>(null);
+  const [waitingForUploads, setWaitingForUploads] = useState(false);
+  const uploads = useBackgroundUploads((file) => uploadPostMediaFile(file, userId));
   const fileInputRef = useRef<HTMLInputElement>(null);
   const liveUrlsRef = useRef<string[]>([]);
-  const uploading = progress !== null;
-  const busy = uploading || pending;
+  const busy = waitingForUploads || pending;
+  const doneCount = uploads.doneCount(previews.map((preview) => preview.file));
 
   // The action is dispatched by hand, so React no longer resets the form —
   // which also means clearing it after a successful post is up to us.
@@ -636,11 +643,10 @@ function BlogComposer({ userId }: { userId: string }) {
     }
     liveUrlsRef.current = current;
 
-    if (current.length === 0) {
-      uploadCache.clear();
-      if (fileInputRef.current?.value) fileInputRef.current.value = "";
+    if (current.length === 0 && fileInputRef.current?.value) {
+      fileInputRef.current.value = "";
     }
-  }, [previews, uploadCache]);
+  }, [previews]);
 
   useEffect(() => {
     return () => {
@@ -671,6 +677,22 @@ function BlogComposer({ userId }: { userId: string }) {
     fileInputRef.current.files = transfer.files;
   }
 
+  function confirmReview(confirmed: File[]) {
+    syncFiles([...previews.map((preview) => preview.file), ...confirmed]);
+    // Upload right away, in the background, while the caption is written.
+    confirmed.forEach((file) => void uploads.start(file));
+    releaseReviewItems(pendingReview);
+    setPendingReview(null);
+  }
+
+  function cancelReview() {
+    // The picker left the cancelled files in the input; put back the
+    // confirmed selection.
+    syncFiles(previews.map((preview) => preview.file));
+    releaseReviewItems(pendingReview);
+    setPendingReview(null);
+  }
+
   function removeFile(index: number) {
     syncFiles(
       previews.filter((_, i) => i !== index).map((preview) => preview.file)
@@ -685,14 +707,10 @@ function BlogComposer({ userId }: { userId: string }) {
     if (busy || previews.length === 0) return;
     setMediaError(null);
 
-    setProgress({ done: 0, total: previews.length });
-    const result = await uploadPostMedia(
-      previews.map((preview) => preview.file),
-      userId,
-      uploadCache,
-      (done, total) => setProgress({ done, total }),
-    );
-    setProgress(null);
+    // Usually already done: uploads start when the files are confirmed.
+    setWaitingForUploads(true);
+    const result = await uploads.finishAll(previews.map((preview) => preview.file));
+    setWaitingForUploads(false);
 
     if ("error" in result) {
       setMediaError(result.error);
@@ -756,6 +774,7 @@ function BlogComposer({ userId }: { userId: string }) {
                     className="h-full w-full object-cover"
                   />
                 )}
+                <UploadStatusBadge status={uploads.statusOf(preview.file)} />
                 <button
                   type="button"
                   onClick={() => removeFile(index)}
@@ -816,8 +835,9 @@ function BlogComposer({ userId }: { userId: string }) {
               );
               // Files already picked are never displaced: new ones only fill
               // the free slots, and any that do not fit are named.
+              const current = previews.map((preview) => preview.file);
               const { files, rejected } = addFilesWithinLimit(
-                previews.map((preview) => preview.file),
+                current,
                 selected.filter((file) => !validateFarmerMedia(file)),
                 MAX_POST_MEDIA,
               );
@@ -826,7 +846,10 @@ function BlogComposer({ userId }: { userId: string }) {
                   ? limitExceededMessage(MAX_POST_MEDIA, "fayl", rejected)
                   : null,
               );
-              syncFiles(files);
+              // Review first, upload after confirmation.
+              const fresh = files.slice(current.length);
+              if (fresh.length > 0) setPendingReview(toReviewItems(fresh));
+              else syncFiles(current);
             }}
           />
           <button
@@ -850,6 +873,15 @@ function BlogComposer({ userId }: { userId: string }) {
             </svg>
             Əlavə et ({previews.length}/{MAX_POST_MEDIA})
           </button>
+          {pendingReview ? (
+            <FileReviewDialog
+              items={pendingReview}
+              title="Seçilmiş fayllar"
+              notice={mediaLimitNotice}
+              onConfirm={confirmReview}
+              onCancel={cancelReview}
+            />
+          ) : null}
           <span className="hidden text-xs text-zinc-400 sm:inline">
             Şəkil və ya video · max 5 · hər biri 50 MB-a qədər
           </span>
@@ -861,7 +893,7 @@ function BlogComposer({ userId }: { userId: string }) {
           className="inline-flex items-center gap-2 rounded-full bg-[#1f5c3d] px-5 py-2 text-sm font-semibold text-white disabled:opacity-50"
         >
           {busy ? <Spinner className="h-3.5 w-3.5" /> : null}
-          {progress ? `Yüklənir ${progress.done}/${progress.total}` : "Paylaş"}
+          {waitingForUploads ? `Yüklənir ${doneCount}/${previews.length}` : "Paylaş"}
         </button>
       </div>
     </form>

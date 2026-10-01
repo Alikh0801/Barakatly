@@ -1,3 +1,4 @@
+import type { UploadOutcome } from "@/lib/files/use-background-uploads";
 import {
   PRODUCT_IMAGE_TOO_LARGE_ERROR,
   productImageUploadPath,
@@ -6,50 +7,29 @@ import {
 import { createClient } from "@/lib/supabase/client";
 
 /**
- * Uploads product photos from the browser straight to the product-images
- * bucket, in parallel, and returns their storage paths in the same order.
- * Files already uploaded in an earlier attempt are taken from `cache`
- * rather than sent again.
+ * Uploads one product photo from the browser straight to the product-images
+ * bucket and returns its storage path. The action only ever receives paths:
+ * five 5 MB photos could never fit Vercel's ~4.5 MB function payload cap.
  */
-export async function uploadProductImages(
-  files: File[],
+export async function uploadProductImage(
+  file: File,
   userId: string,
-  cache: Map<File, string>,
-): Promise<{ paths: string[] } | { error: string }> {
-  for (const file of files) {
-    const invalid = validateProductImage(file);
-    if (invalid) return { error: `${file.name}: ${invalid}` };
+): Promise<UploadOutcome> {
+  const invalid = validateProductImage(file);
+  if (invalid) return { error: `${file.name}: ${invalid}` };
+
+  const path = productImageUploadPath(userId, file);
+  const { error } = await createClient()
+    .storage.from("product-images")
+    .upload(path, file, { contentType: file.type, upsert: false });
+
+  if (error) {
+    console.error("[farmer.uploadProductImage]", error.message);
+    return {
+      error: /exceed|too large|payload/i.test(error.message)
+        ? `${file.name}: ${PRODUCT_IMAGE_TOO_LARGE_ERROR}`
+        : `${file.name}: Şəkil yüklənə bilmədi. Yenidən cəhd edin.`,
+    };
   }
-
-  const bucket = createClient().storage.from("product-images");
-  type Outcome = { path: string } | { error: string };
-  const results = await Promise.all(
-    files.map(async (file): Promise<Outcome> => {
-      const cached = cache.get(file);
-      if (cached) return { path: cached };
-
-      const path = productImageUploadPath(userId, file);
-      const { error } = await bucket.upload(path, file, {
-        contentType: file.type,
-        upsert: false,
-      });
-      if (error) {
-        console.error("[farmer.uploadProductImages]", error.message);
-        return {
-          error: /exceed|too large|payload/i.test(error.message)
-            ? `${file.name}: ${PRODUCT_IMAGE_TOO_LARGE_ERROR}`
-            : "Şəkil yüklənə bilmədi. Yenidən cəhd edin.",
-        };
-      }
-      cache.set(file, path);
-      return { path };
-    }),
-  );
-
-  const paths: string[] = [];
-  for (const result of results) {
-    if ("error" in result) return { error: result.error };
-    paths.push(result.path);
-  }
-  return { paths };
+  return { path };
 }

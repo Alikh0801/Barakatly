@@ -36,7 +36,15 @@ import {
   MAX_PRODUCT_IMAGES,
   validateProductImage,
 } from "@/lib/farmer/image-upload";
-import { uploadProductImages } from "@/lib/farmer/upload-product-images";
+import { uploadProductImage } from "@/lib/farmer/upload-product-images";
+import { useBackgroundUploads } from "@/lib/files/use-background-uploads";
+import {
+  FileReviewDialog,
+  releaseReviewItems,
+  toReviewItems,
+  type ReviewItem,
+} from "@/components/ui/FileReviewDialog";
+import { UploadStatusBadge } from "@/components/ui/UploadStatusBadge";
 import { addFilesWithinLimit, limitExceededMessage } from "@/lib/files/select-limit";
 import { formatDateTime } from "@/lib/format/date";
 import {
@@ -328,9 +336,10 @@ export function FarmerProductForm({
   const [uploading, setUploading] = useState(false);
   const [imageError, setImageError] = useState<string | null>(null);
   const [imageLimitNotice, setImageLimitNotice] = useState<string | null>(null);
-  // File → storage path, so a retry after a failed save re-sends the paths
-  // instead of uploading the same photos again.
-  const [uploadCache] = useState(() => new Map<File, string>());
+  // Freshly picked photos wait here for the farmer to review and confirm
+  // them in FileReviewDialog; nothing is uploaded before that.
+  const [pendingReview, setPendingReview] = useState<ReviewItem[] | null>(null);
+  const uploads = useBackgroundUploads((file) => uploadProductImage(file, userId));
   const busy = uploading || pending;
   const existingImages = [...(product?.product_images ?? [])].sort(
     (a, b) => a.sort_order - b.sort_order,
@@ -371,6 +380,22 @@ export function FarmerProductForm({
     imageInputRef.current.files = transfer.files;
   }
 
+  function confirmReview(confirmed: File[]) {
+    syncImages([...images, ...confirmed]);
+    // Upload right away, in the background, while the form is filled in.
+    confirmed.forEach((file) => void uploads.start(file));
+    releaseReviewItems(pendingReview);
+    setPendingReview(null);
+  }
+
+  function cancelReview() {
+    // The picker left the cancelled files in the input; put back the
+    // confirmed selection.
+    syncImages(images);
+    releaseReviewItems(pendingReview);
+    setPendingReview(null);
+  }
+
   function removeNewImage(index: number) {
     syncImages(images.filter((_, i) => i !== index));
     // The notice named files that did not fit; with room freed it is stale.
@@ -389,8 +414,9 @@ export function FarmerProductForm({
     setImageError(null);
 
     if (images.length > 0) {
+      // Usually already done: uploads start when the photos are confirmed.
       setUploading(true);
-      const result = await uploadProductImages(images, userId, uploadCache);
+      const result = await uploads.finishAll(images);
       setUploading(false);
       if ("error" in result) {
         setImageError(result.error);
@@ -630,7 +656,10 @@ export function FarmerProductForm({
                 ? limitExceededMessage(MAX_PRODUCT_IMAGES, "şəkil", rejected)
                 : null,
             );
-            syncImages(files);
+            // Review first, upload after confirmation.
+            const fresh = files.slice(images.length);
+            if (fresh.length > 0) setPendingReview(toReviewItems(fresh));
+            else syncImages(images);
           }}
         />
         <button
@@ -641,6 +670,15 @@ export function FarmerProductForm({
         >
           Şəkil seç ({images.length}/{MAX_PRODUCT_IMAGES})
         </button>
+        {pendingReview ? (
+          <FileReviewDialog
+            items={pendingReview}
+            title="Seçilmiş şəkillər"
+            notice={imageLimitNotice}
+            onConfirm={confirmReview}
+            onCancel={cancelReview}
+          />
+        ) : null}
         {imageLimitNotice ? (
           <p
             role="alert"
@@ -666,6 +704,7 @@ export function FarmerProductForm({
                     alt="Məhsul şəkli önbaxışı"
                     className="h-full w-full object-cover"
                   />
+                  <UploadStatusBadge status={uploads.statusOf(images[index])} />
                   <button
                     type="button"
                     onClick={() => removeNewImage(index)}
