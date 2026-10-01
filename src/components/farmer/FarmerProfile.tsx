@@ -39,6 +39,9 @@ import type { Farmer, Profile } from "@/types";
 import { formatDate, formatDateTime } from "@/lib/format/date";
 import { validateFarmerMedia } from "@/lib/farmer/media-upload";
 import { uploadPostMedia } from "@/lib/farmer/upload-post-media";
+import { addFilesWithinLimit, limitExceededMessage } from "@/lib/files/select-limit";
+
+const MAX_POST_MEDIA = 5;
 
 const displayFont = Syne({
   subsets: ["latin"],
@@ -602,6 +605,7 @@ function BlogComposer({ userId }: { userId: string }) {
   const [caption, setCaption] = useState("");
   const [lastSuccess, setLastSuccess] = useState(state.success);
   const [mediaError, setMediaError] = useState<string | null>(null);
+  const [mediaLimitNotice, setMediaLimitNotice] = useState<string | null>(null);
   const [progress, setProgress] = useState<{ done: number; total: number } | null>(
     null,
   );
@@ -646,7 +650,7 @@ function BlogComposer({ userId }: { userId: string }) {
   }, []);
 
   function syncFiles(next: File[]) {
-    const limited = next.slice(0, 5);
+    const limited = next.slice(0, MAX_POST_MEDIA);
     const nextPreviews = limited.map((file) => {
       const existing = previews.find((preview) => preview.file === file);
       if (existing) return existing;
@@ -671,6 +675,8 @@ function BlogComposer({ userId }: { userId: string }) {
     syncFiles(
       previews.filter((_, i) => i !== index).map((preview) => preview.file)
     );
+    // The notice named files that did not fit; with room freed it is stale.
+    setMediaLimitNotice(null);
   }
 
   // Media goes browser → Storage first; the action only gets the paths.
@@ -734,10 +740,8 @@ function BlogComposer({ userId }: { userId: string }) {
         {previews.length > 0 ? (
           <div className="mt-2 flex gap-2 overflow-x-auto pb-2">
             {previews.map((preview, index) => (
-              <div
-                key={`${preview.name}-${index}`}
-                className="relative h-24 w-24 shrink-0 overflow-hidden rounded-xl bg-zinc-100 ring-1 ring-zinc-200"
-              >
+              <figure key={`${preview.name}-${index}`} className="w-24 shrink-0">
+              <div className="relative h-24 w-24 overflow-hidden rounded-xl bg-zinc-100 ring-1 ring-zinc-200">
                 {preview.kind === "video" ? (
                   <video
                     src={preview.url}
@@ -756,13 +760,28 @@ function BlogComposer({ userId }: { userId: string }) {
                   type="button"
                   onClick={() => removeFile(index)}
                   className="absolute right-1 top-1 inline-flex h-6 w-6 items-center justify-center rounded-full bg-black/65 text-xs font-bold text-white"
-                  aria-label="Faylı sil"
+                  aria-label={`${preview.name} sil`}
                 >
                   ×
                 </button>
               </div>
+              <figcaption
+                className="mt-1 truncate text-[11px] text-zinc-500"
+                title={preview.name}
+              >
+                {preview.name}
+              </figcaption>
+              </figure>
             ))}
           </div>
+        ) : null}
+        {mediaLimitNotice ? (
+          <p
+            role="alert"
+            className="mb-2 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-800 ring-1 ring-amber-200"
+          >
+            {mediaLimitNotice}
+          </p>
         ) : null}
         {mediaError ? (
           <p role="alert" className="mb-2 text-sm text-rose-600">
@@ -787,27 +806,34 @@ function BlogComposer({ userId }: { userId: string }) {
                 : [];
               // Refuse oversized or unsupported files at pick time, with the
               // file name and reason, instead of after a failed upload.
-              const rejected = selected
+              const invalid = selected
                 .map((file) => ({ file, error: validateFarmerMedia(file) }))
                 .filter((entry) => entry.error);
               setMediaError(
-                rejected.length > 0
-                  ? rejected.map((entry) => `${entry.file.name}: ${entry.error}`).join(" ")
+                invalid.length > 0
+                  ? invalid.map((entry) => `${entry.file.name}: ${entry.error}`).join(" ")
                   : null,
               );
-              const accepted = selected.filter((file) => !validateFarmerMedia(file));
-              syncFiles(
-                [...previews.map((preview) => preview.file), ...accepted].slice(
-                  0,
-                  5
-                )
+              // Files already picked are never displaced: new ones only fill
+              // the free slots, and any that do not fit are named.
+              const { files, rejected } = addFilesWithinLimit(
+                previews.map((preview) => preview.file),
+                selected.filter((file) => !validateFarmerMedia(file)),
+                MAX_POST_MEDIA,
               );
+              setMediaLimitNotice(
+                rejected.length > 0
+                  ? limitExceededMessage(MAX_POST_MEDIA, "fayl", rejected)
+                  : null,
+              );
+              syncFiles(files);
             }}
           />
           <button
             type="button"
             onClick={() => fileInputRef.current?.click()}
-            className="inline-flex items-center gap-2 rounded-full px-3 py-2 text-sm font-semibold text-[#1f5c3d] transition hover:bg-[#f3faf6]"
+            disabled={previews.length >= MAX_POST_MEDIA}
+            className="inline-flex items-center gap-2 rounded-full px-3 py-2 text-sm font-semibold text-[#1f5c3d] transition hover:bg-[#f3faf6] disabled:cursor-not-allowed disabled:opacity-50"
           >
             <svg
               viewBox="0 0 24 24"
@@ -822,7 +848,7 @@ function BlogComposer({ userId }: { userId: string }) {
                 strokeLinejoin="round"
               />
             </svg>
-            Əlavə et
+            Əlavə et ({previews.length}/{MAX_POST_MEDIA})
           </button>
           <span className="hidden text-xs text-zinc-400 sm:inline">
             Şəkil və ya video · max 5 · hər biri 50 MB-a qədər

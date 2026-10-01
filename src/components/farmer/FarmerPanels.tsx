@@ -37,6 +37,7 @@ import {
   validateProductImage,
 } from "@/lib/farmer/image-upload";
 import { uploadProductImages } from "@/lib/farmer/upload-product-images";
+import { addFilesWithinLimit, limitExceededMessage } from "@/lib/files/select-limit";
 import { formatDateTime } from "@/lib/format/date";
 import {
   formatPrice,
@@ -326,6 +327,7 @@ export function FarmerProductForm({
   const [state, formAction, pending] = useActionState(action, initialState);
   const [uploading, setUploading] = useState(false);
   const [imageError, setImageError] = useState<string | null>(null);
+  const [imageLimitNotice, setImageLimitNotice] = useState<string | null>(null);
   // File → storage path, so a retry after a failed save re-sends the paths
   // instead of uploading the same photos again.
   const [uploadCache] = useState(() => new Map<File, string>());
@@ -371,6 +373,8 @@ export function FarmerProductForm({
 
   function removeNewImage(index: number) {
     syncImages(images.filter((_, i) => i !== index));
+    // The notice named files that did not fit; with room freed it is stale.
+    setImageLimitNotice(null);
   }
 
   // Photos go browser → Storage first; the action only gets their paths.
@@ -606,16 +610,27 @@ export function FarmerProductForm({
               : [];
             // Reject oversized or wrong-type files at pick time, with the
             // reason shown right here rather than after a failed save.
-            const rejected = selected
+            const invalid = selected
               .map((file) => ({ file, error: validateProductImage(file) }))
               .filter((entry) => entry.error);
             setImageError(
-              rejected.length > 0
-                ? rejected.map((entry) => `${entry.file.name}: ${entry.error}`).join(" ")
+              invalid.length > 0
+                ? invalid.map((entry) => `${entry.file.name}: ${entry.error}`).join(" ")
                 : null,
             );
-            const accepted = selected.filter((file) => !validateProductImage(file));
-            syncImages([...images, ...accepted].slice(0, MAX_PRODUCT_IMAGES));
+            // Photos already picked are never displaced: new ones only fill
+            // the free slots, and any that do not fit are named.
+            const { files, rejected } = addFilesWithinLimit(
+              images,
+              selected.filter((file) => !validateProductImage(file)),
+              MAX_PRODUCT_IMAGES,
+            );
+            setImageLimitNotice(
+              rejected.length > 0
+                ? limitExceededMessage(MAX_PRODUCT_IMAGES, "şəkil", rejected)
+                : null,
+            );
+            syncImages(files);
           }}
         />
         <button
@@ -626,6 +641,14 @@ export function FarmerProductForm({
         >
           Şəkil seç ({images.length}/{MAX_PRODUCT_IMAGES})
         </button>
+        {imageLimitNotice ? (
+          <p
+            role="alert"
+            className="mt-2 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-800 ring-1 ring-amber-200"
+          >
+            {imageLimitNotice}
+          </p>
+        ) : null}
         {imageError ? (
           <p role="alert" className="mt-2 text-sm text-rose-600">
             {imageError}
@@ -635,25 +658,30 @@ export function FarmerProductForm({
         {previews.length > 0 ? (
           <div className="mt-3 grid grid-cols-3 gap-2 sm:grid-cols-5">
             {previews.map((url, index) => (
-              <div
-                key={url}
-                className="relative aspect-square overflow-hidden rounded-xl bg-zinc-100 ring-1 ring-zinc-200"
-              >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={url}
-                  alt="Məhsul şəkli önbaxışı"
-                  className="h-full w-full object-cover"
-                />
-                <button
-                  type="button"
-                  onClick={() => removeNewImage(index)}
-                  className="absolute right-1 top-1 inline-flex h-6 w-6 items-center justify-center rounded-full bg-black/65 text-xs font-bold text-white"
-                  aria-label="Şəkli sil"
+              <figure key={url} className="min-w-0">
+                <div className="relative aspect-square overflow-hidden rounded-xl bg-zinc-100 ring-1 ring-zinc-200">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={url}
+                    alt="Məhsul şəkli önbaxışı"
+                    className="h-full w-full object-cover"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => removeNewImage(index)}
+                    className="absolute right-1 top-1 inline-flex h-6 w-6 items-center justify-center rounded-full bg-black/65 text-xs font-bold text-white"
+                    aria-label={`${images[index]?.name ?? "Şəkli"} sil`}
+                  >
+                    ×
+                  </button>
+                </div>
+                <figcaption
+                  className="mt-1 truncate text-[11px] text-zinc-500"
+                  title={images[index]?.name}
                 >
-                  ×
-                </button>
-              </div>
+                  {images[index]?.name}
+                </figcaption>
+              </figure>
             ))}
           </div>
         ) : existingImages.length > 0 ? (
