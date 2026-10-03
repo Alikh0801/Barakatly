@@ -119,6 +119,12 @@ const FIELD_ERRORS = {
   bank: "Bank seçin.",
 };
 
+type CheckoutDraft = {
+  phone?: string;
+  address?: string;
+  bankId?: string;
+};
+
 export function CheckoutForm({
   banks,
   defaultPhone,
@@ -145,6 +151,12 @@ export function CheckoutForm({
   const [attempted, setAttempted] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
+  const [draftLoaded, setDraftLoaded] = useState(false);
+  const [draftRestored, setDraftRestored] = useState(false);
+  // AzPhoneInput only reads defaultValue on mount, so a restored number needs
+  // it remounted once.
+  const [phoneKey, setPhoneKey] = useState("initial");
+  const draftKey = `barakatly:checkout:${userId}`;
   // An uploaded receipt is reused on retry while the same file stays picked.
   const uploaded = useRef<{ file: File; path: string } | null>(null);
   const contactSectionRef = useRef<HTMLElement>(null);
@@ -212,11 +224,70 @@ export function CheckoutForm({
   const subtotal = items.reduce((sum, i) => sum + i.price * i.quantity, 0);
   const total = subtotal + (items.length > 0 ? DELIVERY_FEE : 0);
 
+  /* eslint-disable react-hooks/set-state-in-effect -- sessionStorage does not
+     exist during SSR, so the draft can only be read once mounted; reading it
+     in a lazy initializer would make the server and client markup disagree. */
+  // A refresh drops all React state, so what the customer typed is mirrored
+  // into sessionStorage and read back here. The receipt File is the one thing
+  // that cannot come back: browsers forbid setting a file input's value.
   useEffect(() => {
-    if (state.orderId) {
-      router.replace(`/orders/${state.orderId}?success=1`);
+    let draft: CheckoutDraft | null = null;
+    try {
+      const raw = sessionStorage.getItem(draftKey);
+      if (raw) draft = JSON.parse(raw) as CheckoutDraft;
+    } catch {
+      // Blocked or corrupt storage — just start with an empty form.
     }
-  }, [state.orderId, router]);
+
+    if (draft?.phone) {
+      setPhone(draft.phone);
+      setPhoneKey("restored");
+    }
+    if (draft?.address) setAddress(draft.address);
+    if (draft?.bankId) setBankId(draft.bankId);
+    if (draft?.phone || draft?.address || draft?.bankId) setDraftRestored(true);
+    setDraftLoaded(true);
+  }, [draftKey]);
+  /* eslint-enable react-hooks/set-state-in-effect */
+
+  // Only mirror after the draft was read, otherwise the empty first render
+  // would overwrite it.
+  useEffect(() => {
+    if (!draftLoaded) return;
+    try {
+      if (phone || address || bankId) {
+        sessionStorage.setItem(
+          draftKey,
+          JSON.stringify({ phone, address, bankId } satisfies CheckoutDraft),
+        );
+      } else {
+        sessionStorage.removeItem(draftKey);
+      }
+    } catch {
+      // Storage full or blocked — the draft is a convenience, not a must.
+    }
+  }, [draftLoaded, draftKey, phone, address, bankId]);
+
+  useEffect(() => {
+    if (!state.orderId) return;
+    try {
+      sessionStorage.removeItem(draftKey);
+    } catch {
+      // Nothing to do — the order already went through.
+    }
+    router.replace(`/orders/${state.orderId}?success=1`);
+  }, [state.orderId, router, draftKey]);
+
+  // The text fields come back on their own, but a picked receipt cannot — warn
+  // before a reload throws it away.
+  useEffect(() => {
+    if (!receipt) return;
+    function warnBeforeUnload(event: BeforeUnloadEvent) {
+      event.preventDefault();
+    }
+    window.addEventListener("beforeunload", warnBeforeUnload);
+    return () => window.removeEventListener("beforeunload", warnBeforeUnload);
+  }, [receipt]);
 
   if (items.length === 0) {
     return (
@@ -247,6 +318,13 @@ export function CheckoutForm({
       className="grid gap-8 lg:grid-cols-[1fr_360px]"
     >
       <div className="space-y-6">
+        {draftRestored ? (
+          <p className="rounded-2xl bg-emerald-50 px-4 py-3 text-sm text-emerald-800 ring-1 ring-emerald-200">
+            Doldurduğunuz məlumatlar bərpa olundu.
+            {receipt ? null : " Yalnız ödəniş çekini yenidən seçin."}
+          </p>
+        ) : null}
+
         <section
           ref={contactSectionRef}
           className="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-zinc-200"
@@ -256,11 +334,12 @@ export function CheckoutForm({
           </h2>
           <div className="mt-4 space-y-4">
             <AzPhoneInput
+              key={phoneKey}
               id="contact_phone"
               name="contact_phone"
               label="Telefon"
               required
-              defaultValue={defaultPhone ?? ""}
+              defaultValue={phone || (defaultPhone ?? "")}
               onValueChange={setPhone}
               error={attempted ? errors.phone : null}
             />
