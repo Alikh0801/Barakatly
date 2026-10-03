@@ -415,6 +415,36 @@ export interface Database {
         };
         Relationships: [];
       };
+      product_reviews: {
+        Row: {
+          id: string;
+          product_id: string;
+          customer_id: string;
+          rating: number;
+          comment: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          product_id: string;
+          customer_id: string;
+          rating: number;
+          comment?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          product_id?: string;
+          customer_id?: string;
+          rating?: number;
+          comment?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
       orders: {
         Row: {
           id: string;
@@ -672,6 +702,17 @@ export interface Database {
       list_approved_farmer_owner_names: {
         Args: Record<string, never>;
         Returns: { farmer_id: string; owner_name: string | null }[];
+      };
+      list_product_reviews: {
+        Args: { p_product_id: string };
+        Returns: {
+          id: string;
+          customer_id: string;
+          customer_name: string | null;
+          rating: number;
+          comment: string | null;
+          created_at: string;
+        }[];
       };
       place_order: {
         Args: {

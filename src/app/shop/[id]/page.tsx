@@ -5,6 +5,12 @@ import type { Metadata } from "next";
 import { ProductDetailImage } from "@/components/shop/ProductDetailImage";
 import { ProductPurchasePanel } from "@/components/shop/ProductPurchasePanel";
 import { ProductTabs } from "@/components/shop/ProductTabs";
+import { getSessionUser } from "@/lib/auth/session";
+import {
+  canReviewProduct,
+  getProductReviews,
+  summarizeRatings,
+} from "@/lib/shop/reviews";
 import { SimilarProducts } from "@/components/shop/SimilarProducts";
 import { VerifiedIcon } from "@/components/ui/VerifiedIcon";
 import { getProductById, getSimilarProductsByCategory } from "@/lib/shop/queries";
@@ -16,8 +22,6 @@ import {
   getProductImageUrl,
 } from "@/lib/shop/format";
 
-const STATIC_RATING_AVERAGE = 4.8;
-const STATIC_RATING_TOTAL = 128;
 
 export async function generateMetadata({
   params,
@@ -89,6 +93,13 @@ export default async function ProductDetailPage({
   const price = getDisplayPrice(product.final_price, product.farmer_price);
   const farmer = product.farmer;
 
+  const [reviews, canReview, sessionUser] = await Promise.all([
+    getProductReviews(product.id),
+    canReviewProduct(product.id),
+    getSessionUser(),
+  ]);
+  const ratingSummary = summarizeRatings(reviews);
+
   const farmerProducts = farmer ? await getPublicFarmerProducts(farmer.id) : [];
   const farmerOtherProducts = farmerProducts.filter((p) => p.id !== product.id);
 
@@ -135,12 +146,18 @@ export default async function ProductDetailPage({
 
         <div>
           <div className="flex flex-wrap items-center gap-2 text-sm text-zinc-500">
-            <span className="inline-flex items-center gap-1 font-medium text-amber-600">
-              <StarIcon />
-              {STATIC_RATING_AVERAGE.toFixed(1)}
-            </span>
-            <span className="text-zinc-300">·</span>
-            <span>{STATIC_RATING_TOTAL} rəy</span>
+            {ratingSummary.total > 0 ? (
+              <>
+                <span className="inline-flex items-center gap-1 font-medium text-amber-600">
+                  <StarIcon />
+                  {ratingSummary.average.toFixed(1)}
+                </span>
+                <span className="text-zinc-300">·</span>
+                <span>{ratingSummary.total} rəy</span>
+              </>
+            ) : (
+              <span>Hələ rəy yoxdur</span>
+            )}
             <span className="text-zinc-300">·</span>
             <span>{product.sold_count} satış</span>
           </div>
@@ -217,7 +234,14 @@ export default async function ProductDetailPage({
         </div>
       </div>
 
-      <ProductTabs description={product.description} />
+      <ProductTabs
+        description={product.description}
+        productId={product.id}
+        reviews={reviews}
+        summary={ratingSummary}
+        canReview={canReview}
+        currentCustomerId={sessionUser?.id ?? null}
+      />
 
       <SimilarProducts
         title="Bənzər məhsullar"
