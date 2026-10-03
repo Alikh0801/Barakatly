@@ -16,7 +16,7 @@ export function ProductCard({ product }: { product: ProductListItem }) {
   const outOfStock = !product.in_stock || product.quantity_available <= 0;
 
   return (
-    <article className="group overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-zinc-200 transition hover:shadow-md">
+    <article className="overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-zinc-200 transition hover:shadow-md">
       <Link href={`/shop/${product.id}`} prefetch className="block">
         <div className="relative aspect-[4/3] overflow-hidden">
           {imageUrl ? (
@@ -24,7 +24,7 @@ export function ProductCard({ product }: { product: ProductListItem }) {
               src={imageUrl}
               alt={product.title}
               className={[
-                "h-full w-full object-cover transition duration-500 group-hover:scale-[1.03]",
+                "h-full w-full object-cover",
                 outOfStock ? "opacity-60 grayscale" : "",
               ].join(" ")}
               skeletonClassName="rounded-none"
