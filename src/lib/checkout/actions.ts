@@ -16,6 +16,7 @@ import {
   isValidAzPhone,
   normalizeAzPhone,
 } from "@/lib/phone/az";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
 export type CheckoutCartItem = {
@@ -185,8 +186,14 @@ export async function placeOrder(
   // Clearing the cart and notifying admins don't change what the customer
   // sees next, so defer them past the response instead of making them wait
   // (Vercel's waitUntil keeps the invocation alive until these settle).
+  //
+  // Both use the service-role client on purpose: the cookie-bound client can
+  // rotate the Supabase refresh token mid-call, and once the response is out
+  // the new token can no longer be written back to the browser — which would
+  // leave the visitor holding a spent token and silently signed out.
   after(async () => {
-    await supabase.from("cart_items").delete().eq("customer_id", user.id);
+    const admin = createAdminClient();
+    await admin.from("cart_items").delete().eq("customer_id", user.id);
     await notifyAdmins({
       type: "payment_received",
       title: "Yeni ödəniş + çek",
