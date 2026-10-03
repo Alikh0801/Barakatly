@@ -1,5 +1,8 @@
 import { notFound } from "next/navigation";
-import { FarmerProductForm } from "@/components/farmer/FarmerPanels";
+import {
+  FarmerProductForm,
+  ProductArchiveToggle,
+} from "@/components/farmer/FarmerPanels";
 import { requireApprovedFarmer } from "@/lib/farmer/auth";
 import {
   getFarmerProductById,
@@ -30,13 +33,14 @@ export default async function FarmerEditProductPage({
       <p className="mt-2 text-sm text-zinc-500">
         Dəyişiklikdən sonra məhsul yenidən təsdiqə göndərilir
       </p>
-      <div className="mt-8">
+      <div className="mt-8 space-y-6">
         <FarmerProductForm
           categories={categories}
           subcategories={subcategories}
           product={product}
           userId={profile.id}
         />
+        <ProductArchiveToggle product={product} />
       </div>
     </div>
   );

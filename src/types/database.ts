@@ -8,7 +8,12 @@ export type Json =
 
 export type UserRole = "customer" | "farmer" | "courier" | "admin";
 export type FarmerStatus = "pending" | "approved" | "rejected" | "suspended";
-export type ProductStatus = "pending" | "approved" | "rejected";
+export type ProductStatus =
+  | "pending"
+  | "approved"
+  | "rejected"
+  /** Taken off sale by the farmer; kept so order history stays intact. */
+  | "archived";
 export type UnitType = "kg" | "piece" | "liter";
 export type OrderStatus =
   | "awaiting_confirmation"

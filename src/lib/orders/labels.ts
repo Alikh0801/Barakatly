@@ -81,6 +81,8 @@ export function getProductStatusLabel(status: string): string {
       return "Təsdiqləndi";
     case "rejected":
       return "Rədd edildi";
+    case "archived":
+      return "Satışdan çıxarılıb";
     default:
       return status;
   }

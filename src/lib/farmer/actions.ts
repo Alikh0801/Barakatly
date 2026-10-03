@@ -615,6 +615,65 @@ export async function updateProduct(
   return { success: "Məhsul yeniləndi və yenidən təsdiqə göndərildi." };
 }
 
+/**
+ * Takes a product off sale (or puts it back) without deleting it.
+ *
+ * Deleting is not offered on purpose: order_items.product_id cascades, so a
+ * delete would erase the product from every past order. Archiving keeps the
+ * row, and every public query already filters on status = 'approved', so the
+ * product leaves the shop, search, farmer profile, carts and checkout.
+ */
+export async function setProductArchived(
+  _prev: FarmerActionState,
+  formData: FormData
+): Promise<FarmerActionState> {
+  const { farmer } = await requireApprovedFarmer();
+  const productId = String(formData.get("product_id") ?? "").trim();
+  const archive = String(formData.get("archive") ?? "") === "1";
+
+  if (!productId) return { error: "Məhsul tapılmadı." };
+
+  const supabase = await createClient();
+  const { data: product } = await supabase
+    .from("products")
+    .select("id, status")
+    .eq("id", productId)
+    .eq("farmer_id", farmer.id)
+    .maybeSingle();
+
+  if (!product) return { error: "Məhsul tapılmadı." };
+
+  if (archive && product.status !== "approved") {
+    return { error: "Yalnız satışda olan məhsulu çıxarmaq olar." };
+  }
+  if (!archive && product.status !== "archived") {
+    return { error: "Bu məhsul satışdan çıxarılmayıb." };
+  }
+
+  // Restoring goes straight back to "approved": the content was already
+  // approved and archiving never changed it, so there is nothing to re-review.
+  const { error } = await supabase
+    .from("products")
+    .update({ status: archive ? "archived" : "approved" })
+    .eq("id", productId)
+    .eq("farmer_id", farmer.id);
+
+  if (error) {
+    console.error("[farmer.setProductArchived]", error.message);
+    return { error: "Əməliyyat alınmadı. Yenidən cəhd edin." };
+  }
+
+  revalidatePath("/farmer/products");
+  revalidatePath("/farmer");
+  revalidatePath(`/farmer/products/${productId}`);
+  revalidateProductCatalog(productId);
+  return {
+    success: archive
+      ? "Məhsul satışdan çıxarıldı."
+      : "Məhsul yenidən satışdadır.",
+  };
+}
+
 export async function updateOrderItemStatus(
   _prev: FarmerActionState,
   formData: FormData

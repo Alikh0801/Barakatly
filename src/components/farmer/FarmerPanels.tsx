@@ -20,6 +20,7 @@ import { Spinner } from "@/components/ui/Spinner";
 import {
   completeFarmerProfile,
   createProduct,
+  setProductArchived,
   signUpFarmer,
   updateOrderItemStatus,
   updateProduct,
@@ -766,6 +767,77 @@ export function FarmerProductForm({
             : "Məhsul əlavə et"}
       </button>
     </form>
+  );
+}
+
+/**
+ * Takes a product off sale without deleting it — deleting would cascade into
+ * order_items and erase the product from past orders.
+ */
+export function ProductArchiveToggle({ product }: { product: FarmerProduct }) {
+  const [state, formAction, pending] = useActionState(
+    setProductArchived,
+    initialState,
+  );
+  const archived = product.status === "archived";
+
+  // Only an approved or already-archived product can be toggled; a pending or
+  // rejected one has nothing to take off sale.
+  if (!archived && product.status !== "approved") return null;
+
+  return (
+    <div className="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-zinc-200">
+      <h2 className="text-base font-semibold text-zinc-900">
+        {archived ? "Satışa qaytar" : "Satışdan çıxar"}
+      </h2>
+      <p className="mt-1 text-sm text-zinc-500">
+        {archived
+          ? "Məhsul hazırda mağazada görünmür. Qaytarsanız, yenidən satışa çıxacaq."
+          : "Məhsul mağazadan, axtarışdan və profilinizdən gizlədilir. Keçmiş sifarişlər toxunulmaz qalır və istədiyiniz vaxt geri qaytara bilərsiniz."}
+      </p>
+
+      {state.error ? (
+        <p className="mt-3 rounded-xl bg-rose-50 px-3 py-2 text-sm text-rose-700 ring-1 ring-rose-200">
+          {state.error}
+        </p>
+      ) : null}
+      {state.success ? (
+        <p className="mt-3 rounded-xl bg-emerald-50 px-3 py-2 text-sm text-emerald-800 ring-1 ring-emerald-200">
+          {state.success}
+        </p>
+      ) : null}
+
+      <form
+        action={formAction}
+        className="mt-4"
+        onSubmit={(event) => {
+          if (
+            !archived &&
+            !window.confirm(
+              `"${product.title}" satışdan çıxarılsın? Mağazada görünməyəcək, amma silinmir.`,
+            )
+          ) {
+            event.preventDefault();
+          }
+        }}
+      >
+        <input type="hidden" name="product_id" value={product.id} />
+        <input type="hidden" name="archive" value={archived ? "0" : "1"} />
+        <button
+          type="submit"
+          disabled={pending}
+          className={[
+            "inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold disabled:opacity-70",
+            archived
+              ? "bg-emerald-600 text-white hover:bg-emerald-500"
+              : "bg-white text-amber-800 ring-1 ring-amber-200 hover:bg-amber-50",
+          ].join(" ")}
+        >
+          {pending ? <Spinner className="h-4 w-4" /> : null}
+          {archived ? "Satışa qaytar" : "Satışdan çıxar"}
+        </button>
+      </form>
+    </div>
   );
 }
 
