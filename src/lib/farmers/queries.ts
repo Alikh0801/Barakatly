@@ -158,7 +158,8 @@ async function fetchFarmerProducts(farmerId: string): Promise<ProductListItem[]>
     .select(productSelect)
     .eq("farmer_id", farmerId)
     .eq("status", "approved")
-    .eq("in_stock", true)
+    // Sold-out products stay on the farmer's profile, sorted after the rest.
+    .order("in_stock", { ascending: false })
     .order("created_at", { ascending: false });
 
   if (error) {

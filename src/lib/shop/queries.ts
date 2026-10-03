@@ -88,11 +88,13 @@ async function fetchProducts(categorySlug?: string): Promise<ProductListItem[]> 
     categoryId = category.id;
   }
 
+  // Sold-out products stay listed (shown as "Stokda qalmayıb") instead of
+  // vanishing, but they sort below everything still in stock.
   let query = supabase
     .from("products")
     .select(productSelect)
     .eq("status", "approved")
-    .eq("in_stock", true)
+    .order("in_stock", { ascending: false })
     .order("created_at", { ascending: false });
 
   if (categoryId) {
@@ -170,8 +172,8 @@ async function fetchSimilarProductsByCategory(
     .select(productSelect)
     .eq("category_id", category.id)
     .eq("status", "approved")
-    .eq("in_stock", true)
     .neq("id", excludeProductId)
+    .order("in_stock", { ascending: false })
     .order("created_at", { ascending: false })
     .limit(limit);
 

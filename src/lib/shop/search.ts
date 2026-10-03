@@ -55,8 +55,9 @@ export async function searchCatalog(query: string): Promise<SearchResults> {
       `,
       )
       .eq("status", "approved")
-      .eq("in_stock", true)
       .ilike("title", pattern)
+      // Sold-out products still show up, just below the in-stock ones.
+      .order("in_stock", { ascending: false })
       .order("created_at", { ascending: false })
       .limit(24),
     supabase

@@ -8,7 +8,7 @@ import {
   setCartQuantity,
 } from "@/lib/cart/actions";
 import type { CartLineItem } from "@/lib/cart/queries";
-import { formatPrice } from "@/lib/shop/format";
+import { formatPrice, unitLabel } from "@/lib/shop/format";
 import { DELIVERY_FEE } from "@/lib/checkout/constants";
 import { ImageWithSkeleton } from "@/components/ui/ImageWithSkeleton";
 
@@ -41,6 +41,11 @@ export function CartView({ items }: { items: CartLineItem[] }) {
   const groups = useMemo(() => groupByFarmer(items), [items]);
   const subtotal = items.reduce((sum, i) => sum + i.price * i.quantity, 0);
   const total = subtotal + (items.length > 0 ? DELIVERY_FEE : 0);
+  // Stock can drop after an item was added, so catch it here instead of
+  // letting checkout fail with OUT_OF_STOCK.
+  const hasStockIssue = items.some(
+    (item) => item.maxQuantity <= 0 || item.quantity > item.maxQuantity,
+  );
 
   function changeQuantity(productId: string, quantity: number) {
     startTransition(async () => {
@@ -170,6 +175,18 @@ export function CartView({ items }: { items: CartLineItem[] }) {
                         {formatPrice(item.price * item.quantity)}
                       </div>
                     </div>
+
+                    {item.maxQuantity <= 0 ? (
+                      <p className="mt-2 rounded-lg bg-amber-50 px-2.5 py-1.5 text-xs text-amber-800 ring-1 ring-amber-200">
+                        Stokda qalmayıb — sifarişi tamamlamaq üçün bu məhsulu
+                        səbətdən silin.
+                      </p>
+                    ) : item.quantity > item.maxQuantity ? (
+                      <p className="mt-2 rounded-lg bg-amber-50 px-2.5 py-1.5 text-xs text-amber-800 ring-1 ring-amber-200">
+                        Yalnız {item.maxQuantity} {unitLabel(item.unitType)}{" "}
+                        qalıb — miqdarı azaldın.
+                      </p>
+                    ) : null}
                   </div>
                 </div>
               ))}
@@ -208,13 +225,28 @@ export function CartView({ items }: { items: CartLineItem[] }) {
           </div>
         </div>
 
-        <Link
-          href="/checkout"
-          prefetch
-          className="mt-6 inline-flex w-full items-center justify-center rounded-xl bg-emerald-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-emerald-500"
-        >
-          Ödə
-        </Link>
+        {hasStockIssue ? (
+          <>
+            <p className="mt-6 rounded-xl bg-amber-50 px-3 py-2 text-sm text-amber-800 ring-1 ring-amber-200">
+              Səbətdə stoku çatmayan məhsul var. Ödənişə keçməzdən əvvəl
+              miqdarı azaldın və ya həmin məhsulu silin.
+            </p>
+            <span
+              aria-disabled
+              className="mt-3 inline-flex w-full cursor-not-allowed items-center justify-center rounded-xl bg-zinc-200 px-4 py-3 text-sm font-semibold text-zinc-500"
+            >
+              Ödə
+            </span>
+          </>
+        ) : (
+          <Link
+            href="/checkout"
+            prefetch
+            className="mt-6 inline-flex w-full items-center justify-center rounded-xl bg-emerald-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-emerald-500"
+          >
+            Ödə
+          </Link>
+        )}
       </aside>
     </div>
   );

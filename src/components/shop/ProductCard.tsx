@@ -13,6 +13,7 @@ import { ProductImagePlaceholder } from "@/components/shop/ProductImagePlacehold
 export function ProductCard({ product }: { product: ProductListItem }) {
   const imageUrl = getProductImageUrl(product.product_images);
   const price = getDisplayPrice(product.final_price, product.farmer_price);
+  const outOfStock = !product.in_stock || product.quantity_available <= 0;
 
   return (
     <article className="group overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-zinc-200 transition hover:shadow-md">
@@ -22,7 +23,10 @@ export function ProductCard({ product }: { product: ProductListItem }) {
             <ImageWithSkeleton
               src={imageUrl}
               alt={product.title}
-              className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.03]"
+              className={[
+                "h-full w-full object-cover transition duration-500 group-hover:scale-[1.03]",
+                outOfStock ? "opacity-60 grayscale" : "",
+              ].join(" ")}
               skeletonClassName="rounded-none"
             />
           ) : (
@@ -57,8 +61,14 @@ export function ProductCard({ product }: { product: ProductListItem }) {
               {formatUnit(product.unit_type)}
             </span>
           </div>
-          <AddToCartButton product={product} />
+          {outOfStock ? null : <AddToCartButton product={product} />}
         </div>
+
+        {outOfStock ? (
+          <p className="mt-2 inline-flex rounded-full bg-amber-50 px-2.5 py-1 text-[11px] font-medium text-amber-800 ring-1 ring-amber-200">
+            Stokda qalmayıb
+          </p>
+        ) : null}
       </div>
     </article>
   );

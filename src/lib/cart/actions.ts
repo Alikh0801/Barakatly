@@ -107,13 +107,22 @@ export async function setCartQuantity(
 
   const { data: product } = await supabase
     .from("products")
-    .select("quantity_available")
+    .select("quantity_available, in_stock")
     .eq("id", productId)
+    .eq("status", "approved")
     .maybeSingle();
 
-  const capped = product
-    ? Math.min(quantity, product.quantity_available)
-    : quantity;
+  // Previously a missing product fell through to the requested quantity, so a
+  // removed or unapproved item could be set to any amount.
+  if (!product) {
+    return { ok: false, error: "Bu məhsul artıq mövcud deyil." };
+  }
+
+  if (!product.in_stock || product.quantity_available <= 0) {
+    return { ok: false, error: "Bu məhsul hazırda stokda yoxdur." };
+  }
+
+  const capped = Math.min(quantity, product.quantity_available);
 
   const { error } = await supabase
     .from("cart_items")
