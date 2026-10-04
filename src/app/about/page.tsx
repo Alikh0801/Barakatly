@@ -5,7 +5,7 @@ import { getAboutContent } from "@/lib/content/queries";
 export async function generateMetadata(): Promise<Metadata> {
   const content = await getAboutContent();
   return {
-    title: "Haqqımızda — BARAKATLY",
+    title: "Haqqımızda",
     description: content.body.slice(0, 160),
   };
 }

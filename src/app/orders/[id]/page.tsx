@@ -26,8 +26,8 @@ export async function generateMetadata({
   const order = await getOrderById(id);
   return {
     title: order
-      ? `${order.order_code} — BARAKATLY`
-      : "Sifariş — BARAKATLY",
+      ? order.order_code
+      : "Sifariş",
   };
 }
 

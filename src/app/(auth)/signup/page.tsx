@@ -1,7 +1,7 @@
 import { SignUpForm } from "@/components/auth/SignUpForm";
 
 export const metadata = {
-  title: "Qeydiyyat — BARAKATLY",
+  title: "Qeydiyyat",
 };
 
 export default function SignUpPage() {

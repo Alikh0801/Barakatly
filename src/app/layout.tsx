@@ -25,7 +25,13 @@ const appUrl = getAppUrl();
 
 export const metadata: Metadata = {
   metadataBase: new URL(appUrl),
-  title: "Barakatly - Təbii Kənd Məhsulları",
+  // Every page title gets "- Barakatly" appended here, so a new page can
+  // never ship without the brand. The home page sets no title of its own
+  // and shows the default.
+  title: {
+    default: "Barakatly - Təbii Kənd Məhsulları",
+    template: "%s - Barakatly",
+  },
   description:
     "Fermerlərindən birbaşa təzə və organik kənd məhsulları. Yerli fermerləri şüurlu istehlakçılarla birləşdiririk.",
   applicationName: "Barakatly",

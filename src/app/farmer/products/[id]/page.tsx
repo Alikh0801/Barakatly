@@ -10,7 +10,7 @@ import {
   getShopSubcategories,
 } from "@/lib/farmer/queries";
 
-export const metadata = { title: "Məhsulu redaktə et — Fermer" };
+export const metadata = { title: "Məhsulu redaktə et - Fermer" };
 
 export default async function FarmerEditProductPage({
   params,

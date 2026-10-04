@@ -3,7 +3,7 @@ import { AdminHeroPanel } from "@/components/admin/AdminHeroPanel";
 import { AdminPageShell } from "@/components/admin/AdminPageShell";
 import { getAdminAuthImageContent, getAdminHeroContent } from "@/lib/content/queries";
 
-export const metadata = { title: "Hero — Admin" };
+export const metadata = { title: "Hero - Admin" };
 
 export default async function AdminHeroPage() {
   const [heroContent, authImageContent] = await Promise.all([

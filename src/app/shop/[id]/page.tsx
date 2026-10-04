@@ -40,7 +40,7 @@ export async function generateMetadata({
     "Fermerdən birbaşa təzə məhsul";
 
   return {
-    title: `${product.title} — BARAKATLY`,
+    title: product.title,
     description,
     alternates: { canonical: `/shop/${product.id}` },
     openGraph: {

@@ -4,7 +4,7 @@ import { ProductGridSkeleton, ShopFiltersSkeleton } from "@/components/skeletons
 import { Skeleton } from "@/components/ui/Skeleton";
 
 export const metadata = {
-  title: "Mağaza — BARAKATLY",
+  title: "Mağaza",
 };
 
 function ShopDataSkeleton() {

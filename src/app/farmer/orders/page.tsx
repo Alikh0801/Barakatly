@@ -2,7 +2,7 @@ import { FarmerOrdersList } from "@/components/farmer/FarmerPanels";
 import { requireApprovedFarmer } from "@/lib/farmer/auth";
 import { getFarmerOrderItems } from "@/lib/farmer/queries";
 
-export const metadata = { title: "Sifarişlər — Fermer" };
+export const metadata = { title: "Sifarişlər - Fermer" };
 
 export default async function FarmerOrdersPage() {
   const { farmer } = await requireApprovedFarmer();

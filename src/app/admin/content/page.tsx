@@ -8,7 +8,7 @@ import {
   getAdminWhyBarakatlyContent,
 } from "@/lib/content/queries";
 
-export const metadata = { title: "Məzmun — Admin" };
+export const metadata = { title: "Məzmun - Admin" };
 
 export default async function AdminContentPage() {
   const [whyContent, faqContent, aboutContent] = await Promise.all([

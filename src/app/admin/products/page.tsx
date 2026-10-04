@@ -9,7 +9,7 @@ import {
   getAdminPendingProducts,
 } from "@/lib/admin/queries";
 
-export const metadata = { title: "Məhsullar — Admin" };
+export const metadata = { title: "Məhsullar - Admin" };
 
 export default async function AdminProductsPage() {
   const [pending, approved, categories] = await Promise.all([

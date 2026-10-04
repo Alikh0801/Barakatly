@@ -7,7 +7,7 @@ import { resolvePendingActionNotificationIds } from "@/lib/notifications/pending
 import { getProfile } from "@/lib/auth/session";
 
 export const metadata = {
-  title: "Bildirişlər — BARAKATLY",
+  title: "Bildirişlər",
 };
 
 function backLinkForRole(role: string) {

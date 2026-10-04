@@ -3,7 +3,7 @@ import { FarmerProductsList } from "@/components/farmer/FarmerPanels";
 import { requireApprovedFarmer } from "@/lib/farmer/auth";
 import { getFarmerProducts } from "@/lib/farmer/queries";
 
-export const metadata = { title: "Məhsullarım — Fermer" };
+export const metadata = { title: "Məhsullarım - Fermer" };
 
 export default async function FarmerProductsPage() {
   const { farmer } = await requireApprovedFarmer();

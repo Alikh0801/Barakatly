@@ -3,7 +3,7 @@ import { AdminPageShell } from "@/components/admin/AdminPageShell";
 import { getAdminBanks } from "@/lib/admin/queries";
 
 export const metadata = {
-  title: "Kartlar — Admin",
+  title: "Kartlar - Admin",
 };
 
 export default async function AdminBanksPage() {

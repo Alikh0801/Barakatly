@@ -5,7 +5,7 @@ import { firstPayment } from "@/lib/orders/payment";
 import { createClient } from "@/lib/supabase/server";
 
 export const metadata = {
-  title: "Sifarişlər — Admin",
+  title: "Sifarişlər - Admin",
 };
 
 export default async function AdminOrdersPage() {

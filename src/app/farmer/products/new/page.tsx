@@ -5,7 +5,7 @@ import {
   getShopSubcategories,
 } from "@/lib/farmer/queries";
 
-export const metadata = { title: "Yeni məhsul — Fermer" };
+export const metadata = { title: "Yeni məhsul - Fermer" };
 
 export default async function FarmerNewProductPage() {
   const { profile } = await requireApprovedFarmer();

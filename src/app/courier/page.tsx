@@ -1,7 +1,7 @@
 import { CourierQueue } from "@/components/courier/CourierPanels";
 import { getCourierQueue } from "@/lib/courier/queries";
 
-export const metadata = { title: "Kuryer növbəsi — BARAKATLY" };
+export const metadata = { title: "Kuryer növbəsi" };
 
 export default async function CourierPage() {
   const orders = await getCourierQueue();

@@ -11,7 +11,7 @@ const displayFont = Syne({
 });
 
 export const metadata: Metadata = {
-  title: "Fermerlər — BARAKATLY",
+  title: "Fermerlər",
   description:
     "Barakatly platformasında təsdiqlənmiş yerli fermerlər və təsərrüfatlar.",
 };

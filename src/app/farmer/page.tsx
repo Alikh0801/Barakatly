@@ -11,7 +11,7 @@ import {
 } from "@/lib/farmer/queries";
 import { getFarmerFollowerCount } from "@/lib/farmers/queries";
 
-export const metadata = { title: "Fermer profili — BARAKATLY" };
+export const metadata = { title: "Fermer profili" };
 
 function parseTab(value?: string): FarmerProfileTab {
   if (

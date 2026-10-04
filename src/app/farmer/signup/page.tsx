@@ -7,7 +7,7 @@ import {
 import { getProfile } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
 
-export const metadata = { title: "Fermer qeydiyyatı — BARAKATLY" };
+export const metadata = { title: "Fermer qeydiyyatı" };
 
 export default async function FarmerSignUpPage() {
   const profile = await getProfile();

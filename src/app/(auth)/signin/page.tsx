@@ -2,7 +2,7 @@ import Link from "next/link";
 import { SignInForm } from "@/components/auth/SignInForm";
 
 export const metadata = {
-  title: "Daxil ol — BARAKATLY",
+  title: "Daxil ol",
 };
 
 export default async function SignInPage({

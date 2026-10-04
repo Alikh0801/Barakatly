@@ -6,7 +6,7 @@ import { OrderListSkeleton } from "@/components/skeletons";
 import { getProfile } from "@/lib/auth/session";
 
 export const metadata = {
-  title: "Sifarişlərim — BARAKATLY",
+  title: "Sifarişlərim",
 };
 
 export default async function OrdersPage() {

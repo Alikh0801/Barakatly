@@ -2,7 +2,7 @@ import { AdminPageShell } from "@/components/admin/AdminPageShell";
 import { AdminCouriersPanel } from "@/components/admin/AdminPortalPanels";
 import { getAdminCouriers } from "@/lib/admin/queries";
 
-export const metadata = { title: "Kuryerlər — Admin" };
+export const metadata = { title: "Kuryerlər - Admin" };
 
 export default async function AdminCouriersPage() {
   const couriers = await getAdminCouriers();

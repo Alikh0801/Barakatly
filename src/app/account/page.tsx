@@ -5,7 +5,7 @@ import { getProfile } from "@/lib/auth/session";
 import { AccountProfileForm } from "@/components/account/AccountProfileForm";
 
 export const metadata = {
-  title: "Hesabım — BARAKATLY",
+  title: "Hesabım",
   robots: { index: false, follow: false },
 };
 

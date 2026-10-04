@@ -29,7 +29,7 @@ export async function generateMetadata({
     farmer.description?.slice(0, 160) || "Təsdiqlənmiş fermer profili";
 
   return {
-    title: `${farmer.farm_name} — BARAKATLY`,
+    title: farmer.farm_name,
     description,
     alternates: { canonical: `/farmers/${farmer.id}` },
     openGraph: {

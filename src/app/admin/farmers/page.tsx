@@ -2,7 +2,7 @@ import { AdminPageShell } from "@/components/admin/AdminPageShell";
 import { AdminFarmersPanel } from "@/components/admin/AdminPortalPanels";
 import { getAdminFarmers } from "@/lib/admin/queries";
 
-export const metadata = { title: "Fermerlər — Admin" };
+export const metadata = { title: "Fermerlər - Admin" };
 
 export default async function AdminFarmersPage() {
   const farmers = await getAdminFarmers();

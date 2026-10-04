@@ -4,7 +4,7 @@ import { getPendingPayments } from "@/lib/admin/queries";
 import { createClient } from "@/lib/supabase/server";
 
 export const metadata = {
-  title: "Ödənişlər — Admin",
+  title: "Ödənişlər - Admin",
 };
 
 export default async function AdminPaymentsPage() {

@@ -5,7 +5,7 @@ import { getSessionUser } from "@/lib/auth/session";
 import { getCartItems } from "@/lib/cart/queries";
 
 export const metadata = {
-  title: "Səbət — BARAKATLY",
+  title: "Səbət",
 };
 
 export default async function CartPage() {

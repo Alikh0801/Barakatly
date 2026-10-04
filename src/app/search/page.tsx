@@ -4,7 +4,7 @@ import { VerifiedIcon } from "@/components/ui/VerifiedIcon";
 import { searchCatalog } from "@/lib/shop/search";
 
 export const metadata = {
-  title: "Axtarış — BARAKATLY",
+  title: "Axtarış",
 };
 
 export default async function SearchPage({

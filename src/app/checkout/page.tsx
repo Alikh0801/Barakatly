@@ -7,7 +7,7 @@ import { getProfile } from "@/lib/auth/session";
 import { getCartItems } from "@/lib/cart/queries";
 
 export const metadata = {
-  title: "Ödəniş — BARAKATLY",
+  title: "Ödəniş",
 };
 
 export default async function CheckoutPage() {
