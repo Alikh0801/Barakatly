@@ -25,7 +25,7 @@ const appUrl = getAppUrl();
 
 export const metadata: Metadata = {
   metadataBase: new URL(appUrl),
-  title: "BARAKATLY — Organik Kənd Məhsulları",
+  title: "Barakatly - Təbii Kənd Məhsulları",
   description:
     "Fermerlərindən birbaşa təzə və organik kənd məhsulları. Yerli fermerləri şüurlu istehlakçılarla birləşdiririk.",
   applicationName: "Barakatly",
@@ -44,7 +44,7 @@ export const metadata: Metadata = {
     locale: "az_AZ",
     url: appUrl,
     siteName: "Barakatly",
-    title: "BARAKATLY — Organik Kənd Məhsulları",
+    title: "Barakatly - Təbii Kənd Məhsulları",
     description:
       "Fermerlərindən birbaşa təzə və organik kənd məhsulları.",
     images: [
@@ -58,7 +58,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "BARAKATLY — Organik Kənd Məhsulları",
+    title: "Barakatly - Təbii Kənd Məhsulları",
     description:
       "Fermerlərindən birbaşa təzə və organik kənd məhsulları.",
     images: ["/hero/kend.jpg"],
