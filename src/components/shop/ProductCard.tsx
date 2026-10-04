@@ -17,7 +17,9 @@ export function ProductCard({ product }: { product: ProductListItem }) {
 
   return (
     <article className="overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-zinc-200 transition hover:shadow-md">
-      <Link href={`/shop/${product.id}`} prefetch className="block">
+      {/* data-static-hover: the global a:hover scale(1.02) would otherwise
+          zoom the whole image link, which reads as the photo scaling. */}
+      <Link href={`/shop/${product.id}`} prefetch data-static-hover className="block">
         <div className="relative aspect-[4/3] overflow-hidden">
           {imageUrl ? (
             <ImageWithSkeleton
