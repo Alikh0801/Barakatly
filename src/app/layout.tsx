@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { Suspense } from "react";
 import { NavigationProgress } from "@/components/navigation/NavigationProgress";
 import { RoutePrefetcher } from "@/components/navigation/RoutePrefetcher";
+import { ScrollToTopButton } from "@/components/navigation/ScrollToTopButton";
 import { getAppUrl } from "@/lib/auth/urls";
 import "./globals.css";
 
@@ -94,6 +95,7 @@ export default function RootLayout({
         </Suspense>
         <RoutePrefetcher />
         {children}
+        <ScrollToTopButton />
       </body>
     </html>
   );
