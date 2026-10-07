@@ -4,11 +4,12 @@ import { revalidatePath } from "next/cache";
 import { requireAdmin } from "@/lib/admin/auth";
 import { ADMIN_STATUS_TRANSITIONS } from "@/lib/orders/labels";
 import { getOrderStatusLabel } from "@/lib/checkout/labels";
+import { COURIER_READY_ITEM_STATUSES } from "@/lib/orders/courier-handoff";
 import { getOrderFarmerProfileIds } from "@/lib/orders/farmers";
 import { notifyUser } from "@/lib/notifications/helpers";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
-import type { NotificationType, OrderItemStatus, OrderStatus } from "@/types";
+import type { NotificationType, OrderStatus } from "@/types";
 
 type ActionResult = { error?: string; success?: string };
 
@@ -330,9 +331,8 @@ export async function advanceOrderStatus(
       .eq("order_id", orderId)
       .neq("status", "cancelled");
 
-    const readyStatuses: OrderItemStatus[] = ["ready", "awaiting_pickup"];
     const notReady = (items ?? []).some(
-      (item) => !readyStatuses.includes(item.status),
+      (item) => !COURIER_READY_ITEM_STATUSES.includes(item.status),
     );
 
     if (notReady) {
@@ -394,6 +394,7 @@ export async function advanceOrderStatus(
   revalidatePath("/notifications");
   revalidatePath("/farmer");
   revalidatePath("/farmer/orders");
+  revalidatePath("/courier");
 
   return { success: `${order.order_code} statusu yeniləndi.` };
 }

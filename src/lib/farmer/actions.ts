@@ -37,6 +37,7 @@ import { isPhoneTakenByAnother } from "@/lib/phone/uniqueness";
 import { revalidateProductCatalog } from "@/lib/shop/revalidate";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getFarmerOrderHeaders } from "@/lib/farmer/queries";
+import { moveOrderToCourierQueueIfHandedOver } from "@/lib/orders/courier-handoff";
 import { createClient } from "@/lib/supabase/server";
 import { slugifyAz } from "@/lib/admin/slug";
 import type { OrderItemStatus, UnitType } from "@/types";
@@ -754,6 +755,34 @@ export async function updateOrderItemStatus(
     },
   });
 
+  // The last farmer to hand over moves the whole order to couriers; the
+  // admin no longer has to notice and do it by hand.
+  if (
+    nextStatus === "awaiting_pickup" &&
+    (await moveOrderToCourierQueueIfHandedOver(order.id))
+  ) {
+    await insertEventAndNotify({
+      orderId: order.id,
+      customerId: order.customer_id,
+      status: "awaiting_courier",
+      note: "Bütün fermerlər sifarişi təhvilə hazırladı — sifariş kuryer növbəsinə keçdi.",
+      changedBy: profile.id,
+      notification: {
+        type: "order_prepared",
+        title: "Sifarişiniz kuryer gözləyir",
+        body: "Məhsullar hazırdır. Kuryer tərəfindən götürülməyi gözləyir.",
+      },
+    });
+
+    await notifyAdmins({
+      type: "general",
+      title: "Sifariş kuryer növbəsinə keçdi",
+      body: `${order.order_code} — bütün fermerlər hazırdır, sifariş avtomatik olaraq kuryer növbəsinə keçdi.`,
+      metadata: { order_id: order.id, order_code: order.order_code },
+    });
+  }
+
+  revalidatePath("/courier");
   revalidatePath("/farmer/orders");
   revalidatePath("/farmer");
   revalidatePath("/orders");
