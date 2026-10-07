@@ -30,7 +30,7 @@ export default async function SearchPage({
             type="search"
             name="q"
             defaultValue={q}
-            placeholder="Məs: yumurta, TestFarms..."
+            placeholder="Məhsul adı və ya fermer axtarın"
             className="min-w-0 flex-1 rounded-xl border border-zinc-200 bg-white px-4 py-3 text-sm text-zinc-900 outline-none ring-emerald-500/30 focus:ring-2"
           />
           <button
