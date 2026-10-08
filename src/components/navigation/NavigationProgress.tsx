@@ -1,7 +1,10 @@
 "use client";
 
-import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { usePathname, useSearchParams } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
+
+/** Never leave the bar running longer than this, whatever happened. */
+const MAX_VISIBLE_MS = 10_000;
 
 function isModifiedClick(event: MouseEvent) {
   return (
@@ -28,12 +31,26 @@ function shouldHandleLink(anchor: HTMLAnchorElement, pathname: string) {
 
 export function NavigationProgress() {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const [active, setActive] = useState(false);
+  const failsafe = useRef<number | null>(null);
 
+  // A navigation is over once the URL changes — the path *or* the query.
+  // Watching only the path left the bar running forever after query-only
+  // links such as the shop's /shop?category=… filters, which the click
+  // handler (rightly) treats as navigations.
+  const url = `${pathname}?${searchParams.toString()}`;
   useEffect(() => {
     const timeout = window.setTimeout(() => setActive(false), 0);
     return () => window.clearTimeout(timeout);
-  }, [pathname]);
+  }, [url]);
+
+  useEffect(
+    () => () => {
+      if (failsafe.current !== null) window.clearTimeout(failsafe.current);
+    },
+    [],
+  );
 
   useEffect(() => {
     const handleClick = (event: MouseEvent) => {
@@ -43,6 +60,10 @@ export function NavigationProgress() {
       if (!anchor || !shouldHandleLink(anchor, pathname)) return;
 
       setActive(true);
+      // A navigation that never changes the URL (cancelled, or redirected
+      // back to this same page) would otherwise keep the bar on for good.
+      if (failsafe.current !== null) window.clearTimeout(failsafe.current);
+      failsafe.current = window.setTimeout(() => setActive(false), MAX_VISIBLE_MS);
     };
 
     document.addEventListener("click", handleClick, true);
