@@ -82,6 +82,8 @@ export const HERO_KEY = "hero" as const;
 export type HeroItems = {
   highlight: string;
   imageUrl: string;
+  /** Optional portrait image for portrait screens; "" means use imageUrl. */
+  mobileImageUrl: string;
 };
 
 export const HERO_DEFAULT_IMAGE_URL =
@@ -90,6 +92,7 @@ export const HERO_DEFAULT_IMAGE_URL =
 export const HERO_DEFAULT_ITEMS: HeroItems = {
   highlight: "birbaşa süfrənizə.",
   imageUrl: HERO_DEFAULT_IMAGE_URL,
+  mobileImageUrl: "",
 };
 
 export const HERO_DEFAULT = {

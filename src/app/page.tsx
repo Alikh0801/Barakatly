@@ -26,6 +26,7 @@ export default async function Home({
         highlight={hero.items.highlight}
         body={hero.body}
         imageUrl={hero.items.imageUrl}
+        mobileImageUrl={hero.items.mobileImageUrl}
       />
       <Suspense fallback={<CategorySectionSkeleton />}>
         <Reveal>

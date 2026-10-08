@@ -149,8 +149,9 @@ function parseHeroItems(value: unknown): HeroItems {
     String(record.highlight ?? "").trim() || HERO_DEFAULT_ITEMS.highlight;
   const imageUrl =
     String(record.imageUrl ?? "").trim() || HERO_DEFAULT_ITEMS.imageUrl;
+  const mobileImageUrl = String(record.mobileImageUrl ?? "").trim();
 
-  return { highlight, imageUrl };
+  return { highlight, imageUrl, mobileImageUrl };
 }
 
 async function fetchHeroContent(): Promise<HeroContent> {

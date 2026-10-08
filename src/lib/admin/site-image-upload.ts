@@ -1,44 +1,41 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/database";
-import { validateProductImage } from "@/lib/farmer/image-upload";
+import {
+  PRODUCT_IMAGE_MAX_BYTES,
+  PRODUCT_IMAGE_TOO_LARGE_ERROR,
+  PRODUCT_IMAGE_TYPE_ERROR,
+  isProductImageMimeType,
+} from "@/lib/farmer/image-upload";
 
-function getImageExtension(file: File): string {
-  const byType: Record<string, string> = {
-    "image/jpeg": "jpg",
-    "image/png": "png",
-    "image/webp": "webp",
-  };
-  return byType[file.type] ?? "jpg";
-}
+/** Site image folders the admin panels upload into from the browser. */
+export type SiteImageFolder = "hero" | "auth";
 
-/** Uploads an admin-managed site image (hero, auth page, categories, ...)
- * to the shared product-images bucket under its own folder. */
-export async function uploadSiteImage(
+/**
+ * Turns a path the admin's browser uploaded into a public URL.
+ *
+ * Site images go browser → Storage, and the action only gets the path: a
+ * hero form now carries two photos, and two full-size photos would blow
+ * through Vercel's ~4.5 MB function payload cap. The path is
+ * client-supplied, so it must sit in `folder` and exist as an allowed
+ * image within the size limit.
+ */
+export async function resolveSiteImagePath(
   supabase: SupabaseClient<Database>,
-  file: File,
-  folder: string,
+  path: string,
+  folder: SiteImageFolder,
 ): Promise<{ url: string } | { error: string }> {
-  const validationError = validateProductImage(file);
-  if (validationError) return { error: validationError };
-
-  const path = `${folder}/${Date.now()}-${crypto.randomUUID()}.${getImageExtension(file)}`;
-
-  const { error: uploadError } = await supabase.storage
-    .from("product-images")
-    .upload(path, file, {
-      contentType: file.type,
-      upsert: false,
-    });
-
-  if (uploadError) {
-    console.error("[admin.uploadSiteImage]", uploadError.message);
-    return { error: "Şəkil yüklənə bilmədi. Yenidən cəhd edin." };
+  if (!new RegExp(`^${folder}/[\\w-]+\\.(jpg|png|webp)$`).test(path)) {
+    return { error: "Şəkil tapılmadı. Yenidən seçin." };
   }
 
-  const { data } = supabase.storage.from("product-images").getPublicUrl(path);
-  if (!data.publicUrl) {
-    return { error: "Şəkil ünvanı alınmadı." };
+  const bucket = supabase.storage.from("product-images");
+  const { data, error } = await bucket.info(path);
+  if (error || !data) return { error: "Şəkil tapılmadı. Yenidən seçin." };
+  if ((data.size ?? 0) > PRODUCT_IMAGE_MAX_BYTES) {
+    return { error: PRODUCT_IMAGE_TOO_LARGE_ERROR };
   }
-
-  return { url: data.publicUrl };
+  if (!isProductImageMimeType(data.contentType ?? "")) {
+    return { error: PRODUCT_IMAGE_TYPE_ERROR };
+  }
+  return { url: bucket.getPublicUrl(path).data.publicUrl };
 }

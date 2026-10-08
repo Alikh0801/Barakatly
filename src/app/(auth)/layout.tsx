@@ -1,4 +1,4 @@
-import Image from "next/image";
+import Image, { getImageProps } from "next/image";
 import Link from "next/link";
 import type { Viewport } from "next";
 import { getAuthImageContent } from "@/lib/content/queries";
@@ -7,6 +7,39 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
 };
+
+// The panel is a half-width, full-height box, so object-cover crops a 3:2
+// photo to the box height unless the screen is wider than 32:9; "50vw"
+// fetched a file two to three times too small for it.
+const PANEL_SIZES = "(min-aspect-ratio: 32/9) 50vw, 178vh";
+const PANEL_MEDIA = "(min-width: 1024px)";
+// A 1×1 transparent GIF: what the <img> falls back to below lg.
+const BLANK_IMAGE = "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7";
+
+/**
+ * The panel is hidden below lg, but a hidden <img> still downloads, and
+ * phones and tablets fetched the largest file for nothing. The real srcset
+ * sits on a <source> that only matches from lg up; below it the browser
+ * picks the blank fallback and requests nothing.
+ */
+function AuthPanelImage({ src }: { src: string }) {
+  const {
+    props: { srcSet, sizes, alt, ...rest },
+  } = getImageProps({
+    src,
+    alt: "Barakatly — fermerdən süfrəyə",
+    fill: true,
+    sizes: PANEL_SIZES,
+    loading: "eager",
+  });
+
+  return (
+    <picture>
+      <source media={PANEL_MEDIA} srcSet={srcSet} sizes={sizes} />
+      <img {...rest} alt={alt} src={BLANK_IMAGE} className="object-cover" />
+    </picture>
+  );
+}
 
 function TrustChip({ children }: { children: React.ReactNode }) {
   return (
@@ -38,18 +71,9 @@ export default async function AuthLayout({
   const authImage = await getAuthImageContent();
 
   return (
-    <div className="grid min-h-dvh bg-white md:grid-cols-2">
-      <div className="relative hidden md:block">
-        <Image
-          src={authImage.items.imageUrl}
-          alt="Barakatly — fermerdən süfrəyə"
-          fill
-          // eager rather than preload: this panel is hidden below md, and a
-          // preload <link> would pull it on phones that never show it.
-          loading="eager"
-          sizes="50vw"
-          className="object-cover"
-        />
+    <div className="grid min-h-dvh bg-white lg:grid-cols-2">
+      <div className="relative hidden lg:block">
+        <AuthPanelImage src={authImage.items.imageUrl} />
         <div className="absolute inset-0 bg-gradient-to-t from-emerald-950/95 via-emerald-950/40 to-emerald-950/10" />
         <div className="absolute inset-0 bg-gradient-to-r from-transparent via-transparent to-black/20" />
 
@@ -91,11 +115,11 @@ export default async function AuthLayout({
           className="pointer-events-none absolute left-1/2 top-[28%] hidden h-[440px] w-[440px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-emerald-100/70 blur-3xl md:block"
         />
 
-        <header className="relative z-10 shrink-0 border-b border-zinc-200 bg-white/80 backdrop-blur md:border-b-0 md:bg-transparent md:backdrop-blur-none">
-          <div className="flex w-full items-center justify-between px-4 py-3 md:justify-end md:px-8 md:py-6">
+        <header className="relative z-10 shrink-0 border-b border-zinc-200 bg-white/80 backdrop-blur lg:border-b-0 lg:bg-transparent lg:backdrop-blur-none">
+          <div className="flex w-full items-center justify-between px-4 py-3 lg:justify-end md:px-8 md:py-6">
             <Link
               href="/"
-              className="inline-flex items-center gap-2 font-semibold tracking-tight text-emerald-800 md:hidden"
+              className="inline-flex items-center gap-2 font-semibold tracking-tight text-emerald-800 lg:hidden"
             >
               <Image
                 src="/logo/logo.png"

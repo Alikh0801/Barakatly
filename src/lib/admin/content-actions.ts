@@ -2,7 +2,7 @@
 
 import { revalidatePath, updateTag } from "next/cache";
 import { requireAdmin } from "@/lib/admin/auth";
-import { uploadSiteImage } from "@/lib/admin/site-image-upload";
+import { resolveSiteImagePath } from "@/lib/admin/site-image-upload";
 import {
   ABOUT_DEFAULT,
   ABOUT_DEFAULT_ITEMS,
@@ -81,6 +81,7 @@ type HeroFormResult = { title: string; body: string; items: HeroItems };
 function parseHeroForm(
   formData: FormData,
   currentImageUrl: string,
+  mobileImageUrl: string,
 ): HeroFormResult | string {
   const title = String(formData.get("title") ?? "").trim();
   const highlight = String(formData.get("highlight") ?? "").trim();
@@ -96,7 +97,7 @@ function parseHeroForm(
   return {
     title,
     body,
-    items: { highlight, imageUrl: currentImageUrl },
+    items: { highlight, imageUrl: currentImageUrl, mobileImageUrl },
   };
 }
 
@@ -115,15 +116,26 @@ export async function updateHeroContent(
 
   const existingItems = existing?.items as Partial<HeroItems> | null;
   let imageUrl = existingItems?.imageUrl || HERO_DEFAULT_ITEMS.imageUrl;
+  let mobileImageUrl = existingItems?.mobileImageUrl ?? "";
 
-  const image = formData.get("image");
-  if (image instanceof File && image.size > 0) {
-    const uploaded = await uploadSiteImage(supabase, image, "hero");
-    if ("error" in uploaded) return { error: uploaded.error };
-    imageUrl = uploaded.url;
+  // The browser has already uploaded any new photo; only its path is sent.
+  const imagePath = String(formData.get("image_path") ?? "").trim();
+  if (imagePath) {
+    const resolved = await resolveSiteImagePath(supabase, imagePath, "hero");
+    if ("error" in resolved) return { error: resolved.error };
+    imageUrl = resolved.url;
   }
 
-  const parsed = parseHeroForm(formData, imageUrl);
+  const mobileImagePath = String(formData.get("mobile_image_path") ?? "").trim();
+  if (mobileImagePath) {
+    const resolved = await resolveSiteImagePath(supabase, mobileImagePath, "hero");
+    if ("error" in resolved) return { error: `Mobil şəkil: ${resolved.error}` };
+    mobileImageUrl = resolved.url;
+  } else if (String(formData.get("remove_mobile_image") ?? "") === "1") {
+    mobileImageUrl = "";
+  }
+
+  const parsed = parseHeroForm(formData, imageUrl, mobileImageUrl);
   if (typeof parsed === "string") return { error: parsed };
 
   const { error } = await supabase.from("site_content").upsert(
@@ -225,11 +237,12 @@ export async function updateAuthImageContent(
   const existingItems = existing?.items as Partial<AuthImageItems> | null;
   let imageUrl = existingItems?.imageUrl || AUTH_IMAGE_DEFAULT_ITEMS.imageUrl;
 
-  const image = formData.get("image");
-  if (image instanceof File && image.size > 0) {
-    const uploaded = await uploadSiteImage(supabase, image, "auth");
-    if ("error" in uploaded) return { error: uploaded.error };
-    imageUrl = uploaded.url;
+  // The browser has already uploaded any new photo; only its path is sent.
+  const imagePath = String(formData.get("image_path") ?? "").trim();
+  if (imagePath) {
+    const resolved = await resolveSiteImagePath(supabase, imagePath, "auth");
+    if ("error" in resolved) return { error: resolved.error };
+    imageUrl = resolved.url;
   }
 
   const parsed = parseAuthImageForm(formData, imageUrl);

@@ -7,10 +7,12 @@ import {
   type AdminContentActionState,
 } from "@/lib/admin/content-actions";
 import type { AuthImageItems } from "@/lib/content/defaults";
+import { useSiteImageSubmit } from "@/lib/admin/use-site-image-submit";
 import { FileSelectField } from "@/components/ui/FileSelectField";
 import { Spinner } from "@/components/ui/Spinner";
 
 const initialState: AdminContentActionState = {};
+const AUTH_FILE_FIELDS = [{ input: "image", path: "image_path" }];
 
 export function AdminAuthImagePanel({
   title,
@@ -29,6 +31,13 @@ export function AdminAuthImagePanel({
     resetAuthImageContent,
     initialState
   );
+  const { onSubmit, uploading, uploadError, clearUploadError } = useSiteImageSubmit(
+    updateAction,
+    "auth",
+    AUTH_FILE_FIELDS
+  );
+  const saving = uploading || updatePending;
+  const error = uploadError ?? updateState.error ?? resetState.error;
 
   return (
     <div className="space-y-4 rounded-2xl bg-white p-4 shadow-sm sm:p-5 ring-1 ring-zinc-200 xl:col-span-2">
@@ -39,18 +48,20 @@ export function AdminAuthImagePanel({
         </p>
       </div>
 
-      {(updateState.error || resetState.error) && (
+      {error && (
         <p className="rounded-xl bg-rose-50 px-3 py-2 text-sm text-rose-700">
-          {updateState.error ?? resetState.error}
+          {error}
         </p>
       )}
-      {(updateState.success || resetState.success) && (
+      {!error && (updateState.success || resetState.success) && (
         <p className="rounded-xl bg-emerald-50 px-3 py-2 text-sm text-emerald-800">
           {updateState.success ?? resetState.success}
         </p>
       )}
 
-      <form action={updateAction} className="space-y-6">
+      {/* Keyed on the saved images so a successful save clears the file
+          pickers, while a failed one keeps everything the admin entered. */}
+      <form key={items.imageUrl} onSubmit={onSubmit} className="space-y-6">
         <div className="space-y-4">
           <h3 className="text-sm font-semibold text-zinc-900">Şəkil</h3>
           <div className="aspect-[4/5] w-full max-w-xs overflow-hidden rounded-xl bg-zinc-100 ring-1 ring-zinc-200">
@@ -65,7 +76,7 @@ export function AdminAuthImagePanel({
             name="image"
             accept="image/jpeg,image/png,image/webp"
             caption="Yeni şəkil"
-            hint="JPEG, PNG və ya WebP, maksimum 5 MB. Boş buraxsanız mövcud şəkil qalır."
+            hint="Şəkil yalnız geniş ekranlarda (1024 pikseldən) göstərilir. Şaquli şəkil, ən azı 1600×2000 piksel (4:5) tövsiyə olunur. JPEG, PNG və ya WebP, maksimum 5 MB. Boş buraxsanız mövcud şəkil qalır."
           />
         </div>
 
@@ -112,18 +123,18 @@ export function AdminAuthImagePanel({
 
         <button
           type="submit"
-          disabled={updatePending || resetPending}
+          disabled={saving || resetPending}
           className="inline-flex items-center gap-2 rounded-full bg-emerald-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-70"
         >
-          {updatePending ? <Spinner className="h-3.5 w-3.5" /> : null}
-          Yadda saxla
+          {saving ? <Spinner className="h-3.5 w-3.5" /> : null}
+          {uploading ? "Şəkil yüklənir..." : "Yadda saxla"}
         </button>
       </form>
 
-      <form action={resetAction}>
+      <form action={resetAction} onSubmit={clearUploadError}>
         <button
           type="submit"
-          disabled={updatePending || resetPending}
+          disabled={saving || resetPending}
           className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-semibold text-zinc-700 ring-1 ring-zinc-200 disabled:opacity-70"
         >
           {resetPending ? <Spinner className="h-3.5 w-3.5" /> : null}

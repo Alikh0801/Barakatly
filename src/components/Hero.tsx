@@ -1,5 +1,63 @@
-import Image from "next/image";
+import Image, { getImageProps } from "next/image";
 import Link from "next/link";
+
+// The image fills a full-viewport box with object-cover, so on any screen
+// narrower than 16:9 it is cropped to the viewport *height*: a 3:2 photo then
+// renders 1.78 × the viewport height wide, and "100vw" fetched a file two to
+// three times too small for phones and tablets.
+const DESKTOP_SIZES = "(max-aspect-ratio: 16/9) 178vh, 100vw";
+// The optional portrait upload (9:16) covers a portrait screen width-first.
+const MOBILE_SIZES = "100vw";
+const MOBILE_MEDIA = "(orientation: portrait)";
+
+function HeroImage({
+  imageUrl,
+  mobileImageUrl,
+}: {
+  imageUrl: string;
+  mobileImageUrl: string;
+}) {
+  // The LCP element. A CSS background-image would skip the optimizer
+  // entirely — no AVIF/WebP, no srcset, no preload — so a 1MB upload
+  // reached every phone at full size.
+  if (!mobileImageUrl) {
+    return (
+      <Image
+        src={imageUrl}
+        alt=""
+        fill
+        preload
+        sizes={DESKTOP_SIZES}
+        className="object-cover object-center"
+      />
+    );
+  }
+
+  // Art direction: portrait screens get the portrait upload instead of a
+  // thin slice of the landscape one. getImageProps cannot emit a preload
+  // <link> for a <picture>, so the <img> is marked high priority instead.
+  const {
+    props: { srcSet: desktopSrcSet },
+  } = getImageProps({ src: imageUrl, alt: "", fill: true, sizes: DESKTOP_SIZES });
+  const {
+    props: { srcSet: mobileSrcSet, ...rest },
+  } = getImageProps({
+    src: mobileImageUrl,
+    alt: "",
+    fill: true,
+    sizes: MOBILE_SIZES,
+    loading: "eager",
+    fetchPriority: "high",
+  });
+
+  return (
+    <picture>
+      <source media={MOBILE_MEDIA} srcSet={mobileSrcSet} sizes={MOBILE_SIZES} />
+      <source srcSet={desktopSrcSet} sizes={DESKTOP_SIZES} />
+      <img {...rest} alt="" className="object-cover object-center" />
+    </picture>
+  );
+}
 
 function Chip({
   children,
@@ -30,25 +88,18 @@ export function Hero({
   highlight,
   body,
   imageUrl,
+  mobileImageUrl,
 }: {
   title: string;
   highlight: string;
   body: string;
   imageUrl: string;
+  /** Optional portrait image for portrait screens; "" uses imageUrl. */
+  mobileImageUrl: string;
 }) {
   return (
     <section className="relative isolate min-h-dvh overflow-x-hidden">
-      {/* The LCP element. A CSS background-image would skip the optimizer
-          entirely — no AVIF/WebP, no srcset, no preload — so a 1MB upload
-          reached every phone at full size. */}
-      <Image
-        src={imageUrl}
-        alt=""
-        fill
-        preload
-        sizes="100vw"
-        className="object-cover object-center"
-      />
+      <HeroImage imageUrl={imageUrl} mobileImageUrl={mobileImageUrl} />
       <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/45 to-black/10" />
       <div className="absolute inset-0 bg-black/15" />
 

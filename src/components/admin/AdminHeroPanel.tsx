@@ -7,10 +7,15 @@ import {
   type AdminContentActionState,
 } from "@/lib/admin/content-actions";
 import type { HeroItems } from "@/lib/content/defaults";
+import { useSiteImageSubmit } from "@/lib/admin/use-site-image-submit";
 import { FileSelectField } from "@/components/ui/FileSelectField";
 import { Spinner } from "@/components/ui/Spinner";
 
 const initialState: AdminContentActionState = {};
+const HERO_FILE_FIELDS = [
+  { input: "image", path: "image_path" },
+  { input: "mobile_image", path: "mobile_image_path", label: "Mobil şəkil" },
+];
 
 export function AdminHeroPanel({
   title,
@@ -29,6 +34,13 @@ export function AdminHeroPanel({
     resetHeroContent,
     initialState
   );
+  const { onSubmit, uploading, uploadError, clearUploadError } = useSiteImageSubmit(
+    updateAction,
+    "hero",
+    HERO_FILE_FIELDS
+  );
+  const saving = uploading || updatePending;
+  const error = uploadError ?? updateState.error ?? resetState.error;
 
   return (
     <div className="space-y-4 rounded-2xl bg-white p-4 shadow-sm sm:p-5 ring-1 ring-zinc-200 xl:col-span-2">
@@ -39,18 +51,20 @@ export function AdminHeroPanel({
         </p>
       </div>
 
-      {(updateState.error || resetState.error) && (
+      {error && (
         <p className="rounded-xl bg-rose-50 px-3 py-2 text-sm text-rose-700">
-          {updateState.error ?? resetState.error}
+          {error}
         </p>
       )}
-      {(updateState.success || resetState.success) && (
+      {!error && (updateState.success || resetState.success) && (
         <p className="rounded-xl bg-emerald-50 px-3 py-2 text-sm text-emerald-800">
           {updateState.success ?? resetState.success}
         </p>
       )}
 
-      <form action={updateAction} className="space-y-6">
+      {/* Keyed on the saved images so a successful save clears the file
+          pickers, while a failed one keeps everything the admin entered. */}
+      <form key={`${items.imageUrl}|${items.mobileImageUrl}`} onSubmit={onSubmit} className="space-y-6">
         <div className="space-y-4">
           <h3 className="text-sm font-semibold text-zinc-900">Fon şəkli</h3>
           <div className="aspect-[21/9] w-full overflow-hidden rounded-xl bg-zinc-100 ring-1 ring-zinc-200">
@@ -65,7 +79,50 @@ export function AdminHeroPanel({
             name="image"
             accept="image/jpeg,image/png,image/webp"
             caption="Yeni şəkil"
-            hint="JPEG, PNG və ya WebP, maksimum 5 MB. Boş buraxsanız mövcud şəkil qalır."
+            hint="Üfüqi şəkil, ən azı 2400×1600 piksel tövsiyə olunur. JPEG, PNG və ya WebP, maksimum 5 MB. Boş buraxsanız mövcud şəkil qalır."
+          />
+        </div>
+
+        <div className="space-y-4">
+          <div>
+            <h3 className="text-sm font-semibold text-zinc-900">
+              Mobil şəkil <span className="font-normal text-zinc-500">(istəyə bağlı)</span>
+            </h3>
+            <p className="mt-1 text-xs text-zinc-500">
+              Telefon və şaquli tutulmuş planşetlərdə fon şəklinin yerinə göstərilir.
+              Üfüqi şəkil dar ekranda kəsildiyi üçün burada şaquli şəkil daha yaxşı görünür.
+            </p>
+          </div>
+          {items.mobileImageUrl ? (
+            <div className="space-y-3">
+              <div className="aspect-[9/16] w-32 overflow-hidden rounded-xl bg-zinc-100 ring-1 ring-zinc-200">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={items.mobileImageUrl}
+                  alt="Hero mobil şəkli"
+                  className="h-full w-full object-cover"
+                />
+              </div>
+              <label className="inline-flex items-center gap-2 text-sm text-zinc-700">
+                <input
+                  type="checkbox"
+                  name="remove_mobile_image"
+                  value="1"
+                  className="h-4 w-4 rounded border-zinc-300 accent-emerald-600"
+                />
+                Mobil şəkli sil (telefonlarda fon şəkli göstərilsin)
+              </label>
+            </div>
+          ) : (
+            <p className="rounded-xl bg-zinc-50 px-3 py-2 text-xs text-zinc-500 ring-1 ring-zinc-100">
+              Mobil şəkil yoxdur — telefonlarda fon şəkli göstərilir.
+            </p>
+          )}
+          <FileSelectField
+            name="mobile_image"
+            accept="image/jpeg,image/png,image/webp"
+            caption={items.mobileImageUrl ? "Yeni mobil şəkil" : "Mobil şəkil"}
+            hint="Şaquli şəkil (9:16), 1440×2560 piksel tövsiyə olunur, ən azı 1080×1920. JPEG, PNG və ya WebP, maksimum 5 MB."
           />
         </div>
 
@@ -112,18 +169,18 @@ export function AdminHeroPanel({
 
         <button
           type="submit"
-          disabled={updatePending || resetPending}
+          disabled={saving || resetPending}
           className="inline-flex items-center gap-2 rounded-full bg-emerald-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-70"
         >
-          {updatePending ? <Spinner className="h-3.5 w-3.5" /> : null}
-          Yadda saxla
+          {saving ? <Spinner className="h-3.5 w-3.5" /> : null}
+          {uploading ? "Şəkil yüklənir..." : "Yadda saxla"}
         </button>
       </form>
 
-      <form action={resetAction}>
+      <form action={resetAction} onSubmit={clearUploadError}>
         <button
           type="submit"
-          disabled={updatePending || resetPending}
+          disabled={saving || resetPending}
           className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-semibold text-zinc-700 ring-1 ring-zinc-200 disabled:opacity-70"
         >
           {resetPending ? <Spinner className="h-3.5 w-3.5" /> : null}
