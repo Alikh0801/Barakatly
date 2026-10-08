@@ -109,6 +109,10 @@ export function GoogleAuthButton({ next }: { next?: string }) {
       options: {
         redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(safeNext)}`,
         skipBrowserRedirect: true,
+        // Without this Google skips its account chooser when the browser
+        // has a single signed-in account that already granted access, so
+        // there is no way to pick a different account.
+        queryParams: { prompt: "select_account" },
       },
     });
 
