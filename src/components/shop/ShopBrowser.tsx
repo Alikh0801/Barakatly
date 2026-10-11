@@ -168,16 +168,16 @@ export function ShopBrowser({
     return [...map.values()].sort((a, b) => a.name.localeCompare(b.name, "az"));
   }, [products]);
 
+  // The slider always starts at 0 so it has a track to drag along even when
+  // every product costs the same; with no products at all it is shown but
+  // disabled rather than vanishing from the filters.
   const priceBounds = useMemo(() => {
-    if (products.length === 0) return null;
-    let min = Infinity;
     let max = 0;
     for (const product of products) {
       const price = getDisplayPrice(product.final_price, product.farmer_price);
-      if (price < min) min = price;
       if (price > max) max = price;
     }
-    return { min: Math.floor(min), max: Math.ceil(max) };
+    return { min: 0, max: Math.max(1, Math.ceil(max)) };
   }, [products]);
 
   const minPriceValue = minPrice.trim() ? Number(minPrice) : null;
@@ -277,19 +277,18 @@ export function ShopBrowser({
         </FilterSection>
       ) : null}
 
-      {priceBounds ? (
-        <FilterSection title="Qiymət aralığı">
-          <PriceRangeFilter
-            bounds={priceBounds}
-            minPrice={minPrice}
-            maxPrice={maxPrice}
-            onChange={({ min, max }) => {
-              setMinPrice(min);
-              setMaxPrice(max);
-            }}
-          />
-        </FilterSection>
-      ) : null}
+      <FilterSection title="Qiymət aralığı">
+        <PriceRangeFilter
+          bounds={priceBounds}
+          disabled={products.length === 0}
+          minPrice={minPrice}
+          maxPrice={maxPrice}
+          onChange={({ min, max }) => {
+            setMinPrice(min);
+            setMaxPrice(max);
+          }}
+        />
+      </FilterSection>
     </div>
   );
 

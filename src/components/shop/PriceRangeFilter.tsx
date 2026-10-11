@@ -37,8 +37,11 @@ export function PriceRangeFilter({
   minPrice,
   maxPrice,
   onChange,
+  disabled = false,
 }: {
   bounds: { min: number; max: number };
+  /** No products to filter: shown greyed out so the section never vanishes. */
+  disabled?: boolean;
   minPrice: string;
   maxPrice: string;
   onChange: (next: { min: string; max: string }) => void;
@@ -79,7 +82,7 @@ export function PriceRangeFilter({
   }
 
   return (
-    <div>
+    <fieldset disabled={disabled} className={`min-w-0 ${disabled ? "opacity-50" : ""}`}>
       <div className="flex items-end gap-2">
         <label className="min-w-0 flex-1">
           <span className="mb-1 block text-xs text-zinc-500">Min</span>
@@ -157,6 +160,6 @@ export function PriceRangeFilter({
           </div>
         </>
       ) : null}
-    </div>
+    </fieldset>
   );
 }
