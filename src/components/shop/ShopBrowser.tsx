@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import type { ReactNode } from "react";
 import { ProductCard } from "@/components/shop/ProductCard";
 import { getDisplayPrice } from "@/lib/shop/format";
+import { PriceRangeFilter } from "@/components/shop/PriceRangeFilter";
 import type { ProductListItem } from "@/types/shop";
 
 type ShopSort = "newest" | "price_asc" | "price_desc" | "popular";
@@ -278,30 +279,15 @@ export function ShopBrowser({
 
       {priceBounds ? (
         <FilterSection title="Qiymət aralığı">
-          <div className="flex items-center gap-2">
-            <input
-              type="number"
-              inputMode="decimal"
-              min={0}
-              placeholder={String(priceBounds.min)}
-              value={minPrice}
-              onChange={(event) => setMinPrice(event.target.value)}
-              className="w-full min-w-0 rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-900 outline-none ring-emerald-500/30 focus:ring-2"
-            />
-            <span className="shrink-0 text-zinc-400">—</span>
-            <input
-              type="number"
-              inputMode="decimal"
-              min={0}
-              placeholder={String(priceBounds.max)}
-              value={maxPrice}
-              onChange={(event) => setMaxPrice(event.target.value)}
-              className="w-full min-w-0 rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-900 outline-none ring-emerald-500/30 focus:ring-2"
-            />
-          </div>
-          <p className="mt-2 text-xs text-zinc-400">
-            {priceBounds.min.toFixed(2)} ₼ – {priceBounds.max.toFixed(2)} ₼
-          </p>
+          <PriceRangeFilter
+            bounds={priceBounds}
+            minPrice={minPrice}
+            maxPrice={maxPrice}
+            onChange={({ min, max }) => {
+              setMinPrice(min);
+              setMaxPrice(max);
+            }}
+          />
         </FilterSection>
       ) : null}
     </div>

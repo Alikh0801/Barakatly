@@ -22,7 +22,7 @@ body {
 }
 
 /* Force readable form controls even if OS prefers dark mode */
-input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="hidden"]),
+input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="hidden"]):not([type="range"]),
 textarea,
 select {
   color: #18181b;
