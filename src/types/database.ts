@@ -102,6 +102,8 @@ export interface Database {
           pending_description: string | null;
           pending_location_text: string | null;
           pending_avatar_url: string | null;
+          cover_url: string | null;
+          pending_cover_url: string | null;
           pending_submitted_at: string | null;
           created_at: string;
           updated_at: string;
@@ -122,6 +124,8 @@ export interface Database {
           pending_description?: string | null;
           pending_location_text?: string | null;
           pending_avatar_url?: string | null;
+          cover_url?: string | null;
+          pending_cover_url?: string | null;
           pending_submitted_at?: string | null;
           created_at?: string;
           updated_at?: string;
@@ -142,6 +146,8 @@ export interface Database {
           pending_description?: string | null;
           pending_location_text?: string | null;
           pending_avatar_url?: string | null;
+          cover_url?: string | null;
+          pending_cover_url?: string | null;
           pending_submitted_at?: string | null;
           created_at?: string;
           updated_at?: string;
@@ -195,6 +201,33 @@ export interface Database {
           media_type?: FarmerPostMediaType;
           url?: string;
           sort_order?: number;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+      farmer_certificates: {
+        Row: {
+          id: string;
+          farmer_id: string;
+          title: string;
+          file_url: string;
+          file_type: "image" | "pdf";
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          farmer_id: string;
+          title: string;
+          file_url: string;
+          file_type: "image" | "pdf";
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          farmer_id?: string;
+          title?: string;
+          file_url?: string;
+          file_type?: "image" | "pdf";
           created_at?: string;
         };
         Relationships: [];
@@ -703,6 +736,10 @@ export interface Database {
         Args: Record<string, never>;
         Returns: { farmer_id: string; owner_name: string | null }[];
       };
+      farmer_rating_summary: {
+        Args: { p_farmer_id: string };
+        Returns: { average: number | null; total: number }[];
+      };
       list_product_reviews: {
         Args: { p_product_id: string };
         Returns: {
@@ -744,6 +781,8 @@ export interface Database {
 
 export type Profile = Database["public"]["Tables"]["profiles"]["Row"];
 export type Farmer = Database["public"]["Tables"]["farmers"]["Row"];
+export type FarmerCertificate =
+  Database["public"]["Tables"]["farmer_certificates"]["Row"];
 export type FarmerPost = Database["public"]["Tables"]["farmer_posts"]["Row"];
 export type FarmerPostMedia =
   Database["public"]["Tables"]["farmer_post_media"]["Row"];

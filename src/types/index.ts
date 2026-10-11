@@ -10,6 +10,7 @@ export type {
   Database,
   Profile,
   Farmer,
+  FarmerCertificate,
   FarmerPost,
   FarmerPostMedia,
   FarmerPostMediaType,

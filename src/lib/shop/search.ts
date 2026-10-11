@@ -99,6 +99,7 @@ export async function searchCatalog(query: string): Promise<SearchResults> {
       location_text: farmer.location_text,
       verified_at: farmer.verified_at,
       avatar_url: farmer.avatar_url ?? null,
+      cover_url: null,
       productCount: products.filter((p) => p.status === "approved").length,
       created_at: farmer.created_at,
     };

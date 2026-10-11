@@ -5,7 +5,9 @@ import {
   type PublicFarmerProfileTab,
 } from "@/components/farmer/FarmerProfile";
 import {
+  getFarmerCertificates,
   getFarmerFollowerCount,
+  getFarmerRatingSummary,
   getIsFollowingFarmer,
   getPublicFarmerBlogPosts,
   getPublicFarmerById,
@@ -45,10 +47,15 @@ export async function generateMetadata({
 }
 
 function parseTab(value?: string): PublicFarmerProfileTab {
-  if (value === "products" || value === "about" || value === "posts") {
+  if (
+    value === "products" ||
+    value === "about" ||
+    value === "posts" ||
+    value === "certificates"
+  ) {
     return value;
   }
-  return "posts";
+  return "products";
 }
 
 export default async function FarmerDetailPage({
@@ -72,12 +79,15 @@ export default async function FarmerDetailPage({
 
   const profile = await getProfile();
 
-  const [products, rawPosts, followerCount, isFollowing] = await Promise.all([
-    getPublicFarmerProducts(farmer.id),
-    getPublicFarmerBlogPosts(farmer.id),
-    getFarmerFollowerCount(farmer.id),
-    profile ? getIsFollowingFarmer(farmer.id, profile.id) : Promise.resolve(false),
-  ]);
+  const [products, rawPosts, followerCount, isFollowing, rating, certificates] =
+    await Promise.all([
+      getPublicFarmerProducts(farmer.id),
+      getPublicFarmerBlogPosts(farmer.id),
+      getFarmerFollowerCount(farmer.id),
+      profile ? getIsFollowingFarmer(farmer.id, profile.id) : Promise.resolve(false),
+      getFarmerRatingSummary(farmer.id),
+      getFarmerCertificates(farmer.id),
+    ]);
 
   const posts = rawPosts.map(
     (post): FarmerBlogPost => ({
@@ -106,6 +116,8 @@ export default async function FarmerDetailPage({
       followerCount={followerCount}
       isFollowing={isFollowing}
       isAuthenticated={Boolean(profile)}
+      rating={rating}
+      certificates={certificates}
     />
   );
 }

@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { Syne } from "next/font/google";
 import {
@@ -21,13 +20,23 @@ import {
   type FollowActionState,
 } from "@/lib/farmers/actions";
 import { Spinner } from "@/components/ui/Spinner";
-import { VerifiedIcon } from "@/components/ui/VerifiedIcon";
 import {
   FarmerOrdersList,
   FarmerProductsList,
   RegionSelect,
 } from "@/components/farmer/FarmerPanels";
 import { AvatarField } from "@/components/farmer/AvatarField";
+import { CoverField } from "@/components/farmer/CoverField";
+import {
+  CertificateGrid,
+  CertificateManager,
+} from "@/components/farmer/FarmerCertificates";
+import {
+  FarmerProfileHeader,
+  FarmerProfileTabs,
+  memberSinceLabel,
+  type FarmerProfileStats,
+} from "@/components/farmer/FarmerProfileHeader";
 import { ProductCard } from "@/components/shop/ProductCard";
 import type {
   FarmerBlogPost,
@@ -35,8 +44,9 @@ import type {
   FarmerProduct,
 } from "@/lib/farmer/queries";
 import type { ProductListItem } from "@/types/shop";
-import type { Farmer, Profile } from "@/types";
-import { formatDate, formatDateTime } from "@/lib/format/date";
+import type { Farmer, FarmerCertificate, Profile } from "@/types";
+import type { FarmerRatingSummary, PublicFarmer } from "@/lib/farmers/queries";
+import { formatDateTime } from "@/lib/format/date";
 import { validateFarmerMedia } from "@/lib/farmer/media-upload";
 import { uploadPostMediaFile } from "@/lib/farmer/upload-post-media";
 import { useBackgroundUploads } from "@/lib/files/use-background-uploads";
@@ -59,8 +69,8 @@ const displayFont = Syne({
 type ActionResult = { error?: string; success?: string };
 const initialState: ActionResult = {};
 
-export type FarmerProfileTab = "posts" | "products" | "orders" | "about";
-export type PublicFarmerProfileTab = "posts" | "products" | "about";
+export type FarmerProfileTab = "posts" | "products" | "orders" | "certificates" | "about";
+export type PublicFarmerProfileTab = "products" | "posts" | "about" | "certificates";
 
 function getPublicFarmerUrl(farmerId: string) {
   if (typeof window === "undefined") return `/farmers/${farmerId}`;
@@ -106,14 +116,14 @@ function ShareProfileButton({
     <button
       type="button"
       onClick={() => void shareProfile()}
-      className="inline-flex items-center gap-1.5 rounded-full bg-[#1f5c3d] px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-[#184a31]"
+      className="inline-flex h-11 items-center gap-2 rounded-full bg-white px-5 text-[15px] font-semibold text-zinc-800 ring-1 ring-zinc-300 transition hover:bg-zinc-50"
     >
       {copied ? (
         "Link kopyalandı"
       ) : (
         <>
           <ShareIcon className="h-4 w-4" />
-          Profili paylaş
+          Paylaş
         </>
       )}
     </button>
@@ -140,7 +150,7 @@ function FollowButton({
     return (
       <Link
         href="/signin"
-        className="inline-flex items-center gap-1.5 rounded-full bg-[#1f5c3d] px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-[#184a31]"
+        className="inline-flex h-11 items-center gap-2 rounded-full bg-[#2f7a3c] px-6 text-[15px] font-semibold text-white shadow-[0_8px_20px_-10px_rgba(31,77,44,0.7)] transition hover:bg-[#276833]"
       >
         <PlusIcon className="h-4 w-4" />
         İzlə
@@ -157,8 +167,8 @@ function FollowButton({
           disabled={pending}
           className={
             state.following
-              ? "group inline-flex items-center gap-1.5 rounded-full bg-white px-4 py-2 text-sm font-semibold text-[#1f5c3d] ring-1 ring-[#1f5c3d]/30 transition hover:bg-rose-50 hover:text-rose-700 hover:ring-rose-200 disabled:opacity-70"
-              : "inline-flex items-center gap-1.5 rounded-full bg-[#1f5c3d] px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-[#184a31] disabled:opacity-70"
+              ? "group inline-flex h-11 items-center gap-2 rounded-full bg-white px-6 text-[15px] font-semibold text-[#2f7a3c] ring-[1.5px] ring-[#2f7a3c] transition hover:bg-rose-50 hover:text-rose-700 hover:ring-rose-300 disabled:opacity-70"
+              : "inline-flex h-11 items-center gap-2 rounded-full bg-[#2f7a3c] px-6 text-[15px] font-semibold text-white shadow-[0_8px_20px_-10px_rgba(31,77,44,0.7)] transition hover:bg-[#276833] disabled:opacity-70"
           }
         >
           {state.following ? (
@@ -179,37 +189,6 @@ function FollowButton({
       {state.error ? (
         <p className="text-xs text-rose-600">{state.error}</p>
       ) : null}
-    </div>
-  );
-}
-
-function FarmerAvatar({
-  name,
-  url,
-  className = "",
-}: {
-  name: string;
-  url: string | null;
-  className?: string;
-}) {
-  if (url) {
-    // 96 is the largest size any caller renders (sm:h-24). The class name
-    // still drives the displayed size; these only set the srcset and ratio.
-    return (
-      <Image
-        src={url}
-        alt={name}
-        width={96}
-        height={96}
-        className={`rounded-full object-cover ${className}`}
-      />
-    );
-  }
-  return (
-    <div
-      className={`inline-flex items-center justify-center rounded-full bg-[#1a3d2b] font-semibold text-[#d7f5e3] ${className}`}
-    >
-      {name.slice(0, 1).toUpperCase()}
     </div>
   );
 }
@@ -273,234 +252,6 @@ function CloseIcon({ className = "h-4 w-4" }: { className?: string }) {
   );
 }
 
-function PackageIcon({ className = "h-4 w-4" }: { className?: string }) {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      className={className}
-    >
-      <path d="M21 8 12 3 3 8l9 5 9-5Z" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M3 8v8l9 5 9-5V8" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M12 13v8" strokeLinecap="round" />
-    </svg>
-  );
-}
-
-function ImageStackIcon({ className = "h-4 w-4" }: { className?: string }) {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      className={className}
-    >
-      <rect x="3" y="3" width="18" height="18" rx="3" />
-      <circle cx="8.5" cy="8.5" r="1.5" />
-      <path d="M21 15l-5-5-9 9" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
-}
-
-function UsersIcon({ className = "h-4 w-4" }: { className?: string }) {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      className={className}
-    >
-      <circle cx="9" cy="8" r="3" />
-      <path d="M2.5 20c0-3.5 3-6 6.5-6s6.5 2.5 6.5 6" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M16.5 3.5c1.7.4 3 2 3 3.9 0 1.9-1.3 3.5-3 3.9" strokeLinecap="round" />
-      <path d="M18 14.3c2 .5 3.5 2.3 3.5 4.7" strokeLinecap="round" />
-    </svg>
-  );
-}
-
-function PinIcon({ className = "h-3.5 w-3.5" }: { className?: string }) {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      className={className}
-    >
-      <path
-        d="M12 21s-7-7.2-7-12a7 7 0 1 1 14 0c0 4.8-7 12-7 12Z"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <circle cx="12" cy="9" r="2.5" />
-    </svg>
-  );
-}
-
-function CalendarIcon({ className = "h-3.5 w-3.5" }: { className?: string }) {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      className={className}
-    >
-      <rect x="3" y="5" width="18" height="16" rx="2" />
-      <path d="M8 3v4M16 3v4M3 10h18" strokeLinecap="round" />
-    </svg>
-  );
-}
-
-function StatTile({
-  icon,
-  value,
-  label,
-}: {
-  icon: React.ReactNode;
-  value: string | number;
-  label: string;
-}) {
-  return (
-    <div className="flex items-center gap-2 rounded-2xl bg-zinc-50 px-2.5 py-3 ring-1 ring-zinc-100 sm:gap-3 sm:px-4">
-      <span className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-700 sm:h-9 sm:w-9">
-        {icon}
-      </span>
-      <div className="min-w-0">
-        <div
-          className={`${displayFont.className} text-lg font-bold leading-tight text-zinc-900 sm:text-xl`}
-        >
-          {value}
-        </div>
-        <div className="text-[11px] font-medium leading-tight text-zinc-500 sm:truncate sm:uppercase sm:tracking-wide">
-          {label}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function ProfileHero({
-  farmName,
-  avatarUrl,
-  locationText,
-  description,
-  verified,
-  productCount,
-  postCount,
-  followerCount,
-  createdAt,
-  actions,
-}: {
-  farmName: string;
-  avatarUrl: string | null;
-  locationText: string | null;
-  description: string | null;
-  verified: boolean;
-  productCount: number;
-  postCount: number;
-  followerCount: number;
-  createdAt: string;
-  actions?: React.ReactNode;
-}) {
-  return (
-    <section className="rounded-[1.75rem] bg-white p-5 shadow-[0_20px_60px_-40px_rgba(15,40,28,0.45)] ring-1 ring-zinc-200/80 sm:p-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex min-w-0 items-center gap-4">
-          <FarmerAvatar
-            name={farmName}
-            url={avatarUrl}
-            className="h-20 w-20 shrink-0 text-2xl shadow-sm ring-2 ring-emerald-50 sm:h-24 sm:w-24"
-          />
-          <div className="min-w-0">
-            <div className="flex min-w-0 items-center gap-2">
-              <h1 className="truncate text-2xl font-bold tracking-tight text-zinc-900 sm:text-3xl">
-                {farmName}
-              </h1>
-              {verified ? <VerifiedIcon className="h-5 w-5 shrink-0" /> : null}
-            </div>
-            <div className="mt-2 flex flex-wrap items-center gap-1.5">
-              {locationText ? (
-                <span className="inline-flex items-center gap-1 rounded-full bg-zinc-50 px-2.5 py-1 text-xs font-medium text-zinc-600 ring-1 ring-zinc-100">
-                  <PinIcon className="h-3.5 w-3.5 text-emerald-600" />
-                  {locationText}
-                </span>
-              ) : null}
-              <span className="inline-flex items-center gap-1 rounded-full bg-zinc-50 px-2.5 py-1 text-xs font-medium text-zinc-600 ring-1 ring-zinc-100">
-                <CalendarIcon className="h-3.5 w-3.5 text-emerald-600" />
-                Üzv: {formatDate(createdAt)}
-              </span>
-            </div>
-          </div>
-        </div>
-        {actions ? (
-          <div className="flex shrink-0 flex-wrap gap-2 sm:justify-end">{actions}</div>
-        ) : null}
-      </div>
-
-      {description ? (
-        <p className="mt-4 max-w-2xl text-sm leading-6 text-zinc-700 sm:text-[15px]">
-          {description}
-        </p>
-      ) : null}
-
-      <div className="mt-5 grid grid-cols-3 gap-3 border-t border-zinc-100 pt-5">
-        <StatTile
-          icon={<PackageIcon className="h-4 w-4" />}
-          value={productCount}
-          label="Məhsul"
-        />
-        <StatTile
-          icon={<ImageStackIcon className="h-4 w-4" />}
-          value={postCount}
-          label="Paylaşım"
-        />
-        <StatTile
-          icon={<UsersIcon className="h-4 w-4" />}
-          value={followerCount}
-          label="İzləyici"
-        />
-      </div>
-    </section>
-  );
-}
-
-function ProfileTabs({
-  tabs,
-  active,
-  onChange,
-}: {
-  tabs: { id: string; label: string }[];
-  active: string;
-  onChange: (id: string) => void;
-}) {
-  return (
-    <nav className="sticky top-0 z-10 -mx-1 mt-5 flex gap-1 overflow-x-auto rounded-2xl bg-white/90 p-1 shadow-sm ring-1 ring-zinc-200 backdrop-blur">
-      {tabs.map((tab) => {
-        const isActive = tab.id === active;
-        return (
-          <button
-            key={tab.id}
-            type="button"
-            onClick={() => onChange(tab.id)}
-            className={`shrink-0 rounded-xl px-4 py-2.5 text-sm font-semibold transition ${
-              isActive
-                ? "bg-[#1f5c3d] text-white shadow-sm"
-                : "text-zinc-500 hover:bg-zinc-50 hover:text-zinc-800"
-            }`}
-          >
-            {tab.label}
-          </button>
-        );
-      })}
-    </nav>
-  );
-}
-
 function ProfileAboutForm({
   farmer,
   profile,
@@ -512,6 +263,7 @@ function ProfileAboutForm({
     updateFarmerProfile,
     initialState
   );
+  const [coverBusy, setCoverBusy] = useState(false);
 
   return (
     <form
@@ -540,6 +292,14 @@ function ProfileAboutForm({
       ) : null}
 
       <AvatarField farmName={farmer.farm_name} initialUrl={farmer.avatar_url} />
+
+      {/* Remounted after each save so a sent cover is not sent again. */}
+      <CoverField
+        key={state.success ?? "cover"}
+        userId={profile.id}
+        initialUrl={farmer.cover_url}
+        onBusyChange={setCoverBusy}
+      />
 
       <div>
         <label htmlFor="farm_name" className="block text-sm font-medium text-zinc-700">
@@ -587,8 +347,8 @@ function ProfileAboutForm({
 
       <button
         type="submit"
-        disabled={pending}
-        className="inline-flex items-center gap-2 rounded-full bg-[#1f5c3d] px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-70"
+        disabled={pending || coverBusy}
+        className="inline-flex items-center gap-2 rounded-full bg-[#2f7a3c] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[#276833] disabled:opacity-70"
       >
         {pending ? <Spinner className="h-3.5 w-3.5" /> : null}
         Yadda saxla
@@ -996,12 +756,19 @@ export function FarmerBlogFeed({
 }) {
   if (posts.length === 0) {
     return (
-      <div className="rounded-[1.5rem] bg-white px-6 py-12 text-center ring-1 ring-zinc-200">
-        <p className={`${displayFont.className} text-lg font-bold text-zinc-900`}>
-          Hələ paylaşım yoxdur
+      <div className="rounded-2xl bg-white px-6 py-12 text-center ring-1 ring-zinc-200/70">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true" className="mx-auto h-10 w-10 text-zinc-300">
+          <rect x="3" y="3" width="18" height="18" rx="3" />
+          <circle cx="8.5" cy="8.5" r="1.5" />
+          <path d="M21 15l-5-5-9 9" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+        <p className="mt-3 text-base font-semibold text-zinc-900">
+          {canManage ? "Hələ paylaşım etməmisiniz" : "Hələ paylaşım yoxdur"}
         </p>
-        <p className="mt-2 text-sm text-zinc-500">
-          Təsərrüfatdan ilk şəkil və ya videonu paylaşın.
+        <p className="mt-1 text-sm text-zinc-500">
+          {canManage
+            ? "Təsərrüfatdan ilk şəkil və ya videonu paylaşın."
+            : "Bu fermer hələ heç bir paylaşım etməyib. Yeni paylaşımlar burada görünəcək."}
         </p>
       </div>
     );
@@ -1016,6 +783,19 @@ export function FarmerBlogFeed({
   );
 }
 
+function useTabInUrl<T extends string>(initialTab: T) {
+  const [tab, setTab] = useState<T>(initialTab);
+
+  function selectTab(next: T) {
+    setTab(next);
+    const url = new URL(window.location.href);
+    url.searchParams.set("tab", next);
+    window.history.replaceState(null, "", url.pathname + "?" + url.searchParams.toString());
+  }
+
+  return [tab, selectTab] as const;
+}
+
 export function FarmerProfileDashboard({
   farmer,
   profile,
@@ -1024,6 +804,8 @@ export function FarmerProfileDashboard({
   orders,
   posts,
   followerCount,
+  rating,
+  certificates,
 }: {
   farmer: Farmer;
   profile: Profile;
@@ -1032,75 +814,95 @@ export function FarmerProfileDashboard({
   orders: FarmerOrderItem[];
   posts: FarmerBlogPost[];
   followerCount: number;
+  rating: FarmerRatingSummary;
+  certificates: FarmerCertificate[];
 }) {
-  const [tab, setTab] = useState<FarmerProfileTab>(initialTab);
-
-  function selectTab(next: FarmerProfileTab) {
-    setTab(next);
-    if (typeof window !== "undefined") {
-      const url = new URL(window.location.href);
-      url.searchParams.set("tab", next);
-      window.history.replaceState(null, "", url.pathname + "?" + url.searchParams.toString());
-    }
-  }
+  const [tab, selectTab] = useTabInUrl<FarmerProfileTab>(initialTab);
 
   const tabs: { id: FarmerProfileTab; label: string }[] = [
     { id: "posts", label: "Paylaşımlar" },
     { id: "products", label: "Məhsullar" },
     { id: "orders", label: "Sifarişlər" },
+    { id: "certificates", label: "Sertifikatlar" },
     { id: "about", label: "Redaktə" },
   ];
 
+  const stats: FarmerProfileStats = {
+    rating,
+    productCount: products.filter((p) => p.status === "approved").length,
+    postCount: posts.length,
+    followerCount,
+  };
+
   return (
-    <div className="mx-auto w-full max-w-3xl px-4 py-8 md:px-6 md:py-10">
-      <ProfileHero
+    <div className="pb-16">
+      <FarmerProfileHeader
         farmName={farmer.farm_name}
         avatarUrl={farmer.avatar_url}
+        coverUrl={farmer.cover_url}
         locationText={farmer.location_text}
         description={farmer.description}
         verified={Boolean(farmer.verified_at)}
-        productCount={products.filter((p) => p.status === "approved").length}
-        postCount={posts.length}
-        followerCount={followerCount}
         createdAt={farmer.created_at}
+        stats={stats}
+        coverHint={
+          <button
+            type="button"
+            onClick={() => selectTab("about")}
+            className="mt-1 rounded-full bg-white/15 px-3.5 py-1.5 text-xs font-semibold text-white ring-1 ring-white/25 hover:bg-white/25"
+          >
+            Arxa plan şəkli əlavə et
+          </button>
+        }
         actions={
-          <ShareProfileButton
-            farmerId={farmer.id}
-            farmName={farmer.farm_name}
-          />
+          <>
+            <Link
+              href={`/farmers/${farmer.id}`}
+              className="inline-flex h-11 items-center rounded-full bg-white px-5 text-[15px] font-semibold text-zinc-800 ring-1 ring-zinc-300 transition hover:bg-zinc-50"
+            >
+              Profilə bax
+            </Link>
+            <ShareProfileButton farmerId={farmer.id} farmName={farmer.farm_name} />
+          </>
         }
       />
 
-      <ProfileTabs
-        tabs={tabs}
-        active={tab}
-        onChange={(id) => selectTab(id as FarmerProfileTab)}
-      />
+      <div className="mx-auto w-full max-w-6xl px-4 md:px-6">
+        <FarmerProfileTabs
+          tabs={tabs}
+          active={tab}
+          onChange={(id) => selectTab(id as FarmerProfileTab)}
+        />
 
-      <div className="mt-5">
-        <div className={tab === "posts" ? "space-y-5" : "hidden"}>
-          <BlogComposer userId={profile.id} />
-          <FarmerBlogFeed posts={posts} canManage />
-        </div>
-
-        <div className={tab === "products" ? "space-y-4" : "hidden"}>
-          <div className="flex justify-end">
-            <Link
-              href="/farmer/products/new"
-              className="inline-flex rounded-full bg-[#1f5c3d] px-4 py-2 text-sm font-semibold text-white hover:bg-[#184a31]"
-            >
-              Yeni məhsul
-            </Link>
+        <div className="mt-6">
+          <div className={tab === "posts" ? "max-w-3xl space-y-5" : "hidden"}>
+            <BlogComposer userId={profile.id} />
+            <FarmerBlogFeed posts={posts} canManage />
           </div>
-          <FarmerProductsList products={products} />
-        </div>
 
-        <div className={tab === "orders" ? "block" : "hidden"}>
-          <FarmerOrdersList items={orders} />
-        </div>
+          <div className={tab === "products" ? "space-y-4" : "hidden"}>
+            <div className="flex justify-end">
+              <Link
+                href="/farmer/products/new"
+                className="inline-flex rounded-full bg-[#2f7a3c] px-4 py-2 text-sm font-semibold text-white hover:bg-[#276833]"
+              >
+                Yeni məhsul
+              </Link>
+            </div>
+            <FarmerProductsList products={products} />
+          </div>
 
-        <div className={tab === "about" ? "block" : "hidden"}>
-          <ProfileAboutForm farmer={farmer} profile={profile} />
+          <div className={tab === "orders" ? "block" : "hidden"}>
+            <FarmerOrdersList items={orders} />
+          </div>
+
+          <div className={tab === "certificates" ? "block" : "hidden"}>
+            <CertificateManager userId={profile.id} certificates={certificates} />
+          </div>
+
+          <div className={tab === "about" ? "max-w-3xl" : "hidden"}>
+            <ProfileAboutForm farmer={farmer} profile={profile} />
+          </div>
         </div>
       </div>
     </div>
@@ -1109,70 +911,52 @@ export function FarmerProfileDashboard({
 
 export function PublicFarmerProfile({
   farmer,
-  initialTab = "posts",
+  initialTab = "products",
   products,
   posts,
   followerCount,
   isFollowing,
   isAuthenticated,
+  rating,
+  certificates,
 }: {
-  farmer: {
-    id: string;
-    farm_name: string;
-    description: string | null;
-    location_text: string | null;
-    verified_at: string | null;
-    avatar_url: string | null;
-    productCount: number;
-    created_at: string;
-  };
+  farmer: PublicFarmer;
   initialTab?: PublicFarmerProfileTab;
   products: ProductListItem[];
   posts: FarmerBlogPost[];
   followerCount: number;
   isFollowing: boolean;
   isAuthenticated: boolean;
+  rating: FarmerRatingSummary;
+  certificates: FarmerCertificate[];
 }) {
-  const [tab, setTab] = useState<PublicFarmerProfileTab>(initialTab);
-
-  function selectTab(next: PublicFarmerProfileTab) {
-    setTab(next);
-    if (typeof window !== "undefined") {
-      const url = new URL(window.location.href);
-      url.searchParams.set("tab", next);
-      window.history.replaceState(
-        null,
-        "",
-        url.pathname + "?" + url.searchParams.toString()
-      );
-    }
-  }
+  const [tab, selectTab] = useTabInUrl<PublicFarmerProfileTab>(initialTab);
 
   const tabs: { id: PublicFarmerProfileTab; label: string }[] = [
-    { id: "posts", label: "Paylaşımlar" },
     { id: "products", label: "Məhsullar" },
+    { id: "posts", label: "Paylaşımlar" },
     { id: "about", label: "Haqqında" },
+    { id: "certificates", label: "Sertifikatlar" },
   ];
 
-  return (
-    <div className="mx-auto w-full max-w-3xl px-4 py-8 md:px-6 md:py-10">
-      <Link
-        href="/farmers"
-        className="mb-4 inline-flex text-sm font-medium text-[#1f5c3d] hover:underline"
-      >
-        ← Fermerlərə qayıt
-      </Link>
+  const stats: FarmerProfileStats = {
+    rating,
+    productCount: farmer.productCount,
+    postCount: posts.length,
+    followerCount,
+  };
 
-      <ProfileHero
+  return (
+    <div className="pb-16">
+      <FarmerProfileHeader
         farmName={farmer.farm_name}
         avatarUrl={farmer.avatar_url}
+        coverUrl={farmer.cover_url}
         locationText={farmer.location_text}
-        description={tab === "about" ? null : farmer.description}
+        description={farmer.description}
         verified={Boolean(farmer.verified_at)}
-        productCount={farmer.productCount}
-        postCount={posts.length}
-        followerCount={followerCount}
         createdAt={farmer.created_at}
+        stats={stats}
         actions={
           <>
             <FollowButton
@@ -1180,59 +964,77 @@ export function PublicFarmerProfile({
               initialFollowing={isFollowing}
               isAuthenticated={isAuthenticated}
             />
-            <ShareProfileButton
-              farmerId={farmer.id}
-              farmName={farmer.farm_name}
-            />
+            <ShareProfileButton farmerId={farmer.id} farmName={farmer.farm_name} />
           </>
         }
       />
 
-      <ProfileTabs
-        tabs={tabs}
-        active={tab}
-        onChange={(id) => selectTab(id as PublicFarmerProfileTab)}
-      />
+      <div className="mx-auto w-full max-w-6xl px-4 md:px-6">
+        <FarmerProfileTabs
+          tabs={tabs}
+          active={tab}
+          onChange={(id) => selectTab(id as PublicFarmerProfileTab)}
+        />
 
-      <div className="mt-5">
-        <div className={tab === "posts" ? "block" : "hidden"}>
-          <FarmerBlogFeed posts={posts} />
-        </div>
-
-        <div className={tab === "products" ? "block" : "hidden"}>
-          {products.length > 0 ? (
-            <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3">
-              {products.map((product) => (
-                <ProductCard key={product.id} product={product} />
-              ))}
-            </div>
-          ) : (
-            <p className="rounded-[1.5rem] bg-white px-4 py-10 text-center text-sm text-zinc-600 ring-1 ring-zinc-200">
-              Bu fermerin hazırda satışda məhsulu yoxdur.
-            </p>
-          )}
-        </div>
-
-        <div className={tab === "about" ? "block" : "hidden"}>
-          <div className="rounded-[1.5rem] bg-white p-5 shadow-sm ring-1 ring-zinc-200 sm:p-6">
-            <h2 className={`${displayFont.className} text-xl font-bold text-zinc-900`}>
-              Haqqında
-            </h2>
-            {farmer.description ? (
-              <p className="mt-3 text-sm leading-7 text-zinc-700">
-                {farmer.description}
-              </p>
+        <div className="mt-6">
+          <div className={tab === "products" ? "block" : "hidden"}>
+            {products.length > 0 ? (
+              <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-4">
+                {products.map((product) => (
+                  <ProductCard key={product.id} product={product} />
+                ))}
+              </div>
             ) : (
-              <p className="mt-3 text-sm text-zinc-500">
-                Bu təsərrüfat haqqında əlavə təsvir hələ əlavə olunmayıb.
-              </p>
+              <div className="rounded-2xl bg-white px-6 py-12 text-center ring-1 ring-zinc-200/70">
+                <p className="text-base font-semibold text-zinc-900">Satışda məhsul yoxdur</p>
+                <p className="mt-1 text-sm text-zinc-500">
+                  Bu fermerin hazırda satışda məhsulu yoxdur.
+                </p>
+              </div>
             )}
-            {farmer.location_text ? (
-              <p className="mt-4 text-sm text-zinc-600">
-                <span className="font-medium text-zinc-800">Yer:</span>{" "}
-                {farmer.location_text}
-              </p>
-            ) : null}
+          </div>
+
+          <div className={tab === "posts" ? "max-w-3xl" : "hidden"}>
+            <FarmerBlogFeed posts={posts} />
+          </div>
+
+          <div className={tab === "about" ? "max-w-3xl" : "hidden"}>
+            <div className="rounded-2xl bg-white p-5 ring-1 ring-zinc-200/70 sm:p-7">
+              <h2 className="text-xl font-semibold text-zinc-900">Təsərrüfat haqqında</h2>
+              {farmer.description ? (
+                <p className="mt-3 text-[15px] leading-7 text-zinc-700 sm:text-base">
+                  {farmer.description}
+                </p>
+              ) : (
+                <p className="mt-3 text-sm text-zinc-500">
+                  Bu təsərrüfat haqqında təsvir hələ əlavə olunmayıb.
+                </p>
+              )}
+              <dl className="mt-6 grid gap-4 sm:grid-cols-3">
+                <div>
+                  <dt className="text-sm text-zinc-500">Region</dt>
+                  <dd className="mt-1 font-semibold text-zinc-900">
+                    {farmer.location_text ?? "—"}
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-sm text-zinc-500">Üzvlük</dt>
+                  <dd className="mt-1 font-semibold text-zinc-900">
+                    {memberSinceLabel(farmer.created_at)}
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-sm text-zinc-500">Status</dt>
+                  <dd className={`mt-1 font-semibold ${farmer.verified_at ? "text-[#23602f]" : "text-zinc-900"}`}>
+                    {farmer.verified_at ? "Təsdiqlənmiş fermer" : "Fermer"}
+                  </dd>
+                </div>
+              </dl>
+            </div>
+          </div>
+
+          <div className={tab === "certificates" ? "block" : "hidden"}>
+            <CertificateGrid certificates={certificates} />
           </div>
         </div>
       </div>

@@ -15,6 +15,10 @@ import {
   uploadFarmerMedia,
 } from "@/lib/farmer/media-upload";
 import {
+  farmerMediaPathFromUrl,
+  resolveProfileFilePath,
+} from "@/lib/farmer/profile-files";
+import {
   FARMER_ITEM_STATUS_TRANSITIONS,
   getOrderItemStatusLabel,
 } from "@/lib/orders/labels";
@@ -802,6 +806,9 @@ export async function updateFarmerProfile(
   const locationText = String(formData.get("location_text") ?? "").trim();
   const avatarFile = formData.get("avatar");
   const removeAvatar = String(formData.get("remove_avatar") ?? "") === "1";
+  // The browser has already uploaded any new cover; only its path is sent.
+  const coverPath = String(formData.get("cover_path") ?? "").trim();
+  const removeCover = String(formData.get("remove_cover") ?? "") === "1";
 
   if (!farmName) {
     return { error: "Təsərrüfat adı mütləqdir." };
@@ -826,6 +833,15 @@ export async function updateFarmerProfile(
     avatarUrl = uploaded.url;
   }
 
+  let coverUrl = farmer.cover_url;
+  if (coverPath) {
+    const resolved = await resolveProfileFilePath(supabase, profile.id, "cover", coverPath);
+    if ("error" in resolved) return { error: `Arxa plan şəkli: ${resolved.error}` };
+    coverUrl = resolved.url;
+  } else if (removeCover) {
+    coverUrl = null;
+  }
+
   const proposedDescription = description || null;
   const proposedLocationText = locationText || null;
 
@@ -833,7 +849,8 @@ export async function updateFarmerProfile(
     farmName === farmer.farm_name &&
     proposedDescription === farmer.description &&
     proposedLocationText === farmer.location_text &&
-    avatarUrl === farmer.avatar_url;
+    avatarUrl === farmer.avatar_url &&
+    coverUrl === farmer.cover_url;
 
   if (unchanged) {
     return { success: "Dəyişiklik aşkarlanmadı." };
@@ -846,6 +863,7 @@ export async function updateFarmerProfile(
       pending_description: proposedDescription,
       pending_location_text: proposedLocationText,
       pending_avatar_url: avatarUrl,
+      pending_cover_url: coverUrl,
       pending_submitted_at: new Date().toISOString(),
     })
     .eq("id", farmer.id);
@@ -959,4 +977,77 @@ export async function deleteFarmerBlogPost(
   updateTag("farmers");
 
   return { success: "Paylaşım silindi." };
+}
+
+export async function addFarmerCertificate(
+  _prev: FarmerActionState,
+  formData: FormData
+): Promise<FarmerActionState> {
+  const { profile, farmer } = await requireApprovedFarmer();
+  const title = String(formData.get("title") ?? "").trim();
+  const filePath = String(formData.get("file_path") ?? "").trim();
+
+  if (!title) return { error: "Sertifikatın adını yazın." };
+  if (title.length > 120) return { error: "Ad 120 simvoldan uzun ola bilməz." };
+  if (!filePath) return { error: "Sertifikat faylını seçin." };
+
+  const supabase = await createClient();
+  const file = await resolveProfileFilePath(supabase, profile.id, "certificates", filePath);
+  if ("error" in file) return { error: file.error };
+
+  const { error } = await supabase.from("farmer_certificates").insert({
+    farmer_id: farmer.id,
+    title,
+    file_url: file.url,
+    file_type: file.fileType,
+  });
+
+  if (error) {
+    console.error("[farmer.addFarmerCertificate]", error.message);
+    return { error: "Sertifikat əlavə olunmadı." };
+  }
+
+  revalidatePath("/farmer");
+  revalidatePath(`/farmers/${farmer.id}`);
+  updateTag("farmers");
+
+  return { success: "Sertifikat əlavə olundu." };
+}
+
+export async function deleteFarmerCertificate(
+  _prev: FarmerActionState,
+  formData: FormData
+): Promise<FarmerActionState> {
+  const { farmer } = await requireApprovedFarmer();
+  const certificateId = String(formData.get("certificate_id") ?? "").trim();
+  if (!certificateId) return { error: "Sertifikat tapılmadı." };
+
+  const supabase = await createClient();
+  const { data: removed, error } = await supabase
+    .from("farmer_certificates")
+    .delete()
+    .eq("id", certificateId)
+    .eq("farmer_id", farmer.id)
+    .select("file_url");
+
+  if (error) {
+    console.error("[farmer.deleteFarmerCertificate]", error.message);
+    return { error: "Sertifikat silinmədi." };
+  }
+
+  // Best effort: the row is what the profile shows, so a leftover file is
+  // harmless.
+  const path = removed?.[0] ? farmerMediaPathFromUrl(removed[0].file_url) : null;
+  if (path) {
+    const { error: storageError } = await supabase.storage.from("farmer-media").remove([path]);
+    if (storageError) {
+      console.error("[farmer.deleteFarmerCertificate.file]", storageError.message);
+    }
+  }
+
+  revalidatePath("/farmer");
+  revalidatePath(`/farmers/${farmer.id}`);
+  updateTag("farmers");
+
+  return { success: "Sertifikat silindi." };
 }

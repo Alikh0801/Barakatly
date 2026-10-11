@@ -480,6 +480,38 @@ function FarmerProfileEditCard({ farmer }: { farmer: AdminFarmer }) {
             </dd>
           </div>
         ) : null}
+        {farmer.cover_url !== farmer.pending_cover_url ? (
+          <div className="grid gap-1 sm:grid-cols-[140px_1fr] sm:gap-3">
+            <dt className="text-sm font-medium text-zinc-500">
+              Arxa plan şəkli
+            </dt>
+            <dd className="flex items-center gap-3">
+              {farmer.cover_url ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={farmer.cover_url}
+                  alt=""
+                  className="h-12 w-28 rounded-lg object-cover ring-1 ring-zinc-200"
+                />
+              ) : (
+                <span className="text-sm text-zinc-400">—</span>
+              )}
+              <span className="text-zinc-400">→</span>
+              {farmer.pending_cover_url ? (
+                <a href={farmer.pending_cover_url} target="_blank" rel="noreferrer">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={farmer.pending_cover_url}
+                    alt="Yeni arxa plan şəkli"
+                    className="h-12 w-28 rounded-lg object-cover ring-2 ring-emerald-300"
+                  />
+                </a>
+              ) : (
+                <span className="text-sm text-zinc-400">Silinir</span>
+              )}
+            </dd>
+          </div>
+        ) : null}
       </dl>
 
       <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:flex-wrap">

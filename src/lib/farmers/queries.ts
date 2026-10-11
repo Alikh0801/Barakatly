@@ -1,5 +1,6 @@
 import { unstable_cache } from "next/cache";
 import { createPublicClient } from "@/lib/supabase/public";
+import type { FarmerCertificate } from "@/types";
 import type { ProductListItem } from "@/types/shop";
 
 export type PublicFarmer = {
@@ -10,6 +11,7 @@ export type PublicFarmer = {
   location_text: string | null;
   verified_at: string | null;
   avatar_url: string | null;
+  cover_url: string | null;
   productCount: number;
   created_at: string;
 };
@@ -47,6 +49,7 @@ function mapPublicFarmer(
     location_text: string | null;
     verified_at: string | null;
     avatar_url?: string | null;
+    cover_url?: string | null;
     created_at: string;
     products?: { id: string; status: string }[] | null;
   },
@@ -65,6 +68,7 @@ function mapPublicFarmer(
     location_text: farmer.location_text,
     verified_at: farmer.verified_at,
     avatar_url: farmer.avatar_url ?? null,
+    cover_url: farmer.cover_url ?? null,
     productCount: approvedCount,
     created_at: farmer.created_at,
   };
@@ -128,6 +132,7 @@ async function fetchPublicFarmerById(id: string): Promise<PublicFarmer | null> {
       location_text,
       verified_at,
       avatar_url,
+      cover_url,
       created_at,
       products ( id, status )
     `,
@@ -282,4 +287,52 @@ export async function getIsFollowingFarmer(
   }
 
   return Boolean(data);
+}
+
+export type FarmerRatingSummary = { average: number | null; total: number };
+
+/** The average of every review on the farmer's products. */
+export async function getFarmerRatingSummary(
+  farmerId: string,
+): Promise<FarmerRatingSummary> {
+  const supabase = createPublicClient();
+  const { data, error } = await supabase.rpc("farmer_rating_summary", {
+    p_farmer_id: farmerId,
+  });
+
+  if (error) {
+    console.error("[farmers.getFarmerRatingSummary]", error.message);
+    return { average: null, total: 0 };
+  }
+
+  const row = data?.[0];
+  const total = row?.total ?? 0;
+  return {
+    average: total > 0 && row?.average != null ? Number(row.average) : null,
+    total,
+  };
+}
+
+async function fetchFarmerCertificates(farmerId: string): Promise<FarmerCertificate[]> {
+  const supabase = createPublicClient();
+  const { data, error } = await supabase
+    .from("farmer_certificates")
+    .select("id, farmer_id, title, file_url, file_type, created_at")
+    .eq("farmer_id", farmerId)
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    console.error("[farmers.getFarmerCertificates]", error.message);
+    return [];
+  }
+
+  return data ?? [];
+}
+
+export function getFarmerCertificates(farmerId: string) {
+  return unstable_cache(
+    async () => fetchFarmerCertificates(farmerId),
+    ["farmer-certificates", farmerId],
+    { revalidate: 60, tags: ["farmers"] },
+  )();
 }

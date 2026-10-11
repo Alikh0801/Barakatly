@@ -126,7 +126,7 @@ export async function approveFarmerProfileEdit(
   const { data: farmer } = await supabase
     .from("farmers")
     .select(
-      "id, profile_id, pending_farm_name, pending_description, pending_location_text, pending_avatar_url, pending_submitted_at",
+      "id, profile_id, pending_farm_name, pending_description, pending_location_text, pending_avatar_url, pending_cover_url, pending_submitted_at",
     )
     .eq("id", farmerId)
     .single();
@@ -142,10 +142,12 @@ export async function approveFarmerProfileEdit(
       description: farmer.pending_description,
       location_text: farmer.pending_location_text,
       avatar_url: farmer.pending_avatar_url,
+      cover_url: farmer.pending_cover_url,
       pending_farm_name: null,
       pending_description: null,
       pending_location_text: null,
       pending_avatar_url: null,
+      pending_cover_url: null,
       pending_submitted_at: null,
     })
     .eq("id", farmerId);
@@ -202,6 +204,7 @@ export async function rejectFarmerProfileEdit(
       pending_description: null,
       pending_location_text: null,
       pending_avatar_url: null,
+      pending_cover_url: null,
       pending_submitted_at: null,
     })
     .eq("id", farmerId);

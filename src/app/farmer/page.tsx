@@ -9,7 +9,11 @@ import {
   getFarmerOrderItems,
   getFarmerProducts,
 } from "@/lib/farmer/queries";
-import { getFarmerFollowerCount } from "@/lib/farmers/queries";
+import {
+  getFarmerCertificates,
+  getFarmerFollowerCount,
+  getFarmerRatingSummary,
+} from "@/lib/farmers/queries";
 
 export const metadata = { title: "Fermer profili" };
 
@@ -18,6 +22,7 @@ function parseTab(value?: string): FarmerProfileTab {
     value === "products" ||
     value === "orders" ||
     value === "about" ||
+    value === "certificates" ||
     value === "posts" ||
     value === "blog"
   ) {
@@ -46,12 +51,15 @@ export default async function FarmerDashboardPage({
     );
   }
 
-  const [products, orders, posts, followerCount] = await Promise.all([
-    getFarmerProducts(farmer.id),
-    getFarmerOrderItems(farmer.id),
-    getFarmerBlogPosts(farmer.id),
-    getFarmerFollowerCount(farmer.id),
-  ]);
+  const [products, orders, posts, followerCount, rating, certificates] =
+    await Promise.all([
+      getFarmerProducts(farmer.id),
+      getFarmerOrderItems(farmer.id),
+      getFarmerBlogPosts(farmer.id),
+      getFarmerFollowerCount(farmer.id),
+      getFarmerRatingSummary(farmer.id),
+      getFarmerCertificates(farmer.id),
+    ]);
 
   return (
     <FarmerProfileDashboard
@@ -62,6 +70,8 @@ export default async function FarmerDashboardPage({
       orders={orders}
       posts={posts}
       followerCount={followerCount}
+      rating={rating}
+      certificates={certificates}
     />
   );
 }
