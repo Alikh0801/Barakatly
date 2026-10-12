@@ -232,6 +232,42 @@ export interface Database {
         };
         Relationships: [];
       };
+      page_views: {
+        Row: {
+          id: number;
+          created_at: string;
+          path: string;
+          referrer_host: string | null;
+          country: string | null;
+          region: string | null;
+          city: string | null;
+          device: "mobile" | "tablet" | "desktop" | "other";
+          browser: string | null;
+          os: string | null;
+          visitor_id: string | null;
+          is_authenticated: boolean;
+          viewer_role: string | null;
+        };
+        Insert: {
+          id?: never;
+          created_at?: string;
+          path: string;
+          referrer_host?: string | null;
+          country?: string | null;
+          region?: string | null;
+          city?: string | null;
+          device?: "mobile" | "tablet" | "desktop" | "other";
+          browser?: string | null;
+          os?: string | null;
+          visitor_id?: string | null;
+          is_authenticated?: boolean;
+          viewer_role?: string | null;
+        };
+        Update: {
+          path?: string;
+        };
+        Relationships: [];
+      };
       farmer_follows: {
         Row: {
           id: string;
@@ -735,6 +771,14 @@ export interface Database {
       list_approved_farmer_owner_names: {
         Args: Record<string, never>;
         Returns: { farmer_id: string; owner_name: string | null }[];
+      };
+      admin_page_view_stats: {
+        Args: { p_days: number };
+        Returns: Json;
+      };
+      purge_old_page_views: {
+        Args: Record<string, never>;
+        Returns: number;
       };
       farmer_rating_summary: {
         Args: { p_farmer_id: string };

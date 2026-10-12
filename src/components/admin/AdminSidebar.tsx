@@ -111,6 +111,16 @@ const navItems: NavItem[] = [
       </svg>
     ),
   },
+  {
+    href: "/admin/statistics",
+    label: "Statistika",
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-4 w-4">
+        <path d="M4 20h16" strokeLinecap="round" />
+        <path d="M7 16v-5M12 16V6M17 16v-8" strokeLinecap="round" />
+      </svg>
+    ),
+  },
 ];
 
 function isActive(pathname: string, item: NavItem) {
