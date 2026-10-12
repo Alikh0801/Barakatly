@@ -4,6 +4,8 @@ export type WhyBarakatlyFeature = {
   title: string;
   description: string;
   icon: string;
+  /** false hides the card on the site; the admin keeps its text. */
+  enabled: boolean;
 };
 
 export const WHY_BARAKATLY_DEFAULT_FEATURES: WhyBarakatlyFeature[] = [
@@ -12,24 +14,28 @@ export const WHY_BARAKATLY_DEFAULT_FEATURES: WhyBarakatlyFeature[] = [
     description:
       "Məhsullar 24–48 saat ərzində yığılır və çatdırılır ki, maksimum təravət qorunsun.",
     icon: "🌿",
+    enabled: true,
   },
   {
     title: "Keyfiyyət zəmanəti",
     description:
       "Hər məhsul yoxlanılır və sertifikatlı fermerlərdən seçilir.",
     icon: "🛡️",
+    enabled: true,
   },
   {
     title: "Sürətli çatdırılma",
     description:
       "Fermerdən birbaşa qapınıza — eyni gün və ya növbəti gün çatdırılma seçimləri.",
     icon: "🚚",
+    enabled: true,
   },
   {
     title: "Yerliyə dəstək",
     description:
       "Alışlarınız yerli təsərrüfatları və icmaları birbaşa dəstəkləyir.",
     icon: "🤝",
+    enabled: true,
   },
 ];
 
@@ -45,6 +51,8 @@ export const FAQ_KEY = "faq" as const;
 export type FaqItem = {
   question: string;
   answer: string;
+  /** false hides the question on the site; the admin keeps its text. */
+  enabled: boolean;
 };
 
 export const FAQ_DEFAULT_ITEMS: FaqItem[] = [
@@ -52,21 +60,25 @@ export const FAQ_DEFAULT_ITEMS: FaqItem[] = [
     question: "Məhsullar nə qədər təzə olur?",
     answer:
       "Məhsullar adətən yığıldıqdan sonra 24–48 saat ərzində çatdırılır. Bu, maksimum təravət və qida dəyərini qorumağa kömək edir.",
+    enabled: true,
   },
   {
     question: "Bir neçə fermerdən eyni sifarişdə ala bilərəm?",
     answer:
       "Bəli. Müxtəlif fermerlərin məhsullarını bir səbətdə toplaya bilərsiniz. Sistem sifarişi avtomatik qruplaşdırır və çatdırılmanı koordinasiya edir.",
+    enabled: true,
   },
   {
     question: "Çatdırılma necə işləyir?",
     answer:
       "Kuryer şəbəkəmiz məhsulları fermerlərdən götürür və qapınıza çatdırır. Sifarişinizi real vaxtda izləmək mümkün olacaq.",
+    enabled: true,
   },
   {
     question: "Məhsulların orqanik olması necə təsdiqlənir?",
     answer:
       "Orqanik məhsul iddia edən fermerlərin sertifikatlarını yoxlayırıq. Məhsullarda “Orqanik” nişanını görə bilərsiniz.",
+    enabled: true,
   },
 ];
 
@@ -128,6 +140,8 @@ export const ABOUT_KEY = "about" as const;
 export type AboutValue = {
   title: string;
   text: string;
+  /** false hides the card on the site; the admin keeps its text. */
+  enabled: boolean;
 };
 
 export type AboutItems = {
@@ -142,14 +156,17 @@ export const ABOUT_DEFAULT_VALUES: AboutValue[] = [
   {
     title: "Birbaşa fermerdən",
     text: "Ara vasitəçiləri azaldırıq ki, məhsul daha təzə, qiymət isə daha ədalətli olsun.",
+    enabled: true,
   },
   {
     title: "İzlənəbilən mənşə",
     text: "Hər sifarişdə təsərrüfat, mənşə və çatdırılma yolu şəffaf qalır.",
+    enabled: true,
   },
   {
     title: "Yerliyə dəstək",
     text: "Alışlarınız Azərbaycanın kiçik və orta təsərrüfatlarını birbaşa gücləndirir.",
+    enabled: true,
   },
 ];
 

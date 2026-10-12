@@ -56,7 +56,8 @@ function parseFeatureForm(formData: FormData): WhyBarakatlyFeature[] | string {
       return `${index + 1}-ci kartın mətni çox uzundur.`;
     }
 
-    features.push({ title, description, icon });
+    const enabled = formData.get(`feature_enabled_${index}`) !== "0";
+    features.push({ title, description, icon, enabled });
   }
 
   return features;
@@ -321,7 +322,8 @@ function parseFaqForm(formData: FormData): FaqItem[] | string {
     if (!answer) return `${index + 1}-ci cavab tələb olunur.`;
     if (question.length > 200) return `${index + 1}-ci sual çox uzundur.`;
     if (answer.length > 1000) return `${index + 1}-ci cavab çox uzundur.`;
-    items.push({ question, answer });
+    const enabled = formData.get(`faq_enabled_${index}`) !== "0";
+    items.push({ question, answer, enabled });
   }
 
   return items;
@@ -491,7 +493,8 @@ function parseAboutForm(formData: FormData): AboutItems | string {
     if (!text) return `${index + 1}-ci dəyərin mətni tələb olunur.`;
     if (title.length > 80) return `${index + 1}-ci dəyərin başlığı çox uzundur.`;
     if (text.length > 400) return `${index + 1}-ci dəyərin mətni çox uzundur.`;
-    values.push({ title, text });
+    const enabled = formData.get(`value_enabled_${index}`) !== "0";
+    values.push({ title, text, enabled });
   }
 
   return {

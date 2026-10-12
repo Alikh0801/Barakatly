@@ -3,6 +3,8 @@ import { FaqAccordion } from "@/components/FaqAccordion";
 
 export async function FaqSection() {
   const content = await getFaqContent();
+  const items = content.items.filter((item) => item.enabled);
+  if (items.length === 0) return null;
 
   return (
     <section className="bg-[#faf9f5]">
@@ -13,7 +15,7 @@ export async function FaqSection() {
           </h2>
         </div>
         <div className="mt-10">
-          <FaqAccordion items={content.items} />
+          <FaqAccordion items={items} />
         </div>
       </div>
     </section>

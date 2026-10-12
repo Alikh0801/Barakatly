@@ -48,7 +48,7 @@ function parseFeatures(value: unknown): WhyBarakatlyFeature[] {
     const description = String(record.description ?? "").trim();
     const icon = String(record.icon ?? "").trim() || fallback.icon;
     if (!title || !description) return fallback;
-    return { title, description, icon };
+    return { title, description, icon, enabled: record.enabled !== false };
   });
 }
 
@@ -356,7 +356,7 @@ function parseFaqItems(value: unknown): FaqItem[] {
         record.answer ?? record.description ?? record.a ?? ""
       ).trim();
       if (!question || !answer) return null;
-      return { question, answer };
+      return { question, answer, enabled: record.enabled !== false };
     })
     .filter((item): item is FaqItem => item !== null);
 
@@ -454,7 +454,7 @@ function parseAboutValues(value: unknown): AboutValue[] {
     const title = String(record.title ?? "").trim();
     const text = String(record.text ?? record.description ?? "").trim();
     if (!title || !text) return fallback;
-    return { title, text };
+    return { title, text, enabled: record.enabled !== false };
   });
 }
 

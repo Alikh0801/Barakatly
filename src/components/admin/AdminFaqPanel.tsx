@@ -8,6 +8,7 @@ import {
 } from "@/lib/admin/content-actions";
 import type { FaqItem } from "@/lib/content/defaults";
 import { Spinner } from "@/components/ui/Spinner";
+import { ToggleableCard } from "@/components/admin/ToggleableCard";
 
 const initialState: AdminContentActionState = {};
 
@@ -35,8 +36,8 @@ export function AdminFaqPanel({
           Tez-tez verilən suallar
         </h2>
         <p className="mt-1 text-sm text-zinc-600">
-          FAQ başlığını, sualları və cavabları dəyişin. Yeni sual əlavə edə və
-          ya silə bilərsiniz.
+          FAQ başlığını, sualları və cavabları dəyişin. Yeni sual əlavə edə,
+          silə və ya müvəqqəti deaktiv edə bilərsiniz.
         </p>
       </div>
 
@@ -69,14 +70,19 @@ export function AdminFaqPanel({
 
         <div className="space-y-4">
           {rows.map((row, index) => (
-            <div
+            <ToggleableCard
               key={`faq-${index}`}
-              className="space-y-3 rounded-xl bg-zinc-50 p-4 ring-1 ring-zinc-200"
-            >
-              <div className="flex items-center justify-between gap-3">
-                <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
-                  Sual {index + 1}
-                </p>
+              label={`Sual ${index + 1}`}
+              name={`faq_enabled_${index}`}
+              enabled={row.enabled}
+              onToggle={(enabled) =>
+                setRows((current) =>
+                  current.map((item, rowIndex) =>
+                    rowIndex === index ? { ...item, enabled } : item
+                  )
+                )
+              }
+              actions={
                 <button
                   type="button"
                   disabled={rows.length <= 1 || updatePending || resetPending}
@@ -89,7 +95,8 @@ export function AdminFaqPanel({
                 >
                   Sil
                 </button>
-              </div>
+              }
+            >
               <label className="block space-y-1.5">
                 <span className="text-xs font-medium text-zinc-600">Sual</span>
                 <input
@@ -129,7 +136,7 @@ export function AdminFaqPanel({
                   className="w-full resize-y rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-base text-zinc-900 sm:text-sm"
                 />
               </label>
-            </div>
+            </ToggleableCard>
           ))}
         </div>
 
@@ -140,7 +147,7 @@ export function AdminFaqPanel({
             onClick={() =>
               setRows((current) => [
                 ...current,
-                { question: "", answer: "" },
+                { question: "", answer: "", enabled: true },
               ])
             }
             className="inline-flex items-center rounded-full bg-white px-4 py-2 text-sm font-semibold text-zinc-700 ring-1 ring-zinc-200 disabled:opacity-50"

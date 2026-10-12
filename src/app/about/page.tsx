@@ -13,6 +13,7 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function AboutPage() {
   const content = await getAboutContent();
   const { items } = content;
+  const values = items.values.filter((value) => value.enabled);
 
   return (
     <div className="mx-auto w-full max-w-6xl px-4 py-10 md:px-6 md:py-14">
@@ -46,16 +47,26 @@ export default async function AboutPage() {
         </p>
       </section>
 
-      <section className="mt-14 grid gap-8 md:grid-cols-3">
-        {items.values.map((item) => (
-          <div key={item.title}>
-            <h3 className="text-base font-semibold text-zinc-900">
-              {item.title}
-            </h3>
-            <p className="mt-2 text-sm leading-6 text-zinc-600">{item.text}</p>
-          </div>
-        ))}
-      </section>
+      {values.length > 0 ? (
+        <section
+          className={`mt-14 grid gap-8 ${
+            values.length === 1
+              ? "max-w-2xl"
+              : values.length === 2
+                ? "md:grid-cols-2"
+                : "md:grid-cols-3"
+          }`}
+        >
+          {values.map((item) => (
+            <div key={item.title}>
+              <h3 className="text-base font-semibold text-zinc-900">
+                {item.title}
+              </h3>
+              <p className="mt-2 text-sm leading-6 text-zinc-600">{item.text}</p>
+            </div>
+          ))}
+        </section>
+      ) : null}
 
       <section className="mt-16 border-t border-zinc-200 pt-12">
         <h2 className="text-2xl font-semibold tracking-tight text-zinc-900">

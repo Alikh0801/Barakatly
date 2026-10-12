@@ -8,6 +8,7 @@ import {
 } from "@/lib/admin/content-actions";
 import type { WhyBarakatlyFeature } from "@/lib/content/defaults";
 import { Spinner } from "@/components/ui/Spinner";
+import { ToggleableCard } from "@/components/admin/ToggleableCard";
 
 const initialState: AdminContentActionState = {};
 
@@ -36,7 +37,7 @@ export function AdminWhyBarakatlyPanel({
           Niyə Barakatly?
         </h2>
         <p className="mt-1 text-sm text-zinc-600">
-          Bölmə başlığı, alt mətni və 4 kartın başlıq/mətnlərini dəyişin.
+          Bölmə başlığı, alt mətni və 4 kartın başlıq/mətnlərini dəyişin. Deaktiv kartlar saytda gizlənir, qalanları yenidən düzülür.
         </p>
       </div>
 
@@ -83,13 +84,12 @@ export function AdminWhyBarakatlyPanel({
         <div className="space-y-4">
           <h3 className="text-sm font-semibold text-zinc-900">Kartlar</h3>
           {items.map((item, index) => (
-            <div
+            <ToggleableCard
               key={`${item.title}-${index}`}
-              className="space-y-3 rounded-xl bg-zinc-50 p-4 ring-1 ring-zinc-200"
+              label={`Kart ${index + 1}`}
+              name={`feature_enabled_${index}`}
+              defaultEnabled={item.enabled}
             >
-              <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
-                Kart {index + 1}
-              </p>
               <input type="hidden" name={`feature_icon_${index}`} value={item.icon} />
               <label className="block space-y-1.5">
                 <span className="text-xs font-medium text-zinc-600">Başlıq</span>
@@ -112,7 +112,7 @@ export function AdminWhyBarakatlyPanel({
                   className="w-full resize-y rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-base text-zinc-900 sm:text-sm"
                 />
               </label>
-            </div>
+            </ToggleableCard>
           ))}
         </div>
 

@@ -8,6 +8,7 @@ import {
 } from "@/lib/admin/content-actions";
 import type { AboutItems } from "@/lib/content/defaults";
 import { Spinner } from "@/components/ui/Spinner";
+import { ToggleableCard } from "@/components/admin/ToggleableCard";
 
 const initialState: AdminContentActionState = {};
 
@@ -104,13 +105,12 @@ export function AdminAboutPanel({
         <div className="space-y-4">
           <h3 className="text-sm font-semibold text-zinc-900">Dəyərlər</h3>
           {items.values.map((item, index) => (
-            <div
+            <ToggleableCard
               key={`${item.title}-${index}`}
-              className="space-y-3 rounded-xl bg-zinc-50 p-4 ring-1 ring-zinc-200"
+              label={`Dəyər ${index + 1}`}
+              name={`value_enabled_${index}`}
+              defaultEnabled={item.enabled}
             >
-              <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
-                Dəyər {index + 1}
-              </p>
               <label className="block space-y-1.5">
                 <span className="text-xs font-medium text-zinc-600">Başlıq</span>
                 <input
@@ -132,7 +132,7 @@ export function AdminAboutPanel({
                   className="w-full resize-y rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-base text-zinc-900 sm:text-sm"
                 />
               </label>
-            </div>
+            </ToggleableCard>
           ))}
         </div>
 
