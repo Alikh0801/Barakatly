@@ -336,3 +336,19 @@ export function getFarmerCertificates(farmerId: string) {
     { revalidate: 60, tags: ["farmers"] },
   )();
 }
+
+/** Ids of the farmers this person follows. */
+export async function getFollowedFarmerIds(followerId: string): Promise<Set<string>> {
+  const supabase = createPublicClient();
+  const { data, error } = await supabase
+    .from("farmer_follows")
+    .select("farmer_id")
+    .eq("follower_id", followerId);
+
+  if (error) {
+    console.error("[farmers.getFollowedFarmerIds]", error.message);
+    return new Set();
+  }
+
+  return new Set((data ?? []).map((row) => row.farmer_id));
+}

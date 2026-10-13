@@ -38,6 +38,7 @@ export async function toggleFollowFarmer(
     }
 
     revalidatePath(`/farmers/${farmerId}`);
+    revalidatePath("/farmers");
     refresh();
     return { following: false };
   }
@@ -52,6 +53,7 @@ export async function toggleFollowFarmer(
   }
 
   revalidatePath(`/farmers/${farmerId}`);
+  revalidatePath("/farmers");
   refresh();
   return { following: true };
 }
