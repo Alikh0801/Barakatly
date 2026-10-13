@@ -100,7 +100,9 @@ function Card({
   className?: string;
 }) {
   return (
-    <section className={`rounded-2xl bg-white p-4 shadow-sm ring-1 ring-zinc-200 sm:p-5 ${className}`}>
+    // min-w-0: a long page name must truncate, not stretch the grid track
+    // (and with it the whole page) past the screen on phones.
+    <section className={`min-w-0 rounded-2xl bg-white p-4 shadow-sm ring-1 ring-zinc-200 sm:p-5 ${className}`}>
       <h2 className="text-sm font-semibold text-zinc-900">{title}</h2>
       {subtitle ? <p className="mt-0.5 text-xs text-zinc-500">{subtitle}</p> : null}
       <div className="mt-4">{children}</div>
@@ -110,7 +112,7 @@ function Card({
 
 function StatTile({ label, value, hint }: { label: string; value: string; hint?: string }) {
   return (
-    <div className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-zinc-200 sm:p-5">
+    <div className="min-w-0 rounded-2xl bg-white p-4 shadow-sm ring-1 ring-zinc-200 sm:p-5">
       <p className="text-xs font-medium text-zinc-500">{label}</p>
       <p className="mt-1.5 text-2xl font-semibold tracking-tight text-zinc-900 sm:text-3xl">{value}</p>
       {hint ? <p className="mt-1 text-xs text-zinc-500">{hint}</p> : null}
@@ -119,6 +121,16 @@ function StatTile({ label, value, hint }: { label: string; value: string; hint?:
 }
 
 type Column = { key: string; axisLabel: string | null; value: number; tooltip: string };
+
+/**
+ * Tooltips over the outer bars open inwards, so on a phone they never run
+ * off the edge of the screen.
+ */
+function tooltipAlign(index: number, count: number) {
+  if (index < count / 4) return "left-0";
+  if (index >= count - count / 4) return "right-0";
+  return "left-1/2 -translate-x-1/2";
+}
 
 /**
  * Single-series column chart: thin bars on a shared baseline, a recessive
@@ -150,7 +162,7 @@ function ColumnChart({ columns, caption }: { columns: Column[]; caption: string 
               />
             ))}
             <div className="absolute inset-0 flex items-end gap-[2px]">
-              {columns.map((column) => (
+              {columns.map((column, index) => (
                 <div
                   key={column.key}
                   tabIndex={0}
@@ -158,13 +170,15 @@ function ColumnChart({ columns, caption }: { columns: Column[]; caption: string 
                   className="group relative flex h-full min-w-0 flex-1 items-end outline-none"
                 >
                   <div
-                    className="w-full rounded-t-[4px] bg-emerald-600 transition-colors group-hover:bg-emerald-700 group-focus-visible:bg-emerald-700"
+                    className="w-full rounded-t-[4px] bg-emerald-600 transition-colors group-hover:bg-emerald-700 group-focus:bg-emerald-700"
                     style={{
                       height: `${(column.value / top) * 100}%`,
                       minHeight: column.value > 0 ? 2 : 0,
                     }}
                   />
-                  <div className="pointer-events-none absolute bottom-full left-1/2 z-10 mb-1 hidden -translate-x-1/2 whitespace-nowrap rounded-lg bg-zinc-900 px-2.5 py-1.5 text-xs text-white shadow-lg group-hover:block group-focus-visible:block">
+                  <div
+                    className={`pointer-events-none absolute bottom-full z-10 mb-1 hidden whitespace-nowrap rounded-lg bg-zinc-900 px-2.5 py-1.5 text-xs text-white shadow-lg group-hover:block group-focus:block ${tooltipAlign(index, columns.length)}`}
+                  >
                     {column.tooltip}
                   </div>
                 </div>
@@ -214,7 +228,9 @@ function RankedList({
           <div className="flex items-baseline justify-between gap-3 text-sm">
             <span className="min-w-0 truncate text-zinc-800" title={row.detail ?? row.label}>
               {row.label}
-              {row.detail ? <span className="ml-1.5 text-xs text-zinc-400">{row.detail}</span> : null}
+              {row.detail ? (
+                <span className="ml-1.5 hidden text-xs text-zinc-400 sm:inline">{row.detail}</span>
+              ) : null}
             </span>
             <span className="shrink-0 tabular-nums text-zinc-900">
               {fmt(row.views)}
@@ -311,7 +327,7 @@ export function AdminStatsPanels({ stats }: { stats: PageViewStats }) {
         />
       </div>
 
-      <div className="grid gap-4 sm:gap-6 xl:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 sm:gap-6 xl:grid-cols-2">
         {stats.days > 1 ? (
           <Card title="Günlər üzrə baxışlar" subtitle="Bakı vaxtı ilə">
             <ColumnChart columns={dailyColumns} caption="Günlər üzrə səhifə baxışları" />
@@ -326,7 +342,7 @@ export function AdminStatsPanels({ stats }: { stats: PageViewStats }) {
         </Card>
       </div>
 
-      <div className="grid gap-4 sm:gap-6 lg:grid-cols-2 xl:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-2 xl:grid-cols-3">
         <Card title="Ən çox baxılan səhifələr" className="lg:col-span-2 xl:col-span-1 xl:row-span-2">
           <RankedList
             total={views}
