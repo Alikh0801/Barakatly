@@ -272,10 +272,18 @@ export type AdminNavBadges = {
   farmers: number;
   products: number;
   categories: number;
+  reviews: number;
 };
 
 async function countRows(
-  table: "payments" | "orders" | "farmers" | "products" | "categories" | "subcategories",
+  table:
+    | "payments"
+    | "orders"
+    | "farmers"
+    | "products"
+    | "categories"
+    | "subcategories"
+    | "site_reviews",
   filters: { column: string; value: string | boolean }[],
 ): Promise<number> {
   const supabase = await createClient();
@@ -310,8 +318,15 @@ async function countFarmersNeedingReview(): Promise<number> {
 
 /** Pending items needing admin action — shown on sidebar until resolved. */
 export async function getAdminNavBadges(): Promise<AdminNavBadges> {
-  const [payments, orders, farmers, products, unapprovedCategories, unapprovedSubcategories] =
-    await Promise.all([
+  const [
+    payments,
+    orders,
+    farmers,
+    products,
+    unapprovedCategories,
+    unapprovedSubcategories,
+    reviews,
+  ] = await Promise.all([
       countRows("payments", [{ column: "status", value: "pending" }]),
       countRows("orders", [
         { column: "status", value: "awaiting_confirmation" },
@@ -320,6 +335,7 @@ export async function getAdminNavBadges(): Promise<AdminNavBadges> {
       countRows("products", [{ column: "status", value: "pending" }]),
       countRows("categories", [{ column: "approved", value: false }]),
       countRows("subcategories", [{ column: "approved", value: false }]),
+      countRows("site_reviews", [{ column: "status", value: "pending" }]),
     ]);
 
   return {
@@ -328,5 +344,6 @@ export async function getAdminNavBadges(): Promise<AdminNavBadges> {
     farmers,
     products,
     categories: unapprovedCategories + unapprovedSubcategories,
+    reviews,
   };
 }

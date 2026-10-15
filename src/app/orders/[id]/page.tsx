@@ -16,6 +16,8 @@ import { formatPrice, formatUnit, getProductImageUrl } from "@/lib/shop/format";
 import { formatDateTime } from "@/lib/format/date";
 import { getProfile } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
+import { getMySiteReview } from "@/lib/reviews/site";
+import { SiteReviewForm } from "@/components/reviews/SiteReviewForm";
 
 export async function generateMetadata({
   params,
@@ -48,6 +50,10 @@ export default async function OrderDetailPage({
 
   const order = await getOrderById(id);
   if (!order) notFound();
+
+  // A delivered order is what lets a customer review Barakatly itself.
+  const siteReview =
+    order.status === "delivered" ? await getMySiteReview(profile.id) : null;
 
   const payment = firstPayment(order.payments);
   const events = order.order_status_events ?? [];
@@ -113,6 +119,9 @@ export default async function OrderDetailPage({
         <div className="mt-8 grid gap-8 lg:grid-cols-[1fr_360px]">
           <div className="space-y-4">
             <OrderStatusTracker status={order.status} />
+            {order.status === "delivered" ? (
+              <SiteReviewForm existing={siteReview} />
+            ) : null}
             <OrderStatusTimeline events={events} />
 
             <section className="rounded-3xl bg-white p-5 shadow-sm ring-1 ring-zinc-200 sm:p-6">

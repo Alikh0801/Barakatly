@@ -232,6 +232,37 @@ export interface Database {
         };
         Relationships: [];
       };
+      site_reviews: {
+        Row: {
+          id: string;
+          customer_id: string;
+          rating: number;
+          comment: string;
+          city: string;
+          display_name: string;
+          status: "pending" | "approved" | "hidden";
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          customer_id: string;
+          rating: number;
+          comment: string;
+          city: string;
+          display_name?: string;
+          status?: "pending" | "approved" | "hidden";
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          rating?: number;
+          comment?: string;
+          city?: string;
+          status?: "pending" | "approved" | "hidden";
+        };
+        Relationships: [];
+      };
       page_views: {
         Row: {
           id: number;
@@ -825,6 +856,7 @@ export interface Database {
 
 export type Profile = Database["public"]["Tables"]["profiles"]["Row"];
 export type Farmer = Database["public"]["Tables"]["farmers"]["Row"];
+export type SiteReview = Database["public"]["Tables"]["site_reviews"]["Row"];
 export type FarmerCertificate =
   Database["public"]["Tables"]["farmer_certificates"]["Row"];
 export type FarmerPost = Database["public"]["Tables"]["farmer_posts"]["Row"];

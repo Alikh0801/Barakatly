@@ -7,6 +7,7 @@ import { MeetFarmersSection } from "@/components/MeetFarmersSection";
 import { Reveal } from "@/components/Reveal";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
+import { TestimonialsSection } from "@/components/TestimonialsSection";
 import { WhyChooseSection } from "@/components/WhyChooseSection";
 import { CategorySectionSkeleton } from "@/components/skeletons/CategorySectionSkeleton";
 import { getHeroContent } from "@/lib/content/queries";
@@ -42,6 +43,11 @@ export default async function Home({
       <Reveal>
         <WhyChooseSection />
       </Reveal>
+      <Suspense fallback={null}>
+        <Reveal>
+          <TestimonialsSection />
+        </Reveal>
+      </Suspense>
       <Reveal>
         <FaqSection />
       </Reveal>

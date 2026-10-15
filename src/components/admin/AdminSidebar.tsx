@@ -112,6 +112,17 @@ const navItems: NavItem[] = [
     ),
   },
   {
+    href: "/admin/reviews",
+    label: "Rəylər",
+    badgeKey: "reviews",
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-4 w-4">
+        <path d="M5 5h14v10H9l-4 4V5Z" strokeLinejoin="round" />
+        <path d="m12 7.5.9 1.9 2 .3-1.5 1.4.4 2-1.8-1-1.8 1 .4-2-1.5-1.4 2-.3.9-1.9Z" strokeLinejoin="round" />
+      </svg>
+    ),
+  },
+  {
     href: "/admin/statistics",
     label: "Statistika",
     icon: (
@@ -133,7 +144,7 @@ function formatBadge(count: number) {
 }
 
 export function AdminSidebar({
-  badges = { payments: 0, orders: 0, farmers: 0, products: 0, categories: 0 },
+  badges = { payments: 0, orders: 0, farmers: 0, products: 0, categories: 0, reviews: 0 },
 }: {
   badges?: AdminNavBadges;
 }) {
@@ -164,7 +175,8 @@ export function AdminSidebar({
     badges.orders +
     badges.farmers +
     badges.products +
-    badges.categories;
+    badges.categories +
+    badges.reviews;
 
   return (
     <>
