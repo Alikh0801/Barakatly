@@ -21,10 +21,9 @@ export default async function FavoritesPage() {
     <SolidPageShell>
       <div className="mx-auto w-full max-w-6xl px-4 py-10 md:px-6 md:py-12">
         <h1 className="text-3xl font-semibold tracking-tight text-zinc-900">Sevimlilər</h1>
-        <p className="mt-2 text-sm text-zinc-500">
-          Ürək işarəsi ilə saxladığınız məhsullar
-          {products.length > 0 ? ` · ${products.length} məhsul` : ""}
-        </p>
+        {products.length > 0 ? (
+          <p className="mt-2 text-sm text-zinc-500">{products.length} məhsul</p>
+        ) : null}
 
         {products.length === 0 ? (
           <div className="mt-8 rounded-2xl bg-white px-6 py-14 text-center shadow-sm ring-1 ring-zinc-200">
