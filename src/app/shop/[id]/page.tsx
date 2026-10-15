@@ -166,12 +166,6 @@ export default async function ProductDetailPage({
             {product.title}
           </h1>
 
-          {product.description ? (
-            <p className="mt-2 whitespace-pre-line break-words text-sm leading-6 text-zinc-500">
-              {product.description}
-            </p>
-          ) : null}
-
           <div className="mt-5 flex items-baseline gap-2">
             <span className="text-3xl font-semibold text-zinc-900">
               {formatPrice(price)}

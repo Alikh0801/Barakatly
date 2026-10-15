@@ -231,7 +231,7 @@ export function ProductTabs({
       <div className="pt-6">
         {tab === "description" ? (
           description ? (
-            <p className="whitespace-pre-line text-sm leading-7 text-zinc-600 md:text-base">
+            <p className="whitespace-pre-line break-words text-sm leading-7 text-zinc-600 md:text-base">
               {description}
             </p>
           ) : (
