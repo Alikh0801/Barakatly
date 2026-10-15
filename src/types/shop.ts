@@ -15,6 +15,9 @@ export type ProductListItem = {
   quantity_available: number;
   in_stock: boolean;
   sold_count: number;
+  /** Average of the product's reviews; null until it has one. */
+  rating_average?: number | null;
+  rating_count?: number;
   farmer: {
     id: string;
     farm_name: string;

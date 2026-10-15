@@ -50,7 +50,7 @@ export function AddToCartButton({
       onClick={() => add(product.id)}
       title={error || undefined}
       className={[
-        "inline-flex h-8 w-8 items-center justify-center rounded-full text-white shadow-sm transition disabled:opacity-60",
+        "inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-white shadow-sm transition disabled:opacity-60",
         error ? "bg-rose-500" : "bg-emerald-600 hover:bg-emerald-500",
         className,
       ]
@@ -58,7 +58,22 @@ export function AddToCartButton({
         .join(" ")}
       aria-label={error || `${product.title} səbətə əlavə et`}
     >
-      {added ? "✓" : error ? "✕" : "+"}
+      {added ? (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true" className="h-4 w-4">
+          <path d="M5 12l5 5L19 7" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      ) : error ? (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true" className="h-4 w-4">
+          <path d="M6 6l12 12M18 6 6 18" strokeLinecap="round" />
+        </svg>
+      ) : (
+        // Shopping bag with a plus: "add to cart" at a glance.
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true" className="h-[18px] w-[18px]">
+          <path d="M5 8h14l-1.2 11.1a1 1 0 0 1-1 .9H7.2a1 1 0 0 1-1-.9L5 8Z" strokeLinejoin="round" />
+          <path d="M9 8V6.5a3 3 0 0 1 6 0V8" strokeLinecap="round" />
+          <path d="M12 11.5v5M9.5 14h5" strokeLinecap="round" />
+        </svg>
+      )}
     </button>
   );
 }

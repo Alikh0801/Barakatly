@@ -167,6 +167,9 @@ export function ProfileMenu({
             <MenuLink href="/orders" onNavigate={() => setOpen(false)}>
               Sifarişlərim
             </MenuLink>
+            <MenuLink href="/favorites" onNavigate={() => setOpen(false)}>
+              Sevimlilər
+            </MenuLink>
             <MenuLink href="/notifications" onNavigate={() => setOpen(false)}>
               Bildirişlər
             </MenuLink>

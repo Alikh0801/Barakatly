@@ -12,6 +12,8 @@ const productSelect = `
   quantity_available,
   in_stock,
   sold_count,
+  rating_average,
+  rating_count,
   farmer:farmers (
     id,
     farm_name,
@@ -38,6 +40,8 @@ const productDetailSelect = `
   quantity_available,
   in_stock,
   sold_count,
+  rating_average,
+  rating_count,
   farmer:farmers (
     id,
     farm_name,

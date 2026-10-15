@@ -38,6 +38,9 @@ export async function searchCatalog(query: string): Promise<SearchResults> {
         farmer_price,
         quantity_available,
         in_stock,
+        sold_count,
+        rating_average,
+        rating_count,
         farmer:farmers (
           id,
           farm_name,

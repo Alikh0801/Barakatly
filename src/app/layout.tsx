@@ -5,6 +5,7 @@ import { NavigationProgress } from "@/components/navigation/NavigationProgress";
 import { PageViewTracker } from "@/components/navigation/PageViewTracker";
 import { RoutePrefetcher } from "@/components/navigation/RoutePrefetcher";
 import { ScrollToTopButton } from "@/components/navigation/ScrollToTopButton";
+import { WishlistLoader } from "@/components/shop/WishlistLoader";
 import { getAppUrl } from "@/lib/auth/urls";
 import "./globals.css";
 
@@ -96,6 +97,7 @@ export default function RootLayout({
         </Suspense>
         <RoutePrefetcher />
         <PageViewTracker />
+        <WishlistLoader />
         {children}
         <ScrollToTopButton />
       </body>

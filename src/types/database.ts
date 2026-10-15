@@ -232,6 +232,20 @@ export interface Database {
         };
         Relationships: [];
       };
+      wishlist_items: {
+        Row: {
+          customer_id: string;
+          product_id: string;
+          created_at: string;
+        };
+        Insert: {
+          customer_id: string;
+          product_id: string;
+          created_at?: string;
+        };
+        Update: Record<string, never>;
+        Relationships: [];
+      };
       site_reviews: {
         Row: {
           id: string;
@@ -452,6 +466,8 @@ export interface Database {
           in_stock: boolean;
           status: ProductStatus;
           sold_count: number;
+          rating_average: number | null;
+          rating_count: number;
           created_at: string;
           updated_at: string;
         };
