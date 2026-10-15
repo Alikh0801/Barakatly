@@ -101,6 +101,7 @@ async function fetchPublicFarmers(): Promise<PublicFarmer[]> {
       location_text,
       verified_at,
       avatar_url,
+      cover_url,
       created_at,
       products ( id, status )
     `,
@@ -351,4 +352,33 @@ export async function getFollowedFarmerIds(followerId: string): Promise<Set<stri
   }
 
   return new Set((data ?? []).map((row) => row.farmer_id));
+}
+
+export type FeaturedFarmer = PublicFarmer & { rating: FarmerRatingSummary };
+
+/**
+ * Farmers for the home page: verified farms first, then the ones with the
+ * most products on sale, each with its real review rating.
+ */
+async function fetchFeaturedFarmers(limit: number): Promise<FeaturedFarmer[]> {
+  const farmers = await fetchPublicFarmers();
+  const picked = [...farmers]
+    .sort(
+      (a, b) =>
+        Number(Boolean(b.verified_at)) - Number(Boolean(a.verified_at)) ||
+        b.productCount - a.productCount ||
+        a.farm_name.localeCompare(b.farm_name, "az"),
+    )
+    .slice(0, limit);
+
+  const ratings = await Promise.all(picked.map((farmer) => getFarmerRatingSummary(farmer.id)));
+  return picked.map((farmer, index) => ({ ...farmer, rating: ratings[index] }));
+}
+
+export function getFeaturedFarmers(limit = 3) {
+  return unstable_cache(
+    async () => fetchFeaturedFarmers(limit),
+    ["featured-farmers", String(limit)],
+    { revalidate: 300, tags: ["farmers"] },
+  )();
 }

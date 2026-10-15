@@ -1,13 +1,7 @@
 import Image from "next/image";
-import { Playfair_Display } from "next/font/google";
+import { displaySerif as serif } from "@/lib/fonts";
 import type { FarmerRatingSummary } from "@/lib/farmers/queries";
 
-// latin-ext carries ə/Ə, which every Azerbaijani farm name is likely to use.
-const serif = Playfair_Display({
-  subsets: ["latin", "latin-ext"],
-  weight: ["700"],
-  display: "swap",
-});
 
 const TIME_ZONE = "Asia/Baku";
 

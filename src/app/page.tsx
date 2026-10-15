@@ -3,6 +3,7 @@ import { AreYouAFarmerSection } from "@/components/AreYouAFarmerSection";
 import { Hero } from "@/components/Hero";
 import { CategorySection } from "@/components/CategorySection";
 import { FaqSection } from "@/components/FaqSection";
+import { MeetFarmersSection } from "@/components/MeetFarmersSection";
 import { Reveal } from "@/components/Reveal";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
@@ -31,6 +32,11 @@ export default async function Home({
       <Suspense fallback={<CategorySectionSkeleton />}>
         <Reveal>
           <CategorySection categorySlug={params.category} />
+        </Reveal>
+      </Suspense>
+      <Suspense fallback={null}>
+        <Reveal>
+          <MeetFarmersSection />
         </Reveal>
       </Suspense>
       <Reveal>
