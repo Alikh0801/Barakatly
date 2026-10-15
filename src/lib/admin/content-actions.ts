@@ -3,6 +3,7 @@
 import { revalidatePath, updateTag } from "next/cache";
 import { requireAdmin } from "@/lib/admin/auth";
 import { resolveSiteImagePath } from "@/lib/admin/site-image-upload";
+import { isSingleEmoji } from "@/lib/content/emoji";
 import {
   ABOUT_DEFAULT,
   ABOUT_DEFAULT_ITEMS,
@@ -48,6 +49,7 @@ function parseFeatureForm(formData: FormData): WhyBarakatlyFeature[] | string {
       String(formData.get(`feature_icon_${index}`) ?? "").trim() ||
       WHY_BARAKATLY_DEFAULT_FEATURES[index]?.icon ||
       "🌿";
+    if (!isSingleEmoji(icon)) return `${index + 1}-ci kartın ikonu bir emoji olmalıdır.`;
 
     if (!title) return `${index + 1}-ci kartın başlığı tələb olunur.`;
     if (!description) return `${index + 1}-ci kartın mətni tələb olunur.`;

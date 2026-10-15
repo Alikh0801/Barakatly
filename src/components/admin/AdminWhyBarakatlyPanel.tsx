@@ -9,6 +9,7 @@ import {
 import type { WhyBarakatlyFeature } from "@/lib/content/defaults";
 import { Spinner } from "@/components/ui/Spinner";
 import { ToggleableCard } from "@/components/admin/ToggleableCard";
+import { EmojiField } from "@/components/admin/EmojiField";
 
 const initialState: AdminContentActionState = {};
 
@@ -37,7 +38,7 @@ export function AdminWhyBarakatlyPanel({
           Niyə Barakatly?
         </h2>
         <p className="mt-1 text-sm text-zinc-600">
-          Bölmə başlığı, alt mətni və 4 kartın başlıq/mətnlərini dəyişin. Deaktiv kartlar saytda gizlənir, qalanları yenidən düzülür.
+          Bölmə başlığı, alt mətni və 4 kartın ikon/başlıq/mətnlərini dəyişin. Deaktiv kartlar saytda gizlənir, qalanları yenidən düzülür.
         </p>
       </div>
 
@@ -90,7 +91,7 @@ export function AdminWhyBarakatlyPanel({
               name={`feature_enabled_${index}`}
               defaultEnabled={item.enabled}
             >
-              <input type="hidden" name={`feature_icon_${index}`} value={item.icon} />
+              <EmojiField name={`feature_icon_${index}`} defaultValue={item.icon} />
               <label className="block space-y-1.5">
                 <span className="text-xs font-medium text-zinc-600">Başlıq</span>
                 <input
