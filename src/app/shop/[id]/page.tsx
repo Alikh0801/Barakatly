@@ -167,7 +167,7 @@ export default async function ProductDetailPage({
           </h1>
 
           {product.description ? (
-            <p className="mt-2 line-clamp-2 text-sm leading-6 text-zinc-500">
+            <p className="mt-2 whitespace-pre-line break-words text-sm leading-6 text-zinc-500">
               {product.description}
             </p>
           ) : null}
