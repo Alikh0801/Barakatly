@@ -67,11 +67,11 @@ export function AddToCartButton({
           <path d="M6 6l12 12M18 6 6 18" strokeLinecap="round" />
         </svg>
       ) : (
-        // Shopping bag with a plus: "add to cart" at a glance.
+        // Shopping cart.
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true" className="h-[18px] w-[18px]">
-          <path d="M5 8h14l-1.2 11.1a1 1 0 0 1-1 .9H7.2a1 1 0 0 1-1-.9L5 8Z" strokeLinejoin="round" />
-          <path d="M9 8V6.5a3 3 0 0 1 6 0V8" strokeLinecap="round" />
-          <path d="M12 11.5v5M9.5 14h5" strokeLinecap="round" />
+          <path d="M3 4h2l2.4 10.2a1 1 0 0 0 1 .8h8.9a1 1 0 0 0 1-.8L20 7.5H6.2" strokeLinecap="round" strokeLinejoin="round" />
+          <circle cx="9.5" cy="19" r="1.4" />
+          <circle cx="16.5" cy="19" r="1.4" />
         </svg>
       )}
     </button>

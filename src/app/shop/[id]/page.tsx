@@ -5,6 +5,7 @@ import type { Metadata } from "next";
 import { ProductDetailImage } from "@/components/shop/ProductDetailImage";
 import { ProductPurchasePanel } from "@/components/shop/ProductPurchasePanel";
 import { ProductTabs } from "@/components/shop/ProductTabs";
+import { WishlistButton } from "@/components/shop/WishlistButton";
 import { getSessionUser } from "@/lib/auth/session";
 import {
   canReviewProduct,
@@ -162,9 +163,16 @@ export default async function ProductDetailPage({
             <span>{product.sold_count} satış</span>
           </div>
 
-          <h1 className="mt-2 text-3xl font-semibold tracking-tight text-zinc-900 md:text-4xl">
-            {product.title}
-          </h1>
+          <div className="mt-2 flex items-start justify-between gap-3">
+            <h1 className="min-w-0 break-words text-3xl font-semibold tracking-tight text-zinc-900 md:text-4xl">
+              {product.title}
+            </h1>
+            <WishlistButton
+              productId={product.id}
+              productTitle={product.title}
+              className="mt-1 h-11 w-11 shrink-0"
+            />
+          </div>
 
           <div className="mt-5 flex items-baseline gap-2">
             <span className="text-3xl font-semibold text-zinc-900">

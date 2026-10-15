@@ -75,7 +75,8 @@ export function ProductCard({ product }: { product: ProductListItem }) {
         <WishlistButton
           productId={product.id}
           productTitle={product.title}
-          className="absolute right-2.5 top-2.5"
+          // z-20: the photo itself sits on z-10 and would cover the heart.
+          className="absolute right-2.5 top-2.5 z-20"
         />
       </div>
 
