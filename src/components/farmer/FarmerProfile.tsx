@@ -37,6 +37,10 @@ import {
   memberSinceLabel,
   type FarmerProfileStats,
 } from "@/components/farmer/FarmerProfileHeader";
+import {
+  FarmerStatsDashboard,
+  type FarmerProductCounts,
+} from "@/components/farmer/FarmerStatsDashboard";
 import { ProductCard } from "@/components/shop/ProductCard";
 import type {
   FarmerBlogPost,
@@ -46,6 +50,7 @@ import type {
 import type { ProductListItem } from "@/types/shop";
 import type { Farmer, FarmerCertificate, Profile } from "@/types";
 import type { FarmerRatingSummary, PublicFarmer } from "@/lib/farmers/queries";
+import type { FarmerSalesStats } from "@/lib/farmer/stats";
 import { formatDateTime } from "@/lib/format/date";
 import { validateFarmerMedia } from "@/lib/farmer/media-upload";
 import { uploadPostMediaFile } from "@/lib/farmer/upload-post-media";
@@ -69,7 +74,7 @@ const displayFont = Syne({
 type ActionResult = { error?: string; success?: string };
 const initialState: ActionResult = {};
 
-export type FarmerProfileTab = "posts" | "products" | "orders" | "certificates" | "about";
+export type FarmerProfileTab = "stats" | "posts" | "products" | "orders" | "certificates" | "about";
 export type PublicFarmerProfileTab = "products" | "posts" | "about" | "certificates";
 
 function getPublicFarmerUrl(farmerId: string) {
@@ -799,13 +804,15 @@ function useTabInUrl<T extends string>(initialTab: T) {
 export function FarmerProfileDashboard({
   farmer,
   profile,
-  initialTab = "posts",
+  initialTab = "stats",
   products,
   orders,
   posts,
   followerCount,
   rating,
   certificates,
+  sales,
+  productCounts,
 }: {
   farmer: Farmer;
   profile: Profile;
@@ -816,10 +823,13 @@ export function FarmerProfileDashboard({
   followerCount: number;
   rating: FarmerRatingSummary;
   certificates: FarmerCertificate[];
+  sales: FarmerSalesStats;
+  productCounts: FarmerProductCounts;
 }) {
   const [tab, selectTab] = useTabInUrl<FarmerProfileTab>(initialTab);
 
   const tabs: { id: FarmerProfileTab; label: string }[] = [
+    { id: "stats", label: "Statistika" },
     { id: "posts", label: "Paylaşımlar" },
     { id: "products", label: "Məhsullar" },
     { id: "orders", label: "Sifarişlər" },
@@ -875,6 +885,16 @@ export function FarmerProfileDashboard({
         />
 
         <div className="mt-6">
+          <div className={tab === "stats" ? "block" : "hidden"}>
+            <FarmerStatsDashboard
+              sales={sales}
+              rating={rating}
+              products={productCounts}
+              orders={orders}
+              onViewOrders={() => selectTab("orders")}
+            />
+          </div>
+
           <div className={tab === "posts" ? "max-w-3xl space-y-5" : "hidden"}>
             <BlogComposer userId={profile.id} />
             <FarmerBlogFeed posts={posts} canManage />

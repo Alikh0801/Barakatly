@@ -14,11 +14,13 @@ import {
   getFarmerFollowerCount,
   getFarmerRatingSummary,
 } from "@/lib/farmers/queries";
+import { currentBakuMonthStart, getFarmerSalesStats } from "@/lib/farmer/stats";
 
 export const metadata = { title: "Fermer profili" };
 
 function parseTab(value?: string): FarmerProfileTab {
   if (
+    value === "stats" ||
     value === "products" ||
     value === "orders" ||
     value === "about" ||
@@ -28,7 +30,7 @@ function parseTab(value?: string): FarmerProfileTab {
   ) {
     return value === "blog" ? "posts" : value;
   }
-  return "posts";
+  return "stats";
 }
 
 export default async function FarmerDashboardPage({
@@ -51,7 +53,7 @@ export default async function FarmerDashboardPage({
     );
   }
 
-  const [products, orders, posts, followerCount, rating, certificates] =
+  const [products, orders, posts, followerCount, rating, certificates, sales] =
     await Promise.all([
       getFarmerProducts(farmer.id),
       getFarmerOrderItems(farmer.id),
@@ -59,7 +61,17 @@ export default async function FarmerDashboardPage({
       getFarmerFollowerCount(farmer.id),
       getFarmerRatingSummary(farmer.id),
       getFarmerCertificates(farmer.id),
+      getFarmerSalesStats(farmer.id),
     ]);
+
+  const monthStart = currentBakuMonthStart();
+  const approved = products.filter((product) => product.status === "approved");
+  const productCounts = {
+    approved: approved.length,
+    newThisMonth: approved.filter((product) => new Date(product.created_at) >= monthStart)
+      .length,
+    inReview: products.filter((product) => product.status === "pending").length,
+  };
 
   return (
     <FarmerProfileDashboard
@@ -72,6 +84,8 @@ export default async function FarmerDashboardPage({
       followerCount={followerCount}
       rating={rating}
       certificates={certificates}
+      sales={sales}
+      productCounts={productCounts}
     />
   );
 }
