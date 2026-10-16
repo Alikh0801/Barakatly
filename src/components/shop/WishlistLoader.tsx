@@ -2,8 +2,7 @@
 
 import { usePathname } from "next/navigation";
 import { useEffect } from "react";
-import { getWishlistIds } from "@/lib/wishlist/actions";
-import { useWishlist } from "@/lib/wishlist/store";
+import { fetchWishlistIds, useWishlist } from "@/lib/wishlist/store";
 
 /**
  * Loads the visitor's favourites once, so every heart on the page knows
@@ -18,7 +17,7 @@ export function WishlistLoader() {
   useEffect(() => {
     if (signedIn) return;
     let cancelled = false;
-    getWishlistIds()
+    fetchWishlistIds()
       .then((ids) => {
         if (!cancelled) setIds(ids);
       })

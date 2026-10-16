@@ -1,9 +1,24 @@
 "use client";
 
 import { usePathname, useRouter } from "next/navigation";
-import { useTransition } from "react";
-import { setWishlisted } from "@/lib/wishlist/actions";
-import { useWishlist } from "@/lib/wishlist/store";
+import { saveWishlisted, useWishlist } from "@/lib/wishlist/store";
+
+/**
+ * Requests for one product go out one after another, so they cannot reach
+ * the server out of order, and a tap overtaken by a newer one is skipped:
+ * only the latest state is sent, and only its failure rolls the heart back.
+ */
+const latestTap = new Map<string, number>();
+const queue = new Map<string, Promise<unknown>>();
+let tapCounter = 0;
+
+function sendLatest(productId: string, tap: number, save: boolean) {
+  const run = (queue.get(productId) ?? Promise.resolve()).then(() =>
+    latestTap.get(productId) === tap ? saveWishlisted(productId, save) : "skipped",
+  );
+  queue.set(productId, run);
+  return run;
+}
 
 /** Heart on a product card: adds the product to "Sevimlilər" or removes it. */
 export function WishlistButton({
@@ -17,8 +32,8 @@ export function WishlistButton({
 }) {
   const router = useRouter();
   const pathname = usePathname();
-  const [pending, startTransition] = useTransition();
   const saved = useWishlist((state) => state.ids?.has(productId) ?? false);
+  const loaded = useWishlist((state) => state.loaded);
   const signedIn = useWishlist((state) => state.signedIn);
   const toggleLocal = useWishlist((state) => state.toggleLocal);
 
@@ -26,23 +41,24 @@ export function WishlistButton({
     router.push(`/signin?next=${encodeURIComponent(pathname)}`);
   }
 
-  function toggle() {
-    if (!signedIn) {
+  async function toggle() {
+    // Before the first load answers, try anyway: the server says if the
+    // visitor is a guest.
+    if (loaded && !signedIn) {
       goToSignIn();
       return;
     }
     const next = !saved;
+    const tap = ++tapCounter;
+    latestTap.set(productId, tap);
+    // The heart changes at once; the request follows in the background.
     toggleLocal(productId, next);
-    startTransition(async () => {
-      const result = await setWishlisted(productId, next);
-      if (!result.ok) {
-        toggleLocal(productId, !next);
-        if (result.needsAuth) goToSignIn();
-        return;
-      }
-      // The favourites page lists hearted products: drop the card at once.
-      if (!next && pathname === "/favorites") router.refresh();
-    });
+
+    const result = await sendLatest(productId, tap, next);
+    if (result !== "error" && result !== "needs-auth") return;
+    if (latestTap.get(productId) !== tap) return;
+    toggleLocal(productId, !next);
+    if (result === "needs-auth") goToSignIn();
   }
 
   return (
@@ -50,7 +66,6 @@ export function WishlistButton({
       type="button"
       data-static-hover
       onClick={toggle}
-      disabled={pending}
       aria-pressed={saved}
       aria-label={saved ? `${productTitle} sevimlilərdən çıxar` : `${productTitle} sevimlilərə əlavə et`}
       title={saved ? "Sevimlilərdən çıxar" : "Sevimlilərə əlavə et"}
