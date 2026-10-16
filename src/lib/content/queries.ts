@@ -7,6 +7,9 @@ import {
   AUTH_IMAGE_DEFAULT,
   AUTH_IMAGE_DEFAULT_ITEMS,
   AUTH_IMAGE_KEY,
+  CONTACT_EMPTY,
+  CONTACT_KEY,
+  type ContactItems,
   FAQ_DEFAULT,
   FAQ_DEFAULT_ITEMS,
   FAQ_KEY,
@@ -575,4 +578,49 @@ export async function getAdminAboutContent(): Promise<AboutContent> {
     items: parseAboutItems(data.items),
     updated_at: data.updated_at,
   };
+}
+
+function parseContactItems(value: unknown): ContactItems {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return { ...CONTACT_EMPTY };
+  const record = value as Record<string, unknown>;
+  return {
+    phone: String(record.phone ?? "").trim(),
+    email: String(record.email ?? "").trim(),
+  };
+}
+
+async function fetchContactContent(): Promise<ContactItems> {
+  const supabase = createPublicClient();
+  const { data, error } = await supabase
+    .from("site_content")
+    .select("items")
+    .eq("key", CONTACT_KEY)
+    .maybeSingle();
+
+  if (error) {
+    console.error("[content.getContactContent]", error.message);
+    return { ...CONTACT_EMPTY };
+  }
+  return parseContactItems(data?.items);
+}
+
+/** Phone and email for the footer. Nothing saved yet: both empty. */
+export const getContactContent = unstable_cache(fetchContactContent, ["contact-content"], {
+  revalidate: 300,
+  tags: ["site-content", "contact"],
+});
+
+export async function getAdminContactContent(): Promise<ContactItems> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("site_content")
+    .select("items")
+    .eq("key", CONTACT_KEY)
+    .maybeSingle();
+
+  if (error) {
+    console.error("[content.getAdminContactContent]", error.message);
+    return { ...CONTACT_EMPTY };
+  }
+  return parseContactItems(data?.items);
 }

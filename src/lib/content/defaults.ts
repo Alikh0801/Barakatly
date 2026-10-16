@@ -186,3 +186,13 @@ export const ABOUT_DEFAULT = {
   body: "Barakatly yerli fermerlərin məhsullarını şəhər sakinlərinə birbaşa çatdıran marketplace-dir. Məqsədimiz sadədir: təzə qida, ədalətli satış və aydın izləmə.",
   items: ABOUT_DEFAULT_ITEMS,
 } as const;
+
+export const CONTACT_KEY = "contact" as const;
+
+/** Footer contact details; an empty value is simply not shown. */
+export type ContactItems = {
+  phone: string;
+  email: string;
+};
+
+export const CONTACT_EMPTY: ContactItems = { phone: "", email: "" };

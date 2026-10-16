@@ -28,6 +28,7 @@ import {
   type HeroItems,
   type WhyBarakatlyFeature,
 } from "@/lib/content/defaults";
+import { CONTACT_KEY } from "@/lib/content/defaults";
 import { createClient } from "@/lib/supabase/server";
 
 export type AdminContentActionState = {
@@ -584,4 +585,49 @@ export async function resetAboutContent(
 
   revalidateAboutContent();
   return { success: "Default Haqqımızda məzmunu bərpa olundu." };
+}
+
+// Loose on purpose: landlines and short numbers are fine, only digits and
+// the usual separators.
+const CONTACT_PHONE_PATTERN = /^\+?[\d\s()-]{7,20}$/;
+const CONTACT_EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+/** Footer phone and email. Leaving a field empty hides it on the site. */
+export async function updateContactContent(
+  _prev: AdminContentActionState,
+  formData: FormData
+): Promise<AdminContentActionState> {
+  await requireAdmin();
+
+  const phone = String(formData.get("phone") ?? "").trim();
+  const email = String(formData.get("email") ?? "").trim();
+
+  if (phone && !CONTACT_PHONE_PATTERN.test(phone)) {
+    return { error: "Telefon nömrəsi düzgün deyil (məs. +994 50 123 45 67)." };
+  }
+  if (email && (email.length > 120 || !CONTACT_EMAIL_PATTERN.test(email))) {
+    return { error: "Email ünvanı düzgün deyil." };
+  }
+
+  const supabase = await createClient();
+  const { error } = await supabase.from("site_content").upsert(
+    { key: CONTACT_KEY, title: "Əlaqə", body: "", items: { phone, email } },
+    { onConflict: "key" }
+  );
+
+  if (error) {
+    console.error("[admin.updateContactContent]", error.message);
+    return { error: "Əlaqə məlumatları yadda saxlanılmadı." };
+  }
+
+  updateTag("site-content");
+  updateTag("contact");
+  revalidatePath("/", "layout");
+  revalidatePath("/admin/content");
+  return {
+    success:
+      phone || email
+        ? "Əlaqə məlumatları yeniləndi."
+        : "Əlaqə məlumatları silindi, footerdə göstərilmir.",
+  };
 }
