@@ -917,6 +917,7 @@ export function PublicFarmerProfile({
   followerCount,
   isFollowing,
   isAuthenticated,
+  isOwner = false,
   rating,
   certificates,
 }: {
@@ -927,6 +928,8 @@ export function PublicFarmerProfile({
   followerCount: number;
   isFollowing: boolean;
   isAuthenticated: boolean;
+  /** The farmer viewing their own page: no follow button, a link to the panel instead. */
+  isOwner?: boolean;
   rating: FarmerRatingSummary;
   certificates: FarmerCertificate[];
 }) {
@@ -959,11 +962,20 @@ export function PublicFarmerProfile({
         stats={stats}
         actions={
           <>
-            <FollowButton
-              farmerId={farmer.id}
-              initialFollowing={isFollowing}
-              isAuthenticated={isAuthenticated}
-            />
+            {isOwner ? (
+              <Link
+                href="/farmer"
+                className="inline-flex h-11 items-center rounded-full bg-white px-5 text-[15px] font-semibold text-zinc-800 ring-1 ring-zinc-300 transition hover:bg-zinc-50"
+              >
+                Fermer paneli
+              </Link>
+            ) : (
+              <FollowButton
+                farmerId={farmer.id}
+                initialFollowing={isFollowing}
+                isAuthenticated={isAuthenticated}
+              />
+            )}
             <ShareProfileButton farmerId={farmer.id} farmName={farmer.farm_name} />
           </>
         }

@@ -43,6 +43,17 @@ export async function toggleFollowFarmer(
     return { following: false };
   }
 
+  // A farmer cannot follow their own farm (the insert policy enforces it too).
+  const { data: ownFarm } = await supabase
+    .from("farmers")
+    .select("id")
+    .eq("id", farmerId)
+    .eq("profile_id", profile.id)
+    .maybeSingle();
+  if (ownFarm) {
+    return { following: false, error: "Öz təsərrüfatınızı izləyə bilməzsiniz." };
+  }
+
   const { error } = await supabase
     .from("farmer_follows")
     .insert({ farmer_id: farmerId, follower_id: profile.id });

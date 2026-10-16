@@ -9,6 +9,7 @@ import {
   getFarmerFollowerCount,
   getFarmerRatingSummary,
   getIsFollowingFarmer,
+  isOwnFarm,
   getPublicFarmerBlogPosts,
   getPublicFarmerById,
   getPublicFarmerProducts,
@@ -79,7 +80,7 @@ export default async function FarmerDetailPage({
 
   const profile = await getProfile();
 
-  const [products, rawPosts, followerCount, isFollowing, rating, certificates] =
+  const [products, rawPosts, followerCount, isFollowing, rating, certificates, isOwner] =
     await Promise.all([
       getPublicFarmerProducts(farmer.id),
       getPublicFarmerBlogPosts(farmer.id),
@@ -87,6 +88,7 @@ export default async function FarmerDetailPage({
       profile ? getIsFollowingFarmer(farmer.id, profile.id) : Promise.resolve(false),
       getFarmerRatingSummary(farmer.id),
       getFarmerCertificates(farmer.id),
+      profile?.role === "farmer" ? isOwnFarm(farmer.id, profile.id) : Promise.resolve(false),
     ]);
 
   const posts = rawPosts.map(
@@ -116,6 +118,7 @@ export default async function FarmerDetailPage({
       followerCount={followerCount}
       isFollowing={isFollowing}
       isAuthenticated={Boolean(profile)}
+      isOwner={isOwner}
       rating={rating}
       certificates={certificates}
     />

@@ -385,3 +385,19 @@ export function getFeaturedFarmers(limit = 3) {
     { revalidate: 300, tags: ["farmers"] },
   )();
 }
+
+/** True when this profile owns the farm, i.e. the farmer is looking at their own page. */
+export async function isOwnFarm(farmerId: string, profileId: string): Promise<boolean> {
+  const supabase = createPublicClient();
+  const { data, error } = await supabase
+    .from("farmers")
+    .select("profile_id")
+    .eq("id", farmerId)
+    .maybeSingle();
+
+  if (error) {
+    console.error("[farmers.isOwnFarm]", error.message);
+    return false;
+  }
+  return data?.profile_id === profileId;
+}
