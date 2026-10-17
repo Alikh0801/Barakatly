@@ -80,6 +80,7 @@ export function AdminHeroPanel({
             name="image"
             accept="image/jpeg,image/png,image/webp"
             caption="Yeni şəkil"
+            hint="Üfüqi şəkil, ən azı 2400×1600 piksel tövsiyə olunur. JPEG, PNG və ya WebP, maksimum 5 MB. Boş buraxsanız mövcud şəkil qalır."
           />
         </div>
 
@@ -88,6 +89,10 @@ export function AdminHeroPanel({
             <h3 className="text-sm font-semibold text-zinc-900">
               Mobil şəkil <span className="font-normal text-zinc-500">(istəyə bağlı)</span>
             </h3>
+            <p className="mt-1 text-xs text-zinc-500">
+              Telefon və şaquli tutulmuş planşetlərdə fon şəklinin yerinə göstərilir.
+              Üfüqi şəkil dar ekranda kəsildiyi üçün burada şaquli şəkil daha yaxşı görünür.
+            </p>
           </div>
           {items.mobileImageUrl ? (
             <div className="space-y-3">
@@ -118,6 +123,7 @@ export function AdminHeroPanel({
             name="mobile_image"
             accept="image/jpeg,image/png,image/webp"
             caption={items.mobileImageUrl ? "Yeni mobil şəkil" : "Mobil şəkil"}
+            hint="Şaquli şəkil (9:16), 1440×2560 piksel tövsiyə olunur, ən azı 1080×1920. JPEG, PNG və ya WebP, maksimum 5 MB."
           />
         </div>
 

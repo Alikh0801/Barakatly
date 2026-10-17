@@ -73,6 +73,7 @@ export function AdminAuthImagePanel({
             name="image"
             accept="image/jpeg,image/png,image/webp"
             caption="Yeni şəkil"
+            hint="Şəkil yalnız geniş ekranlarda (1024 pikseldən) göstərilir. Şaquli şəkil, ən azı 1600×2000 piksel (4:5) tövsiyə olunur. JPEG, PNG və ya WebP, maksimum 5 MB. Boş buraxsanız mövcud şəkil qalır."
           />
         </div>
 
