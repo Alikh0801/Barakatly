@@ -60,15 +60,19 @@ export function ProductCard({ product }: { product: ProductListItem }) {
               <ImageWithSkeleton
                 src={imageUrl}
                 alt={product.title}
-                className={[
-                  "h-full w-full object-cover",
-                  outOfStock ? "opacity-60 grayscale" : "",
-                ].join(" ")}
+                className="h-full w-full object-cover"
                 skeletonClassName="rounded-none"
               />
             ) : (
               <ProductImagePlaceholder className="h-full w-full" />
             )}
+            {outOfStock ? (
+              // The photo keeps its colours; a soft strip over its foot says
+              // it is sold out. z-20: the photo itself sits on z-10.
+              <span className="pointer-events-none absolute inset-x-0 bottom-0 z-20 bg-rose-500/75 py-1.5 text-center text-xs font-semibold tracking-wide text-white backdrop-blur-sm">
+                Stokda qalmayıb
+              </span>
+            ) : null}
           </div>
         </Link>
         {/* Outside the link, so a tap on the heart never opens the product. */}
@@ -98,7 +102,7 @@ export function ProductCard({ product }: { product: ProductListItem }) {
           </div>
         ) : null}
 
-        <div className="mt-3 flex items-center justify-between gap-2">
+        <div className="mt-3 flex min-h-9 items-center justify-between gap-2">
           <div className="min-w-0 flex items-baseline gap-1">
             <span className="truncate text-sm font-semibold text-zinc-900">
               {formatPrice(price)}
@@ -109,12 +113,6 @@ export function ProductCard({ product }: { product: ProductListItem }) {
           </div>
           {outOfStock ? null : <AddToCartButton product={product} />}
         </div>
-
-        {outOfStock ? (
-          <p className="mt-2 inline-flex rounded-full bg-amber-50 px-2.5 py-1 text-[11px] font-medium text-amber-800 ring-1 ring-amber-200">
-            Stokda qalmayıb
-          </p>
-        ) : null}
       </div>
     </article>
   );
