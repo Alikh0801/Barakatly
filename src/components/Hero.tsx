@@ -84,30 +84,11 @@ function Chip({
   );
 }
 
-const STAT_ICONS: Record<keyof HeroStats, React.ReactNode> = {
-  // A sprout: the farms.
-  farmers: (
-    <path
-      d="M12 20v-7m0 0c0-3.5-2.5-6-6.5-6 0 3.5 2.5 6 6.5 6Zm0-2c0-3.5 2.5-6 6.5-6 0 3.5-2.5 6-6.5 6Z"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-  ),
-  // A basket: the products.
-  products: (
-    <>
-      <path d="M4 10h16l-1.6 8.4A2 2 0 0 1 16.4 20H7.6a2 2 0 0 1-2-1.6L4 10Z" strokeLinejoin="round" />
-      <path d="m8 10 3-6m5 6-3-6M9.5 14v2.5m5-2.5v2.5" strokeLinecap="round" strokeLinejoin="round" />
-    </>
-  ),
-  // A smile: the happy customers.
-  customers: (
-    <>
-      <circle cx="12" cy="12" r="8.5" />
-      <path d="M8.5 13.5a4 4 0 0 0 7 0M9.5 9.5h.01M14.5 9.5h.01" strokeLinecap="round" strokeLinejoin="round" />
-    </>
-  ),
-};
+/** "15K+" -> ["15K", "+"]: trailing signs take the accent colour. */
+function splitFigure(value: string): [string, string] {
+  const match = value.match(/^(.*?)([^\p{L}\p{N}]*)$/u);
+  return match ? [match[1], match[2]] : [value, ""];
+}
 
 const STAT_COLUMNS: Record<number, string> = {
   1: "grid-cols-1",
@@ -115,36 +96,26 @@ const STAT_COLUMNS: Record<number, string> = {
   3: "grid-cols-3",
 };
 
-/**
- * The admin's figures under the buttons, on one frosted strip so they read
- * as a set over any photo. Ones left empty are skipped.
- */
+/** The admin's figures under the buttons; ones left empty are skipped. */
 function HeroStatsRow({ stats }: { stats: HeroStats }) {
   const shown = HERO_STAT_FIELDS.filter((field) => stats[field.key]);
   if (shown.length === 0) return null;
 
   return (
-    <dl
-      className={`mt-8 grid w-full divide-x divide-white/15 overflow-hidden rounded-2xl bg-black/25 shadow-[0_8px_32px_rgba(0,0,0,0.25)] ring-1 ring-white/15 backdrop-blur-md sm:w-auto md:inline-grid ${STAT_COLUMNS[shown.length]}`}
-    >
-      {shown.map((field) => (
-        <div
-          key={field.key}
-          className="flex min-w-0 flex-col items-center gap-2 px-2 py-4 text-center sm:flex-row sm:gap-3 sm:px-6 sm:py-5 sm:text-left"
-        >
-          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-emerald-400/15 text-emerald-300 ring-1 ring-emerald-300/30 sm:h-11 sm:w-11">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true" className="h-[18px] w-[18px] sm:h-5 sm:w-5">
-              {STAT_ICONS[field.key]}
-            </svg>
-          </span>
-          <div className="flex min-w-0 flex-col-reverse">
-            <dt className="text-[11px] leading-4 text-white/70 sm:text-sm">{field.label}</dt>
-            <dd className="text-xl font-bold leading-tight tracking-tight text-white sm:text-[28px]">
-              {stats[field.key]}
+    // A grid on phones keeps all three on one row; from md they sit left.
+    <dl className={`mt-9 grid gap-x-4 md:flex md:gap-x-14 ${STAT_COLUMNS[shown.length]}`}>
+      {shown.map((field) => {
+        const [number, suffix] = splitFigure(stats[field.key]);
+        return (
+          <div key={field.key} className="flex flex-col-reverse items-center md:items-start">
+            <dt className="mt-1.5 text-center text-xs font-medium text-white/75 sm:text-sm md:text-left">{field.label}</dt>
+            <dd className="whitespace-nowrap text-[26px] font-extrabold leading-none tracking-tight text-white [text-shadow:0_2px_16px_rgba(0,0,0,0.35)] sm:text-[40px]">
+              {number}
+              {suffix ? <span className="text-emerald-300">{suffix}</span> : null}
             </dd>
           </div>
-        </div>
-      ))}
+        );
+      })}
     </dl>
   );
 }
