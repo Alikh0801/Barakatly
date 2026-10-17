@@ -3,6 +3,7 @@ import { CartView } from "@/components/cart/CartView";
 import { SolidPageShell } from "@/components/layout/SolidPageShell";
 import { getSessionUser } from "@/lib/auth/session";
 import { getCartItems } from "@/lib/cart/queries";
+import { getAppliedPromo } from "@/lib/promo/server";
 
 export const metadata = {
   title: "Səbət",
@@ -10,6 +11,9 @@ export const metadata = {
 
 export default async function CartPage() {
   const user = await getSessionUser();
+  const [items, promo] = user
+    ? await Promise.all([getCartItems(), getAppliedPromo()])
+    : [[], null];
 
   return (
     <SolidPageShell>
@@ -22,7 +26,7 @@ export default async function CartPage() {
         </p>
         <div className="mt-8">
           {user ? (
-            <CartView items={await getCartItems()} />
+            <CartView items={items} promo={promo} />
           ) : (
             <div className="rounded-3xl bg-white p-10 text-center shadow-sm ring-1 ring-zinc-200">
               <p className="text-lg font-medium text-zinc-900">

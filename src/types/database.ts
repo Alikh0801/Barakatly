@@ -232,6 +232,51 @@ export interface Database {
         };
         Relationships: [];
       };
+      promo_codes: {
+        Row: {
+          id: string;
+          code: string;
+          name: string;
+          discount_type: "percent" | "fixed";
+          discount_value: number;
+          min_order_amount: number;
+          expires_at: string | null;
+          max_uses: number | null;
+          once_per_customer: boolean;
+          is_active: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          code: string;
+          name: string;
+          discount_type: "percent" | "fixed";
+          discount_value: number;
+          min_order_amount?: number;
+          expires_at?: string | null;
+          max_uses?: number | null;
+          once_per_customer?: boolean;
+          is_active?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          code?: string;
+          name?: string;
+          discount_type?: "percent" | "fixed";
+          discount_value?: number;
+          min_order_amount?: number;
+          expires_at?: string | null;
+          max_uses?: number | null;
+          once_per_customer?: boolean;
+          is_active?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
       wishlist_items: {
         Row: {
           customer_id: string;
@@ -575,6 +620,9 @@ export interface Database {
           subtotal: number;
           delivery_fee: number;
           total_amount: number;
+          promo_code_id: string | null;
+          promo_code: string | null;
+          discount_amount: number;
           courier_id: string | null;
           created_at: string;
           updated_at: string;
@@ -592,6 +640,9 @@ export interface Database {
           subtotal?: number;
           delivery_fee?: number;
           total_amount?: number;
+          promo_code_id?: string | null;
+          promo_code?: string | null;
+          discount_amount?: number;
           courier_id?: string | null;
           created_at?: string;
           updated_at?: string;
@@ -609,6 +660,9 @@ export interface Database {
           subtotal?: number;
           delivery_fee?: number;
           total_amount?: number;
+          promo_code_id?: string | null;
+          promo_code?: string | null;
+          discount_amount?: number;
           courier_id?: string | null;
           created_at?: string;
           updated_at?: string;
@@ -844,15 +898,18 @@ export interface Database {
       };
       place_order: {
         Args: {
-          p_customer_id: string;
           p_contact_phone: string;
           p_delivery_address_text: string | null;
           p_bank_id: string;
           p_receipt_url: string;
-          p_delivery_fee: number;
           p_items: Json;
+          p_promo_code?: string | null;
         };
         Returns: { order_id: string; order_code: string }[];
+      };
+      check_promo_code: {
+        Args: { p_code: string };
+        Returns: Json;
       };
     };
     Enums: {

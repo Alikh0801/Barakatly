@@ -5,6 +5,7 @@ import { SolidPageShell } from "@/components/layout/SolidPageShell";
 import { getActiveBanks } from "@/lib/checkout/queries";
 import { getProfile } from "@/lib/auth/session";
 import { getCartItems } from "@/lib/cart/queries";
+import { getAppliedPromo } from "@/lib/promo/server";
 
 export const metadata = {
   title: "Ödəniş",
@@ -17,7 +18,7 @@ export default async function CheckoutPage() {
     redirect("/signin?next=/checkout");
   }
 
-  const items = await getCartItems();
+  const [items, promo] = await Promise.all([getCartItems(), getAppliedPromo()]);
 
   return (
     <SolidPageShell>
@@ -41,6 +42,7 @@ export default async function CheckoutPage() {
             defaultPhone={profile.phone}
             items={items}
             userId={profile.id}
+            promo={promo}
           />
         </div>
       </div>

@@ -36,6 +36,16 @@ const navItems: NavItem[] = [
     ),
   },
   {
+    href: "/admin/promo-codes",
+    label: "Promokodlar",
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-4 w-4">
+        <path d="M3.5 12.6V5a1.5 1.5 0 0 1 1.5-1.5h7.6a1.5 1.5 0 0 1 1.06.44l6.9 6.9a1.5 1.5 0 0 1 0 2.12l-7.6 7.6a1.5 1.5 0 0 1-2.12 0l-6.9-6.9a1.5 1.5 0 0 1-.44-1.06Z" strokeLinejoin="round" />
+        <circle cx="8.5" cy="8.5" r="1.5" />
+      </svg>
+    ),
+  },
+  {
     href: "/admin/orders",
     label: "Sifarişlər",
     badgeKey: "orders",

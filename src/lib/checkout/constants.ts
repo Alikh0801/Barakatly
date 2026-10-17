@@ -1,3 +1,4 @@
+/** Shown in the cart and checkout. place_order() charges its own copy (migration 042): keep them equal. */
 export const DELIVERY_FEE = 5;
 
 /**

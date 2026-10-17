@@ -95,6 +95,11 @@ function PendingPaymentCard({ payment }: { payment: PendingPaymentWithReceipt })
           <div className="font-semibold text-zinc-900">
             {order ? formatPrice(order.total_amount) : "—"}
           </div>
+          {order?.promo_code && Number(order.discount_amount) > 0 ? (
+            <div className="mt-0.5 text-xs text-emerald-700">
+              {order.promo_code} · −{formatPrice(Number(order.discount_amount))}
+            </div>
+          ) : null}
           <div className="mt-2 text-xs font-medium text-amber-800">
             {getPaymentStatusLabel(payment.status)}
           </div>
@@ -348,6 +353,11 @@ export function AdminOrdersPanel({
                         <div className="font-semibold text-zinc-900">
                           {formatPrice(order.total_amount)}
                         </div>
+                        {order.promo_code && Number(order.discount_amount) > 0 ? (
+                          <div className="mt-0.5 text-xs text-emerald-700">
+                            {order.promo_code} · −{formatPrice(Number(order.discount_amount))}
+                          </div>
+                        ) : null}
                         <div className="mt-2 flex flex-wrap gap-2 sm:justify-end">
                           <span className="inline-flex rounded-full bg-zinc-100 px-2.5 py-0.5 text-xs font-medium text-zinc-700 ring-1 ring-zinc-200">
                             {getOrderStatusLabel(order.status)}

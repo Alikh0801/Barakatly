@@ -21,6 +21,8 @@ export type AdminPendingPayment = Payment & {
     | "customer_id"
     | "status"
     | "total_amount"
+    | "promo_code"
+    | "discount_amount"
     | "contact_phone"
     | "created_at"
   > | null;
@@ -40,6 +42,8 @@ export async function getPendingPayments(): Promise<AdminPendingPayment[]> {
         customer_id,
         status,
         total_amount,
+        promo_code,
+        discount_amount,
         contact_phone,
         created_at
       )

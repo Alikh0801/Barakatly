@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   startTransition,
@@ -11,6 +12,7 @@ import {
 } from "react";
 import { placeOrder, type PlaceOrderState } from "@/lib/checkout/actions";
 import { DELIVERY_FEE, RECEIPT_MAX_LABEL } from "@/lib/checkout/constants";
+import type { AppliedPromo } from "@/lib/promo/constants";
 import { uploadReceipt, validateReceiptFile } from "@/lib/checkout/upload-receipt";
 import {
   AZ_PHONE_FORMAT_ERROR,
@@ -130,11 +132,14 @@ export function CheckoutForm({
   defaultPhone,
   items,
   userId,
+  promo,
 }: {
   banks: Bank[];
   defaultPhone?: string | null;
   items: CartLineItem[];
   userId: string;
+  /** The code applied in the cart; placeOrder() judges it again. */
+  promo: AppliedPromo | null;
 }) {
   const router = useRouter();
   const [state, formAction, pending] = useActionState(placeOrder, initialState);
@@ -222,7 +227,8 @@ export function CheckoutForm({
   }
 
   const subtotal = items.reduce((sum, i) => sum + i.price * i.quantity, 0);
-  const total = subtotal + (items.length > 0 ? DELIVERY_FEE : 0);
+  const discount = promo && !promo.error ? Math.min(promo.discount, subtotal) : 0;
+  const total = subtotal - discount + (items.length > 0 ? DELIVERY_FEE : 0);
 
   /* eslint-disable react-hooks/set-state-in-effect -- sessionStorage does not
      exist during SSR, so the draft can only be read once mounted; reading it
@@ -448,6 +454,14 @@ export function CheckoutForm({
                 {formatPrice(subtotal)}
               </span>
             </div>
+            {discount > 0 && promo ? (
+              <div className="flex justify-between text-emerald-700">
+                <span>
+                  Promokod <span className="font-semibold">{promo.code}</span>
+                </span>
+                <span className="font-medium">−{formatPrice(discount)}</span>
+              </div>
+            ) : null}
             <div className="flex justify-between text-zinc-700">
               <span>Çatdırılma</span>
               <span className="font-medium text-zinc-900">
@@ -459,6 +473,16 @@ export function CheckoutForm({
               <span>{formatPrice(total)}</span>
             </div>
           </div>
+
+          {promo?.error ? (
+            <p className="mt-4 rounded-xl bg-amber-50 px-3 py-2 text-sm text-amber-800 ring-1 ring-amber-200">
+              <span className="font-semibold">{promo.code}</span> promokodu tətbiq olunmadı: {promo.error}{" "}
+              <Link href="/cart" className="font-semibold underline">
+                Səbətdə dəyişin
+              </Link>
+              .
+            </p>
+          ) : null}
 
           {attempted && Object.values(errors).some(Boolean) ? (
             <p className="mt-4 rounded-xl bg-amber-50 px-3 py-2 text-sm text-amber-800 ring-1 ring-amber-200">

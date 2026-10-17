@@ -1,9 +1,9 @@
 "use server";
 
+import { cookies } from "next/headers";
 import { after } from "next/server";
 import { getSessionUser } from "@/lib/auth/session";
 import {
-  DELIVERY_FEE,
   RECEIPT_MAX_BYTES,
   RECEIPT_TOO_LARGE_ERROR,
   RECEIPT_TYPE_ERROR,
@@ -18,6 +18,8 @@ import {
 } from "@/lib/phone/az";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
+import { PROMO_COOKIE, describePromoError } from "@/lib/promo/constants";
+import { getAppliedPromo } from "@/lib/promo/server";
 
 export type CheckoutCartItem = {
   productId: string;
@@ -34,6 +36,11 @@ function describePlaceOrderError(message: string): string {
   if (message === "EMPTY_CART") return "Səbətiniz boşdur.";
   if (message === "PRODUCT_NOT_FOUND") {
     return "Səbətdəki bəzi məhsullar artıq mövcud deyil.";
+  }
+  if (message.startsWith("PROMO_")) {
+    // The code stopped working between the summary and the order, so the
+    // amount the customer transferred no longer matches.
+    return `${describePromoError(message.slice("PROMO_".length))} Səhifəni yeniləyin: məbləğ dəyişə bilər.`;
   }
   if (message.startsWith("OUT_OF_STOCK:")) {
     const title = message.slice("OUT_OF_STOCK:".length);
@@ -154,6 +161,11 @@ export async function placeOrder(
     return { error: "Seçilmiş bank tapılmadı." };
   }
 
+  // Only a code that works right now is sent: checkout showed the total
+  // without it otherwise, and that is the amount the customer transferred.
+  const promo = await getAppliedPromo();
+  const promoCode = promo && !promo.error ? promo.code : null;
+
   // Product validation, pricing, order/items/payment creation, and the stock
   // decrement all happen atomically inside place_order() — either everything
   // commits together or nothing does, so a stock shortfall can never leave
@@ -161,16 +173,15 @@ export async function placeOrder(
   const { data: placed, error: placeError } = await supabase.rpc(
     "place_order",
     {
-      p_customer_id: user.id,
       p_contact_phone: contactPhone,
       p_delivery_address_text: deliveryAddress || null,
       p_bank_id: bankId,
       p_receipt_url: receiptPath,
-      p_delivery_fee: DELIVERY_FEE,
       p_items: cartItems.map((item) => ({
         product_id: item.productId,
         quantity: item.quantity,
       })),
+      p_promo_code: promoCode,
     }
   );
 
@@ -182,6 +193,8 @@ export async function placeOrder(
   }
 
   const { order_id: orderId, order_code: orderCode } = placed[0];
+
+  if (promo) (await cookies()).delete(PROMO_COOKIE);
 
   // Clearing the cart and notifying admins don't change what the customer
   // sees next, so defer them past the response instead of making them wait

@@ -1,7 +1,8 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
-import { useMemo, useTransition } from "react";
+import { useActionState, useMemo, useTransition } from "react";
 import {
   clearCart,
   removeFromCart,
@@ -10,12 +11,15 @@ import {
 import type { CartLineItem } from "@/lib/cart/queries";
 import { formatPrice, unitLabel } from "@/lib/shop/format";
 import { DELIVERY_FEE } from "@/lib/checkout/constants";
+import { applyPromoCode, removePromoCode } from "@/lib/promo/actions";
+import type { AppliedPromo } from "@/lib/promo/constants";
+import { Spinner } from "@/components/ui/Spinner";
 import { ImageWithSkeleton } from "@/components/ui/ImageWithSkeleton";
 
 function groupByFarmer(items: CartLineItem[]) {
   const groups = new Map<
     string,
-    { farmerId: string; farmerName: string; items: CartLineItem[] }
+    { farmerId: string; farmerName: string; farmerAvatarUrl: string | null; items: CartLineItem[] }
   >();
 
   for (const item of items) {
@@ -27,6 +31,7 @@ function groupByFarmer(items: CartLineItem[]) {
       groups.set(key, {
         farmerId: item.farmerId,
         farmerName: item.farmerName || "Fermer",
+        farmerAvatarUrl: item.farmerAvatarUrl,
         items: [item],
       });
     }
@@ -35,12 +40,100 @@ function groupByFarmer(items: CartLineItem[]) {
   return [...groups.values()];
 }
 
-export function CartView({ items }: { items: CartLineItem[] }) {
+function FarmerAvatar({ name, url }: { name: string; url: string | null }) {
+  return (
+    <span className="relative flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full bg-emerald-700 text-xs font-semibold text-white ring-2 ring-white shadow-sm">
+      {url ? (
+        <Image src={url} alt="" fill sizes="32px" className="object-cover" />
+      ) : (
+        name.slice(0, 1).toUpperCase()
+      )}
+    </span>
+  );
+}
+
+/** The promo code field in the order summary, or the code once applied. */
+function PromoCodeBox({ promo }: { promo: AppliedPromo | null }) {
+  const [state, applyAction, applying] = useActionState(applyPromoCode, {});
+  const [removing, startRemove] = useTransition();
+
+  if (promo) {
+    return (
+      <div
+        className={`rounded-xl px-3 py-2.5 text-sm ring-1 ${
+          promo.error ? "bg-amber-50 ring-amber-200" : "bg-emerald-50 ring-emerald-200"
+        }`}
+      >
+        <div className="flex items-center justify-between gap-3">
+          <div className="min-w-0">
+            <p className={`font-semibold tracking-wide ${promo.error ? "text-amber-900" : "text-emerald-800"}`}>
+              {promo.code}
+            </p>
+            {promo.name && !promo.error ? (
+              <p className="truncate text-xs text-emerald-700">{promo.name}</p>
+            ) : null}
+          </div>
+          <button
+            type="button"
+            onClick={() => startRemove(() => removePromoCode())}
+            disabled={removing}
+            className="shrink-0 text-xs font-medium text-zinc-500 hover:text-rose-600 disabled:opacity-60"
+          >
+            {removing ? "Silinir..." : "Sil"}
+          </button>
+        </div>
+        {promo.error ? <p className="mt-1 text-xs text-amber-800">{promo.error}</p> : null}
+      </div>
+    );
+  }
+
+  return (
+    <form action={applyAction}>
+      <label htmlFor="promo-code" className="text-sm font-medium text-zinc-700">
+        Promokod
+      </label>
+      <div className="mt-1.5 flex gap-2">
+        <input
+          id="promo-code"
+          name="code"
+          autoComplete="off"
+          autoCapitalize="characters"
+          spellCheck={false}
+          maxLength={30}
+          placeholder="Kodu daxil edin"
+          className="min-w-0 flex-1 rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-base uppercase text-zinc-900 outline-none ring-emerald-500 placeholder:normal-case focus:ring-2 sm:text-sm"
+        />
+        <button
+          type="submit"
+          disabled={applying}
+          className="inline-flex shrink-0 items-center gap-1.5 rounded-xl bg-zinc-900 px-4 text-sm font-semibold text-white transition hover:bg-zinc-800 disabled:opacity-70"
+        >
+          {applying ? <Spinner className="h-3.5 w-3.5" /> : null}
+          Tətbiq et
+        </button>
+      </div>
+      {state.error ? (
+        <p role="alert" className="mt-1.5 text-xs text-rose-600">
+          {state.error}
+        </p>
+      ) : null}
+    </form>
+  );
+}
+
+export function CartView({
+  items,
+  promo,
+}: {
+  items: CartLineItem[];
+  promo: AppliedPromo | null;
+}) {
   const [pending, startTransition] = useTransition();
 
   const groups = useMemo(() => groupByFarmer(items), [items]);
   const subtotal = items.reduce((sum, i) => sum + i.price * i.quantity, 0);
-  const total = subtotal + (items.length > 0 ? DELIVERY_FEE : 0);
+  const discount = promo && !promo.error ? Math.min(promo.discount, subtotal) : 0;
+  const total = subtotal - discount + (items.length > 0 ? DELIVERY_FEE : 0);
   // Stock can drop after an item was added, so catch it here instead of
   // letting checkout fail with OUT_OF_STOCK.
   const hasStockIssue = items.some(
@@ -91,9 +184,12 @@ export function CartView({ items }: { items: CartLineItem[] }) {
         {groups.map((group) => (
           <section key={group.farmerId || group.farmerName}>
             <div className="mb-3 flex items-center justify-between gap-3">
-              <h2 className="text-sm font-semibold text-zinc-900">
-                {group.farmerName}
-              </h2>
+              <div className="flex min-w-0 items-center gap-2.5">
+                <FarmerAvatar name={group.farmerName} url={group.farmerAvatarUrl} />
+                <h2 className="truncate text-sm font-semibold text-zinc-900">
+                  {group.farmerName}
+                </h2>
+              </div>
               {group.farmerId ? (
                 <Link
                   href={`/farmers/${group.farmerId}`}
@@ -213,6 +309,12 @@ export function CartView({ items }: { items: CartLineItem[] }) {
               {formatPrice(subtotal)}
             </span>
           </div>
+          {discount > 0 ? (
+            <div className="flex justify-between text-emerald-700">
+              <span>Promokod endirimi</span>
+              <span className="font-medium">−{formatPrice(discount)}</span>
+            </div>
+          ) : null}
           <div className="flex justify-between text-zinc-700">
             <span>Kuryer haqqı</span>
             <span className="font-medium text-zinc-900">
@@ -223,6 +325,10 @@ export function CartView({ items }: { items: CartLineItem[] }) {
             <span>Ümumi</span>
             <span>{formatPrice(total)}</span>
           </div>
+        </div>
+
+        <div className="mt-5 border-t border-zinc-100 pt-5">
+          <PromoCodeBox promo={promo} />
         </div>
 
         {hasStockIssue ? (

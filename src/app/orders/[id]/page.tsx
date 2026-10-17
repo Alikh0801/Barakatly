@@ -233,6 +233,19 @@ export default async function OrderDetailPage({
                     {formatPrice(order.subtotal)}
                   </span>
                 </div>
+                {Number(order.discount_amount ?? 0) > 0 ? (
+                  <div className="flex justify-between text-emerald-700">
+                    <span>
+                      Promokod
+                      {order.promo_code ? (
+                        <span className="font-semibold"> {order.promo_code}</span>
+                      ) : null}
+                    </span>
+                    <span className="font-medium">
+                      −{formatPrice(Number(order.discount_amount))}
+                    </span>
+                  </div>
+                ) : null}
                 <div className="flex justify-between text-zinc-700">
                   <span>Çatdırılma</span>
                   <span className="font-medium text-zinc-900">
