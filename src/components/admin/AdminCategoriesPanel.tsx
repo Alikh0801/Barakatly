@@ -27,6 +27,7 @@ export function AdminCategoriesPanel({
     createCategory,
     initialState
   );
+  const approvedCount = categories.filter((category) => category.approved).length;
 
   return (
     <div className="space-y-6">
@@ -47,16 +48,13 @@ export function AdminCategoriesPanel({
               className="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-base text-zinc-900 sm:text-sm placeholder:text-zinc-500"
             />
           </label>
-          <label className="block space-y-1.5">
+          <div className="space-y-1.5">
             <span className="text-xs font-medium text-zinc-600">Sıra</span>
-            <input
-              name="sort_order"
-              type="number"
-              required
-              defaultValue={categories.length + 1}
-              className="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-base text-zinc-900 sm:text-sm"
-            />
-          </label>
+            <p className="flex h-[42px] items-center gap-2 rounded-xl bg-zinc-50 px-3 text-sm text-zinc-600 ring-1 ring-zinc-200">
+              <span className="font-semibold text-zinc-900">{approvedCount + 1}</span>
+              avtomatik — siyahının ən yuxarısında
+            </p>
+          </div>
           <div className="sm:col-span-2 lg:col-span-1">
             <FileSelectField
               name="image"
@@ -92,7 +90,7 @@ export function AdminCategoriesPanel({
       ) : (
         <div className="space-y-3">
           {categories.map((category) => (
-            <CategoryCard key={category.id} category={category} />
+            <CategoryCard key={category.id} category={category} total={approvedCount} />
           ))}
         </div>
       )}
@@ -100,7 +98,13 @@ export function AdminCategoriesPanel({
   );
 }
 
-function CategoryCard({ category }: { category: AdminCategory }) {
+/** Keeps the position field to digits, two at most. */
+function digitsOnly(event: React.FormEvent<HTMLInputElement>) {
+  const input = event.currentTarget;
+  input.value = input.value.replace(/\D/g, "").slice(0, 2);
+}
+
+function CategoryCard({ category, total }: { category: AdminCategory; total: number }) {
   const [updateState, updateAction, updatePending] = useActionState(
     updateCategory,
     initialState
@@ -153,7 +157,12 @@ function CategoryCard({ category }: { category: AdminCategory }) {
       <form action={updateAction} className="space-y-4">
         <input type="hidden" name="category_id" value={category.id} />
         <div className="flex flex-wrap items-start gap-4">
-          <div className="h-16 w-16 shrink-0 overflow-hidden rounded-2xl bg-zinc-100 ring-1 ring-zinc-200">
+          <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-2xl bg-zinc-100 ring-1 ring-zinc-200">
+            {category.position !== null ? (
+              <span className="absolute left-1 top-1 z-10 rounded-md bg-zinc-900/80 px-1.5 py-0.5 text-[11px] font-bold leading-none text-white">
+                {category.position}
+              </span>
+            ) : null}
             {category.image_url ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
@@ -177,16 +186,25 @@ function CategoryCard({ category }: { category: AdminCategory }) {
                 className="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-base text-zinc-900 sm:text-sm"
               />
             </label>
-            <label className="block space-y-1.5">
-              <span className="text-xs font-medium text-zinc-600">Sıra</span>
-              <input
-                name="sort_order"
-                type="number"
-                required
-                defaultValue={category.sort_order}
-                className="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-base text-zinc-900 sm:text-sm"
-              />
-            </label>
+            {category.position !== null ? (
+              <label className="block space-y-1.5">
+                <span className="block text-xs font-medium text-zinc-600">Sıra (1–{total})</span>
+                <input
+                  // Re-read the number after a move shifts this card's place.
+                  key={category.position}
+                  name="sort_order"
+                  type="text"
+                  inputMode="numeric"
+                  pattern="[0-9]{1,2}"
+                  maxLength={2}
+                  required
+                  defaultValue={category.position}
+                  onInput={digitsOnly}
+                  title={`1 ilə ${total} arasında rəqəm`}
+                  className="w-20 rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-center text-base font-semibold text-zinc-900 sm:text-sm"
+                />
+              </label>
+            ) : null}
             <div className="sm:col-span-2 lg:col-span-1">
               <FileSelectField
                 name="image"

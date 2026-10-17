@@ -231,26 +231,49 @@ export async function getAdminCouriers(): Promise<AdminCourier[]> {
   return (data ?? []) as unknown as AdminCourier[];
 }
 
-export type AdminCategory = Category & { subcategories: Subcategory[] };
+export type AdminCategory = Category & {
+  subcategories: Subcategory[];
+  /** 1..N among approved categories; null while awaiting approval. */
+  position: number | null;
+};
 
+/**
+ * Proposals awaiting approval first, then approved categories from the
+ * highest number down, so the newest sits on top. Positions are counted
+ * here rather than read raw, so older data with gaps still shows 1..N.
+ */
 export async function getAdminCategories(): Promise<AdminCategory[]> {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("categories")
     .select("*, subcategories(*)")
-    .order("sort_order", { ascending: true });
+    .order("sort_order", { ascending: true })
+    .order("created_at", { ascending: true });
 
   if (error) {
     console.error("[admin.getAdminCategories]", error.message);
     return [];
   }
 
-  return ((data ?? []) as unknown as AdminCategory[]).map((category) => ({
+  const rows = (data ?? []) as unknown as (Category & { subcategories: Subcategory[] | null })[];
+  const withSubs = (category: (typeof rows)[number], position: number | null): AdminCategory => ({
     ...category,
+    position,
     subcategories: [...(category.subcategories ?? [])].sort((a, b) =>
       a.name_az.localeCompare(b.name_az),
     ),
-  }));
+  });
+
+  const pending = rows
+    .filter((category) => !category.approved)
+    .sort((a, b) => b.created_at.localeCompare(a.created_at))
+    .map((category) => withSubs(category, null));
+  const approved = rows
+    .filter((category) => category.approved)
+    .map((category, index) => withSubs(category, index + 1))
+    .reverse();
+
+  return [...pending, ...approved];
 }
 
 export type AdminBank = Bank;

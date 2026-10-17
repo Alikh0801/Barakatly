@@ -12,11 +12,16 @@ import {
 export const metadata = { title: "Məhsullar - Admin" };
 
 export default async function AdminProductsPage() {
-  const [pending, approved, categories] = await Promise.all([
+  const [pending, approved, adminCategories] = await Promise.all([
     getAdminPendingProducts(),
     getAdminApprovedProducts(),
     getAdminCategories(),
   ]);
+  // The category list shows the newest first; a picker reads better in
+  // shop order.
+  const categories = [...adminCategories].sort(
+    (a, b) => (a.position ?? Infinity) - (b.position ?? Infinity),
+  );
 
   return (
     <AdminPageShell
