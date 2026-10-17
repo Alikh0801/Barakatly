@@ -851,9 +851,7 @@ export function FarmerProfileDashboard({
         avatarUrl={farmer.avatar_url}
         coverUrl={farmer.cover_url}
         locationText={farmer.location_text}
-        description={farmer.description}
         verified={Boolean(farmer.verified_at)}
-        createdAt={farmer.created_at}
         stats={stats}
         coverHint={
           <button
@@ -976,9 +974,7 @@ export function PublicFarmerProfile({
         avatarUrl={farmer.avatar_url}
         coverUrl={farmer.cover_url}
         locationText={farmer.location_text}
-        description={farmer.description}
         verified={Boolean(farmer.verified_at)}
-        createdAt={farmer.created_at}
         stats={stats}
         actions={
           <>

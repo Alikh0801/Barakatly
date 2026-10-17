@@ -40,23 +40,6 @@ function PinIcon({ className }: { className?: string }) {
   );
 }
 
-function CalendarIcon({ className }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true" className={className}>
-      <rect x="3" y="5" width="18" height="16" rx="2" />
-      <path d="M8 3v4M16 3v4M3 10h18" strokeLinecap="round" />
-    </svg>
-  );
-}
-
-function CheckIcon({ className }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true" className={className}>
-      <path d="M5 12l5 5L19 7" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
-}
-
 function StarIcon({ className }: { className?: string }) {
   return (
     <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" className={className}>
@@ -142,9 +125,7 @@ export function FarmerProfileHeader({
   avatarUrl,
   coverUrl,
   locationText,
-  description,
   verified,
-  createdAt,
   stats,
   actions,
   coverHint,
@@ -153,9 +134,7 @@ export function FarmerProfileHeader({
   avatarUrl: string | null;
   coverUrl: string | null;
   locationText: string | null;
-  description: string | null;
   verified: boolean;
-  createdAt: string;
   stats: FarmerProfileStats;
   actions?: React.ReactNode;
   /** Extra line under the missing-cover notice, e.g. a link to add one. */
@@ -238,31 +217,6 @@ export function FarmerProfileHeader({
           <StatCard value={stats.followerCount} label="İzləyici" />
         </div>
 
-        <div className="mt-4 rounded-2xl bg-white p-5 ring-1 ring-zinc-200/70 sm:p-6">
-          {description ? (
-            <p className="max-w-4xl text-[15px] leading-7 text-zinc-700 sm:text-base">
-              {description}
-            </p>
-          ) : null}
-          <div className={`flex flex-wrap items-center gap-x-5 gap-y-2.5 text-sm text-zinc-600 sm:text-[15px] ${description ? "mt-4" : ""}`}>
-            {locationText ? (
-              <span className="inline-flex items-center gap-1.5">
-                <PinIcon className="h-4 w-4 text-[#2f7a3c]" />
-                {locationText}
-              </span>
-            ) : null}
-            <span className="inline-flex items-center gap-1.5">
-              <CalendarIcon className="h-4 w-4 text-[#2f7a3c]" />
-              {memberSinceLabel(createdAt)}
-            </span>
-            {verified ? (
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-[#e4f2e6] px-3 py-1 text-xs font-semibold text-[#23602f] sm:text-[13px]">
-                <CheckIcon className="h-3.5 w-3.5" />
-                Təsdiqlənmiş fermer
-              </span>
-            ) : null}
-          </div>
-        </div>
       </div>
     </section>
   );
