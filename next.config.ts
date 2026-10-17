@@ -27,6 +27,11 @@ const nextConfig: NextConfig = {
   },
   images: {
     formats: ["image/avif", "image/webp"],
+    // Every upload gets a new file name (timestamp + UUID), so an image at a
+    // given URL never changes. The default 4-hour TTL made Vercel transform
+    // each image again every 4 hours, and every one of those counts against
+    // the monthly Image Transformations quota.
+    minimumCacheTTL: 2678400, // 31 days
     remotePatterns: [
       {
         protocol: "https",
