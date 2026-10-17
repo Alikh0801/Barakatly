@@ -44,6 +44,12 @@ export async function GET(request: Request) {
     }
   }
 
+  // An expired password reset link goes back to the reset form, where the
+  // 6-digit code from the same email still works.
+  if (next === "/reset-password" || type === "recovery") {
+    return NextResponse.redirect(`${origin}/forgot-password?error=link-expired`);
+  }
+
   return NextResponse.redirect(
     `${origin}/signin?error=auth&message=link-expired`
   );

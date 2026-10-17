@@ -98,6 +98,12 @@ export function translateAuthError(message: string): string {
   if (normalized.includes("rate limit")) {
     return "Çox sayda cəhd etdiniz. Bir az gözləyin.";
   }
+  if (normalized.includes("different from the old password")) {
+    return "Yeni şifrə köhnə şifrədən fərqli olmalıdır.";
+  }
+  if (normalized.includes("auth session missing")) {
+    return "Sessiyanın vaxtı bitib. Şifrəni bərpa etməyə yenidən başlayın.";
+  }
   if (normalized.includes("password")) {
     return "Şifrə ən azı 6 simvol olmalıdır.";
   }

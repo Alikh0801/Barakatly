@@ -70,6 +70,14 @@ export function SignInForm({ next }: { next?: string }) {
           label="Şifrə"
           autoComplete="current-password"
         />
+        <div className="-mt-2 text-right">
+          <Link
+            href="/forgot-password"
+            className="text-sm font-medium text-emerald-700 hover:underline"
+          >
+            Şifrəni unutmusunuz?
+          </Link>
+        </div>
 
         {TURNSTILE_SITE_KEY ? (
           <Turnstile ref={turnstileRef} siteKey={TURNSTILE_SITE_KEY} />
