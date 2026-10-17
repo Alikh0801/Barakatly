@@ -26,6 +26,9 @@ import {
   type AuthImageItems,
   type FaqItem,
   type HeroItems,
+  type HeroStats,
+  HERO_STAT_FIELDS,
+  HERO_STAT_MAX_LENGTH,
   type WhyBarakatlyFeature,
 } from "@/lib/content/defaults";
 import { CONTACT_KEY } from "@/lib/content/defaults";
@@ -98,10 +101,22 @@ function parseHeroForm(
   if (highlight.length > 60) return "Başlığın 2-ci sətri çox uzundur.";
   if (body.length > 400) return "Alt mətn çox uzundur.";
 
+  const stats: HeroStats = { farmers: "", products: "", customers: "" };
+  for (const field of HERO_STAT_FIELDS) {
+    const value = String(formData.get(`stat_${field.key}`) ?? "").trim();
+    if (value.length > HERO_STAT_MAX_LENGTH) {
+      return `"${field.label}" göstəricisi ən çox ${HERO_STAT_MAX_LENGTH} simvol ola bilər.`;
+    }
+    if (value && !/\d/.test(value)) {
+      return `"${field.label}" göstəricisində rəqəm olmalıdır (məsələn 200+).`;
+    }
+    stats[field.key] = value;
+  }
+
   return {
     title,
     body,
-    items: { highlight, imageUrl: currentImageUrl, mobileImageUrl },
+    items: { highlight, imageUrl: currentImageUrl, mobileImageUrl, stats },
   };
 }
 
@@ -174,12 +189,23 @@ export async function resetHeroContent(
   await requireAdmin();
 
   const supabase = await createClient();
+  // The button restores the text and photo; the figures are kept.
+  const { data: existing } = await supabase
+    .from("site_content")
+    .select("items")
+    .eq("key", HERO_KEY)
+    .maybeSingle();
+  const existingStats = (existing?.items as Partial<HeroItems> | null)?.stats;
+
   const { error } = await supabase.from("site_content").upsert(
     {
       key: HERO_KEY,
       title: HERO_DEFAULT.title,
       body: HERO_DEFAULT.body,
-      items: { ...HERO_DEFAULT_ITEMS },
+      items: {
+        ...HERO_DEFAULT_ITEMS,
+        stats: { ...HERO_DEFAULT_ITEMS.stats, ...existingStats },
+      },
     },
     { onConflict: "key" }
   );

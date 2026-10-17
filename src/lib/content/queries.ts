@@ -24,6 +24,8 @@ import {
   type AuthImageItems,
   type FaqItem,
   type HeroItems,
+  type HeroStats,
+  HERO_STAT_MAX_LENGTH,
   type WhyBarakatlyFeature,
 } from "@/lib/content/defaults";
 import { createPublicClient } from "@/lib/supabase/public";
@@ -153,8 +155,19 @@ function parseHeroItems(value: unknown): HeroItems {
   const imageUrl =
     String(record.imageUrl ?? "").trim() || HERO_DEFAULT_ITEMS.imageUrl;
   const mobileImageUrl = String(record.mobileImageUrl ?? "").trim();
+  const rawStats =
+    record.stats && typeof record.stats === "object" && !Array.isArray(record.stats)
+      ? (record.stats as Record<string, unknown>)
+      : {};
+  const stat = (key: keyof HeroStats) =>
+    String(rawStats[key] ?? "").trim().slice(0, HERO_STAT_MAX_LENGTH);
 
-  return { highlight, imageUrl, mobileImageUrl };
+  return {
+    highlight,
+    imageUrl,
+    mobileImageUrl,
+    stats: { farmers: stat("farmers"), products: stat("products"), customers: stat("customers") },
+  };
 }
 
 async function fetchHeroContent(): Promise<HeroContent> {
@@ -171,7 +184,7 @@ async function fetchHeroContent(): Promise<HeroContent> {
       key: HERO_DEFAULT.key,
       title: HERO_DEFAULT.title,
       body: HERO_DEFAULT.body,
-      items: { ...HERO_DEFAULT_ITEMS },
+      items: { ...HERO_DEFAULT_ITEMS, stats: { ...HERO_DEFAULT_ITEMS.stats } },
     };
   }
 
@@ -180,7 +193,7 @@ async function fetchHeroContent(): Promise<HeroContent> {
       key: HERO_DEFAULT.key,
       title: HERO_DEFAULT.title,
       body: HERO_DEFAULT.body,
-      items: { ...HERO_DEFAULT_ITEMS },
+      items: { ...HERO_DEFAULT_ITEMS, stats: { ...HERO_DEFAULT_ITEMS.stats } },
     };
   }
 
@@ -211,7 +224,7 @@ export async function getAdminHeroContent(): Promise<HeroContent> {
       key: HERO_DEFAULT.key,
       title: HERO_DEFAULT.title,
       body: HERO_DEFAULT.body,
-      items: { ...HERO_DEFAULT_ITEMS },
+      items: { ...HERO_DEFAULT_ITEMS, stats: { ...HERO_DEFAULT_ITEMS.stats } },
       updated_at: new Date(0).toISOString(),
     };
   }
@@ -221,7 +234,7 @@ export async function getAdminHeroContent(): Promise<HeroContent> {
       key: HERO_DEFAULT.key,
       title: HERO_DEFAULT.title,
       body: HERO_DEFAULT.body,
-      items: { ...HERO_DEFAULT_ITEMS },
+      items: { ...HERO_DEFAULT_ITEMS, stats: { ...HERO_DEFAULT_ITEMS.stats } },
       updated_at: new Date(0).toISOString(),
     };
   }

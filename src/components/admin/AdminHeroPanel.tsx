@@ -6,7 +6,11 @@ import {
   updateHeroContent,
   type AdminContentActionState,
 } from "@/lib/admin/content-actions";
-import type { HeroItems } from "@/lib/content/defaults";
+import {
+  HERO_STAT_FIELDS,
+  HERO_STAT_MAX_LENGTH,
+  type HeroItems,
+} from "@/lib/content/defaults";
 import { useSiteImageSubmit } from "@/lib/admin/use-site-image-submit";
 import { FileSelectField } from "@/components/ui/FileSelectField";
 import { Spinner } from "@/components/ui/Spinner";
@@ -165,6 +169,30 @@ export function AdminHeroPanel({
               className="w-full resize-y rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-base text-zinc-900 sm:text-sm"
             />
           </label>
+        </div>
+
+        <div className="space-y-4">
+          <div>
+            <h3 className="text-sm font-semibold text-zinc-900">Statistika</h3>
+            <p className="mt-1 text-xs text-zinc-500">
+              Axtarışın və düymələrin altında göstərilir. Rəqəmi saytda görünəcəyi kimi yazın,
+              məsələn 200+, 1 400+ və ya 15K+. Boş buraxılan göstərici saytda görünmür.
+            </p>
+          </div>
+          <div className="grid gap-4 sm:grid-cols-3">
+            {HERO_STAT_FIELDS.map((field) => (
+              <label key={field.key} className="block space-y-1.5">
+                <span className="text-xs font-medium text-zinc-600">{field.label}</span>
+                <input
+                  name={`stat_${field.key}`}
+                  maxLength={HERO_STAT_MAX_LENGTH}
+                  defaultValue={items.stats[field.key]}
+                  placeholder="Boş — göstərilmir"
+                  className="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-base text-zinc-900 sm:text-sm"
+                />
+              </label>
+            ))}
+          </div>
         </div>
 
         <button

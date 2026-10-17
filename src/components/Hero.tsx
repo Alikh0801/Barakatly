@@ -1,5 +1,6 @@
 import Image, { getImageProps } from "next/image";
 import Link from "next/link";
+import { HERO_STAT_FIELDS, type HeroStats } from "@/lib/content/defaults";
 
 // The image fills a full-viewport box with object-cover, so on any screen
 // narrower than 16:9 it is cropped to the viewport *height*: a 3:2 photo then
@@ -83,12 +84,32 @@ function Chip({
   );
 }
 
+/** The admin's figures under the buttons; ones left empty are skipped. */
+function HeroStatsRow({ stats }: { stats: HeroStats }) {
+  const shown = HERO_STAT_FIELDS.filter((field) => stats[field.key]);
+  if (shown.length === 0) return null;
+
+  return (
+    <dl className="mt-8 flex flex-wrap justify-center gap-x-8 gap-y-4 sm:gap-x-12 md:justify-start">
+      {shown.map((field) => (
+        <div key={field.key} className="flex flex-col-reverse items-center md:items-start">
+          <dt className="mt-1 text-xs text-white/70 sm:text-sm">{field.label}</dt>
+          <dd className="text-2xl font-bold tracking-tight text-white drop-shadow-sm sm:text-3xl">
+            {stats[field.key]}
+          </dd>
+        </div>
+      ))}
+    </dl>
+  );
+}
+
 export function Hero({
   title,
   highlight,
   body,
   imageUrl,
   mobileImageUrl,
+  stats,
 }: {
   title: string;
   highlight: string;
@@ -96,6 +117,7 @@ export function Hero({
   imageUrl: string;
   /** Optional portrait image for portrait screens; "" uses imageUrl. */
   mobileImageUrl: string;
+  stats: HeroStats;
 }) {
   return (
     <section className="relative isolate min-h-dvh overflow-x-hidden">
@@ -194,6 +216,8 @@ export function Hero({
               Fermer ol
             </Link>
           </div>
+
+          <HeroStatsRow stats={stats} />
         </div>
       </div>
     </section>

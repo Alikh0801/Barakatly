@@ -91,11 +91,30 @@ export const FAQ_DEFAULT = {
 
 export const HERO_KEY = "hero" as const;
 
+/**
+ * The figures under the hero buttons, typed by the admin as shown ("200+",
+ * "15K+"). An empty one is not shown, so nothing invented appears by default.
+ */
+export type HeroStats = {
+  farmers: string;
+  products: string;
+  customers: string;
+};
+
+export const HERO_STAT_FIELDS = [
+  { key: "farmers", label: "Yerli fermer" },
+  { key: "products", label: "Təzə məhsul" },
+  { key: "customers", label: "Məmnun müştəri" },
+] as const satisfies readonly { key: keyof HeroStats; label: string }[];
+
+export const HERO_STAT_MAX_LENGTH = 12;
+
 export type HeroItems = {
   highlight: string;
   imageUrl: string;
   /** Optional portrait image for portrait screens; "" means use imageUrl. */
   mobileImageUrl: string;
+  stats: HeroStats;
 };
 
 export const HERO_DEFAULT_IMAGE_URL =
@@ -105,6 +124,7 @@ export const HERO_DEFAULT_ITEMS: HeroItems = {
   highlight: "birbaşa süfrənizə.",
   imageUrl: HERO_DEFAULT_IMAGE_URL,
   mobileImageUrl: "",
+  stats: { farmers: "", products: "", customers: "" },
 };
 
 export const HERO_DEFAULT = {
