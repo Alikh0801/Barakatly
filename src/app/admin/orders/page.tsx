@@ -29,7 +29,6 @@ export default async function AdminOrdersPage() {
   return (
     <AdminPageShell
       title="Sifarişlər"
-      description="Axtarın, keçmişə baxın, fermer statusunu izləyin və sifariş statusunu müştəriyə göstərin"
     >
       <AdminOrdersPanel orders={ordersWithReceipts} />
     </AdminPageShell>

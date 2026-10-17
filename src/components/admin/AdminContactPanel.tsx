@@ -17,9 +17,6 @@ export function AdminContactPanel({ contact }: { contact: ContactItems }) {
     <div className="space-y-4 rounded-2xl bg-white p-4 shadow-sm ring-1 ring-zinc-200 sm:p-5">
       <div>
         <h2 className="text-lg font-semibold text-zinc-900">Əlaqə məlumatları</h2>
-        <p className="mt-1 text-sm text-zinc-600">
-          Saytın footerində göstərilən telefon və email. Boş saxlanan sahə footerdə görünmür.
-        </p>
       </div>
 
       {state.error ? (

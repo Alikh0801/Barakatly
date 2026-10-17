@@ -36,20 +36,11 @@ function discountLabel(promo: Pick<AdminPromoCode, "discount_type" | "discount_v
     : formatPrice(Number(promo.discount_value));
 }
 
-function Field({
-  label,
-  hint,
-  children,
-}: {
-  label: string;
-  hint?: string;
-  children: React.ReactNode;
-}) {
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <label className="block space-y-1.5">
       <span className="text-xs font-medium text-zinc-600">{label}</span>
       {children}
-      {hint ? <span className="block text-[11px] text-zinc-500">{hint}</span> : null}
     </label>
   );
 }
@@ -65,7 +56,7 @@ function PromoForm({ promo, onCancel }: { promo?: AdminPromoCode; onCancel?: () 
       {promo ? <input type="hidden" name="id" value={promo.id} /> : null}
 
       <div className="grid gap-4 sm:grid-cols-2">
-        <Field label="Kod" hint="Müştərinin yazacağı kod. Latın hərfləri, rəqəmlər, - və _ (3–30 simvol).">
+        <Field label="Kod">
           <input
             name="code"
             required
@@ -77,7 +68,7 @@ function PromoForm({ promo, onCancel }: { promo?: AdminPromoCode; onCancel?: () 
             className={`${inputClass} uppercase placeholder:normal-case`}
           />
         </Field>
-        <Field label="Ad" hint="Yalnız sizin üçün, məsələn kampaniyanın adı. Müştəri kodu tətbiq edəndə də görünür.">
+        <Field label="Ad">
           <input name="name" required maxLength={80} defaultValue={promo?.name} placeholder="Yay endirimi" className={inputClass} />
         </Field>
       </div>
@@ -111,7 +102,6 @@ function PromoForm({ promo, onCancel }: { promo?: AdminPromoCode; onCancel?: () 
         </div>
         <Field
           label={type === "percent" ? "Endirim faizi" : "Endirim məbləği (₼)"}
-          hint={type === "percent" ? "Məhsulların cəmindən, 1–100." : "Məhsulların cəmindən çıxılır, kuryer haqqından yox."}
         >
           <input
             name="discount_value"
@@ -125,10 +115,10 @@ function PromoForm({ promo, onCancel }: { promo?: AdminPromoCode; onCancel?: () 
       </div>
 
       <div className="grid gap-4 sm:grid-cols-3">
-        <Field label="Son istifadə tarixi" hint="Həmin günün sonuna qədər işləyir. Boş — müddətsiz.">
+        <Field label="Son istifadə tarixi">
           <input type="date" name="expires_on" defaultValue={bakuDate(promo?.expires_at ?? null)} className={inputClass} />
         </Field>
-        <Field label="Minimum sifariş (₼)" hint="Boş — məhdudiyyət yoxdur.">
+        <Field label="Minimum sifariş (₼)">
           <input
             name="min_order_amount"
             inputMode="decimal"
@@ -137,7 +127,7 @@ function PromoForm({ promo, onCancel }: { promo?: AdminPromoCode; onCancel?: () 
             className={inputClass}
           />
         </Field>
-        <Field label="Ümumi istifadə limiti" hint="Neçə sifarişdə işləyə bilər. Boş — limitsiz.">
+        <Field label="Ümumi istifadə limiti">
           <input
             name="max_uses"
             inputMode="numeric"
@@ -275,10 +265,6 @@ export function AdminPromoCodesPanel({ promoCodes }: { promoCodes: AdminPromoCod
     <div className="space-y-6">
       <section className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-zinc-200 sm:p-5">
         <h2 className="text-lg font-semibold text-zinc-900">Yeni promokod</h2>
-        <p className="mt-1 text-sm text-zinc-600">
-          Müştəri kodu səbətdə yazır. Endirim məhsulların cəmindən çıxılır, fermerlərin
-          gəlirinə toxunmur.
-        </p>
         <div className="mt-5">
           <PromoForm />
         </div>

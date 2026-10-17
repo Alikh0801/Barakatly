@@ -35,10 +35,6 @@ export function AdminBanksPanel({ banks }: { banks: AdminBank[] }) {
           <h2 className="text-lg font-semibold text-zinc-900">
             Kart məlumatları
           </h2>
-          <p className="mt-1 text-sm text-zinc-600">
-            Bank adı və 16 rəqəmli kart nömrəsini daxil edin. Aktiv
-            qeydlər sifariş ödənişi zamanı müştəriyə görünəcək.
-          </p>
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2">
@@ -92,9 +88,6 @@ export function AdminBanksPanel({ banks }: { banks: AdminBank[] }) {
       {banks.length === 0 ? (
         <div className="rounded-2xl bg-white p-8 text-center ring-1 ring-zinc-200">
           <p className="font-medium text-zinc-900">Kart məlumatı yoxdur</p>
-          <p className="mt-1 text-sm text-zinc-600">
-            Yuxarıdan bank əlavə edin ki, müştəri ödəniş edə bilsin.
-          </p>
         </div>
       ) : (
         <div className="space-y-3">

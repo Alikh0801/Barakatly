@@ -37,9 +37,6 @@ export function AdminWhyBarakatlyPanel({
         <h2 className="text-lg font-semibold text-zinc-900">
           Niyə Barakatly?
         </h2>
-        <p className="mt-1 text-sm text-zinc-600">
-          Bölmə başlığı, alt mətni və 4 kartın ikon/başlıq/mətnlərini dəyişin. Deaktiv kartlar saytda gizlənir, qalanları yenidən düzülür.
-        </p>
       </div>
 
       {(updateState.error || resetState.error) && (

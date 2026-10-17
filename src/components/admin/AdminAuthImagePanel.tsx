@@ -43,9 +43,6 @@ export function AdminAuthImagePanel({
     <div className="space-y-4 rounded-2xl bg-white p-4 shadow-sm sm:p-5 ring-1 ring-zinc-200 xl:col-span-2">
       <div>
         <h2 className="text-lg font-semibold text-zinc-900">Giriş səhifəsi</h2>
-        <p className="mt-1 text-sm text-zinc-600">
-          Daxil ol və qeydiyyat səhifələrindəki şəkli və mətnləri dəyişin.
-        </p>
       </div>
 
       {error && (
@@ -76,7 +73,6 @@ export function AdminAuthImagePanel({
             name="image"
             accept="image/jpeg,image/png,image/webp"
             caption="Yeni şəkil"
-            hint="Şəkil yalnız geniş ekranlarda (1024 pikseldən) göstərilir. Şaquli şəkil, ən azı 1600×2000 piksel (4:5) tövsiyə olunur. JPEG, PNG və ya WebP, maksimum 5 MB. Boş buraxsanız mövcud şəkil qalır."
           />
         </div>
 

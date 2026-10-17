@@ -10,7 +10,6 @@ export default async function AdminCouriersPage() {
   return (
     <AdminPageShell
       title="Kuryerlər"
-      description="Kuryer hesabları yaradın və aktivliyi idarə edin"
     >
       <AdminCouriersPanel couriers={couriers} />
     </AdminPageShell>

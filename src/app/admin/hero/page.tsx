@@ -14,7 +14,6 @@ export default async function AdminHeroPage() {
   return (
     <AdminPageShell
       title="Hero"
-      description="Ana səhifənin ilk bölməsi və giriş səhifəsindəki şəkil/mətnləri idarə edin"
     >
       <div className="grid gap-6 xl:grid-cols-2">
         <AdminHeroPanel

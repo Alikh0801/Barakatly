@@ -12,7 +12,6 @@ export default async function AdminBanksPage() {
   return (
     <AdminPageShell
       title="Kartlar"
-      description="Müştərilərə göstərilən ödəniş kartlarını idarə edin"
     >
       <AdminBanksPanel banks={banks} />
     </AdminPageShell>

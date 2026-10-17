@@ -52,7 +52,7 @@ export function AdminCategoriesPanel({
             <span className="text-xs font-medium text-zinc-600">Sıra</span>
             <p className="flex h-[42px] items-center gap-2 rounded-xl bg-zinc-50 px-3 text-sm text-zinc-600 ring-1 ring-zinc-200">
               <span className="font-semibold text-zinc-900">{approvedCount + 1}</span>
-              avtomatik — siyahının ən yuxarısında
+              avtomatik
             </p>
           </div>
           <div className="sm:col-span-2 lg:col-span-1">

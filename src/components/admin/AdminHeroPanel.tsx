@@ -50,9 +50,6 @@ export function AdminHeroPanel({
     <div className="space-y-4 rounded-2xl bg-white p-4 shadow-sm sm:p-5 ring-1 ring-zinc-200 xl:col-span-2">
       <div>
         <h2 className="text-lg font-semibold text-zinc-900">Hero</h2>
-        <p className="mt-1 text-sm text-zinc-600">
-          Ana səhifənin ilk bölməsindəki fon şəklini və mətnləri dəyişin.
-        </p>
       </div>
 
       {error && (
@@ -83,7 +80,6 @@ export function AdminHeroPanel({
             name="image"
             accept="image/jpeg,image/png,image/webp"
             caption="Yeni şəkil"
-            hint="Üfüqi şəkil, ən azı 2400×1600 piksel tövsiyə olunur. JPEG, PNG və ya WebP, maksimum 5 MB. Boş buraxsanız mövcud şəkil qalır."
           />
         </div>
 
@@ -92,10 +88,6 @@ export function AdminHeroPanel({
             <h3 className="text-sm font-semibold text-zinc-900">
               Mobil şəkil <span className="font-normal text-zinc-500">(istəyə bağlı)</span>
             </h3>
-            <p className="mt-1 text-xs text-zinc-500">
-              Telefon və şaquli tutulmuş planşetlərdə fon şəklinin yerinə göstərilir.
-              Üfüqi şəkil dar ekranda kəsildiyi üçün burada şaquli şəkil daha yaxşı görünür.
-            </p>
           </div>
           {items.mobileImageUrl ? (
             <div className="space-y-3">
@@ -114,19 +106,18 @@ export function AdminHeroPanel({
                   value="1"
                   className="h-4 w-4 rounded border-zinc-300 accent-emerald-600"
                 />
-                Mobil şəkli sil (telefonlarda fon şəkli göstərilsin)
+                Mobil şəkli sil
               </label>
             </div>
           ) : (
             <p className="rounded-xl bg-zinc-50 px-3 py-2 text-xs text-zinc-500 ring-1 ring-zinc-100">
-              Mobil şəkil yoxdur — telefonlarda fon şəkli göstərilir.
+              Mobil şəkil yoxdur.
             </p>
           )}
           <FileSelectField
             name="mobile_image"
             accept="image/jpeg,image/png,image/webp"
             caption={items.mobileImageUrl ? "Yeni mobil şəkil" : "Mobil şəkil"}
-            hint="Şaquli şəkil (9:16), 1440×2560 piksel tövsiyə olunur, ən azı 1080×1920. JPEG, PNG və ya WebP, maksimum 5 MB."
           />
         </div>
 
@@ -174,10 +165,6 @@ export function AdminHeroPanel({
         <div className="space-y-4">
           <div>
             <h3 className="text-sm font-semibold text-zinc-900">Statistika</h3>
-            <p className="mt-1 text-xs text-zinc-500">
-              Axtarışın və düymələrin altında göstərilir. Rəqəmi saytda görünəcəyi kimi yazın,
-              məsələn 200+, 1 400+ və ya 15K+. Boş buraxılan göstərici saytda görünmür.
-            </p>
           </div>
           <div className="grid gap-4 sm:grid-cols-3">
             {HERO_STAT_FIELDS.map((field) => (

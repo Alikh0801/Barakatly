@@ -16,7 +16,6 @@ export default async function AdminStatisticsPage({
   return (
     <AdminPageShell
       title="Statistika"
-      description="Sayta baxışlar: hansı səhifələr, haradan, hansı cihazla və nə vaxt. Məlumat anonimdir və 21 gün saxlanılır."
     >
       <div className="mb-5 sm:mb-6">
         <StatsPeriodTabs active={period} />

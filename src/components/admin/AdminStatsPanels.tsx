@@ -315,7 +315,7 @@ export function AdminStatsPanels({ stats }: { stats: PageViewStats }) {
     <div className="space-y-4 sm:space-y-6">
       <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
         <StatTile label="Səhifə baxışı" value={fmt(stats.views)} />
-        <StatTile label="Unikal ziyarətçi" value={fmt(stats.visitors)} hint="Eyni brauzer bir dəfə sayılır" />
+        <StatTile label="Unikal ziyarətçi" value={fmt(stats.visitors)} />
         <StatTile
           label="Ziyarətçi başına baxış"
           value={perVisitor.toFixed(1).replace(".", ",")}
@@ -323,19 +323,18 @@ export function AdminStatsPanels({ stats }: { stats: PageViewStats }) {
         <StatTile
           label="Daxil olmuş istifadəçilər"
           value={percent(stats.signedInViews, stats.views)}
-          hint="Baxışların payı"
         />
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:gap-6 xl:grid-cols-2">
         {stats.days > 1 ? (
-          <Card title="Günlər üzrə baxışlar" subtitle="Bakı vaxtı ilə">
+          <Card title="Günlər üzrə baxışlar">
             <ColumnChart columns={dailyColumns} caption="Günlər üzrə səhifə baxışları" />
           </Card>
         ) : null}
         <Card
           title="Saatlar üzrə baxışlar"
-          subtitle={busiestHour.views > 0 ? `Ən sıx saat: ${hourLabel(busiestHour.hour)}–${hourLabel((busiestHour.hour + 1) % 24)} · Bakı vaxtı ilə` : "Bakı vaxtı ilə"}
+          subtitle={busiestHour.views > 0 ? `Ən sıx saat: ${hourLabel(busiestHour.hour)}–${hourLabel((busiestHour.hour + 1) % 24)}` : undefined}
           className={stats.days > 1 ? "" : "xl:col-span-2"}
         >
           <ColumnChart columns={hourlyColumns} caption="Saatlar üzrə səhifə baxışları" />
@@ -354,7 +353,7 @@ export function AdminStatsPanels({ stats }: { stats: PageViewStats }) {
             }))}
           />
         </Card>
-        <Card title="Şəhərlər" subtitle="IP-yə görə təxmini">
+        <Card title="Şəhərlər">
           <RankedList
             total={views}
             rows={stats.cities.map((row, index) => ({

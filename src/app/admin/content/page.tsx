@@ -23,7 +23,6 @@ export default async function AdminContentPage() {
   return (
     <AdminPageShell
       title="Məzmun"
-      description="Ana səhifə, Haqqımızda mətnləri və footerdəki əlaqə məlumatlarını idarə edin"
     >
       <div className="grid gap-6 xl:grid-cols-2">
         <AdminWhyBarakatlyPanel

@@ -21,7 +21,6 @@ export default async function AdminReviewsPage({
   return (
     <AdminPageShell
       title="Rəylər"
-      description="Müştərilərin Barakatly haqqında rəyləri. Ana səhifədə hansıların göstəriləcəyini burada seçin."
     >
       <AdminSiteReviewsPanel reviews={reviews} filter={filter} counts={counts} />
     </AdminPageShell>

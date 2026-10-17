@@ -972,9 +972,6 @@ function ProductEditForm({
           />
         </label>
       </div>
-      <p className="text-xs text-zinc-400">
-        Fermerin təklif etdiyi qiymət və miqdar dəyişdirilə bilməz.
-      </p>
 
       <button
         type="submit"

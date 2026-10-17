@@ -34,10 +34,6 @@ export function AdminAboutPanel({
     <div className="space-y-4 rounded-2xl bg-white p-4 shadow-sm sm:p-5 ring-1 ring-zinc-200 xl:col-span-2">
       <div>
         <h2 className="text-lg font-semibold text-zinc-900">Haqqımızda</h2>
-        <p className="mt-1 text-sm text-zinc-600">
-          Haqqımızda səhifəsinin başlıq, missiya, dəyərlər və fermer CTA
-          mətnlərini dəyişin.
-        </p>
       </div>
 
       {(updateState.error || resetState.error) && (

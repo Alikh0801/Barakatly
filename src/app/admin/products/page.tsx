@@ -26,7 +26,6 @@ export default async function AdminProductsPage() {
   return (
     <AdminPageShell
       title="Məhsullar"
-      description="Gözləyən məhsulları təsdiqləyin və təsdiqlənmişlərin son qiymətini yeniləyin"
     >
       <div className="space-y-10">
         <section>

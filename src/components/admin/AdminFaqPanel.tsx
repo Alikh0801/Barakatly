@@ -35,10 +35,6 @@ export function AdminFaqPanel({
         <h2 className="text-lg font-semibold text-zinc-900">
           Tez-tez verilən suallar
         </h2>
-        <p className="mt-1 text-sm text-zinc-600">
-          FAQ başlığını, sualları və cavabları dəyişin. Yeni sual əlavə edə,
-          silə və ya müvəqqəti deaktiv edə bilərsiniz.
-        </p>
       </div>
 
       {(updateState.error || resetState.error) && (

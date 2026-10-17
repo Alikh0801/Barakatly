@@ -116,10 +116,6 @@ export function AdminSiteReviewsPanel({
 
   return (
     <div className="space-y-5">
-      <p className="rounded-2xl bg-white px-4 py-3 text-sm text-zinc-600 shadow-sm ring-1 ring-zinc-200">
-        Rəyləri çatdırılmış sifarişi olan müştərilər yazır. Ana səhifədə ən son təsdiqlənmiş 3 rəy göstərilir.
-        Müştəri rəyini dəyişsə, rəy yenidən “Gözləyən” bölməsinə düşür.
-      </p>
 
       <nav aria-label="Rəy statusu" className="flex flex-wrap gap-2">
         {REVIEW_FILTERS.map((item) => {

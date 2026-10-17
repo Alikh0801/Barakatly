@@ -10,7 +10,6 @@ export default async function AdminPromoCodesPage() {
   return (
     <AdminPageShell
       title="Promokodlar"
-      description="Müştərilərin səbətdə tətbiq edəcəyi endirim kodlarını yaradın və idarə edin"
     >
       <AdminPromoCodesPanel promoCodes={promoCodes} />
     </AdminPageShell>

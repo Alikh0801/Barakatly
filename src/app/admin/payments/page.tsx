@@ -27,7 +27,6 @@ export default async function AdminPaymentsPage() {
   return (
     <AdminPageShell
       title="Ödənişlər"
-      description="Gözləyən çekləri yoxlayın, təsdiqləyin və ya rədd edin"
     >
       <PendingPaymentsPanel payments={paymentsWithReceipts} />
     </AdminPageShell>
