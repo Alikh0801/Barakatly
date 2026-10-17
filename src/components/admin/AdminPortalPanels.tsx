@@ -659,6 +659,9 @@ function ProductCard({
   );
   const [editing, setEditing] = useState(false);
   const imageUrl = getProductImageUrl(product.product_images ?? []);
+  // The server refuses too; this explains why before the admin tries.
+  const taxonomyPending =
+    product.categories?.approved === false || product.subcategories?.approved === false;
 
   return (
     <article className="overflow-hidden rounded-3xl bg-white shadow-sm ring-1 ring-zinc-200/70 transition hover:shadow-md">
@@ -767,6 +770,13 @@ function ProductCard({
         ) : null}
       </div>
 
+      {taxonomyPending ? (
+        <p className="border-t border-amber-100 bg-amber-50 px-4 py-2.5 text-xs text-amber-800 sm:px-5">
+          Kateqoriya hələ təsdiqlənməyib. Məhsulu təsdiqləməzdən əvvəl yuxarıdakı
+          “təsdiqlə” ilə kateqoriyanı təsdiqləyin və ya “Redaktə et” ilə başqa
+          kateqoriya seçin.
+        </p>
+      ) : null}
       <div className="flex flex-col gap-3 border-t border-zinc-100 bg-zinc-50/60 p-4 sm:flex-row sm:items-end sm:justify-between sm:p-5">
         <form
           action={approveAction}
@@ -793,8 +803,8 @@ function ProductCard({
           </div>
           <button
             type="submit"
-            disabled={approvePending || rejectPending}
-            className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-500 disabled:opacity-70 sm:w-auto"
+            disabled={approvePending || rejectPending || taxonomyPending}
+            className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
           >
             {approvePending ? <Spinner className="h-3.5 w-3.5" /> : <CheckIcon className="h-4 w-4" />}
             Təsdiqlə

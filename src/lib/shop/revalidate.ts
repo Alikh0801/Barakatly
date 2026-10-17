@@ -20,6 +20,8 @@ export function revalidateCategories() {
   revalidatePath("/");
   revalidatePath("/shop");
   revalidatePath("/admin/categories");
+  // Pending product cards show whether their category is approved yet.
+  revalidatePath("/admin/products");
   revalidatePath("/admin");
   revalidatePath("/farmer");
 }

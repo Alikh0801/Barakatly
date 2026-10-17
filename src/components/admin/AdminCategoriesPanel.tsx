@@ -139,6 +139,12 @@ function CategoryCard({ category, total }: { category: AdminCategory; total: num
         <div className="mb-3 flex flex-wrap items-center justify-between gap-2 rounded-xl bg-amber-50 px-3 py-2 ring-1 ring-amber-200">
           <span className="text-sm font-medium text-amber-800">
             Fermer əlavə edib — təsdiq gözləyir
+            {category.liveProductCount > 0 ? (
+              <span className="mt-0.5 block text-xs font-normal">
+                Bu kateqoriyada {category.liveProductCount} məhsul artıq mağazadadır. Kateqoriyanı
+                təsdiqləyin və ya həmin məhsulları başqa kateqoriyaya keçirin.
+              </span>
+            ) : null}
           </span>
           <form action={approveAction}>
             <input type="hidden" name="category_id" value={category.id} />

@@ -235,6 +235,11 @@ export type AdminCategory = Category & {
   subcategories: Subcategory[];
   /** 1..N among approved categories; null while awaiting approval. */
   position: number | null;
+  /**
+   * Products already on sale in a category still awaiting approval: left
+   * over from before approving a product required an approved category.
+   */
+  liveProductCount: number;
 };
 
 /**
@@ -256,9 +261,26 @@ export async function getAdminCategories(): Promise<AdminCategory[]> {
   }
 
   const rows = (data ?? []) as unknown as (Category & { subcategories: Subcategory[] | null })[];
+  const pendingIds = rows.filter((category) => !category.approved).map((category) => category.id);
+  const liveCounts = new Map<string, number>();
+  if (pendingIds.length > 0) {
+    const { data: live, error: liveError } = await supabase
+      .from("products")
+      .select("category_id")
+      .eq("status", "approved")
+      .in("category_id", pendingIds);
+    if (liveError) console.error("[admin.getAdminCategories.live]", liveError.message);
+    for (const product of live ?? []) {
+      if (product.category_id) {
+        liveCounts.set(product.category_id, (liveCounts.get(product.category_id) ?? 0) + 1);
+      }
+    }
+  }
+
   const withSubs = (category: (typeof rows)[number], position: number | null): AdminCategory => ({
     ...category,
     position,
+    liveProductCount: liveCounts.get(category.id) ?? 0,
     subcategories: [...(category.subcategories ?? [])].sort((a, b) =>
       a.name_az.localeCompare(b.name_az),
     ),

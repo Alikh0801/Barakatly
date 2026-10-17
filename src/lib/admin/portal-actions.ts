@@ -360,6 +360,35 @@ export async function deleteFarmer(
   return { success: "Fermer bazadan silindi." };
 }
 
+/**
+ * A product only goes on sale once its category (and subcategory, if any)
+ * is approved: the shop's category list leaves out unapproved ones, so the
+ * product would sit in the shop under a category nobody can browse to.
+ */
+async function pendingTaxonomyError(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  categoryId: string | null,
+  subcategoryId: string | null,
+): Promise<string | null> {
+  const [{ data: category }, { data: subcategory }] = await Promise.all([
+    categoryId
+      ? supabase.from("categories").select("name_az, approved").eq("id", categoryId).maybeSingle()
+      : Promise.resolve({ data: null }),
+    subcategoryId
+      ? supabase.from("subcategories").select("name_az, approved").eq("id", subcategoryId).maybeSingle()
+      : Promise.resolve({ data: null }),
+  ]);
+
+  if (!category) return "Məhsulun kateqoriyası tapılmadı. Redaktə edib kateqoriya seçin.";
+  if (!category.approved) {
+    return `"${category.name_az}" kateqoriyası hələ təsdiqlənməyib. Əvvəlcə onu təsdiqləyin və ya məhsul üçün başqa kateqoriya seçin.`;
+  }
+  if (subcategory && !subcategory.approved) {
+    return `"${subcategory.name_az}" alt kateqoriyası hələ təsdiqlənməyib. Əvvəlcə onu təsdiqləyin və ya başqa alt kateqoriya seçin.`;
+  }
+  return null;
+}
+
 export async function approveProduct(
   _prev: AdminPortalActionState,
   formData: FormData
@@ -374,11 +403,18 @@ export async function approveProduct(
   const supabase = await createClient();
   const { data: product } = await supabase
     .from("products")
-    .select("id, title, farmer_id, farmers(profile_id, farm_name)")
+    .select("id, title, farmer_id, category_id, subcategory_id, farmers(profile_id, farm_name)")
     .eq("id", productId)
     .single();
 
   if (!product) return { error: "Məhsul tapılmadı." };
+
+  const taxonomyError = await pendingTaxonomyError(
+    supabase,
+    product.category_id,
+    product.subcategory_id,
+  );
+  if (taxonomyError) return { error: taxonomyError };
 
   const { error } = await supabase
     .from("products")
@@ -484,6 +520,18 @@ export async function updateProductByAdmin(
   }
 
   const supabase = await createClient();
+
+  // A product already on sale can't be moved into an unapproved category.
+  const { data: current } = await supabase
+    .from("products")
+    .select("status")
+    .eq("id", productId)
+    .maybeSingle();
+  if (current?.status === "approved") {
+    const taxonomyError = await pendingTaxonomyError(supabase, categoryId, subcategoryId || null);
+    if (taxonomyError) return { error: taxonomyError };
+  }
+
   // Note: farmer_price and quantity_available are intentionally not touched here —
   // the farmer's offer stays as submitted.
   const { error } = await supabase
