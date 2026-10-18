@@ -32,6 +32,11 @@ export function adminLinkForType(type: NotificationType): string {
  * unchanged without Telegram configured. Errors are logged, never thrown.
  */
 export async function sendAdminTelegram(text: string): Promise<void> {
+  // The test site shares the live bot settings unless overridden, so it
+  // stays silent: test orders must not reach the real admin chat. Set
+  // TELEGRAM_SEND_ON_PRE=true (with a test bot) to try messages there.
+  if (IS_PRE && process.env.TELEGRAM_SEND_ON_PRE !== "true") return;
+
   const token = process.env.TELEGRAM_BOT_TOKEN;
   const chatIds = adminChatIds();
   if (!token || chatIds.length === 0) return;
