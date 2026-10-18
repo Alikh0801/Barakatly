@@ -71,7 +71,7 @@ const nextConfig: NextConfig = {
             value: "max-age=63072000; includeSubDomains; preload",
           },
           // The test site stays out of search engines, files included.
-          ...(process.env.NEXT_PUBLIC_APP_ENV === "pre"
+          ...(process.env.NEXT_PUBLIC_APP_ENV?.trim().replace(/^["']|["']$/g, "").toLowerCase() === "pre"
             ? [{ key: "X-Robots-Tag", value: "noindex, nofollow" }]
             : []),
         ],
