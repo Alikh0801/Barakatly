@@ -1,3 +1,4 @@
+import { IS_PRE } from "@/lib/env";
 import type { NotificationType } from "@/types";
 
 const TELEGRAM_API = "https://api.telegram.org";
@@ -47,7 +48,8 @@ export async function sendAdminTelegram(text: string): Promise<void> {
           headers: { "content-type": "application/json" },
           body: JSON.stringify({
             chat_id: chatId,
-            text,
+            // Marked, in case the test site is ever pointed at a real chat.
+            text: IS_PRE ? `🧪 TEST MÜHİTİ\n${text}` : text,
             disable_web_page_preview: true,
           }),
           signal: controller.signal,

@@ -1,9 +1,11 @@
 import type { MetadataRoute } from "next";
 import { getAppUrl } from "@/lib/auth/urls";
+import { IS_PRE } from "@/lib/env";
 import { getPublicFarmers } from "@/lib/farmers/queries";
 import { getProducts } from "@/lib/shop/queries";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  if (IS_PRE) return [];
   const base = getAppUrl();
   const now = new Date();
 

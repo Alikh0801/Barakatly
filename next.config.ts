@@ -70,6 +70,10 @@ const nextConfig: NextConfig = {
             key: "Strict-Transport-Security",
             value: "max-age=63072000; includeSubDomains; preload",
           },
+          // The test site stays out of search engines, files included.
+          ...(process.env.NEXT_PUBLIC_APP_ENV === "pre"
+            ? [{ key: "X-Robots-Tag", value: "noindex, nofollow" }]
+            : []),
         ],
       },
     ];

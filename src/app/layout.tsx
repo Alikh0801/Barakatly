@@ -7,6 +7,7 @@ import { RoutePrefetcher } from "@/components/navigation/RoutePrefetcher";
 import { ScrollToTopButton } from "@/components/navigation/ScrollToTopButton";
 import { WishlistLoader } from "@/components/shop/WishlistLoader";
 import { getAppUrl } from "@/lib/auth/urls";
+import { IS_PRE } from "@/lib/env";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -31,9 +32,10 @@ export const metadata: Metadata = {
   // Every page title gets "- Barakatly" appended here, so a new page can
   // never ship without the brand. The home page sets no title of its own
   // and shows the default.
+  // The test site's tabs say so, so it is never mistaken for the live one.
   title: {
-    default: "Barakatly - Təbii Kənd Məhsulları",
-    template: "%s - Barakatly",
+    default: `${IS_PRE ? "[TEST] " : ""}Barakatly - Təbii Kənd Məhsulları`,
+    template: `${IS_PRE ? "[TEST] " : ""}%s - Barakatly`,
   },
   description:
     "Fermerlərindən birbaşa təzə və organik kənd məhsulları. Yerli fermerləri şüurlu istehlakçılarla birləşdiririk.",
@@ -72,10 +74,8 @@ export const metadata: Metadata = {
       "Fermerlərindən birbaşa təzə və organik kənd məhsulları.",
     images: ["/hero/kend.jpg"],
   },
-  robots: {
-    index: true,
-    follow: true,
-  },
+  // The test site must never show up in search results.
+  robots: IS_PRE ? { index: false, follow: false } : { index: true, follow: true },
   alternates: {
     canonical: "/",
   },
@@ -100,6 +100,14 @@ export default function RootLayout({
         <WishlistLoader />
         {children}
         <ScrollToTopButton />
+        {IS_PRE ? (
+          <div
+            role="note"
+            className="pointer-events-none fixed bottom-3 left-3 z-[90] rounded-full bg-amber-400 px-3 py-1.5 text-xs font-bold uppercase tracking-wide text-amber-950 shadow-lg ring-2 ring-white"
+          >
+            Test mühiti
+          </div>
+        ) : null}
       </body>
     </html>
   );
