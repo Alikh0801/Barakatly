@@ -16,15 +16,17 @@ export const ORDER_STATUS_FLOW: OrderStatus[] = [
   "delivered",
 ];
 
-export const ADMIN_STATUS_TRANSITIONS: Record<
-  OrderStatus,
-  OrderStatus[]
-> = {
+/**
+ * The admin runs a paid order: from any status it can move to any later one
+ * (say straight to "Çatdırıldı" when no courier marked it) or cancel it.
+ * Payment confirmation alone moves an order out of "awaiting_confirmation".
+ */
+export const ADMIN_STATUS_TRANSITIONS: Record<OrderStatus, OrderStatus[]> = {
   awaiting_confirmation: ["cancelled"],
-  confirmed: ["farmer_accepted", "preparing", "cancelled"],
-  farmer_accepted: ["preparing", "cancelled"],
-  preparing: ["awaiting_courier", "cancelled"],
-  awaiting_courier: ["picked_up", "cancelled"],
+  confirmed: [...ORDER_STATUS_FLOW.slice(2), "cancelled"],
+  farmer_accepted: [...ORDER_STATUS_FLOW.slice(3), "cancelled"],
+  preparing: [...ORDER_STATUS_FLOW.slice(4), "cancelled"],
+  awaiting_courier: [...ORDER_STATUS_FLOW.slice(5), "cancelled"],
   picked_up: ["delivered", "cancelled"],
   delivered: [],
   cancelled: [],

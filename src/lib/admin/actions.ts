@@ -353,6 +353,19 @@ export async function advanceOrderStatus(
     return { error: "Status yenilənmədi." };
   }
 
+  // Picked up or delivered by the admin's word: the lines follow, so farmers
+  // don't keep seeing them as waiting for the courier. Cancelled lines stay.
+  if (nextStatus === "picked_up" || nextStatus === "delivered") {
+    const { error: itemsError } = await supabase
+      .from("order_items")
+      .update({ status: nextStatus })
+      .eq("order_id", orderId)
+      .not("status", "in", nextStatus === "delivered" ? "(cancelled,delivered)" : "(cancelled,picked_up,delivered)");
+    if (itemsError) {
+      console.error("[admin.advanceOrderStatus.items]", itemsError.message);
+    }
+  }
+
   const baseNotification = notificationForOrderStatus(nextStatus);
   const notification =
     nextStatus === "cancelled" && baseNotification
