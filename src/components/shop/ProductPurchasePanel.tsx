@@ -5,6 +5,7 @@ import { useState, useTransition } from "react";
 import { addToCart } from "@/lib/cart/actions";
 import type { ProductDetail } from "@/types/shop";
 import { formatPrice, getDisplayPrice, unitLabel } from "@/lib/shop/format";
+import { QuantityInput } from "@/components/ui/QuantityInput";
 
 export function ProductPurchasePanel({ product }: { product: ProductDetail }) {
   const router = useRouter();
@@ -47,43 +48,19 @@ export function ProductPurchasePanel({ product }: { product: ProductDetail }) {
     });
   }
 
-  function decrease() {
-    setQuantity((q) => Math.max(1, q - 1));
-  }
-
-  function increase() {
-    setQuantity((q) => Math.min(maxQty, q + 1));
-  }
-
   return (
     <div className="mt-6 rounded-2xl bg-zinc-50 p-5 ring-1 ring-zinc-100">
       <div className="flex items-center justify-between gap-3">
         <span className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
           Miqdar
         </span>
-        <div className="inline-flex items-center rounded-xl bg-white ring-1 ring-zinc-200">
-          <button
-            type="button"
-            onClick={decrease}
-            disabled={outOfStock || quantity <= 1}
-            className="h-10 w-10 text-lg font-semibold text-zinc-700 transition hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-40"
-            aria-label="Azalt"
-          >
-            −
-          </button>
-          <span className="min-w-9 text-center text-base font-semibold text-zinc-900">
-            {quantity}
-          </span>
-          <button
-            type="button"
-            onClick={increase}
-            disabled={outOfStock || quantity >= maxQty}
-            className="h-10 w-10 text-lg font-semibold text-zinc-700 transition hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-40"
-            aria-label="Artır"
-          >
-            +
-          </button>
-        </div>
+        <QuantityInput
+          value={quantity}
+          max={maxQty}
+          onCommit={setQuantity}
+          disabled={outOfStock}
+          commitWhileTyping
+        />
       </div>
       <p className="mt-1.5 text-sm text-zinc-500">
         {outOfStock

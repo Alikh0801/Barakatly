@@ -14,6 +14,7 @@ import { DELIVERY_FEE } from "@/lib/checkout/constants";
 import { applyPromoCode, removePromoCode } from "@/lib/promo/actions";
 import type { AppliedPromo } from "@/lib/promo/constants";
 import { Spinner } from "@/components/ui/Spinner";
+import { QuantityInput } from "@/components/ui/QuantityInput";
 import { ImageWithSkeleton } from "@/components/ui/ImageWithSkeleton";
 
 function groupByFarmer(items: CartLineItem[]) {
@@ -178,7 +179,7 @@ export function CartView({
 
   return (
     <div
-      className={`grid gap-8 lg:grid-cols-[1fr_360px] ${pending ? "opacity-70" : ""}`}
+      className={`grid grid-cols-[minmax(0,1fr)] gap-8 lg:grid-cols-[minmax(0,1fr)_360px] ${pending ? "opacity-70" : ""}`}
     >
       <div className="space-y-6">
         {groups.map((group) => (
@@ -240,33 +241,16 @@ export function CartView({
                     </div>
 
                     <div className="mt-auto flex items-center justify-between pt-3">
-                      <div className="inline-flex items-center rounded-full bg-zinc-100 text-zinc-900 ring-1 ring-zinc-200">
-                        <button
-                          type="button"
-                          onClick={() =>
-                            changeQuantity(item.productId, item.quantity - 1)
-                          }
-                          disabled={pending}
-                          className="px-3 py-1 text-sm font-medium text-zinc-900 hover:text-emerald-700 disabled:opacity-60"
-                          aria-label="Miqdarı azalt"
-                        >
-                          −
-                        </button>
-                        <span className="min-w-8 text-center text-sm font-semibold text-zinc-900">
-                          {item.quantity}
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() =>
-                            changeQuantity(item.productId, item.quantity + 1)
-                          }
-                          disabled={pending || item.quantity >= item.maxQuantity}
-                          className="px-3 py-1 text-sm font-medium text-zinc-900 hover:text-emerald-700 disabled:opacity-40"
-                          aria-label="Miqdarı artır"
-                        >
-                          +
-                        </button>
-                      </div>
+                      <QuantityInput
+                        variant="cart"
+                        value={item.quantity}
+                        // Above the stock only when stock dropped after it
+                        // was added; typing then brings it down to the stock.
+                        max={Math.max(item.maxQuantity, 1)}
+                        onCommit={(quantity) => changeQuantity(item.productId, quantity)}
+                        disabled={pending}
+                        label={`${item.title} miqdarı`}
+                      />
                       <div className="text-sm font-semibold text-zinc-900">
                         {formatPrice(item.price * item.quantity)}
                       </div>
