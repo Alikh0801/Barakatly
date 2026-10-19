@@ -15,6 +15,7 @@ import type { AdminCategory } from "@/lib/admin/queries";
 import type { Subcategory } from "@/types";
 import { FileSelectField } from "@/components/ui/FileSelectField";
 import { Spinner } from "@/components/ui/Spinner";
+import { FormPendingSpinner } from "@/components/ui/FormPendingSpinner";
 
 const initialState: AdminPortalActionState = {};
 
@@ -331,8 +332,9 @@ function SubcategoryRow({ subcategory }: { subcategory: Subcategory }) {
             <button
               type="submit"
               disabled={approvePending || deletePending}
-              className="text-xs font-semibold text-emerald-700 hover:underline disabled:opacity-70"
+              className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-700 hover:underline disabled:opacity-70"
             >
+              <FormPendingSpinner className="h-3 w-3" />
               Təsdiqlə
             </button>
           </form>
@@ -342,8 +344,9 @@ function SubcategoryRow({ subcategory }: { subcategory: Subcategory }) {
           <button
             type="submit"
             disabled={approvePending || deletePending}
-            className="text-xs font-semibold text-rose-700 hover:underline disabled:opacity-70"
+            className="inline-flex items-center gap-1 text-xs font-semibold text-rose-700 hover:underline disabled:opacity-70"
           >
+            <FormPendingSpinner className="h-3 w-3" />
             Sil
           </button>
         </form>

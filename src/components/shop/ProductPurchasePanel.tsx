@@ -1,11 +1,12 @@
 "use client";
 
 import { usePathname, useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
-import { addToCart } from "@/lib/cart/actions";
+import { useOptimistic, useState, useTransition } from "react";
+import { addToCart, buyNow } from "@/lib/cart/actions";
 import type { ProductDetail } from "@/types/shop";
 import { formatPrice, getDisplayPrice, unitLabel } from "@/lib/shop/format";
 import { QuantityInput } from "@/components/ui/QuantityInput";
+import { Spinner } from "@/components/ui/Spinner";
 
 export function ProductPurchasePanel({ product }: { product: ProductDetail }) {
   const router = useRouter();
@@ -14,6 +15,9 @@ export function ProductPurchasePanel({ product }: { product: ProductDetail }) {
   const maxQty = Math.max(1, Number(product.quantity_available) || 1);
   const [quantity, setQuantity] = useState(1);
   const [added, setAdded] = useState(false);
+  // Which button is waiting; both fall back to false when the action ends.
+  const [adding, setAdding] = useOptimistic(false);
+  const [buying, setBuying] = useOptimistic(false);
 
   const price = getDisplayPrice(product.final_price, product.farmer_price);
   const lineTotal = price * quantity;
@@ -22,6 +26,7 @@ export function ProductPurchasePanel({ product }: { product: ProductDetail }) {
   function handleAddToCart() {
     if (outOfStock) return;
     startTransition(async () => {
+      setAdding(true);
       const result = await addToCart(product.id, quantity);
       if (result.needsAuth) {
         router.push(`/signin?next=${encodeURIComponent(pathname)}`);
@@ -37,14 +42,9 @@ export function ProductPurchasePanel({ product }: { product: ProductDetail }) {
   function handleBuyNow() {
     if (outOfStock) return;
     startTransition(async () => {
-      const result = await addToCart(product.id, quantity);
-      if (result.needsAuth) {
-        router.push(`/signin?next=${encodeURIComponent("/checkout")}`);
-        return;
-      }
-      if (result.ok) {
-        router.push("/checkout");
-      }
+      // Spins until checkout has replaced this page; buyNow redirects there.
+      setBuying(true);
+      await buyNow(product.id, quantity);
     });
   }
 
@@ -85,16 +85,18 @@ export function ProductPurchasePanel({ product }: { product: ProductDetail }) {
             type="button"
             onClick={handleAddToCart}
             disabled={pending}
-            className="inline-flex w-full items-center justify-center rounded-xl bg-white px-4 py-3.5 text-sm font-semibold text-emerald-800 ring-1 ring-emerald-200 transition hover:bg-emerald-50 disabled:opacity-60"
+            className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-white px-4 py-3.5 text-sm font-semibold text-emerald-800 ring-1 ring-emerald-200 transition hover:bg-emerald-50 disabled:opacity-60"
           >
+            {adding ? <Spinner className="h-4 w-4" /> : null}
             {added ? "Əlavə olundu" : "Səbətə at"}
           </button>
           <button
             type="button"
             onClick={handleBuyNow}
             disabled={pending}
-            className="inline-flex w-full items-center justify-center rounded-xl bg-emerald-600 px-4 py-3.5 text-sm font-semibold text-white transition hover:bg-emerald-500 disabled:opacity-60"
+            className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-3.5 text-sm font-semibold text-white transition hover:bg-emerald-500 disabled:opacity-60"
           >
+            {buying ? <Spinner className="h-4 w-4" /> : null}
             İndi al
           </button>
         </div>

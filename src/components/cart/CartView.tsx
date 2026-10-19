@@ -1,8 +1,8 @@
 "use client";
 
 import Image from "next/image";
-import Link from "next/link";
-import { useActionState, useMemo, useTransition } from "react";
+import Link, { useLinkStatus } from "next/link";
+import { useActionState, useMemo, useState, useTransition } from "react";
 import {
   clearCart,
   removeFromCart,
@@ -122,6 +122,12 @@ function PromoCodeBox({ promo }: { promo: AppliedPromo | null }) {
   );
 }
 
+/** Spins while the link it sits in is still loading its page. */
+function LinkSpinner() {
+  const { pending } = useLinkStatus();
+  return pending ? <Spinner className="h-4 w-4" /> : null;
+}
+
 export function CartView({
   items,
   promo,
@@ -130,6 +136,8 @@ export function CartView({
   promo: AppliedPromo | null;
 }) {
   const [pending, startTransition] = useTransition();
+  // What the running update is for, so its own control shows the spinner.
+  const [busy, setBusy] = useState<string | null>(null);
 
   const groups = useMemo(() => groupByFarmer(items), [items]);
   const subtotal = items.reduce((sum, i) => sum + i.price * i.quantity, 0);
@@ -141,22 +149,24 @@ export function CartView({
     (item) => item.maxQuantity <= 0 || item.quantity > item.maxQuantity,
   );
 
-  function changeQuantity(productId: string, quantity: number) {
+  function run(key: string, task: () => Promise<unknown>) {
+    setBusy(key);
     startTransition(async () => {
-      await setCartQuantity(productId, quantity);
+      await task();
+      setBusy(null);
     });
+  }
+
+  function changeQuantity(productId: string, quantity: number) {
+    run(`qty:${productId}`, () => setCartQuantity(productId, quantity));
   }
 
   function remove(productId: string) {
-    startTransition(async () => {
-      await removeFromCart(productId);
-    });
+    run(`remove:${productId}`, () => removeFromCart(productId));
   }
 
   function clear() {
-    startTransition(async () => {
-      await clearCart();
-    });
+    run("clear", () => clearCart());
   }
 
   if (items.length === 0) {
@@ -234,8 +244,11 @@ export function CartView({
                         type="button"
                         onClick={() => remove(item.productId)}
                         disabled={pending}
-                        className="shrink-0 text-xs text-zinc-500 hover:text-rose-600 disabled:opacity-60"
+                        className="inline-flex shrink-0 items-center gap-1 text-xs text-zinc-500 hover:text-rose-600 disabled:opacity-60"
                       >
+                        {busy === `remove:${item.productId}` ? (
+                          <Spinner className="h-3 w-3" />
+                        ) : null}
                         Sil
                       </button>
                     </div>
@@ -251,7 +264,10 @@ export function CartView({
                         disabled={pending}
                         label={`${item.title} miqdarı`}
                       />
-                      <div className="text-sm font-semibold text-zinc-900">
+                      <div className="inline-flex items-center gap-1.5 text-sm font-semibold text-zinc-900">
+                        {busy === `qty:${item.productId}` ? (
+                          <Spinner className="h-3.5 w-3.5 text-emerald-600" />
+                        ) : null}
                         {formatPrice(item.price * item.quantity)}
                       </div>
                     </div>
@@ -278,8 +294,9 @@ export function CartView({
           type="button"
           onClick={clear}
           disabled={pending}
-          className="text-sm text-zinc-500 hover:text-rose-600 disabled:opacity-60"
+          className="inline-flex items-center gap-1.5 text-sm text-zinc-500 hover:text-rose-600 disabled:opacity-60"
         >
+          {busy === "clear" ? <Spinner className="h-3.5 w-3.5" /> : null}
           Səbəti təmizlə
         </button>
       </div>
@@ -332,8 +349,9 @@ export function CartView({
           <Link
             href="/checkout"
             prefetch
-            className="mt-6 inline-flex w-full items-center justify-center rounded-xl bg-emerald-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-emerald-500"
+            className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-emerald-500"
           >
+            <LinkSpinner />
             Ödə
           </Link>
         )}

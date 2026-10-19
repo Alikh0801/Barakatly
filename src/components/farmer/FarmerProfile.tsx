@@ -176,7 +176,12 @@ function FollowButton({
               : "inline-flex h-11 items-center gap-2 rounded-full bg-[#2f7a3c] px-6 text-[15px] font-semibold text-white shadow-[0_8px_20px_-10px_rgba(31,77,44,0.7)] transition hover:bg-[#276833] disabled:opacity-70"
           }
         >
-          {state.following ? (
+          {pending ? (
+            <>
+              <Spinner className="h-4 w-4" />
+              {state.following ? "İzlənilir" : "İzlə"}
+            </>
+          ) : state.following ? (
             <>
               <CheckIcon className="h-4 w-4 group-hover:hidden" />
               <CloseIcon className="hidden h-4 w-4 group-hover:block" />

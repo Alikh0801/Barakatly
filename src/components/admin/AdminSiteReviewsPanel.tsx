@@ -9,7 +9,7 @@ import {
 } from "@/lib/reviews/site-actions";
 import { formatDateTime } from "@/lib/format/date";
 import { REVIEW_FILTERS, type ReviewFilter } from "@/lib/reviews/site-constants";
-import { Spinner } from "@/components/ui/Spinner";
+import { FormPendingSpinner } from "@/components/ui/FormPendingSpinner";
 import type { SiteReview } from "@/types";
 
 const initialState: SiteReviewActionState = {};
@@ -64,7 +64,7 @@ function ReviewCard({ review }: { review: SiteReview }) {
               disabled={busy}
               className="inline-flex items-center gap-1.5 rounded-full bg-emerald-600 px-3.5 py-2 text-sm font-semibold text-white disabled:opacity-60"
             >
-              {moderating ? <Spinner className="h-3.5 w-3.5" /> : null}
+              <FormPendingSpinner />
               Ana səhifədə göstər
             </button>
           </form>
@@ -76,8 +76,9 @@ function ReviewCard({ review }: { review: SiteReview }) {
             <button
               type="submit"
               disabled={busy}
-              className="inline-flex items-center rounded-full bg-white px-3.5 py-2 text-sm font-semibold text-zinc-700 ring-1 ring-zinc-200 disabled:opacity-60"
+              className="inline-flex items-center gap-1.5 rounded-full bg-white px-3.5 py-2 text-sm font-semibold text-zinc-700 ring-1 ring-zinc-200 disabled:opacity-60"
             >
+              <FormPendingSpinner />
               Gizlət
             </button>
           </form>

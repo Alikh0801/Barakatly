@@ -26,6 +26,7 @@ import {
   getProductStatusLabel,
 } from "@/lib/orders/labels";
 import { Spinner } from "@/components/ui/Spinner";
+import { FormPendingSpinner } from "@/components/ui/FormPendingSpinner";
 import {
   formatPrice,
   getProductImageUrl,
@@ -589,8 +590,9 @@ function PendingTaxonomyBadge({
         <button
           type="submit"
           disabled={pending}
-          className="rounded-full bg-emerald-600 px-2 py-0.5 font-semibold text-white transition hover:bg-emerald-500 disabled:opacity-70"
+          className="inline-flex items-center gap-1 rounded-full bg-emerald-600 px-2 py-0.5 font-semibold text-white transition hover:bg-emerald-500 disabled:opacity-70"
         >
+          <FormPendingSpinner className="h-3 w-3" />
           {state.success ? "✓ təsdiqləndi" : "təsdiqlə"}
         </button>
       </form>

@@ -189,12 +189,15 @@ function PromoCard({ promo }: { promo: AdminPromoCode }) {
   const [editing, setEditing] = useState(false);
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState("");
+  const [busy, setBusy] = useState<"toggle" | "delete" | null>(null);
   const status = STATUS[promo.status];
 
-  function run(task: () => Promise<AdminPromoActionState>) {
+  function run(key: "toggle" | "delete", task: () => Promise<AdminPromoActionState>) {
     setError("");
+    setBusy(key);
     startTransition(async () => {
       const result = await task();
+      setBusy(null);
       if (result.error) setError(result.error);
     });
   }
@@ -231,9 +234,10 @@ function PromoCard({ promo }: { promo: AdminPromoCode }) {
           <button
             type="button"
             disabled={pending}
-            onClick={() => run(() => setPromoCodeActive(promo.id, !promo.is_active))}
-            className="rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-zinc-700 ring-1 ring-zinc-200 hover:bg-zinc-50"
+            onClick={() => run("toggle", () => setPromoCodeActive(promo.id, !promo.is_active))}
+            className="inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-zinc-700 ring-1 ring-zinc-200 hover:bg-zinc-50"
           >
+            {busy === "toggle" ? <Spinner className="h-3 w-3" /> : null}
             {promo.is_active ? "Deaktiv et" : "Aktiv et"}
           </button>
           <button
@@ -241,11 +245,12 @@ function PromoCard({ promo }: { promo: AdminPromoCode }) {
             disabled={pending}
             onClick={() => {
               if (window.confirm(`"${promo.code}" promokodu silinsin? İstifadə olunmuş sifarişlərdə endirim qalır.`)) {
-                run(() => deletePromoCode(promo.id));
+                run("delete", () => deletePromoCode(promo.id));
               }
             }}
-            className="rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-rose-600 ring-1 ring-rose-200 hover:bg-rose-50"
+            className="inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-rose-600 ring-1 ring-rose-200 hover:bg-rose-50"
           >
+            {busy === "delete" ? <Spinner className="h-3 w-3" /> : null}
             Sil
           </button>
         </div>

@@ -5,6 +5,7 @@ import { useState, useTransition } from "react";
 import { addToCart } from "@/lib/cart/actions";
 import type { ProductListItem } from "@/types/shop";
 import { formatPrice, formatUnit, getDisplayPrice } from "@/lib/shop/format";
+import { Spinner } from "@/components/ui/Spinner";
 
 function useAddToCart() {
   const router = useRouter();
@@ -58,7 +59,9 @@ export function AddToCartButton({
         .join(" ")}
       aria-label={error || `${product.title} səbətə əlavə et`}
     >
-      {added ? (
+      {pending ? (
+        <Spinner className="h-4 w-4" />
+      ) : added ? (
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true" className="h-4 w-4">
           <path d="M5 12l5 5L19 7" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
@@ -92,8 +95,9 @@ export function AddToCartButtonLarge({
         type="button"
         disabled={pending}
         onClick={() => add(product.id)}
-        className="inline-flex w-full items-center justify-center rounded-xl bg-emerald-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-emerald-500 disabled:opacity-60"
+        className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-emerald-500 disabled:opacity-60"
       >
+        {pending ? <Spinner className="h-4 w-4" /> : null}
         {added
           ? "Səbətə əlavə olundu"
           : `Səbətə əlavə et — ${formatPrice(price)}${formatUnit(product.unit_type)}`}

@@ -1,6 +1,7 @@
 "use server";
 
 import { refresh, revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { getSessionUser } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
 
@@ -88,6 +89,25 @@ export async function addToCart(
 
   revalidateCart();
   return { ok: true };
+}
+
+/**
+ * "İndi al": adds to the cart and goes to checkout in one response. Calling
+ * router.push after addToCart raced with its refresh(), and Next sometimes
+ * replaced the product page in history instead of pushing checkout.
+ */
+export async function buyNow(
+  productId: string,
+  quantity = 1,
+): Promise<CartActionResult> {
+  const result = await addToCart(productId, quantity);
+  if (result.needsAuth) {
+    redirect(`/signin?next=${encodeURIComponent("/checkout")}`);
+  }
+  if (result.ok) {
+    redirect("/checkout");
+  }
+  return result;
 }
 
 export async function setCartQuantity(

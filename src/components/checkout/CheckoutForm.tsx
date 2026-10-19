@@ -307,7 +307,9 @@ export function CheckoutForm({
   // A missing file is only flagged after trying to continue; one too big
   // or of the wrong type is flagged the moment it is picked.
   const receiptError = uploadError ?? (receipt || attempted[2] ? errors.receipt : null);
-  const busy = uploading || pending;
+  // After a successful order the button keeps spinning until the order page
+  // has replaced this one.
+  const busy = uploading || pending || Boolean(state.orderId);
   const show = (s: Step) => attempted[s];
 
   function goTo(next: Step) {
