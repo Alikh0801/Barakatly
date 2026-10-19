@@ -696,6 +696,7 @@ export interface Database {
           unit_price: number;
           line_total: number;
           status: OrderItemStatus;
+          cancel_reason: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -710,6 +711,7 @@ export interface Database {
           unit_price: number;
           line_total: number;
           status?: OrderItemStatus;
+          cancel_reason?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -724,6 +726,7 @@ export interface Database {
           unit_price?: number;
           line_total?: number;
           status?: OrderItemStatus;
+          cancel_reason?: string | null;
           created_at?: string;
           updated_at?: string;
         };

@@ -23,6 +23,12 @@ import {
   getOrderItemStatusLabel,
 } from "@/lib/orders/labels";
 import {
+  CANCEL_REASON_MAX,
+  CANCEL_REASON_MIN,
+  FARMER_CANCELLABLE_ITEM_STATUSES,
+} from "@/lib/orders/item-cancel";
+import { formatPrice, unitLabel } from "@/lib/shop/format";
+import {
   insertEventAndNotify,
   notifyAdmins,
 } from "@/lib/notifications/helpers";
@@ -686,6 +692,47 @@ export async function setProductArchived(
   };
 }
 
+/**
+ * Moves the order to the courier queue once every remaining line has been
+ * handed over, and tells the customer and the admins.
+ */
+async function moveToCourierQueueIfReady(
+  order: { id: string; order_code: string; customer_id: string },
+  changedBy: string,
+) {
+  if (!(await moveOrderToCourierQueueIfHandedOver(order.id))) return;
+
+  await insertEventAndNotify({
+    orderId: order.id,
+    customerId: order.customer_id,
+    status: "awaiting_courier",
+    note: "Bütün fermerlər sifarişi təhvilə hazırladı — sifariş kuryer növbəsinə keçdi.",
+    changedBy,
+    notification: {
+      type: "order_prepared",
+      title: "Sifarişiniz kuryer gözləyir",
+      body: "Məhsullar hazırdır. Kuryer tərəfindən götürülməyi gözləyir.",
+    },
+  });
+
+  await notifyAdmins({
+    type: "general",
+    title: "Sifariş kuryer növbəsinə keçdi",
+    body: `${order.order_code} — bütün fermerlər hazırdır, sifariş avtomatik olaraq kuryer növbəsinə keçdi.`,
+    metadata: { order_id: order.id, order_code: order.order_code },
+  });
+}
+
+function revalidateOrderViews() {
+  revalidatePath("/courier");
+  revalidatePath("/farmer/orders");
+  revalidatePath("/farmer");
+  revalidatePath("/orders");
+  revalidatePath("/admin/orders");
+  revalidatePath("/admin");
+  revalidatePath("/notifications");
+}
+
 export async function updateOrderItemStatus(
   _prev: FarmerActionState,
   formData: FormData
@@ -768,39 +815,150 @@ export async function updateOrderItemStatus(
 
   // The last farmer to hand over moves the whole order to couriers; the
   // admin no longer has to notice and do it by hand.
-  if (
-    nextStatus === "awaiting_pickup" &&
-    (await moveOrderToCourierQueueIfHandedOver(order.id))
-  ) {
-    await insertEventAndNotify({
-      orderId: order.id,
-      customerId: order.customer_id,
-      status: "awaiting_courier",
-      note: "Bütün fermerlər sifarişi təhvilə hazırladı — sifariş kuryer növbəsinə keçdi.",
-      changedBy: profile.id,
-      notification: {
-        type: "order_prepared",
-        title: "Sifarişiniz kuryer gözləyir",
-        body: "Məhsullar hazırdır. Kuryer tərəfindən götürülməyi gözləyir.",
-      },
-    });
-
-    await notifyAdmins({
-      type: "general",
-      title: "Sifariş kuryer növbəsinə keçdi",
-      body: `${order.order_code} — bütün fermerlər hazırdır, sifariş avtomatik olaraq kuryer növbəsinə keçdi.`,
-      metadata: { order_id: order.id, order_code: order.order_code },
-    });
+  if (nextStatus === "awaiting_pickup") {
+    await moveToCourierQueueIfReady(order, profile.id);
   }
 
-  revalidatePath("/courier");
-  revalidatePath("/farmer/orders");
-  revalidatePath("/farmer");
-  revalidatePath("/orders");
-  revalidatePath("/admin/orders");
-  revalidatePath("/admin");
-  revalidatePath("/notifications");
+  revalidateOrderViews();
   return { success: "Status yeniləndi." };
+}
+
+/**
+ * The farmer cancels their line of a paid order, with a reason the customer
+ * and the admin see. Stock is not given back: the usual reason is that the
+ * goods aren't there. If no line of the order is left, the order itself is
+ * cancelled.
+ */
+export async function cancelOrderItem(
+  _prev: FarmerActionState,
+  formData: FormData,
+): Promise<FarmerActionState> {
+  const { profile, farmer } = await requireApprovedFarmer();
+  const itemId = String(formData.get("order_item_id") ?? "").trim();
+  const reason = String(formData.get("cancel_reason") ?? "").trim();
+
+  if (!itemId) {
+    return { error: "Sifariş məhsulu tapılmadı." };
+  }
+  if (reason.length < CANCEL_REASON_MIN) {
+    return { error: "Ləğvin səbəbini yazın." };
+  }
+  if (reason.length > CANCEL_REASON_MAX) {
+    return { error: `Səbəb ən çox ${CANCEL_REASON_MAX} simvol ola bilər.` };
+  }
+
+  const supabase = await createClient();
+  const { data: item, error } = await supabase
+    .from("order_items")
+    .select("*")
+    .eq("id", itemId)
+    .eq("farmer_id", farmer.id)
+    .single();
+
+  if (error || !item) {
+    return { error: "Sifariş məhsulu tapılmadı." };
+  }
+
+  const order = (await getFarmerOrderHeaders(farmer.id, [item.order_id])).get(
+    item.order_id,
+  );
+  if (!order) {
+    return { error: "Sifariş tapılmadı." };
+  }
+  if (order.status === "awaiting_confirmation") {
+    return { error: "Bu sifarişin ödənişi hələ təsdiqlənməyib." };
+  }
+  if (!FARMER_CANCELLABLE_ITEM_STATUSES.includes(item.status)) {
+    return { error: "Kuryerə təhvil verilmiş məhsulu ləğv etmək olmaz." };
+  }
+
+  // Only from the status it was read in, so a line handed over meanwhile
+  // isn't cancelled behind the courier's back.
+  const { data: cancelled, error: updateError } = await supabase
+    .from("order_items")
+    .update({ status: "cancelled", cancel_reason: reason })
+    .eq("id", itemId)
+    .eq("status", item.status)
+    .select("id");
+
+  if (updateError) {
+    console.error("[farmer.cancelOrderItem]", updateError.message);
+    return { error: "Ləğv edilmədi. Yenidən cəhd edin." };
+  }
+  if (!cancelled?.length) {
+    return { error: "Məhsulun statusu dəyişib. Səhifəni yeniləyin." };
+  }
+
+  const amount = formatPrice(Number(item.line_total));
+
+  await insertEventAndNotify({
+    orderId: order.id,
+    customerId: order.customer_id,
+    orderItemId: itemId,
+    status: "cancelled",
+    note: `${item.product_title}: fermer ləğv etdi. Səbəb: ${reason}`,
+    changedBy: profile.id,
+    notification: {
+      type: "general",
+      title: "Məhsul ləğv edildi",
+      body: `${order.order_code} — "${item.product_title}" fermer tərəfindən ləğv edildi. Səbəb: ${reason}. Bu məhsulun məbləği (${amount}) ilə bağlı sizinlə əlaqə saxlanılacaq.`,
+    },
+  });
+
+  await notifyAdmins({
+    type: "general",
+    title: "Fermer məhsulu ləğv etdi",
+    body: `${order.order_code} — ${farmer.farm_name}: "${item.product_title}" (${item.quantity} ${unitLabel(item.unit_type)}, ${amount}) ləğv edildi. Səbəb: ${reason}. Müştəriyə geri ödəniş lazımdır.`,
+    metadata: {
+      order_id: order.id,
+      order_code: order.order_code,
+      order_item_id: itemId,
+      item_status: "cancelled",
+    },
+  });
+
+  // The rest of the order: nothing left means the order is off; otherwise
+  // the other farmers may all have handed over already.
+  const admin = createAdminClient();
+  const { data: lines } = await admin
+    .from("order_items")
+    .select("status")
+    .eq("order_id", order.id);
+  const allCancelled = (lines ?? []).every((line) => line.status === "cancelled");
+
+  if (allCancelled) {
+    const { data: closed } = await admin
+      .from("orders")
+      .update({ status: "cancelled" })
+      .eq("id", order.id)
+      .not("status", "in", "(cancelled,delivered)")
+      .select("id");
+    if (closed?.length) {
+      await insertEventAndNotify({
+        orderId: order.id,
+        customerId: order.customer_id,
+        status: "cancelled",
+        note: "Sifarişdəki bütün məhsullar ləğv edildi — sifariş ləğv olundu.",
+        changedBy: profile.id,
+        notification: {
+          type: "general",
+          title: "Sifariş ləğv edildi",
+          body: `${order.order_code} — sifarişdəki bütün məhsullar ləğv edildi. Ödənişin qaytarılması ilə bağlı sizinlə əlaqə saxlanılacaq.`,
+        },
+      });
+      await notifyAdmins({
+        type: "general",
+        title: "Sifariş tam ləğv olundu",
+        body: `${order.order_code} — bütün məhsullar fermerlər tərəfindən ləğv edildi. Müştəriyə ödənişin hamısı qaytarılmalıdır.`,
+        metadata: { order_id: order.id, order_code: order.order_code },
+      });
+    }
+  } else {
+    await moveToCourierQueueIfReady(order, profile.id);
+  }
+
+  revalidateOrderViews();
+  return { success: "Məhsul ləğv edildi." };
 }
 
 export async function updateFarmerProfile(

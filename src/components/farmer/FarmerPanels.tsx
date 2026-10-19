@@ -17,6 +17,8 @@ import { Turnstile, type TurnstileHandle } from "@/components/auth/Turnstile";
 import { VerifyOtpForm } from "@/components/auth/VerifyOtpForm";
 import { AzPhoneInput } from "@/components/ui/AzPhoneInput";
 import { Spinner } from "@/components/ui/Spinner";
+import { CancelOrderItemForm } from "@/components/farmer/CancelOrderItemForm";
+import { FARMER_CANCELLABLE_ITEM_STATUSES } from "@/lib/orders/item-cancel";
 import {
   completeFarmerProfile,
   createProduct,
@@ -938,6 +940,8 @@ function FarmerOrderItemCard({ item }: { item: FarmerOrderItem }) {
   );
   const nextStatuses = FARMER_ITEM_STATUS_TRANSITIONS[item.status] ?? [];
   const order = item.orders;
+  const [cancelling, setCancelling] = useState(false);
+  const cancellable = FARMER_CANCELLABLE_ITEM_STATUSES.includes(item.status);
 
   return (
     <article className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-zinc-200">
@@ -969,6 +973,11 @@ function FarmerOrderItemCard({ item }: { item: FarmerOrderItem }) {
               Qeyd: {order.order_note}
             </p>
           ) : null}
+          {item.status === "cancelled" && item.cancel_reason ? (
+            <p className="mt-2 whitespace-pre-line break-words rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-800">
+              Ləğv səbəbi: {item.cancel_reason}
+            </p>
+          ) : null}
           <p className="mt-1 text-xs text-zinc-500">
             {formatDateTime(item.created_at)}
           </p>
@@ -980,7 +989,7 @@ function FarmerOrderItemCard({ item }: { item: FarmerOrderItem }) {
         </span>
       </div>
 
-      {nextStatuses.length > 0 ? (
+      {nextStatuses.length > 0 && !cancelling ? (
         <form action={action} className="mt-4 flex flex-wrap items-end gap-2">
           <input type="hidden" name="order_item_id" value={item.id} />
           <div className="min-w-[220px] flex-1">
@@ -1011,7 +1020,24 @@ function FarmerOrderItemCard({ item }: { item: FarmerOrderItem }) {
             {pending ? <Spinner className="h-3.5 w-3.5" /> : null}
             Yenilə
           </button>
+          {cancellable ? (
+            <button
+              type="button"
+              onClick={() => setCancelling(true)}
+              disabled={pending}
+              className="rounded-full bg-white px-4 py-2.5 text-sm font-semibold text-rose-700 ring-1 ring-rose-200 hover:bg-rose-50 disabled:opacity-60"
+            >
+              Ləğv et
+            </button>
+          ) : null}
         </form>
+      ) : null}
+      {cancelling && cancellable ? (
+        <CancelOrderItemForm
+          itemId={item.id}
+          productTitle={item.product_title}
+          onClose={() => setCancelling(false)}
+        />
       ) : null}
     </article>
   );

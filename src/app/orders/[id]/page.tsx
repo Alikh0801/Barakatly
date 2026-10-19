@@ -188,9 +188,20 @@ export default async function OrderDetailPage({
                                 </div>
                               </div>
                             </dl>
-                            <div className="mt-2 inline-flex rounded-full bg-zinc-100 px-2 py-0.5 text-xs font-medium text-zinc-700 ring-1 ring-zinc-200">
+                            <div
+                              className={`mt-2 inline-flex rounded-full px-2 py-0.5 text-xs font-medium ring-1 ${
+                                item.status === "cancelled"
+                                  ? "bg-rose-50 text-rose-800 ring-rose-200"
+                                  : "bg-zinc-100 text-zinc-700 ring-zinc-200"
+                              }`}
+                            >
                               {getOrderItemStatusLabel(item.status)}
                             </div>
+                            {item.status === "cancelled" && item.cancel_reason ? (
+                              <p className="mt-2 whitespace-pre-line break-words text-sm text-rose-800">
+                                Fermerin qeydi: {item.cancel_reason}
+                              </p>
+                            ) : null}
                           </div>
                           <div className="shrink-0 text-right font-semibold text-zinc-900">
                             {formatPrice(item.line_total)}

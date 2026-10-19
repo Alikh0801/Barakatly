@@ -69,6 +69,7 @@ export type AdminOrderItem = Pick<
   | "status"
   | "farmer_id"
   | "line_total"
+  | "cancel_reason"
 > & {
   farmers: { farm_name: string } | null;
 };
@@ -101,6 +102,7 @@ export async function getAdminOrders(): Promise<AdminOrderListItem[]> {
         status,
         farmer_id,
         line_total,
+        cancel_reason,
         farmers (farm_name)
       ),
       order_status_events (

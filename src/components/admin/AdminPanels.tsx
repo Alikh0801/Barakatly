@@ -403,9 +403,21 @@ export function AdminOrdersPanel({
                                 <p className="text-xs text-zinc-500">
                                   {item.farmers?.farm_name ?? "Fermer"} ·{" "}
                                   {item.quantity} {formatUnit(item.unit_type)}
+                                  {item.status === "cancelled" ? ` · ${formatPrice(Number(item.line_total))}` : ""}
                                 </p>
+                                {item.status === "cancelled" && item.cancel_reason ? (
+                                  <p className="mt-0.5 whitespace-pre-line break-words text-xs text-rose-700">
+                                    Ləğv səbəbi: {item.cancel_reason}
+                                  </p>
+                                ) : null}
                               </div>
-                      <span className="inline-flex w-fit max-w-[16rem] shrink-0 rounded-full bg-sky-50 px-2.5 py-0.5 text-xs font-medium text-sky-900 ring-1 ring-sky-200">
+                      <span
+                        className={`inline-flex w-fit max-w-[16rem] shrink-0 rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ${
+                          item.status === "cancelled"
+                            ? "bg-rose-50 text-rose-800 ring-rose-200"
+                            : "bg-sky-50 text-sky-900 ring-sky-200"
+                        }`}
+                      >
                         {getOrderItemStatusLabel(item.status)}
                       </span>
                             </li>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { updateOrderItemStatus } from "@/lib/farmer/actions";
 import type { FarmerOrderItem } from "@/lib/farmer/queries";
 import type { FarmerSalesStats } from "@/lib/farmer/stats";
@@ -8,6 +8,7 @@ import type { FarmerRatingSummary } from "@/lib/farmers/queries";
 import { formatDate } from "@/lib/format/date";
 import { unitLabel } from "@/lib/shop/format";
 import { Spinner } from "@/components/ui/Spinner";
+import { CancelOrderItemForm } from "@/components/farmer/CancelOrderItemForm";
 
 const MONTH_NAMES = ["Yanvar", "Fevral", "Mart", "Aprel", "May", "İyun", "İyul", "Avqust", "Sentyabr", "Oktyabr", "Noyabr", "Dekabr"];
 const MONTH_SHORT = ["Yan", "Fev", "Mar", "Apr", "May", "İyn", "İyl", "Avq", "Sen", "Okt", "Noy", "Dek"];
@@ -283,6 +284,7 @@ function RevenueChart({ months }: { months: FarmerSalesStats["months"] }) {
 
 function PendingOrderRow({ item, now }: { item: FarmerOrderItem; now: number }) {
   const [state, action, pending] = useActionState(updateOrderItemStatus, {});
+  const [cancelling, setCancelling] = useState(false);
   const order = item.orders;
   const unit = unitLabel(item.unit_type);
 
@@ -307,6 +309,24 @@ function PendingOrderRow({ item, now }: { item: FarmerOrderItem; now: number }) 
             {relativeTime(item.created_at, now)}
           </p>
         </div>
+        <button
+          type="button"
+          onClick={() => setCancelling((open) => !open)}
+          disabled={pending}
+          aria-label={`${item.product_title} sifarişini ləğv et`}
+          aria-expanded={cancelling}
+          title="Ləğv et"
+          data-static-hover
+          className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ring-1 transition-colors disabled:opacity-60 ${
+            cancelling
+              ? "bg-rose-600 text-white ring-rose-600"
+              : "bg-rose-50 text-rose-600 ring-rose-200 hover:bg-rose-600 hover:text-white"
+          }`}
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true" className="h-4 w-4">
+            <path d="M7 7l10 10M17 7 7 17" strokeLinecap="round" />
+          </svg>
+        </button>
         <form action={action} className="shrink-0">
           <input type="hidden" name="order_item_id" value={item.id} />
           <input type="hidden" name="next_status" value="accepted" />
@@ -330,6 +350,13 @@ function PendingOrderRow({ item, now }: { item: FarmerOrderItem; now: number }) 
       </div>
       {state.error ? (
         <p className="mt-2 rounded-lg bg-rose-50 px-3 py-1.5 text-xs text-rose-700">{state.error}</p>
+      ) : null}
+      {cancelling ? (
+        <CancelOrderItemForm
+          itemId={item.id}
+          productTitle={item.product_title}
+          onClose={() => setCancelling(false)}
+        />
       ) : null}
     </li>
   );
