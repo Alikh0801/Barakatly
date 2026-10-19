@@ -964,6 +964,11 @@ function FarmerOrderItemCard({ item }: { item: FarmerOrderItem }) {
               Müştəri: {order.customer.full_name}
             </p>
           ) : null}
+          {order?.order_note ? (
+            <p className="mt-1 whitespace-pre-line break-words text-sm text-zinc-600">
+              Qeyd: {order.order_note}
+            </p>
+          ) : null}
           <p className="mt-1 text-xs text-zinc-500">
             {formatDateTime(item.created_at)}
           </p>

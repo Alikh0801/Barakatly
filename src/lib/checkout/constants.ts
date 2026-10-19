@@ -38,3 +38,17 @@ export function isOwnReceiptPath(path: string, userId: string): boolean {
   const escaped = userId.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   return new RegExp(`^${escaped}/[\\w-]+\\.(jpg|png|webp|pdf)$`).test(path);
 }
+
+export const RECIPIENT_NAME_MAX = 50;
+export const DISTRICT_MAX = 80;
+export const ORDER_NOTE_MAX = 500;
+
+/** An address from one of the customer's earlier orders, offered again. */
+export type SavedAddress = {
+  firstName: string;
+  lastName: string;
+  phone: string;
+  city: string;
+  district: string;
+  address: string;
+};

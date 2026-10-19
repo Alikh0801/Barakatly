@@ -2,10 +2,11 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { CheckoutForm } from "@/components/checkout/CheckoutForm";
 import { SolidPageShell } from "@/components/layout/SolidPageShell";
-import { getActiveBanks } from "@/lib/checkout/queries";
+import { getActiveBanks, getSavedAddresses } from "@/lib/checkout/queries";
 import { getProfile } from "@/lib/auth/session";
 import { getCartItems } from "@/lib/cart/queries";
 import { getAppliedPromo } from "@/lib/promo/server";
+import { displaySerif } from "@/lib/fonts";
 
 export const metadata = {
   title: "Ödəniş",
@@ -18,7 +19,11 @@ export default async function CheckoutPage() {
     redirect("/signin?next=/checkout");
   }
 
-  const [items, promo] = await Promise.all([getCartItems(), getAppliedPromo()]);
+  const [items, promo, savedAddresses] = await Promise.all([
+    getCartItems(),
+    getAppliedPromo(),
+    getSavedAddresses(profile.id),
+  ]);
 
   return (
     <SolidPageShell>
@@ -30,16 +35,15 @@ export default async function CheckoutPage() {
         >
           ← Səbətə qayıt
         </Link>
-        <h1 className="mt-4 text-3xl font-semibold tracking-tight text-zinc-900">
-          Ödəniş
+        <h1 className={`${displaySerif.className} mt-4 text-3xl tracking-tight text-zinc-900 md:text-4xl`}>
+          Sifarişi rəsmiləşdir
         </h1>
-        <p className="mt-2 text-sm text-zinc-500">
-          Əlaqə məlumatlarınızı doldurun, bank seçin və çeki yükləyin
-        </p>
-        <div className="mt-8">
+        <div className="mt-6">
           <CheckoutForm
             banks={banks}
             defaultPhone={profile.phone}
+            defaultName={profile.full_name}
+            savedAddresses={savedAddresses}
             items={items}
             userId={profile.id}
             promo={promo}

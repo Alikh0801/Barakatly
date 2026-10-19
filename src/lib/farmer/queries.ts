@@ -64,14 +64,14 @@ export async function getFarmerProductById(
 }
 
 export type FarmerOrderItem = OrderItem & {
-  orders: (Pick<Order, "id" | "order_code" | "status" | "created_at"> & {
+  orders: (Pick<Order, "id" | "order_code" | "status" | "created_at" | "order_note"> & {
     customer: { full_name: string | null } | null;
   }) | null;
 };
 
 export type FarmerOrderHeader = Pick<
   Order,
-  "id" | "order_code" | "status" | "created_at" | "customer_id"
+  "id" | "order_code" | "status" | "created_at" | "customer_id" | "order_note"
 > & {
   customer: { full_name: string | null } | null;
 };
@@ -102,6 +102,7 @@ export async function getFarmerOrderHeaders(
       status,
       created_at,
       customer_id,
+      order_note,
       customer:profiles!orders_customer_id_fkey (full_name),
       order_items!inner (farmer_id)
     `
@@ -122,6 +123,8 @@ export async function getFarmerOrderHeaders(
       status: row.status,
       created_at: row.created_at,
       customer_id: row.customer_id,
+      // Written for the farmer or the courier, so farmers see it too.
+      order_note: row.order_note,
       customer: customer ? { full_name: customer.full_name } : null,
     });
   }
@@ -165,6 +168,7 @@ export async function getFarmerOrderItems(
             order_code: order.order_code,
             status: order.status,
             created_at: order.created_at,
+            order_note: order.order_note,
             customer: order.customer,
           },
         },

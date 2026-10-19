@@ -13,6 +13,7 @@ import {
 import { Spinner } from "@/components/ui/Spinner";
 import { formatDateTime } from "@/lib/format/date";
 import type { CourierOrder } from "@/lib/courier/queries";
+import { deliveryAddress, recipientName } from "@/lib/orders/delivery";
 import type { OrderStatus } from "@/types";
 
 const initialState: CourierActionState = {};
@@ -83,12 +84,22 @@ function CourierOrderCard({ order }: { order: CourierOrder }) {
         <div>
           <div className="font-semibold text-zinc-900">{order.order_code}</div>
           <p className="mt-1 text-sm text-zinc-500">{formatDateTime(order.created_at)}</p>
-          <p className="mt-2 text-sm text-zinc-700">
+          {recipientName(order) ? (
+            <p className="mt-2 text-sm font-medium text-zinc-900">
+              Alıcı: {recipientName(order)}
+            </p>
+          ) : null}
+          <p className={`${recipientName(order) ? "mt-1" : "mt-2"} text-sm text-zinc-700`}>
             Müştəri telefonu: {order.contact_phone}
           </p>
           <p className="mt-1 text-sm text-zinc-600">
-            Çatdırılma: {order.delivery_address_text ?? "Ünvan qeyd olunmayıb"}
+            Çatdırılma: {deliveryAddress(order) ?? "Ünvan qeyd olunmayıb"}
           </p>
+          {order.order_note ? (
+            <p className="mt-1 whitespace-pre-line break-words text-sm text-zinc-600">
+              Qeyd: {order.order_note}
+            </p>
+          ) : null}
         </div>
         <div className="text-xs font-medium text-zinc-700">
           {getOrderStatusLabel(order.status)}

@@ -4,6 +4,9 @@ import { cookies } from "next/headers";
 import { after } from "next/server";
 import { getSessionUser } from "@/lib/auth/session";
 import {
+  DISTRICT_MAX,
+  ORDER_NOTE_MAX,
+  RECIPIENT_NAME_MAX,
   RECEIPT_MAX_BYTES,
   RECEIPT_TOO_LARGE_ERROR,
   RECEIPT_TYPE_ERROR,
@@ -16,6 +19,7 @@ import {
   isValidAzPhone,
   normalizeAzPhone,
 } from "@/lib/phone/az";
+import { AZ_REGIONS } from "@/lib/az/regions";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { PROMO_COOKIE, describePromoError } from "@/lib/promo/constants";
@@ -77,6 +81,31 @@ export async function placeOrder(
 
   if (!deliveryAddress) {
     return { error: "Çatdırılma ünvanını daxil edin." };
+  }
+  if (deliveryAddress.length > 300) {
+    return { error: "Ünvan çox uzundur." };
+  }
+
+  const firstName = String(formData.get("first_name") ?? "").trim();
+  const lastName = String(formData.get("last_name") ?? "").trim();
+  const city = String(formData.get("city") ?? "").trim();
+  const district = String(formData.get("district") ?? "").trim();
+  const note = String(formData.get("order_note") ?? "").trim();
+
+  if (!firstName || !lastName) {
+    return { error: "Ad və soyadı daxil edin." };
+  }
+  if (firstName.length > RECIPIENT_NAME_MAX || lastName.length > RECIPIENT_NAME_MAX) {
+    return { error: "Ad və ya soyad çox uzundur." };
+  }
+  if (!(AZ_REGIONS as readonly string[]).includes(city)) {
+    return { error: "Şəhəri seçin." };
+  }
+  if (district.length > DISTRICT_MAX) {
+    return { error: "Rayon/qəsəbə adı çox uzundur." };
+  }
+  if (note.length > ORDER_NOTE_MAX) {
+    return { error: `Qeyd ən çox ${ORDER_NOTE_MAX} simvol ola bilər.` };
   }
 
   if (!bankId) {
@@ -182,6 +211,11 @@ export async function placeOrder(
         quantity: item.quantity,
       })),
       p_promo_code: promoCode,
+      p_first_name: firstName,
+      p_last_name: lastName,
+      p_city: city,
+      p_district: district || null,
+      p_note: note || null,
     }
   );
 

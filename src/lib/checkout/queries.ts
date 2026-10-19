@@ -1,6 +1,7 @@
 import { unstable_cache } from "next/cache";
 import { createPublicClient } from "@/lib/supabase/public";
 import { createClient } from "@/lib/supabase/server";
+import type { SavedAddress } from "@/lib/checkout/constants";
 import type { Bank, Order, OrderItem, OrderStatusEvent, Payment } from "@/types";
 
 async function fetchActiveBanks(): Promise<Bank[]> {
@@ -24,6 +25,48 @@ export const getActiveBanks = unstable_cache(
   ["active-banks"],
   { revalidate: 300, tags: ["banks"] }
 );
+
+/**
+ * The addresses of the customer's latest orders, newest first and without
+ * repeats, to fill the checkout form with one tap. Orders from before the
+ * form asked for a city are skipped.
+ */
+export async function getSavedAddresses(customerId: string, limit = 3): Promise<SavedAddress[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("orders")
+    .select(
+      "recipient_first_name, recipient_last_name, contact_phone, delivery_city, delivery_district, delivery_address_text",
+    )
+    .eq("customer_id", customerId)
+    .not("delivery_city", "is", null)
+    .order("created_at", { ascending: false })
+    .limit(20);
+
+  if (error) {
+    console.error("[checkout.getSavedAddresses]", error.message);
+    return [];
+  }
+
+  const seen = new Set<string>();
+  const addresses: SavedAddress[] = [];
+  for (const row of data ?? []) {
+    const address: SavedAddress = {
+      firstName: row.recipient_first_name ?? "",
+      lastName: row.recipient_last_name ?? "",
+      phone: row.contact_phone ?? "",
+      city: row.delivery_city ?? "",
+      district: row.delivery_district ?? "",
+      address: row.delivery_address_text ?? "",
+    };
+    const key = [address.city, address.district, address.address].join("|").toLowerCase();
+    if (!address.address || seen.has(key)) continue;
+    seen.add(key);
+    addresses.push(address);
+    if (addresses.length >= limit) break;
+  }
+  return addresses;
+}
 
 export type OrderItemProductImage = {
   url: string;

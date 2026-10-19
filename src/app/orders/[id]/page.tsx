@@ -11,6 +11,7 @@ import {
   getPaymentStatusLabel,
 } from "@/lib/orders/labels";
 import { firstPayment } from "@/lib/orders/payment";
+import { deliveryAddress, recipientName } from "@/lib/orders/delivery";
 import { getOrderById } from "@/lib/checkout/queries";
 import { formatPrice, formatUnit, getProductImageUrl } from "@/lib/shop/format";
 import { formatDateTime } from "@/lib/format/date";
@@ -207,6 +208,14 @@ export default async function OrderDetailPage({
                 Çatdırılma məlumatları
               </h2>
               <dl className="mt-4 space-y-3 text-sm">
+                {recipientName(order) ? (
+                  <div className="flex justify-between gap-4">
+                    <dt className="text-zinc-500">Alıcı</dt>
+                    <dd className="font-medium text-zinc-900">
+                      {recipientName(order)}
+                    </dd>
+                  </div>
+                ) : null}
                 <div className="flex justify-between gap-4">
                   <dt className="text-zinc-500">Telefon</dt>
                   <dd className="font-medium text-zinc-900">
@@ -216,9 +225,17 @@ export default async function OrderDetailPage({
                 <div className="flex justify-between gap-4">
                   <dt className="text-zinc-500">Ünvan</dt>
                   <dd className="max-w-xs text-right font-medium text-zinc-900">
-                    {order.delivery_address_text ?? "—"}
+                    {deliveryAddress(order) ?? "—"}
                   </dd>
                 </div>
+                {order.order_note ? (
+                  <div className="flex justify-between gap-4">
+                    <dt className="text-zinc-500">Qeyd</dt>
+                    <dd className="max-w-xs whitespace-pre-line break-words text-right font-medium text-zinc-900">
+                      {order.order_note}
+                    </dd>
+                  </div>
+                ) : null}
               </dl>
             </section>
           </div>

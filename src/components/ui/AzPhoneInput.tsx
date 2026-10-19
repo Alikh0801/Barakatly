@@ -35,6 +35,7 @@ export function AzPhoneInput({
   label = "Telefon",
   error,
   onValueChange,
+  labelClassName = "block text-sm font-medium text-zinc-700",
 }: {
   id?: string;
   name?: string;
@@ -45,6 +46,7 @@ export function AzPhoneInput({
   error?: string | null;
   /** Called with the normalized value (+994XXXXXXXXX, or "" when empty). */
   onValueChange?: (value: string) => void;
+  labelClassName?: string;
 }) {
   const [digits, setDigits] = useState(() =>
     sanitizeAzLocalInput(azPhoneLocalPart(defaultValue)),
@@ -93,7 +95,7 @@ export function AzPhoneInput({
 
   return (
     <div>
-      <label htmlFor={id} className="block text-sm font-medium text-zinc-700">
+      <label htmlFor={id} className={labelClassName}>
         {label}
         {required ? " *" : ""}
       </label>

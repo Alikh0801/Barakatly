@@ -18,6 +18,7 @@ import {
   getPaymentStatusLabel,
 } from "@/lib/orders/labels";
 import { firstPayment } from "@/lib/orders/payment";
+import { deliveryAddress, recipientName } from "@/lib/orders/delivery";
 import { matchesAdminOrderQuery } from "@/lib/orders/admin-order-filter";
 import type {
   AdminOrderListItem,
@@ -348,6 +349,21 @@ export function AdminOrdersPanel({
                             order.customer?.email ??
                             "Müştəri"}
                         </p>
+                        {recipientName(order) ? (
+                          <p className="mt-1 text-sm text-zinc-600">
+                            Alıcı: {recipientName(order)} · {order.contact_phone}
+                          </p>
+                        ) : null}
+                        {deliveryAddress(order) ? (
+                          <p className="mt-1 break-words text-sm text-zinc-600">
+                            {deliveryAddress(order)}
+                          </p>
+                        ) : null}
+                        {order.order_note ? (
+                          <p className="mt-1 whitespace-pre-line break-words text-sm text-zinc-500">
+                            Qeyd: {order.order_note}
+                          </p>
+                        ) : null}
                       </div>
                       <div className="shrink-0 sm:text-right">
                         <div className="font-semibold text-zinc-900">
