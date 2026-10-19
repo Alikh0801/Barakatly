@@ -87,7 +87,7 @@ async function uniqueSubcategorySlug(
 type ResolvedTaxonomy =
   | {
       categoryId: string;
-      subcategoryId: string;
+      subcategoryId: string | null;
       createdLabels: string[];
       createdCategoryId?: string;
       createdSubcategoryId?: string;
@@ -97,7 +97,8 @@ type ResolvedTaxonomy =
 /**
  * Resolves the category + subcategory for a product form. Handles the "__new__"
  * sentinel by creating a pending (unapproved) category/subcategory owned by the
- * farmer, so admins can review it. Subcategory is always required.
+ * farmer, so admins can review it. The subcategory is optional: a product
+ * can sit directly under its category.
  */
 async function resolveTaxonomy(
   formData: FormData,
@@ -141,7 +142,7 @@ async function resolveTaxonomy(
     return { error: "Kateqoriya seçin." };
   }
 
-  let subcategoryId: string;
+  let subcategoryId: string | null = null;
   if (subcategoryIdRaw === "__new__") {
     if (!newSubcategoryName) {
       return { error: "Yeni alt-kateqoriya adını daxil edin." };
@@ -169,9 +170,15 @@ async function resolveTaxonomy(
     subcategoryId = data.id;
     createdSubcategoryId = data.id;
     createdLabels.push(`alt-kateqoriya "${newSubcategoryName}"`);
-  } else if (!subcategoryIdRaw) {
-    return { error: "Alt-kateqoriya seçin." };
-  } else {
+  } else if (subcategoryIdRaw) {
+    const { data: subcategory } = await admin
+      .from("subcategories")
+      .select("category_id")
+      .eq("id", subcategoryIdRaw)
+      .maybeSingle();
+    if (!subcategory || subcategory.category_id !== categoryId) {
+      return { error: "Alt kateqoriya seçilmiş kateqoriyaya aid deyil." };
+    }
     subcategoryId = subcategoryIdRaw;
   }
 

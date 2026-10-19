@@ -530,19 +530,19 @@ export function FarmerProductForm({
           htmlFor="subcategory_id"
           className="block text-sm font-medium text-zinc-700"
         >
-          Alt kateqoriya
+          Alt kateqoriya{" "}
+          <span className="font-normal text-zinc-400">(istəyə görə)</span>
         </label>
         <select
           id="subcategory_id"
           name="subcategory_id"
-          required
           value={subcategoryId}
           onChange={(event) => setSubcategoryId(event.target.value)}
           disabled={!categoryId}
           className="mt-1 w-full rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-base text-zinc-900 disabled:bg-zinc-50 disabled:text-zinc-400"
         >
           <option value="">
-            {categoryId ? "Seçin" : "Əvvəlcə kateqoriya seçin"}
+            {categoryId ? "Alt kateqoriyasız" : "Əvvəlcə kateqoriya seçin"}
           </option>
           {visibleSubcategories.map((sub) => (
             <option key={sub.id} value={sub.id}>
