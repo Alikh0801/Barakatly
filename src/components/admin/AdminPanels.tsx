@@ -1,12 +1,13 @@
 "use client";
 
-import { useActionState, useDeferredValue, useState } from "react";
+import { useActionState, useDeferredValue, useEffect, useState } from "react";
 import {
   advanceOrderStatus,
   confirmPayment,
   deleteOrders,
   rejectPayment,
 } from "@/lib/admin/actions";
+import { markFarmerOrderUpdatesSeen } from "@/lib/admin/farmer-update-actions";
 import { Spinner } from "@/components/ui/Spinner";
 import { OrderStatusTimeline } from "@/components/orders/OrderStatusTimeline";
 import { formatPrice, formatUnit } from "@/lib/shop/format";
@@ -23,6 +24,7 @@ import { matchesAdminOrderQuery } from "@/lib/orders/admin-order-filter";
 import type {
   AdminOrderListItem,
   AdminPendingPayment,
+  FarmerOrderUpdate,
 } from "@/lib/admin/queries";
 import type { OrderStatus } from "@/types";
 
@@ -174,9 +176,21 @@ type AdminOrderListItemWithReceipt = AdminOrderListItem & {
 
 export function AdminOrdersPanel({
   orders,
+  farmerUpdates = [],
 }: {
   orders: AdminOrderListItemWithReceipt[];
+  farmerUpdates?: FarmerOrderUpdate[];
 }) {
+  // Kept from the first render: opening the page marks the updates seen,
+  // which clears the sidebar badge, but they stay red while the admin is here.
+  const [updates] = useState(
+    () => new Map(farmerUpdates.map((update) => [update.orderId, update.messages])),
+  );
+  useEffect(() => {
+    if (updates.size > 0) void markFarmerOrderUpdatesSeen();
+  }, [updates]);
+  const updatedOrders = orders.filter((order) => updates.has(order.id));
+
   const [statusState, statusAction, statusPending] = useActionState(
     advanceOrderStatus,
     initialState
@@ -245,6 +259,29 @@ export function AdminOrdersPanel({
           </p>
         ) : null}
       </div>
+
+      {updatedOrders.length > 0 ? (
+        <section className="rounded-2xl bg-rose-50 p-4 ring-1 ring-rose-200">
+          <h2 className="flex items-center gap-2 text-sm font-semibold text-rose-800">
+            <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-rose-500 px-1.5 text-[11px] font-semibold text-white">
+              {updatedOrders.length}
+            </span>
+            Fermer sifariş statusunu dəyişib
+          </h2>
+          <ul className="mt-2 flex flex-wrap gap-2">
+            {updatedOrders.map((order) => (
+              <li key={order.id}>
+                <a
+                  href={`#order-${order.id}`}
+                  className="inline-flex rounded-full bg-white px-3 py-1 text-xs font-semibold text-rose-700 ring-1 ring-rose-200 hover:bg-rose-100"
+                >
+                  {order.order_code}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
 
       {statusState.error || deleteState.error ? (
         <p className="rounded-xl bg-rose-50 px-3 py-2 text-sm text-rose-700 ring-1 ring-rose-200">
@@ -316,14 +353,35 @@ export function AdminOrdersPanel({
             const items = order.order_items ?? [];
             const events = order.order_status_events ?? [];
             const isChecked = selected.includes(order.id);
+            const farmerMessages = updates.get(order.id);
 
             return (
               <article
                 key={order.id}
-                className={`rounded-2xl bg-white p-4 shadow-sm ring-1 sm:p-5 ${
-                  isChecked ? "ring-emerald-300" : "ring-zinc-200"
+                id={`order-${order.id}`}
+                className={`scroll-mt-20 rounded-2xl bg-white p-4 shadow-sm sm:p-5 ${
+                  isChecked
+                    ? "ring-1 ring-emerald-300"
+                    : farmerMessages
+                      ? "ring-2 ring-rose-300"
+                      : "ring-1 ring-zinc-200"
                 }`}
               >
+                {farmerMessages ? (
+                  <div className="mb-3 rounded-xl bg-rose-50 px-3 py-2 ring-1 ring-rose-200">
+                    <p className="flex items-center gap-1.5 text-xs font-semibold text-rose-700">
+                      <span className="h-2 w-2 rounded-full bg-rose-500" aria-hidden="true" />
+                      Fermer statusu dəyişdi
+                    </p>
+                    <ul className="mt-1 space-y-0.5 text-xs text-rose-800">
+                      {farmerMessages.slice(0, 3).map((message, index) => (
+                        <li key={index} className="break-words">
+                          {message}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ) : null}
                 <div className="flex gap-3">
                   <input
                     type="checkbox"

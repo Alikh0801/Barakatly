@@ -1,6 +1,6 @@
 import { AdminOrdersPanel } from "@/components/admin/AdminPanels";
 import { AdminPageShell } from "@/components/admin/AdminPageShell";
-import { getAdminOrders } from "@/lib/admin/queries";
+import { getAdminOrders, getUnseenFarmerOrderUpdates } from "@/lib/admin/queries";
 import { firstPayment } from "@/lib/orders/payment";
 import { createClient } from "@/lib/supabase/server";
 
@@ -9,7 +9,10 @@ export const metadata = {
 };
 
 export default async function AdminOrdersPage() {
-  const orders = await getAdminOrders();
+  const [orders, farmerUpdates] = await Promise.all([
+    getAdminOrders(),
+    getUnseenFarmerOrderUpdates(),
+  ]);
   const supabase = await createClient();
 
   const ordersWithReceipts = await Promise.all(
@@ -30,7 +33,7 @@ export default async function AdminOrdersPage() {
     <AdminPageShell
       title="Sifarişlər"
     >
-      <AdminOrdersPanel orders={ordersWithReceipts} />
+      <AdminOrdersPanel orders={ordersWithReceipts} farmerUpdates={farmerUpdates} />
     </AdminPageShell>
   );
 }

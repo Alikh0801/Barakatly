@@ -1,3 +1,4 @@
+import { getSessionUser } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
 import type {
   Bank,
@@ -367,6 +368,65 @@ async function countFarmersNeedingReview(): Promise<number> {
   return count ?? 0;
 }
 
+export type FarmerOrderUpdate = {
+  orderId: string;
+  /** "BRK-… — Dağ balı: Hazırlanır. …", newest first per order. */
+  messages: string[];
+};
+
+/**
+ * Farmer status changes and cancellations this admin hasn't seen yet. They
+ * are the admin notifications that carry an `item_status`; opening the
+ * orders page marks them read.
+ */
+export async function getUnseenFarmerOrderUpdates(): Promise<FarmerOrderUpdate[]> {
+  const user = await getSessionUser();
+  if (!user) return [];
+
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("notifications")
+    .select("body, metadata, created_at")
+    .eq("user_id", user.id)
+    .is("read_at", null)
+    .not("metadata->>item_status", "is", null)
+    .order("created_at", { ascending: false })
+    .limit(200);
+
+  if (error) {
+    console.error("[admin.getUnseenFarmerOrderUpdates]", error.message);
+    return [];
+  }
+
+  const byOrder = new Map<string, string[]>();
+  for (const row of data ?? []) {
+    const metadata = row.metadata as Record<string, unknown> | null;
+    const orderId = typeof metadata?.order_id === "string" ? metadata.order_id : null;
+    if (!orderId) continue;
+    byOrder.set(orderId, [...(byOrder.get(orderId) ?? []), row.body]);
+  }
+  return [...byOrder].map(([orderId, messages]) => ({ orderId, messages }));
+}
+
+async function countUnseenFarmerOrderUpdates(): Promise<number> {
+  const user = await getSessionUser();
+  if (!user) return 0;
+
+  const supabase = await createClient();
+  const { count, error } = await supabase
+    .from("notifications")
+    .select("id", { count: "exact", head: true })
+    .eq("user_id", user.id)
+    .is("read_at", null)
+    .not("metadata->>item_status", "is", null);
+
+  if (error) {
+    console.error("[admin.count.farmerUpdates]", error.message);
+    return 0;
+  }
+  return count ?? 0;
+}
+
 /** Pending items needing admin action — shown on sidebar until resolved. */
 export async function getAdminNavBadges(): Promise<AdminNavBadges> {
   const [
@@ -377,6 +437,7 @@ export async function getAdminNavBadges(): Promise<AdminNavBadges> {
     unapprovedCategories,
     unapprovedSubcategories,
     reviews,
+    farmerUpdates,
   ] = await Promise.all([
       countRows("payments", [{ column: "status", value: "pending" }]),
       countRows("orders", [
@@ -387,11 +448,13 @@ export async function getAdminNavBadges(): Promise<AdminNavBadges> {
       countRows("categories", [{ column: "approved", value: false }]),
       countRows("subcategories", [{ column: "approved", value: false }]),
       countRows("site_reviews", [{ column: "status", value: "pending" }]),
+      countUnseenFarmerOrderUpdates(),
     ]);
 
   return {
     payments,
-    orders,
+    // Unpaid orders plus farmer status changes the admin hasn't seen.
+    orders: orders + farmerUpdates,
     farmers,
     products,
     categories: unapprovedCategories + unapprovedSubcategories,

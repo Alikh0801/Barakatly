@@ -804,7 +804,7 @@ export async function updateOrderItemStatus(
   await notifyAdmins({
     type: "general",
     title: "Fermer sifariş statusunu yenilədi",
-    body: `${order.order_code} — ${item.product_title}: ${statusLabel}. Sifariş statusunu yoxlayın.`,
+    body: `${order.order_code} — ${farmer.farm_name}: "${item.product_title}" → ${statusLabel}.`,
     metadata: {
       order_id: order.id,
       order_code: order.order_code,
