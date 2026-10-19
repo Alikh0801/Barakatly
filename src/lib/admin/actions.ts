@@ -6,6 +6,7 @@ import { ADMIN_STATUS_TRANSITIONS } from "@/lib/orders/labels";
 import { getOrderStatusLabel } from "@/lib/checkout/labels";
 import { COURIER_READY_ITEM_STATUSES } from "@/lib/orders/courier-handoff";
 import { getOrderFarmerProfileIds } from "@/lib/orders/farmers";
+import { ITEM_CANCEL_ANNOUNCED } from "@/lib/orders/item-cancel";
 import { notifyUser } from "@/lib/notifications/helpers";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
@@ -443,4 +444,65 @@ export async function deleteOrders(
         ? "Sifariş silindi."
         : `${uniqueIds.length} sifariş silindi.`,
   };
+}
+
+/**
+ * Passes a farmer's cancellation of one line on to the customer: until the
+ * admin does, the customer still sees the line as ordered. Recorded as an
+ * order event on that line.
+ */
+export async function announceItemCancellation(
+  _prev: ActionResult,
+  formData: FormData,
+): Promise<ActionResult> {
+  const admin = await requireAdmin();
+  const itemId = String(formData.get("order_item_id") ?? "").trim();
+  if (!itemId) return { error: "Məhsul tapılmadı." };
+
+  const supabase = await createClient();
+  const { data: item } = await supabase
+    .from("order_items")
+    .select("id, order_id, product_title, line_total, status, cancel_reason, orders (order_code, customer_id)")
+    .eq("id", itemId)
+    .maybeSingle();
+
+  const order = item?.orders as { order_code: string; customer_id: string } | null | undefined;
+  if (!item || !order) return { error: "Məhsul tapılmadı." };
+  if (item.status !== "cancelled") return { error: "Bu məhsul ləğv edilməyib." };
+
+  const { count } = await supabase
+    .from("order_status_events")
+    .select("id", { count: "exact", head: true })
+    .eq("order_item_id", itemId)
+    .eq("status", ITEM_CANCEL_ANNOUNCED);
+  if (count) return { success: "Müştəriyə artıq bildirilib." };
+
+  const amount = `${Number(item.line_total).toFixed(2)} ₼`;
+  const reason = item.cancel_reason ? ` Səbəb: ${item.cancel_reason}.` : "";
+
+  const { error } = await supabase.from("order_status_events").insert({
+    order_id: item.order_id,
+    order_item_id: itemId,
+    status: ITEM_CANCEL_ANNOUNCED,
+    changed_by: admin.id,
+    note: `${item.product_title}: ləğv müştəriyə bildirildi`,
+  });
+  if (error) {
+    console.error("[admin.announceItemCancellation]", error.message);
+    return { error: "Bildirilmədi. Yenidən cəhd edin." };
+  }
+
+  await supabase.from("notifications").insert({
+    user_id: order.customer_id,
+    title: "Məhsul ləğv edildi",
+    body: `${order.order_code} — "${item.product_title}" sifarişinizdən çıxarıldı.${reason} Bu məhsulun məbləği (${amount}) sizə qaytarılacaq.`,
+    type: "general",
+    metadata: { order_id: item.order_id },
+  });
+
+  revalidatePath("/admin/orders");
+  revalidatePath(`/orders/${item.order_id}`);
+  revalidatePath("/orders");
+  revalidatePath("/notifications");
+  return { success: "Müştəriyə bildirildi." };
 }

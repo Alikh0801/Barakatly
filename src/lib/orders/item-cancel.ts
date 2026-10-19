@@ -8,5 +8,11 @@ export const FARMER_CANCELLABLE_ITEM_STATUSES: OrderItemStatus[] = [
   "ready",
 ];
 
+/**
+ * Order event recorded when the admin passes a farmer's cancellation on to
+ * the customer. Until then the customer still sees the line as ordered.
+ */
+export const ITEM_CANCEL_ANNOUNCED = "item_cancel_announced";
+
 export const CANCEL_REASON_MIN = 5;
 export const CANCEL_REASON_MAX = 500;

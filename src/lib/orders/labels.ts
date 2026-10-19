@@ -143,6 +143,7 @@ export function getEventStatusLabel(status: string): string {
 
   if (status === "payment_confirmed") return "Ödəniş təsdiqləndi";
   if (status === "payment_rejected") return "Ödəniş rədd edildi";
+  if (status === "item_cancel_announced") return "Ləğv müştəriyə bildirildi";
 
   return status;
 }

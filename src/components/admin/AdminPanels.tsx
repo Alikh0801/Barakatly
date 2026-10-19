@@ -3,6 +3,7 @@
 import { useActionState, useDeferredValue, useEffect, useState } from "react";
 import {
   advanceOrderStatus,
+  announceItemCancellation,
   confirmPayment,
   deleteOrders,
   rejectPayment,
@@ -20,6 +21,7 @@ import {
 } from "@/lib/orders/labels";
 import { firstPayment } from "@/lib/orders/payment";
 import { deliveryAddress, recipientName } from "@/lib/orders/delivery";
+import { ITEM_CANCEL_ANNOUNCED } from "@/lib/orders/item-cancel";
 import { matchesAdminOrderQuery } from "@/lib/orders/admin-order-filter";
 import type {
   AdminOrderListItem,
@@ -173,6 +175,33 @@ export function PendingPaymentsPanel({
 type AdminOrderListItemWithReceipt = AdminOrderListItem & {
   receiptSignedUrl?: string | null;
 };
+
+/**
+ * A farmer's cancellation reaches the customer only through the admin: this
+ * sends it, or says it was sent.
+ */
+function AnnounceCancellation({ itemId, announced }: { itemId: string; announced: boolean }) {
+  const [state, action, pending] = useActionState(announceItemCancellation, initialState);
+
+  if (announced || state.success) {
+    return <p className="mt-1 text-xs font-medium text-emerald-700">✓ Müştəriyə bildirilib</p>;
+  }
+
+  return (
+    <form action={action} className="mt-1.5">
+      <input type="hidden" name="order_item_id" value={itemId} />
+      <button
+        type="submit"
+        disabled={pending}
+        className="inline-flex items-center gap-1.5 rounded-full bg-rose-600 px-3 py-1 text-xs font-semibold text-white hover:bg-rose-500 disabled:opacity-60"
+      >
+        {pending ? <Spinner className="h-3 w-3" /> : null}
+        Müştəriyə bildir
+      </button>
+      {state.error ? <span className="ml-2 text-xs text-rose-700">{state.error}</span> : null}
+    </form>
+  );
+}
 
 export function AdminOrdersPanel({
   orders,
@@ -464,9 +493,21 @@ export function AdminOrdersPanel({
                                   {item.status === "cancelled" ? ` · ${formatPrice(Number(item.line_total))}` : ""}
                                 </p>
                                 {item.status === "cancelled" && item.cancel_reason ? (
-                                  <p className="mt-0.5 whitespace-pre-line break-words text-xs text-rose-700">
-                                    Ləğv səbəbi: {item.cancel_reason}
-                                  </p>
+                                  <>
+                                    <p className="mt-0.5 whitespace-pre-line break-words text-xs text-rose-700">
+                                      Ləğv səbəbi: {item.cancel_reason}
+                                    </p>
+                                    {order.status !== "cancelled" ? (
+                                      <AnnounceCancellation
+                                        itemId={item.id}
+                                        announced={events.some(
+                                          (event) =>
+                                            event.order_item_id === item.id &&
+                                            event.status === ITEM_CANCEL_ANNOUNCED,
+                                        )}
+                                      />
+                                    ) : null}
+                                  </>
                                 ) : null}
                               </div>
                       <span

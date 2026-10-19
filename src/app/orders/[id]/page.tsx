@@ -3,7 +3,6 @@ import { notFound } from "next/navigation";
 import { SolidPageShell } from "@/components/layout/SolidPageShell";
 import { OrderStatusTracker } from "@/components/orders/OrderStatusTracker";
 import {
-  getOrderItemStatusLabel,
   getOrderStatusLabel,
   getOrderStatusTone,
   getPaymentBadgeTone,
@@ -11,6 +10,7 @@ import {
 } from "@/lib/orders/labels";
 import { firstPayment } from "@/lib/orders/payment";
 import { deliveryAddress, recipientName } from "@/lib/orders/delivery";
+import { ITEM_CANCEL_ANNOUNCED } from "@/lib/orders/item-cancel";
 import { getOrderById } from "@/lib/checkout/queries";
 import { formatPrice, formatUnit, getProductImageUrl } from "@/lib/shop/format";
 import { formatDateTime } from "@/lib/format/date";
@@ -57,6 +57,13 @@ export default async function OrderDetailPage({
 
   const payment = firstPayment(order.payments);
   const events = order.order_status_events ?? [];
+  const cancelledLineIds = new Set(
+    order.status === "cancelled"
+      ? order.order_items.map((item) => item.id)
+      : events
+          .filter((event) => event.status === ITEM_CANCEL_ANNOUNCED && event.order_item_id)
+          .map((event) => event.order_item_id as string),
+  );
   let receiptSignedUrl: string | null = null;
 
   if (payment?.receipt_url) {
@@ -190,19 +197,21 @@ export default async function OrderDetailPage({
                                 </div>
                               </div>
                             </dl>
-                            <div
-                              className={`mt-2 inline-flex rounded-full px-2 py-0.5 text-xs font-medium ring-1 ${
-                                item.status === "cancelled"
-                                  ? "bg-rose-50 text-rose-800 ring-rose-200"
-                                  : "bg-zinc-100 text-zinc-700 ring-zinc-200"
-                              }`}
-                            >
-                              {getOrderItemStatusLabel(item.status)}
-                            </div>
-                            {item.status === "cancelled" && item.cancel_reason ? (
-                              <p className="mt-2 whitespace-pre-line break-words text-sm text-rose-800">
-                                Fermerin qeydi: {item.cancel_reason}
-                              </p>
+                            {/* Farmers' own progress stays with the admin; the
+                                customer sees the order status the admin sets,
+                                and a line's cancellation once the admin passes
+                                it on. */}
+                            {cancelledLineIds.has(item.id) ? (
+                              <>
+                                <div className="mt-2 inline-flex rounded-full bg-rose-50 px-2 py-0.5 text-xs font-medium text-rose-800 ring-1 ring-rose-200">
+                                  Ləğv edildi
+                                </div>
+                                {item.cancel_reason && order.status !== "cancelled" ? (
+                                  <p className="mt-2 whitespace-pre-line break-words text-sm text-rose-800">
+                                    Səbəb: {item.cancel_reason}
+                                  </p>
+                                ) : null}
+                              </>
                             ) : null}
                           </div>
                           <div className="shrink-0 text-right font-semibold text-zinc-900">
