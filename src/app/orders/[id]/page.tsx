@@ -2,7 +2,6 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { SolidPageShell } from "@/components/layout/SolidPageShell";
 import { OrderStatusTracker } from "@/components/orders/OrderStatusTracker";
-import { OrderStatusTimeline } from "@/components/orders/OrderStatusTimeline";
 import {
   getOrderItemStatusLabel,
   getOrderStatusLabel,
@@ -119,11 +118,14 @@ export default async function OrderDetailPage({
 
         <div className="mt-8 grid gap-8 lg:grid-cols-[1fr_360px]">
           <div className="space-y-4">
-            <OrderStatusTracker status={order.status} />
+            <OrderStatusTracker
+              status={order.status}
+              events={events}
+              createdAt={order.created_at}
+            />
             {order.status === "delivered" ? (
               <SiteReviewForm existing={siteReview} />
             ) : null}
-            <OrderStatusTimeline events={events} />
 
             <section className="rounded-3xl bg-white p-5 shadow-sm ring-1 ring-zinc-200 sm:p-6">
               <div className="flex flex-wrap items-end justify-between gap-2">
