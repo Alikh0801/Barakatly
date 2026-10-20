@@ -12,7 +12,9 @@ import "./globals.css";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
-  subsets: ["latin"],
+  // latin-ext carries ə, ş, ğ, ı and İ; without it they fell back to Arial
+  // in the middle of words.
+  subsets: ["latin", "latin-ext"],
   display: "swap",
 });
 

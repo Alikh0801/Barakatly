@@ -1,5 +1,4 @@
 import Image from "next/image";
-import { displaySerif as serif } from "@/lib/fonts";
 import type { FarmerRatingSummary } from "@/lib/farmers/queries";
 
 
@@ -91,7 +90,7 @@ function HeaderAvatar({ name, url }: { name: string; url: string | null }) {
   }
   return (
     <div className={`${frame} flex items-center justify-center`}>
-      <span className={`${serif.className} text-4xl text-[#dff3e4] sm:text-5xl`}>
+      <span className="text-4xl font-bold text-[#dff3e4] sm:text-5xl">
         {name.slice(0, 1).toUpperCase()}
       </span>
     </div>
@@ -159,7 +158,7 @@ export function FarmerProfileHeader({
         <div className="absolute inset-x-0 bottom-0 hidden sm:block">
           <div className="mx-auto w-full max-w-6xl px-4 md:px-6">
             <div className="flex min-w-0 items-center gap-2.5 pb-4 pl-[10rem]">
-              <h1 className={`${serif.className} min-w-0 break-words text-3xl leading-tight text-white [text-shadow:0_2px_12px_rgba(0,0,0,0.35)] lg:text-4xl`}>
+              <h1 className="min-w-0 break-words text-3xl font-bold leading-tight tracking-tight text-white [text-shadow:0_2px_12px_rgba(0,0,0,0.35)] lg:text-4xl">
                 {farmName}
               </h1>
               {verified ? (
@@ -178,7 +177,7 @@ export function FarmerProfileHeader({
 
           <div className="min-w-0 flex-1 sm:pt-3">
             <div className="flex min-w-0 items-center gap-2 sm:hidden">
-              <h1 className={`${serif.className} min-w-0 break-words text-2xl leading-tight text-zinc-900`}>
+              <h1 className="min-w-0 break-words text-2xl font-bold leading-tight tracking-tight text-zinc-900">
                 {farmName}
               </h1>
               {verified ? (
