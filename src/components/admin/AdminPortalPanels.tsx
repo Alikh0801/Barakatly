@@ -29,6 +29,7 @@ import { Spinner } from "@/components/ui/Spinner";
 import {
   formatPrice,
   getProductImageUrl,
+  UNIT_TYPES,
   unitLabel,
 } from "@/lib/shop/format";
 import { formatDateTime } from "@/lib/format/date";
@@ -944,9 +945,11 @@ function ProductEditForm({
             defaultValue={product.unit_type as UnitType}
             className={fieldClass}
           >
-            <option value="kg">kq</option>
-            <option value="piece">ədəd</option>
-            <option value="liter">litr</option>
+            {UNIT_TYPES.map((unit) => (
+              <option key={unit} value={unit}>
+                {unitLabel(unit)}
+              </option>
+            ))}
           </select>
         </label>
         <label className="block">

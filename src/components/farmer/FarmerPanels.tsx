@@ -52,6 +52,7 @@ import {
   formatPrice,
   formatUnit,
   getProductImageUrl,
+  UNIT_TYPES,
   unitLabel,
 } from "@/lib/shop/format";
 import type { FarmerOrderItem, FarmerProduct } from "@/lib/farmer/queries";
@@ -497,9 +498,11 @@ export function FarmerProductForm({
             onChange={(event) => setUnitType(event.target.value as UnitType)}
             className="mt-1 w-full rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-base text-zinc-900"
           >
-            <option value="kg">kq</option>
-            <option value="piece">ədəd</option>
-            <option value="liter">litr</option>
+            {UNIT_TYPES.map((unit) => (
+              <option key={unit} value={unit}>
+                {unitLabel(unit)}
+              </option>
+            ))}
           </select>
         </div>
       </div>

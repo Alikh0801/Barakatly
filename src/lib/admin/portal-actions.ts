@@ -7,6 +7,7 @@ import { revalidateProductCatalog } from "@/lib/shop/revalidate";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import type { UnitType } from "@/types";
+import { isUnitType } from "@/lib/shop/format";
 
 export type AdminPortalActionState = {
   error?: string;
@@ -515,7 +516,7 @@ export async function updateProductByAdmin(
   if (!title || !description || !categoryId) {
     return { error: "Ad, təsvir və kateqoriya mütləqdir." };
   }
-  if (!["kg", "piece", "liter"].includes(unitType)) {
+  if (!isUnitType(unitType)) {
     return { error: "Vahid tipi yanlışdır." };
   }
 

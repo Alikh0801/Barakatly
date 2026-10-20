@@ -11,6 +11,13 @@ export function formatPrice(amount: number): string {
   return `${amount.toFixed(2)} ₼`;
 }
 
+/** Every selling unit, in the order the product forms offer them. */
+export const UNIT_TYPES: UnitType[] = ["kg", "piece", "liter", "jar", "glass", "bunch"];
+
+export function isUnitType(value: string): value is UnitType {
+  return (UNIT_TYPES as string[]).includes(value);
+}
+
 export function unitLabel(unit: UnitType): string {
   switch (unit) {
     case "kg":
@@ -19,6 +26,12 @@ export function unitLabel(unit: UnitType): string {
       return "ədəd";
     case "liter":
       return "litr";
+    case "jar":
+      return "banka";
+    case "glass":
+      return "stəkan";
+    case "bunch":
+      return "dəstə";
     default:
       return "";
   }

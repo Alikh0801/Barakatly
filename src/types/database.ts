@@ -14,7 +14,7 @@ export type ProductStatus =
   | "rejected"
   /** Taken off sale by the farmer; kept so order history stays intact. */
   | "archived";
-export type UnitType = "kg" | "piece" | "liter";
+export type UnitType = "kg" | "piece" | "liter" | "jar" | "glass" | "bunch";
 export type OrderStatus =
   | "awaiting_confirmation"
   | "confirmed"

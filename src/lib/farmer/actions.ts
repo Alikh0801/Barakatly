@@ -45,6 +45,7 @@ import { moveOrderToCourierQueueIfHandedOver } from "@/lib/orders/courier-handof
 import { createClient } from "@/lib/supabase/server";
 import { slugifyAz } from "@/lib/admin/slug";
 import type { OrderItemStatus, UnitType } from "@/types";
+import { isUnitType } from "@/lib/shop/format";
 
 type AdminClient = ReturnType<typeof createAdminClient>;
 
@@ -436,7 +437,7 @@ export async function createProduct(
     return { error: "Bütün sahələr mütləqdir." };
   }
 
-  if (!["kg", "piece", "liter"].includes(unitType)) {
+  if (!isUnitType(unitType)) {
     return { error: "Vahid tipi yanlışdır." };
   }
 
@@ -541,6 +542,10 @@ export async function updateProduct(
 
   if (!productId || !title || !description || !unitType) {
     return { error: "Bütün sahələr mütləqdir." };
+  }
+
+  if (!isUnitType(unitType)) {
+    return { error: "Vahid tipi yanlışdır." };
   }
 
   if (imagePaths.length > MAX_PRODUCT_IMAGES) {
