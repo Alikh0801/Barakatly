@@ -438,7 +438,7 @@ export function CheckoutForm({
                   <div className="font-medium text-zinc-900">{item.title}</div>
                   <div className="text-xs text-zinc-500">
                     {item.quantity} × {formatPrice(item.price)}
-                    {formatUnit(item.unitType)}
+                    {formatUnit(item.unitType, item.unitSize)}
                   </div>
                 </div>
                 <div className="shrink-0 font-medium text-zinc-900">

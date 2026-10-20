@@ -66,6 +66,7 @@ export type AdminOrderItem = Pick<
   | "product_title"
   | "quantity"
   | "unit_type"
+  | "unit_size"
   | "status"
   | "farmer_id"
   | "line_total"
@@ -98,6 +99,7 @@ export async function getAdminOrders(): Promise<AdminOrderListItem[]> {
         product_title,
         quantity,
         unit_type,
+        unit_size,
         status,
         farmer_id,
         line_total,

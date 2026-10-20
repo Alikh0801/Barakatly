@@ -386,7 +386,7 @@ export function AdminOrdersPanel({
                                 </p>
                                 <p className="text-xs text-zinc-500">
                                   {item.farmers?.farm_name ?? "Fermer"} ·{" "}
-                                  {item.quantity} {formatUnit(item.unit_type)}
+                                  {item.quantity} {formatUnit(item.unit_type, item.unit_size)}
                                 </p>
                               </div>
                       <span className="inline-flex w-fit max-w-[16rem] shrink-0 rounded-full bg-sky-50 px-2.5 py-0.5 text-xs font-medium text-sky-900 ring-1 ring-sky-200">

@@ -179,7 +179,7 @@ export default async function ProductDetailPage({
               {formatPrice(price)}
             </span>
             <span className="text-sm text-zinc-500">
-              {formatUnit(product.unit_type)}
+              {formatUnit(product.unit_type, product.unit_size)}
             </span>
           </div>
 

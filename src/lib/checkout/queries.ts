@@ -62,6 +62,7 @@ export async function getCustomerOrders(): Promise<OrderListItem[]> {
         product_title,
         quantity,
         unit_type,
+        unit_size,
         unit_price,
         line_total,
         status,

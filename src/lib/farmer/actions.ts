@@ -45,7 +45,7 @@ import { moveOrderToCourierQueueIfHandedOver } from "@/lib/orders/courier-handof
 import { createClient } from "@/lib/supabase/server";
 import { slugifyAz } from "@/lib/admin/slug";
 import type { OrderItemStatus, UnitType } from "@/types";
-import { isUnitType } from "@/lib/shop/format";
+import { isUnitType, parseUnitSize } from "@/lib/shop/format";
 
 type AdminClient = ReturnType<typeof createAdminClient>;
 
@@ -441,6 +441,11 @@ export async function createProduct(
     return { error: "Vahid tipi yanlışdır." };
   }
 
+  const unitSize = parseUnitSize(unitType, String(formData.get("unit_size") ?? ""));
+  if (unitSize === null) {
+    return { error: "Ölçünü seçin." };
+  }
+
   if (!(farmerPrice > 0) || !(quantity >= 0)) {
     return { error: "Qiymət və miqdar düzgün deyil." };
   }
@@ -472,6 +477,7 @@ export async function createProduct(
       title,
       description,
       unit_type: unitType,
+      unit_size: unitSize || null,
       farmer_price: farmerPrice,
       quantity_available: quantity,
       in_stock: quantity > 0,
@@ -548,6 +554,11 @@ export async function updateProduct(
     return { error: "Vahid tipi yanlışdır." };
   }
 
+  const unitSize = parseUnitSize(unitType, String(formData.get("unit_size") ?? ""));
+  if (unitSize === null) {
+    return { error: "Ölçünü seçin." };
+  }
+
   if (imagePaths.length > MAX_PRODUCT_IMAGES) {
     return { error: `Ən çox ${MAX_PRODUCT_IMAGES} şəkil əlavə edə bilərsiniz.` };
   }
@@ -574,6 +585,7 @@ export async function updateProduct(
       category_id: taxonomy.categoryId,
       subcategory_id: taxonomy.subcategoryId,
       unit_type: unitType,
+      unit_size: unitSize || null,
       farmer_price: farmerPrice,
       quantity_available: quantity,
       in_stock: quantity > 0,

@@ -284,7 +284,7 @@ function RevenueChart({ months }: { months: FarmerSalesStats["months"] }) {
 function PendingOrderRow({ item, now }: { item: FarmerOrderItem; now: number }) {
   const [state, action, pending] = useActionState(updateOrderItemStatus, {});
   const order = item.orders;
-  const unit = unitLabel(item.unit_type);
+  const unit = unitLabel(item.unit_type, item.unit_size);
 
   return (
     <li className="py-3.5 first:pt-0 last:pb-0">

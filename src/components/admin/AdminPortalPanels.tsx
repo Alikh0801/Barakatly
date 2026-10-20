@@ -29,6 +29,8 @@ import { Spinner } from "@/components/ui/Spinner";
 import {
   formatPrice,
   getProductImageUrl,
+  SIZE_REQUIRED_UNITS,
+  UNIT_SIZES,
   UNIT_TYPES,
   unitLabel,
 } from "@/lib/shop/format";
@@ -748,7 +750,7 @@ function ProductCard({
               </span>
               <span className="inline-flex items-center gap-1.5 rounded-lg bg-zinc-50 px-2.5 py-1 text-xs font-medium text-zinc-700 ring-1 ring-zinc-100">
                 <BoxIcon className="h-3.5 w-3.5 text-zinc-400" />
-                {product.quantity_available} {unitLabel(product.unit_type)}
+                {product.quantity_available} {unitLabel(product.unit_type, product.unit_size)}
               </span>
               <button
                 type="button"
@@ -842,6 +844,10 @@ function ProductEditForm({
     initialState
   );
   const [categoryId, setCategoryId] = useState(product.category_id);
+  const [unitType, setUnitType] = useState(product.unit_type as UnitType);
+  const [unitSize, setUnitSize] = useState(product.unit_size ?? "");
+  const unitSizes = UNIT_SIZES[unitType] ?? [];
+  const sizeRequired = SIZE_REQUIRED_UNITS.includes(unitType);
   const [subcategoryId, setSubcategoryId] = useState(
     product.subcategory_id ?? ""
   );
@@ -942,7 +948,11 @@ function ProductEditForm({
           <select
             name="unit_type"
             required
-            defaultValue={product.unit_type as UnitType}
+            value={unitType}
+            onChange={(event) => {
+              setUnitType(event.target.value as UnitType);
+              setUnitSize("");
+            }}
             className={fieldClass}
           >
             {UNIT_TYPES.map((unit) => (
@@ -951,6 +961,23 @@ function ProductEditForm({
               </option>
             ))}
           </select>
+          {unitSizes.length > 0 ? (
+            <select
+              name="unit_size"
+              required={sizeRequired}
+              value={unitSize}
+              onChange={(event) => setUnitSize(event.target.value)}
+              aria-label="Ölçü"
+              className={`${fieldClass} mt-2`}
+            >
+              <option value="">{sizeRequired ? "Ölçü seçin" : "Ölçüsüz"}</option>
+              {unitSizes.map((size) => (
+                <option key={size} value={size}>
+                  {size}
+                </option>
+              ))}
+            </select>
+          ) : null}
         </label>
         <label className="block">
           <span className="text-xs font-medium text-zinc-600">

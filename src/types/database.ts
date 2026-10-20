@@ -505,6 +505,7 @@ export interface Database {
           title: string;
           description: string;
           unit_type: UnitType;
+          unit_size: string | null;
           farmer_price: number;
           final_price: number | null;
           quantity_available: number;
@@ -524,6 +525,7 @@ export interface Database {
           title: string;
           description: string;
           unit_type: UnitType;
+          unit_size?: string | null;
           farmer_price: number;
           final_price?: number | null;
           quantity_available?: number;
@@ -541,6 +543,7 @@ export interface Database {
           title?: string;
           description?: string;
           unit_type?: UnitType;
+          unit_size?: string | null;
           farmer_price?: number;
           final_price?: number | null;
           quantity_available?: number;
@@ -678,6 +681,7 @@ export interface Database {
           product_title: string;
           quantity: number;
           unit_type: UnitType;
+          unit_size: string | null;
           unit_price: number;
           line_total: number;
           status: OrderItemStatus;
@@ -692,6 +696,7 @@ export interface Database {
           product_title: string;
           quantity: number;
           unit_type: UnitType;
+          unit_size?: string | null;
           unit_price: number;
           line_total: number;
           status?: OrderItemStatus;
@@ -706,6 +711,7 @@ export interface Database {
           product_title?: string;
           quantity?: number;
           unit_type?: UnitType;
+          unit_size?: string | null;
           unit_price?: number;
           line_total?: number;
           status?: OrderItemStatus;

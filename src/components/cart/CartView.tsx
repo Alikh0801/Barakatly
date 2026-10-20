@@ -279,7 +279,7 @@ export function CartView({
                       </p>
                     ) : item.quantity > item.maxQuantity ? (
                       <p className="mt-2 rounded-lg bg-amber-50 px-2.5 py-1.5 text-xs text-amber-800 ring-1 ring-amber-200">
-                        Yalnız {item.maxQuantity} {unitLabel(item.unitType)}{" "}
+                        Yalnız {item.maxQuantity} {unitLabel(item.unitType, item.unitSize)}{" "}
                         qalıb — miqdarı azaldın.
                       </p>
                     ) : null}
