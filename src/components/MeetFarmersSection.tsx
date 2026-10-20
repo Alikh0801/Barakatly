@@ -81,7 +81,7 @@ function FarmerCard({ farmer }: { farmer: FeaturedFarmer }) {
           {farmer.avatar_url ? (
             <Image src={farmer.avatar_url} alt="" fill sizes="48px" className="object-cover" />
           ) : (
-            <span className={`${displaySerif.className} flex h-full w-full items-center justify-center text-lg text-[#dff3e4]`}>
+            <span className="flex h-full w-full items-center justify-center text-lg font-bold text-[#dff3e4]">
               {name.slice(0, 1).toUpperCase()}
             </span>
           )}
