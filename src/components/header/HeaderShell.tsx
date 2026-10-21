@@ -28,12 +28,15 @@ export function HeaderShell({
   const headerClass =
     mode === "scroll"
       ? [
-          "group/header fixed inset-x-0 top-0 z-30 transition-[background-color,border-color,box-shadow,backdrop-filter] duration-300",
+          "group/header fixed inset-x-0 top-0 z-30 transition-[background-color,border-color,box-shadow] duration-300",
           solid
-            ? "border-b border-zinc-200/90 bg-white/95 shadow-sm backdrop-blur"
+            ? "border-b border-zinc-200/90 bg-white shadow-sm"
             : "border-b border-transparent bg-transparent",
         ].join(" ")
-      : "sticky top-0 z-30 border-b border-zinc-200 bg-white/95 backdrop-blur";
+      // Solid white, no backdrop-filter: a blurred sticky header over a long
+      // page left parts of it unpainted (white) in some browsers until a
+      // zoom or scroll forced a repaint.
+      : "sticky top-0 z-30 border-b border-zinc-200 bg-white";
 
   return (
     <header className={headerClass} data-scrolled={solid ? "true" : "false"}>

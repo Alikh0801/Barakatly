@@ -69,7 +69,7 @@ export function WishlistButton({
       aria-pressed={saved}
       aria-label={saved ? `${productTitle} sevimlilərdən çıxar` : `${productTitle} sevimlilərə əlavə et`}
       title={saved ? "Sevimlilərdən çıxar" : "Sevimlilərə əlavə et"}
-      className={`inline-flex h-9 w-9 items-center justify-center rounded-full bg-white/95 shadow-sm ring-1 ring-black/5 backdrop-blur transition-colors hover:bg-white ${
+      className={`inline-flex h-9 w-9 items-center justify-center rounded-full bg-white shadow-sm ring-1 ring-black/5 transition-colors hover:bg-white ${
         saved ? "text-rose-500" : "text-zinc-500 hover:text-rose-500"
       } ${className}`}
     >

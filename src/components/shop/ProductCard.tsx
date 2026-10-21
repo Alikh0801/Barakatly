@@ -69,7 +69,7 @@ export function ProductCard({ product }: { product: ProductListItem }) {
             {outOfStock ? (
               // The photo keeps its colours; a soft strip over its foot says
               // it is sold out. z-20: the photo itself sits on z-10.
-              <span className="pointer-events-none absolute inset-x-0 bottom-0 z-20 bg-rose-500/75 py-1.5 text-center text-xs font-semibold tracking-wide text-white backdrop-blur-sm">
+              <span className="pointer-events-none absolute inset-x-0 bottom-0 z-20 bg-rose-500/85 py-1.5 text-center text-xs font-semibold tracking-wide text-white">
                 Stokda qalmayıb
               </span>
             ) : null}
