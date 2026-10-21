@@ -1,15 +1,9 @@
 import Image from "next/image";
 import Link from "next/link";
 import type { Metadata } from "next";
-import { Syne } from "next/font/google";
 import { VerifiedIcon } from "@/components/ui/VerifiedIcon";
 import { getSessionUser } from "@/lib/auth/session";
 import { getFollowedFarmerIds, getPublicFarmers } from "@/lib/farmers/queries";
-
-const displayFont = Syne({
-  subsets: ["latin"],
-  weight: ["600", "700"],
-});
 
 export const metadata: Metadata = {
   title: "Fermerlər",
@@ -66,7 +60,7 @@ export default async function FarmersPage({
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h1
-            className={`${displayFont.className} text-3xl font-bold tracking-tight text-zinc-900`}
+            className="text-3xl font-bold tracking-tight text-zinc-900"
           >
             Fermerlər
           </h1>
@@ -164,17 +158,14 @@ export default async function FarmersPage({
                   )}
                   <div className={`min-w-0 flex-1 ${followedIds.has(farmer.id) ? "pr-20" : ""}`}>
                     <div className="flex flex-wrap items-center gap-1.5">
-                      <h2
-                        className={`${displayFont.className} text-lg font-bold text-zinc-900 group-hover:text-[#1f5c3d]`}
-                      >
+                      {/* The farmer's own name; the farm's shows only when
+                          no owner name was given. */}
+                      <h2 className="text-lg font-bold text-zinc-900 group-hover:text-[#1f5c3d]">
                         {farmer.owner_name || farmer.farm_name}
                       </h2>
                       {farmer.verified_at ? <VerifiedIcon /> : null}
                     </div>
 
-                    <p className="text-sm font-medium text-[#1f5c3d]">
-                      {farmer.farm_name}
-                    </p>
                     {farmer.location_text ? (
                       <p className="mt-1 text-sm text-zinc-500">
                         {farmer.location_text}
