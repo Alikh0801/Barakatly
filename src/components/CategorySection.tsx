@@ -1,12 +1,18 @@
 import Image from "next/image";
 import Link from "next/link";
+import { Pagination } from "@/components/shop/Pagination";
 import { ProductCard } from "@/components/shop/ProductCard";
 import { getCategories, getProducts } from "@/lib/shop/queries";
 
+/** 4 columns × 5 rows on wide screens. */
+const PAGE_SIZE = 20;
+
 export async function CategorySection({
   categorySlug,
+  page: pageParam,
 }: {
   categorySlug?: string;
+  page?: string;
 }) {
   const [categories, products] = await Promise.all([
     getCategories(),
@@ -20,6 +26,19 @@ export async function CategorySection({
   const activeCategory = categories.find(
     (category) => category.slug === categorySlug,
   );
+
+  const totalPages = Math.max(1, Math.ceil(products.length / PAGE_SIZE));
+  const requested = Number.parseInt(pageParam ?? "1", 10);
+  const page = Number.isFinite(requested) ? Math.min(Math.max(requested, 1), totalPages) : 1;
+  const pageProducts = products.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  // Page links land on the product list, not the top of the home page.
+  const pageHref = (target: number) => {
+    const query = new URLSearchParams();
+    if (categorySlug) query.set("category", categorySlug);
+    if (target > 1) query.set("page", String(target));
+    const search = query.toString();
+    return `/${search ? `?${search}` : ""}#products`;
+  };
 
   return (
     <section className="bg-white">
@@ -131,7 +150,7 @@ export async function CategorySection({
           </div>
         </div>
 
-        <div className="mt-10">
+        <div id="products" className="mt-10 scroll-mt-24">
           <div className="mb-6 flex items-end justify-between gap-4">
             <h3 className="text-lg font-semibold text-zinc-900">
               {activeCategory?.name_az ?? "Bütün məhsullar"}
@@ -149,7 +168,7 @@ export async function CategorySection({
 
           {products.length > 0 ? (
             <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-4 lg:gap-6">
-              {products.map((product) => (
+              {pageProducts.map((product) => (
                 <ProductCard key={product.id} product={product} />
               ))}
             </div>
@@ -159,6 +178,7 @@ export async function CategorySection({
               məhsullar admin təsdiqindən sonra burada görünəcək.
             </p>
           )}
+          <Pagination current={page} total={totalPages} href={pageHref} label="Məhsul səhifələri" />
         </div>
       </div>
     </section>

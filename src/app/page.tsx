@@ -15,7 +15,7 @@ import { getHeroContent } from "@/lib/content/queries";
 export default async function Home({
   searchParams,
 }: {
-  searchParams: Promise<{ category?: string }>;
+  searchParams: Promise<{ category?: string; page?: string }>;
 }) {
   const params = await searchParams;
   const hero = await getHeroContent();
@@ -33,7 +33,7 @@ export default async function Home({
       />
       <Suspense fallback={<CategorySectionSkeleton />}>
         <Reveal>
-          <CategorySection categorySlug={params.category} />
+          <CategorySection categorySlug={params.category} page={params.page} />
         </Reveal>
       </Suspense>
       <Suspense fallback={null}>
