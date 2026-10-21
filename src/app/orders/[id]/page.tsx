@@ -192,7 +192,7 @@ export default async function OrderDetailPage({
                                   </span>
                                   <span className="font-medium text-zinc-800">
                                     {formatPrice(item.unit_price)}
-                                    {formatUnit(item.unit_type)}
+                                    {formatUnit(item.unit_type, item.unit_size)}
                                   </span>
                                 </div>
                               </div>

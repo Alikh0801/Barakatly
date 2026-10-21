@@ -7,6 +7,7 @@ import { revalidateProductCatalog } from "@/lib/shop/revalidate";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import type { UnitType } from "@/types";
+import { isUnitType, parseUnitSize } from "@/lib/shop/format";
 
 export type AdminPortalActionState = {
   error?: string;
@@ -515,8 +516,13 @@ export async function updateProductByAdmin(
   if (!title || !description || !categoryId) {
     return { error: "Ad, təsvir və kateqoriya mütləqdir." };
   }
-  if (!["kg", "piece", "liter"].includes(unitType)) {
+  if (!isUnitType(unitType)) {
     return { error: "Vahid tipi yanlışdır." };
+  }
+
+  const unitSize = parseUnitSize(unitType, String(formData.get("unit_size") ?? ""));
+  if (unitSize === null) {
+    return { error: "Ölçünü seçin." };
   }
 
   const supabase = await createClient();
@@ -542,6 +548,7 @@ export async function updateProductByAdmin(
       category_id: categoryId,
       subcategory_id: subcategoryId || null,
       unit_type: unitType as UnitType,
+      unit_size: unitSize || null,
     })
     .eq("id", productId);
 

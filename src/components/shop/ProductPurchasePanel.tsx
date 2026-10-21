@@ -65,7 +65,7 @@ export function ProductPurchasePanel({ product }: { product: ProductDetail }) {
       <p className="mt-1.5 text-sm text-zinc-500">
         {outOfStock
           ? "Stokda yoxdur"
-          : `Anbarda ${product.quantity_available} ${unitLabel(product.unit_type)} qalıb`}
+          : `Anbarda ${product.quantity_available} ${unitLabel(product.unit_type, product.unit_size)} qalıb`}
       </p>
 
       <div className="mt-4 border-t border-zinc-200 pt-4">

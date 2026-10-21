@@ -790,7 +790,7 @@ export function CheckoutForm({
                     <span className="block truncate text-sm font-medium text-zinc-900">{item.title}</span>
                     <span className="block text-xs text-zinc-500">
                       ×{item.quantity} · {formatPrice(item.price)}
-                      {formatUnit(item.unitType)}
+                      {formatUnit(item.unitType, item.unitSize)}
                     </span>
                   </span>
                   <span className="shrink-0 text-sm font-semibold text-zinc-900">

@@ -100,7 +100,7 @@ export function AddToCartButtonLarge({
         {pending ? <Spinner className="h-4 w-4" /> : null}
         {added
           ? "Səbətə əlavə olundu"
-          : `Səbətə əlavə et — ${formatPrice(price)}${formatUnit(product.unit_type)}`}
+          : `Səbətə əlavə et — ${formatPrice(price)}${formatUnit(product.unit_type, product.unit_size)}`}
       </button>
       {error ? (
         <p className="rounded-xl bg-rose-50 px-3 py-2 text-sm text-rose-700 ring-1 ring-rose-200">

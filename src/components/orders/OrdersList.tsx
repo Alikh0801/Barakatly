@@ -122,7 +122,7 @@ export async function OrdersList() {
                         <p className="mt-0.5 text-xs text-zinc-500">
                           Say: {item.quantity} ·{" "}
                           {formatPrice(item.unit_price)}
-                          {formatUnit(item.unit_type)}
+                          {formatUnit(item.unit_type, item.unit_size)}
                         </p>
                       </div>
                       <div className="shrink-0 text-sm font-medium text-zinc-900">

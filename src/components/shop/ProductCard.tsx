@@ -108,7 +108,7 @@ export function ProductCard({ product }: { product: ProductListItem }) {
               {formatPrice(price)}
             </span>
             <span className="shrink-0 text-xs text-zinc-500">
-              {formatUnit(product.unit_type)}
+              {formatUnit(product.unit_type, product.unit_size)}
             </span>
           </div>
           {outOfStock ? null : <AddToCartButton product={product} />}

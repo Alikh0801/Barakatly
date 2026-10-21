@@ -51,6 +51,7 @@ import { isOrderHandedOver } from "@/lib/orders/courier-handoff";
 import { createClient } from "@/lib/supabase/server";
 import { slugifyAz } from "@/lib/admin/slug";
 import type { OrderItemStatus, UnitType } from "@/types";
+import { isUnitType, parseUnitSize } from "@/lib/shop/format";
 
 type AdminClient = ReturnType<typeof createAdminClient>;
 
@@ -449,8 +450,13 @@ export async function createProduct(
     return { error: "Bütün sahələr mütləqdir." };
   }
 
-  if (!["kg", "piece", "liter"].includes(unitType)) {
+  if (!isUnitType(unitType)) {
     return { error: "Vahid tipi yanlışdır." };
+  }
+
+  const unitSize = parseUnitSize(unitType, String(formData.get("unit_size") ?? ""));
+  if (unitSize === null) {
+    return { error: "Ölçünü seçin." };
   }
 
   if (!(farmerPrice > 0) || !(quantity >= 0)) {
@@ -484,6 +490,7 @@ export async function createProduct(
       title,
       description,
       unit_type: unitType,
+      unit_size: unitSize || null,
       farmer_price: farmerPrice,
       quantity_available: quantity,
       in_stock: quantity > 0,
@@ -556,6 +563,15 @@ export async function updateProduct(
     return { error: "Bütün sahələr mütləqdir." };
   }
 
+  if (!isUnitType(unitType)) {
+    return { error: "Vahid tipi yanlışdır." };
+  }
+
+  const unitSize = parseUnitSize(unitType, String(formData.get("unit_size") ?? ""));
+  if (unitSize === null) {
+    return { error: "Ölçünü seçin." };
+  }
+
   if (imagePaths.length > MAX_PRODUCT_IMAGES) {
     return { error: `Ən çox ${MAX_PRODUCT_IMAGES} şəkil əlavə edə bilərsiniz.` };
   }
@@ -582,6 +598,7 @@ export async function updateProduct(
       category_id: taxonomy.categoryId,
       subcategory_id: taxonomy.subcategoryId,
       unit_type: unitType,
+      unit_size: unitSize || null,
       farmer_price: farmerPrice,
       quantity_available: quantity,
       in_stock: quantity > 0,
@@ -884,7 +901,7 @@ export async function cancelOrderItem(
   await notifyAdmins({
     type: "general",
     title: "Fermer məhsulu ləğv etdi",
-    body: `${order.order_code} — ${farmer.farm_name}: "${item.product_title}" (${item.quantity} ${unitLabel(item.unit_type)}, ${amount}) ləğv edildi. Səbəb: ${reason}. Müştəriyə bildirin və geri ödənişi edin.`,
+    body: `${order.order_code} — ${farmer.farm_name}: "${item.product_title}" (${item.quantity} ${unitLabel(item.unit_type, item.unit_size)}, ${amount}) ləğv edildi. Səbəb: ${reason}. Müştəriyə bildirin və geri ödənişi edin.`,
     metadata: {
       order_id: order.id,
       order_code: order.order_code,

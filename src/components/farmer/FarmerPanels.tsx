@@ -54,6 +54,9 @@ import {
   formatPrice,
   formatUnit,
   getProductImageUrl,
+  SIZE_REQUIRED_UNITS,
+  UNIT_SIZES,
+  UNIT_TYPES,
   unitLabel,
 } from "@/lib/shop/format";
 import type { FarmerOrderItem, FarmerProduct } from "@/lib/farmer/queries";
@@ -356,6 +359,8 @@ export function FarmerProductForm({
   const [unitType, setUnitType] = useState<UnitType>(
     (product?.unit_type as UnitType) ?? "kg",
   );
+  const [unitSize, setUnitSize] = useState(product?.unit_size ?? "");
+  const unitSizes = UNIT_SIZES[unitType] ?? [];
   const [categoryId, setCategoryId] = useState<string>(
     product?.category_id ?? "",
   );
@@ -496,15 +501,48 @@ export function FarmerProductForm({
             name="unit_type"
             required
             value={unitType}
-            onChange={(event) => setUnitType(event.target.value as UnitType)}
+            onChange={(event) => {
+              setUnitType(event.target.value as UnitType);
+              setUnitSize("");
+            }}
             className="mt-1 w-full rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-base text-zinc-900"
           >
-            <option value="kg">kq</option>
-            <option value="piece">ədəd</option>
-            <option value="liter">litr</option>
+            {UNIT_TYPES.map((unit) => (
+              <option key={unit} value={unit}>
+                {unitLabel(unit)}
+              </option>
+            ))}
           </select>
         </div>
       </div>
+
+      {unitSizes.length > 0 ? (
+        <div>
+          <label htmlFor="unit_size" className="block text-sm font-medium text-zinc-700">
+            Ölçü
+            {SIZE_REQUIRED_UNITS.includes(unitType) ? null : (
+              <span className="font-normal text-zinc-400"> (istəyə görə)</span>
+            )}
+          </label>
+          <select
+            id="unit_size"
+            name="unit_size"
+            required={SIZE_REQUIRED_UNITS.includes(unitType)}
+            value={unitSize}
+            onChange={(event) => setUnitSize(event.target.value)}
+            className="mt-1 w-full rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-base text-zinc-900"
+          >
+            <option value="">
+              {SIZE_REQUIRED_UNITS.includes(unitType) ? "Seçin" : "Ölçüsüz"}
+            </option>
+            {unitSizes.map((size) => (
+              <option key={size} value={size}>
+                {unitLabel(unitType, size)}
+              </option>
+            ))}
+          </select>
+        </div>
+      ) : null}
 
       {categoryId === "__new__" ? (
         <div>
@@ -598,7 +636,7 @@ export function FarmerProductForm({
             htmlFor="quantity_available"
             className="block text-sm font-medium text-zinc-700"
           >
-            Əldə olan ({unitLabel(unitType)})
+            Əldə olan ({unitLabel(unitType, unitSize)})
           </label>
           <input
             id="quantity_available"
@@ -890,11 +928,11 @@ export function FarmerProductsList({ products }: { products: FarmerProduct[] }) 
                 </p>
                 <p className="mt-2 text-sm text-zinc-700">
                   Təklif: {formatPrice(product.farmer_price)}
-                  {formatUnit(product.unit_type as UnitType)}
+                  {formatUnit(product.unit_type as UnitType, product.unit_size)}
                   {product.final_price != null ? (
                     <span className="ml-2 text-emerald-800">
                       · Son qiymət: {formatPrice(product.final_price)}
-                      {formatUnit(product.unit_type as UnitType)}
+                      {formatUnit(product.unit_type as UnitType, product.unit_size)}
                     </span>
                   ) : (
                     <span className="ml-2 text-amber-700">· Son qiymət gözlənilir</span>
@@ -961,7 +999,7 @@ function FarmerOrderItemCard({ item }: { item: FarmerOrderItem }) {
           <div className="font-semibold text-zinc-900">{item.product_title}</div>
           <p className="mt-1 text-sm text-zinc-500">
             {order?.order_code ?? "Sifariş"} · Say: {item.quantity}{" "}
-            {formatUnit(item.unit_type)}
+            {formatUnit(item.unit_type, item.unit_size)}
           </p>
           {order?.customer?.full_name ? (
             <p className="mt-2 text-sm text-zinc-600">

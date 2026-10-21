@@ -14,7 +14,7 @@ export type ProductStatus =
   | "rejected"
   /** Taken off sale by the farmer; kept so order history stays intact. */
   | "archived";
-export type UnitType = "kg" | "piece" | "liter";
+export type UnitType = "kg" | "piece" | "liter" | "jar" | "glass" | "bunch";
 export type OrderStatus =
   | "awaiting_confirmation"
   | "confirmed"
@@ -505,6 +505,7 @@ export interface Database {
           title: string;
           description: string;
           unit_type: UnitType;
+          unit_size: string | null;
           farmer_price: number;
           final_price: number | null;
           quantity_available: number;
@@ -524,6 +525,7 @@ export interface Database {
           title: string;
           description: string;
           unit_type: UnitType;
+          unit_size?: string | null;
           farmer_price: number;
           final_price?: number | null;
           quantity_available?: number;
@@ -541,6 +543,7 @@ export interface Database {
           title?: string;
           description?: string;
           unit_type?: UnitType;
+          unit_size?: string | null;
           farmer_price?: number;
           final_price?: number | null;
           quantity_available?: number;
@@ -693,6 +696,7 @@ export interface Database {
           product_title: string;
           quantity: number;
           unit_type: UnitType;
+          unit_size: string | null;
           unit_price: number;
           line_total: number;
           status: OrderItemStatus;
@@ -708,6 +712,7 @@ export interface Database {
           product_title: string;
           quantity: number;
           unit_type: UnitType;
+          unit_size?: string | null;
           unit_price: number;
           line_total: number;
           status?: OrderItemStatus;
@@ -723,6 +728,7 @@ export interface Database {
           product_title?: string;
           quantity?: number;
           unit_type?: UnitType;
+          unit_size?: string | null;
           unit_price?: number;
           line_total?: number;
           status?: OrderItemStatus;

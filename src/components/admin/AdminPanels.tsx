@@ -489,7 +489,7 @@ export function AdminOrdersPanel({
                                 </p>
                                 <p className="text-xs text-zinc-500">
                                   {item.farmers?.farm_name ?? "Fermer"} ·{" "}
-                                  {item.quantity} {formatUnit(item.unit_type)}
+                                  {item.quantity} {formatUnit(item.unit_type, item.unit_size)}
                                   {item.status === "cancelled" ? ` · ${formatPrice(Number(item.line_total))}` : ""}
                                 </p>
                                 {item.status === "cancelled" && item.cancel_reason ? (

@@ -8,6 +8,7 @@ export type CartLineItem = {
   title: string;
   price: number;
   unitType: UnitType;
+  unitSize: string | null;
   quantity: number;
   maxQuantity: number;
   imageUrl: string | null;
@@ -22,6 +23,7 @@ type CartRow = {
     id: string;
     title: string;
     unit_type: UnitType;
+    unit_size: string | null;
     final_price: number | null;
     farmer_price: number;
     quantity_available: number;
@@ -38,6 +40,7 @@ const cartSelect = `
     id,
     title,
     unit_type,
+    unit_size,
     final_price,
     farmer_price,
     quantity_available,
@@ -80,6 +83,7 @@ export async function getCartItems(): Promise<CartLineItem[]> {
         title: product.title,
         price: getDisplayPrice(product.final_price, product.farmer_price),
         unitType: product.unit_type,
+        unitSize: product.unit_size,
         quantity: row.quantity,
         maxQuantity: product.quantity_available,
         imageUrl: getProductImageUrl(product.product_images),
