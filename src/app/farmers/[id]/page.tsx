@@ -30,18 +30,19 @@ export async function generateMetadata({
 
   const description =
     farmer.description?.slice(0, 160) || "Təsdiqlənmiş fermer profili";
+  const name = farmer.owner_name?.trim() || farmer.farm_name;
 
   return {
-    title: farmer.farm_name,
+    title: name,
     description,
     alternates: { canonical: `/farmers/${farmer.id}` },
     openGraph: {
-      title: farmer.farm_name,
+      title: name,
       description,
       type: "website",
       url: `/farmers/${farmer.id}`,
       images: farmer.avatar_url
-        ? [{ url: farmer.avatar_url, alt: farmer.farm_name }]
+        ? [{ url: farmer.avatar_url, alt: name }]
         : undefined,
     },
   };

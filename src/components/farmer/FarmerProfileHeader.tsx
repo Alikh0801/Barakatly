@@ -121,6 +121,7 @@ export type FarmerProfileStats = {
  */
 export function FarmerProfileHeader({
   farmName,
+  ownerName,
   avatarUrl,
   coverUrl,
   locationText,
@@ -130,6 +131,8 @@ export function FarmerProfileHeader({
   coverHint,
 }: {
   farmName: string;
+  /** The farmer's own name; the heading falls back to the farm's. */
+  ownerName?: string | null;
   avatarUrl: string | null;
   coverUrl: string | null;
   locationText: string | null;
@@ -140,6 +143,8 @@ export function FarmerProfileHeader({
   coverHint?: React.ReactNode;
 }) {
   const { rating } = stats;
+  const owner = ownerName?.trim() || null;
+  const heading = owner ?? farmName;
 
   return (
     <section>
@@ -158,12 +163,21 @@ export function FarmerProfileHeader({
         <div className="absolute inset-x-0 bottom-0 hidden sm:block">
           <div className="mx-auto w-full max-w-6xl px-4 md:px-6">
             <div className="flex min-w-0 items-center gap-2.5 pb-4 pl-[10rem]">
-              <h1 className="min-w-0 break-words text-3xl font-bold leading-tight tracking-tight text-white [text-shadow:0_2px_12px_rgba(0,0,0,0.35)] lg:text-4xl">
-                {farmName}
-              </h1>
-              {verified ? (
-                <VerifiedBadge className="h-7 w-7 shrink-0 text-white drop-shadow" />
-              ) : null}
+              <div className="min-w-0">
+                <div className="flex min-w-0 items-center gap-2.5">
+                  <h1 className="min-w-0 break-words text-3xl font-bold leading-tight tracking-tight text-white [text-shadow:0_2px_12px_rgba(0,0,0,0.35)] lg:text-4xl">
+                    {heading}
+                  </h1>
+                  {verified ? (
+                    <VerifiedBadge className="h-7 w-7 shrink-0 text-white drop-shadow" />
+                  ) : null}
+                </div>
+                {owner ? (
+                  <p className="mt-0.5 break-words text-base font-medium text-white/85 [text-shadow:0_1px_8px_rgba(0,0,0,0.35)]">
+                    {farmName}
+                  </p>
+                ) : null}
+              </div>
             </div>
           </div>
         </div>
@@ -172,18 +186,21 @@ export function FarmerProfileHeader({
       <div className="mx-auto w-full max-w-6xl px-4 md:px-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:gap-7">
           <div className="-mt-12 sm:-mt-20">
-            <HeaderAvatar name={farmName} url={avatarUrl} />
+            <HeaderAvatar name={heading} url={avatarUrl} />
           </div>
 
           <div className="min-w-0 flex-1 sm:pt-3">
             <div className="flex min-w-0 items-center gap-2 sm:hidden">
               <h1 className="min-w-0 break-words text-2xl font-bold leading-tight tracking-tight text-zinc-900">
-                {farmName}
+                {heading}
               </h1>
               {verified ? (
                 <VerifiedBadge className="h-6 w-6 shrink-0 text-[#2f7a3c]" />
               ) : null}
             </div>
+            {owner ? (
+              <p className="break-words text-sm font-medium text-zinc-600 sm:hidden">{farmName}</p>
+            ) : null}
             {locationText ? (
               <p className="mt-1 inline-flex items-center gap-1.5 text-sm text-zinc-600 sm:mt-0 sm:text-[15px]">
                 <PinIcon className="h-4 w-4 shrink-0 text-[#2f7a3c]" />
