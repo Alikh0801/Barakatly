@@ -23,14 +23,19 @@ export function Reveal({
       return () => cancelAnimationFrame(id);
     }
 
+    // Shows once the top edge is in the lower part of the screen, or the
+    // section is already above it (a reload restored the scroll). This used
+    // a 15% threshold, and a section taller than about six screens — the
+    // home page products once the shop grew — could never show 15% of
+    // itself at once, so it stayed invisible until the page was zoomed out.
     const observer = new IntersectionObserver(
       ([entry]) => {
-        if (entry.isIntersecting) {
+        if (entry.isIntersecting || entry.boundingClientRect.top < 0) {
           setVisible(true);
           observer.disconnect();
         }
       },
-      { threshold: 0.15, rootMargin: "0px 0px -10% 0px" },
+      { threshold: 0, rootMargin: "0px 0px -10% 0px" },
     );
 
     observer.observe(node);
