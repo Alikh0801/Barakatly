@@ -12,6 +12,8 @@ export type ProductListItem = {
   unit_type: UnitType;
   /** Package size for the unit, e.g. "0,5 kq" for a jar. */
   unit_size: string | null;
+  /** Farmer's minimum order; null means the unit's floor. */
+  min_order_quantity: number | null;
   final_price: number | null;
   farmer_price: number;
   quantity_available: number;

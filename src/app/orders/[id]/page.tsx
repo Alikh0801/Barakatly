@@ -18,6 +18,7 @@ import { getProfile } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
 import { getMySiteReview } from "@/lib/reviews/site";
 import { SiteReviewForm } from "@/components/reviews/SiteReviewForm";
+import { formatAmount } from "@/lib/shop/quantity";
 
 export async function generateMetadata({
   params,
@@ -140,12 +141,7 @@ export default async function OrderDetailPage({
                   Məhsullar
                 </h2>
                 <p className="text-sm text-zinc-500">
-                  {order.order_items.length} məhsul ·{" "}
-                  {order.order_items.reduce(
-                    (sum, item) => sum + Number(item.quantity),
-                    0
-                  )}{" "}
-                  ədəd
+                  {order.order_items.length} məhsul
                 </p>
               </div>
               <div className="mt-4 space-y-4">
@@ -181,9 +177,9 @@ export default async function OrderDetailPage({
                             <dl className="mt-2 space-y-1 text-sm text-zinc-600">
                               <div className="flex flex-wrap gap-x-3 gap-y-1">
                                 <div>
-                                  <span className="text-zinc-500">Say: </span>
+                                  <span className="text-zinc-500">Miqdar: </span>
                                   <span className="font-medium text-zinc-800">
-                                    {item.quantity}
+                                    {formatAmount(item.unit_type, item.quantity, item.unit_size)}
                                   </span>
                                 </div>
                                 <div>

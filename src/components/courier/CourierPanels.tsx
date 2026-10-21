@@ -12,6 +12,7 @@ import {
 } from "@/lib/orders/labels";
 import { Spinner } from "@/components/ui/Spinner";
 import { formatDateTime } from "@/lib/format/date";
+import { formatAmount } from "@/lib/shop/quantity";
 import type { CourierOrder } from "@/lib/courier/queries";
 import { deliveryAddress, recipientName } from "@/lib/orders/delivery";
 import type { OrderStatus } from "@/types";
@@ -55,7 +56,7 @@ function CourierOrderCard({ order }: { order: CourierOrder }) {
   for (const item of order.order_items) {
     const farmerId = item.farmer_id;
     const existing = farmers.get(farmerId);
-    const line = `${item.product_title} × ${item.quantity} (${getOrderItemStatusLabel(item.status)})`;
+    const line = `${item.product_title} — ${formatAmount(item.unit_type, item.quantity, item.unit_size)} (${getOrderItemStatusLabel(item.status)})`;
     if (existing) {
       existing.items.push(line);
     } else {

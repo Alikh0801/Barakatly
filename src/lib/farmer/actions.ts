@@ -27,7 +27,7 @@ import {
   CANCEL_REASON_MIN,
   FARMER_CANCELLABLE_ITEM_STATUSES,
 } from "@/lib/orders/item-cancel";
-import { formatPrice, unitLabel } from "@/lib/shop/format";
+import { formatPrice } from "@/lib/shop/format";
 import {
   insertEventAndNotify,
   notifyAdmins,
@@ -52,6 +52,7 @@ import { createClient } from "@/lib/supabase/server";
 import { slugifyAz } from "@/lib/admin/slug";
 import type { OrderItemStatus, UnitType } from "@/types";
 import { isUnitType, parseUnitSize } from "@/lib/shop/format";
+import { formatAmount, parseMinOrderInput } from "@/lib/shop/quantity";
 
 type AdminClient = ReturnType<typeof createAdminClient>;
 
@@ -459,6 +460,18 @@ export async function createProduct(
     return { error: "Ölçünü seçin." };
   }
 
+  const minOrder = parseMinOrderInput(unitType, String(formData.get("min_order_quantity") ?? ""));
+  if (minOrder === "invalid") {
+    return {
+      error:
+        unitType === "kg"
+          ? "Minimum sifariş 50 qr-ın misli olmalıdır (məs: 250, 500)."
+          : unitType === "liter"
+            ? "Minimum sifariş 0,5 litrin misli olmalıdır (məs: 0.5, 1, 1.5)."
+            : "Minimum sifariş tam ədəd olmalıdır.",
+    };
+  }
+
   if (!(farmerPrice > 0) || !(quantity >= 0)) {
     return { error: "Qiymət və miqdar düzgün deyil." };
   }
@@ -491,6 +504,7 @@ export async function createProduct(
       description,
       unit_type: unitType,
       unit_size: unitSize || null,
+      min_order_quantity: minOrder,
       farmer_price: farmerPrice,
       quantity_available: quantity,
       in_stock: quantity > 0,
@@ -572,6 +586,18 @@ export async function updateProduct(
     return { error: "Ölçünü seçin." };
   }
 
+  const minOrder = parseMinOrderInput(unitType, String(formData.get("min_order_quantity") ?? ""));
+  if (minOrder === "invalid") {
+    return {
+      error:
+        unitType === "kg"
+          ? "Minimum sifariş 50 qr-ın misli olmalıdır (məs: 250, 500)."
+          : unitType === "liter"
+            ? "Minimum sifariş 0,5 litrin misli olmalıdır (məs: 0.5, 1, 1.5)."
+            : "Minimum sifariş tam ədəd olmalıdır.",
+    };
+  }
+
   if (imagePaths.length > MAX_PRODUCT_IMAGES) {
     return { error: `Ən çox ${MAX_PRODUCT_IMAGES} şəkil əlavə edə bilərsiniz.` };
   }
@@ -599,6 +625,7 @@ export async function updateProduct(
       subcategory_id: taxonomy.subcategoryId,
       unit_type: unitType,
       unit_size: unitSize || null,
+      min_order_quantity: minOrder,
       farmer_price: farmerPrice,
       quantity_available: quantity,
       in_stock: quantity > 0,
@@ -901,7 +928,7 @@ export async function cancelOrderItem(
   await notifyAdmins({
     type: "general",
     title: "Fermer məhsulu ləğv etdi",
-    body: `${order.order_code} — ${farmer.farm_name}: "${item.product_title}" (${item.quantity} ${unitLabel(item.unit_type, item.unit_size)}, ${amount}) ləğv edildi. Səbəb: ${reason}. Müştəriyə bildirin və geri ödənişi edin.`,
+    body: `${order.order_code} — ${farmer.farm_name}: "${item.product_title}" (${formatAmount(item.unit_type, item.quantity, item.unit_size)}, ${amount}) ləğv edildi. Səbəb: ${reason}. Müştəriyə bildirin və geri ödənişi edin.`,
     metadata: {
       order_id: order.id,
       order_code: order.order_code,

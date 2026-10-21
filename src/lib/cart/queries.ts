@@ -2,6 +2,7 @@ import { getSessionUser } from "@/lib/auth/session";
 import { getDisplayPrice, getProductImageUrl } from "@/lib/shop/format";
 import { createClient } from "@/lib/supabase/server";
 import type { UnitType } from "@/types";
+import { minOrderQuantity } from "@/lib/shop/quantity";
 
 export type CartLineItem = {
   productId: string;
@@ -9,6 +10,8 @@ export type CartLineItem = {
   price: number;
   unitType: UnitType;
   unitSize: string | null;
+  /** The smallest amount allowed, from the product and its unit. */
+  minQuantity: number;
   quantity: number;
   maxQuantity: number;
   imageUrl: string | null;
@@ -24,6 +27,7 @@ type CartRow = {
     title: string;
     unit_type: UnitType;
     unit_size: string | null;
+    min_order_quantity: number | null;
     final_price: number | null;
     farmer_price: number;
     quantity_available: number;
@@ -41,6 +45,7 @@ const cartSelect = `
     title,
     unit_type,
     unit_size,
+    min_order_quantity,
     final_price,
     farmer_price,
     quantity_available,
@@ -84,6 +89,7 @@ export async function getCartItems(): Promise<CartLineItem[]> {
         price: getDisplayPrice(product.final_price, product.farmer_price),
         unitType: product.unit_type,
         unitSize: product.unit_size,
+        minQuantity: minOrderQuantity(product.unit_type, product.min_order_quantity),
         quantity: row.quantity,
         maxQuantity: product.quantity_available,
         imageUrl: getProductImageUrl(product.product_images),

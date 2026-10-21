@@ -34,6 +34,7 @@ import { AzPhoneInput } from "@/components/ui/AzPhoneInput";
 import { FileSelectField } from "@/components/ui/FileSelectField";
 import { Spinner } from "@/components/ui/Spinner";
 import type { Bank } from "@/types";
+import { formatAmount } from "@/lib/shop/quantity";
 
 const initialState: PlaceOrderState = {};
 
@@ -789,7 +790,7 @@ export function CheckoutForm({
                   <span className="min-w-0 flex-1">
                     <span className="block truncate text-sm font-medium text-zinc-900">{item.title}</span>
                     <span className="block text-xs text-zinc-500">
-                      ×{item.quantity} · {formatPrice(item.price)}
+                      {formatAmount(item.unitType, item.quantity, item.unitSize)} · {formatPrice(item.price)}
                       {formatUnit(item.unitType, item.unitSize)}
                     </span>
                   </span>

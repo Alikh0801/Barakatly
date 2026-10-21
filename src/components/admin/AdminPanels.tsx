@@ -11,7 +11,7 @@ import {
 import { markFarmerOrderUpdatesSeen } from "@/lib/admin/farmer-update-actions";
 import { Spinner } from "@/components/ui/Spinner";
 import { OrderStatusTimeline } from "@/components/orders/OrderStatusTimeline";
-import { formatPrice, formatUnit } from "@/lib/shop/format";
+import { formatPrice } from "@/lib/shop/format";
 import { formatDateTime } from "@/lib/format/date";
 import {
   ADMIN_STATUS_TRANSITIONS,
@@ -29,6 +29,7 @@ import type {
   FarmerOrderUpdate,
 } from "@/lib/admin/queries";
 import type { OrderStatus } from "@/types";
+import { formatAmount } from "@/lib/shop/quantity";
 
 type ActionResult = { error?: string; success?: string };
 
@@ -489,7 +490,7 @@ export function AdminOrdersPanel({
                                 </p>
                                 <p className="text-xs text-zinc-500">
                                   {item.farmers?.farm_name ?? "Fermer"} ·{" "}
-                                  {item.quantity} {formatUnit(item.unit_type, item.unit_size)}
+                                  {formatAmount(item.unit_type, item.quantity, item.unit_size)}
                                   {item.status === "cancelled" ? ` · ${formatPrice(Number(item.line_total))}` : ""}
                                 </p>
                                 {item.status === "cancelled" && item.cancel_reason ? (

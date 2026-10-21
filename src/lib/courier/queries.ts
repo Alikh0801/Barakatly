@@ -4,7 +4,7 @@ import type { Order, OrderItem } from "@/types";
 
 export type CourierOrderItem = Pick<
   OrderItem,
-  "id" | "product_title" | "quantity" | "status" | "farmer_id"
+  "id" | "product_title" | "quantity" | "unit_type" | "unit_size" | "status" | "farmer_id"
 > & {
   farmers: { farm_name: string; location_text: string | null } | null;
 };
@@ -40,6 +40,8 @@ export async function getCourierQueue(): Promise<CourierOrder[]> {
         id,
         product_title,
         quantity,
+        unit_type,
+        unit_size,
         status,
         farmer_id,
         farmers (farm_name, location_text)

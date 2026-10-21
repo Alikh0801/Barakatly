@@ -14,7 +14,7 @@ function useAddToCart() {
   const [added, setAdded] = useState(false);
   const [error, setError] = useState("");
 
-  function add(productId: string, quantity = 1) {
+  function add(productId: string, quantity?: number) {
     setError("");
     startTransition(async () => {
       const result = await addToCart(productId, quantity);

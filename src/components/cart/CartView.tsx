@@ -9,12 +9,13 @@ import {
   setCartQuantity,
 } from "@/lib/cart/actions";
 import type { CartLineItem } from "@/lib/cart/queries";
-import { formatPrice, unitLabel } from "@/lib/shop/format";
+import { formatPrice, formatUnit } from "@/lib/shop/format";
 import { DELIVERY_FEE } from "@/lib/checkout/constants";
 import { applyPromoCode, removePromoCode } from "@/lib/promo/actions";
 import type { AppliedPromo } from "@/lib/promo/constants";
 import { Spinner } from "@/components/ui/Spinner";
 import { QuantityInput } from "@/components/ui/QuantityInput";
+import { formatAmount } from "@/lib/shop/quantity";
 import { ImageWithSkeleton } from "@/components/ui/ImageWithSkeleton";
 
 function groupByFarmer(items: CartLineItem[]) {
@@ -146,7 +147,10 @@ export function CartView({
   // Stock can drop after an item was added, so catch it here instead of
   // letting checkout fail with OUT_OF_STOCK.
   const hasStockIssue = items.some(
-    (item) => item.maxQuantity <= 0 || item.quantity > item.maxQuantity,
+    (item) =>
+      item.maxQuantity < item.minQuantity ||
+      item.quantity > item.maxQuantity ||
+      item.quantity < item.minQuantity,
   );
 
   function run(key: string, task: () => Promise<unknown>) {
@@ -237,7 +241,8 @@ export function CartView({
                           {item.title}
                         </Link>
                         <p className="mt-1 text-xs text-zinc-500">
-                          {formatPrice(item.price)} / vahid
+                          {formatPrice(item.price)}
+                          {formatUnit(item.unitType, item.unitSize)}
                         </p>
                       </div>
                       <button
@@ -256,10 +261,12 @@ export function CartView({
                     <div className="mt-auto flex items-center justify-between pt-3">
                       <QuantityInput
                         variant="cart"
-                        value={item.quantity}
+                        value={Number(item.quantity)}
+                        unit={item.unitType}
+                        min={item.minQuantity}
                         // Above the stock only when stock dropped after it
                         // was added; typing then brings it down to the stock.
-                        max={Math.max(item.maxQuantity, 1)}
+                        max={Math.max(item.maxQuantity, item.minQuantity)}
                         onCommit={(quantity) => changeQuantity(item.productId, quantity)}
                         disabled={pending}
                         label={`${item.title} miqdarı`}
@@ -272,15 +279,19 @@ export function CartView({
                       </div>
                     </div>
 
-                    {item.maxQuantity <= 0 ? (
+                    {item.maxQuantity < item.minQuantity ? (
                       <p className="mt-2 rounded-lg bg-amber-50 px-2.5 py-1.5 text-xs text-amber-800 ring-1 ring-amber-200">
                         Stokda qalmayıb — sifarişi tamamlamaq üçün bu məhsulu
                         səbətdən silin.
                       </p>
                     ) : item.quantity > item.maxQuantity ? (
                       <p className="mt-2 rounded-lg bg-amber-50 px-2.5 py-1.5 text-xs text-amber-800 ring-1 ring-amber-200">
-                        Yalnız {item.maxQuantity} {unitLabel(item.unitType, item.unitSize)}{" "}
+                        Yalnız {formatAmount(item.unitType, item.maxQuantity, item.unitSize)}{" "}
                         qalıb — miqdarı azaldın.
+                      </p>
+                    ) : item.quantity < item.minQuantity ? (
+                      <p className="mt-2 rounded-lg bg-amber-50 px-2.5 py-1.5 text-xs text-amber-800 ring-1 ring-amber-200">
+                        Minimum sifariş: {formatAmount(item.unitType, item.minQuantity, item.unitSize)} — miqdarı artırın.
                       </p>
                     ) : null}
                   </div>

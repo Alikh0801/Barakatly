@@ -9,6 +9,7 @@ import { firstPayment } from "@/lib/orders/payment";
 import { getCustomerOrders } from "@/lib/checkout/queries";
 import { formatPrice, formatUnit, getProductImageUrl } from "@/lib/shop/format";
 import { formatDateTime } from "@/lib/format/date";
+import { formatAmount } from "@/lib/shop/quantity";
 
 export async function OrdersList() {
   const orders = await getCustomerOrders();
@@ -39,10 +40,6 @@ export async function OrdersList() {
         const paymentStatus =
           firstPayment(order.payments)?.status ?? "pending";
         const items = order.order_items ?? [];
-        const itemCount = items.reduce(
-          (sum, item) => sum + Number(item.quantity),
-          0
-        );
         const previewItems = items.slice(0, 3);
         const extraCount = Math.max(0, items.length - previewItems.length);
 
@@ -63,7 +60,7 @@ export async function OrdersList() {
                   {items.length > 0 ? (
                     <span>
                       {" "}
-                      · {items.length} məhsul · {itemCount} ədəd
+                      · {items.length} məhsul
                     </span>
                   ) : null}
                 </div>
@@ -120,7 +117,7 @@ export async function OrdersList() {
                           {item.product_title}
                         </p>
                         <p className="mt-0.5 text-xs text-zinc-500">
-                          Say: {item.quantity} ·{" "}
+                          {formatAmount(item.unit_type, item.quantity, item.unit_size)} ·{" "}
                           {formatPrice(item.unit_price)}
                           {formatUnit(item.unit_type, item.unit_size)}
                         </p>

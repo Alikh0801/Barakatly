@@ -67,6 +67,7 @@ import type {
   Subcategory,
   UnitType,
 } from "@/types";
+import { formatAmount } from "@/lib/shop/quantity";
 
 const initialState: FarmerActionState = {};
 const TURNSTILE_SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
@@ -326,6 +327,21 @@ export function FarmerPendingCard({ farmer }: { farmer: Farmer }) {
   );
 }
 
+/**
+ * The minimum-order field speaks the farmer's language: grams for weight
+ * (50 qr steps), litres in halves, whole units otherwise. The server turns
+ * grams back into kq.
+ */
+function minOrderInput(unit: UnitType) {
+  if (unit === "kg") {
+    return { label: "qr", step: 50, fromQuantity: (kq: number) => Math.round(kq * 1000) };
+  }
+  if (unit === "liter") {
+    return { label: "l", step: 0.5, fromQuantity: (litres: number) => litres };
+  }
+  return { label: unitLabel(unit), step: 1, fromQuantity: (count: number) => count };
+}
+
 export function FarmerProductForm({
   categories,
   subcategories,
@@ -361,6 +377,7 @@ export function FarmerProductForm({
   );
   const [unitSize, setUnitSize] = useState(product?.unit_size ?? "");
   const unitSizes = UNIT_SIZES[unitType] ?? [];
+  const minOrderField = minOrderInput(unitType);
   const [categoryId, setCategoryId] = useState<string>(
     product?.category_id ?? "",
   );
@@ -649,6 +666,28 @@ export function FarmerProductForm({
             className="mt-1 w-full rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-base text-zinc-900"
           />
         </div>
+      </div>
+      <div>
+        <label htmlFor="min_order_quantity" className="block text-sm font-medium text-zinc-700">
+          Minimum sifariş ({minOrderField.label})
+        </label>
+        <input
+          // Remounts with the unit: grams and litres don't convert.
+          key={unitType}
+          id="min_order_quantity"
+          name="min_order_quantity"
+          type="number"
+          inputMode="decimal"
+          step={minOrderField.step}
+          min={minOrderField.step}
+          defaultValue={
+            product?.min_order_quantity && product.unit_type === unitType
+              ? minOrderField.fromQuantity(Number(product.min_order_quantity))
+              : ""
+          }
+          placeholder={String(minOrderField.step)}
+          className="mt-1 w-full rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-base text-zinc-900 sm:max-w-xs"
+        />
       </div>
       <div>
         <label className="block text-sm font-medium text-zinc-700">
@@ -998,8 +1037,8 @@ function FarmerOrderItemCard({ item }: { item: FarmerOrderItem }) {
         <div className="min-w-0">
           <div className="font-semibold text-zinc-900">{item.product_title}</div>
           <p className="mt-1 text-sm text-zinc-500">
-            {order?.order_code ?? "Sifariş"} · Say: {item.quantity}{" "}
-            {formatUnit(item.unit_type, item.unit_size)}
+            {order?.order_code ?? "Sifariş"} ·{" "}
+            {formatAmount(item.unit_type, item.quantity, item.unit_size)}
           </p>
           {order?.customer?.full_name ? (
             <p className="mt-2 text-sm text-zinc-600">

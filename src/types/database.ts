@@ -506,6 +506,7 @@ export interface Database {
           description: string;
           unit_type: UnitType;
           unit_size: string | null;
+          min_order_quantity: number | null;
           farmer_price: number;
           final_price: number | null;
           quantity_available: number;
@@ -526,6 +527,7 @@ export interface Database {
           description: string;
           unit_type: UnitType;
           unit_size?: string | null;
+          min_order_quantity?: number | null;
           farmer_price: number;
           final_price?: number | null;
           quantity_available?: number;
@@ -544,6 +546,7 @@ export interface Database {
           description?: string;
           unit_type?: UnitType;
           unit_size?: string | null;
+          min_order_quantity?: number | null;
           farmer_price?: number;
           final_price?: number | null;
           quantity_available?: number;

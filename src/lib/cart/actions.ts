@@ -4,6 +4,7 @@ import { refresh, revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getSessionUser } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
+import { initialQuantity, minOrderQuantity, normalizeQuantity } from "@/lib/shop/quantity";
 
 export type CartActionResult = {
   ok: boolean;
@@ -17,16 +18,22 @@ function revalidateCart() {
   refresh();
 }
 
+/**
+ * Adds to the cart. `quantity` is in the product's unit; left out (the
+ * product cards' quick button) it is one unit or the product's minimum.
+ * The total in the cart always lands on a step, between the minimum and
+ * the stock.
+ */
 export async function addToCart(
   productId: string,
-  quantity = 1,
+  quantity?: number,
 ): Promise<CartActionResult> {
   const user = await getSessionUser();
   if (!user) {
     return { ok: false, needsAuth: true };
   }
 
-  if (!productId || !(quantity > 0)) {
+  if (!productId || (quantity !== undefined && !(quantity > 0))) {
     return { ok: false, error: "Məhsul seçilmədi." };
   }
 
@@ -34,7 +41,7 @@ export async function addToCart(
 
   const { data: product } = await supabase
     .from("products")
-    .select("id, quantity_available, in_stock, status, farmer_id")
+    .select("id, quantity_available, in_stock, status, farmer_id, unit_type, min_order_quantity")
     .eq("id", productId)
     .eq("status", "approved")
     .maybeSingle();
@@ -42,6 +49,11 @@ export async function addToCart(
   if (!product || !product.in_stock || product.quantity_available <= 0) {
     return { ok: false, error: "Bu məhsul hazırda mövcud deyil." };
   }
+
+  const limits = {
+    min: minOrderQuantity(product.unit_type, product.min_order_quantity),
+    max: Number(product.quantity_available),
+  };
 
   // A farmer cannot order their own product.
   const { data: ownFarmer } = await supabase
@@ -61,10 +73,15 @@ export async function addToCart(
     .eq("product_id", productId)
     .maybeSingle();
 
-  const nextQuantity = Math.min(
-    (existing?.quantity ?? 0) + quantity,
-    product.quantity_available,
+  const adding = quantity ?? initialQuantity(product.unit_type, limits.min, limits.max);
+  const nextQuantity = normalizeQuantity(
+    product.unit_type,
+    Number(existing?.quantity ?? 0) + adding,
+    limits,
   );
+  if (nextQuantity <= 0) {
+    return { ok: false, error: "Anbarda minimum sifariş qədər məhsul qalmayıb." };
+  }
 
   if (existing) {
     const { error } = await supabase
@@ -98,7 +115,7 @@ export async function addToCart(
  */
 export async function buyNow(
   productId: string,
-  quantity = 1,
+  quantity?: number,
 ): Promise<CartActionResult> {
   const result = await addToCart(productId, quantity);
   if (result.needsAuth) {
@@ -127,7 +144,7 @@ export async function setCartQuantity(
 
   const { data: product } = await supabase
     .from("products")
-    .select("quantity_available, in_stock")
+    .select("quantity_available, in_stock, unit_type, min_order_quantity")
     .eq("id", productId)
     .eq("status", "approved")
     .maybeSingle();
@@ -142,7 +159,13 @@ export async function setCartQuantity(
     return { ok: false, error: "Bu məhsul hazırda stokda yoxdur." };
   }
 
-  const capped = Math.min(quantity, product.quantity_available);
+  const capped = normalizeQuantity(product.unit_type, quantity, {
+    min: minOrderQuantity(product.unit_type, product.min_order_quantity),
+    max: Number(product.quantity_available),
+  });
+  if (capped <= 0) {
+    return { ok: false, error: "Anbarda minimum sifariş qədər məhsul qalmayıb." };
+  }
 
   const { error } = await supabase
     .from("cart_items")

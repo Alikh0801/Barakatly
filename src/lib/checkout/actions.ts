@@ -24,6 +24,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { PROMO_COOKIE, describePromoError } from "@/lib/promo/constants";
 import { getAppliedPromo } from "@/lib/promo/server";
+import { formatAmount, isOnStep, minOrderQuantity } from "@/lib/shop/quantity";
 
 export type CheckoutCartItem = {
   productId: string;
@@ -162,7 +163,10 @@ export async function placeOrder(
   // A farmer cannot order their own products — checked here since it's not
   // a stock concern and doesn't need to be inside the atomic order function.
   const [{ data: cartProducts }, { data: ownFarmer }] = await Promise.all([
-    supabase.from("products").select("id, farmer_id").in("id", productIds),
+    supabase
+      .from("products")
+      .select("id, farmer_id, title, unit_type, unit_size, min_order_quantity")
+      .in("id", productIds),
     supabase
       .from("farmers")
       .select("id")
@@ -177,6 +181,20 @@ export async function placeOrder(
     return {
       error: "Öz məhsulunuza sifariş verə bilməzsiniz. Onu səbətdən çıxarın.",
     };
+  }
+
+  // Amounts must sit on the unit's steps and reach the farmer's minimum; a
+  // cart filled before a minimum was set can still be below it.
+  for (const item of cartItems) {
+    const product = (cartProducts ?? []).find((row) => row.id === item.productId);
+    if (!product) continue;
+    const min = minOrderQuantity(product.unit_type, product.min_order_quantity);
+    if (Number(item.quantity) < min - 1e-9 || !isOnStep(product.unit_type, Number(item.quantity))) {
+      const amount = formatAmount(product.unit_type, min, product.unit_size);
+      return {
+        error: `"${product.title}" üçün minimum sifariş: ${amount}. Səbətdə miqdarı dəyişin.`,
+      };
+    }
   }
 
   const { data: bank, error: bankError } = await supabase

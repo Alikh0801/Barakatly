@@ -1,6 +1,13 @@
 "use client";
 
 import { useState, type KeyboardEvent } from "react";
+import type { UnitType } from "@/types";
+import {
+  formatQuantity,
+  normalizeQuantity,
+  parseQuantity,
+  quantityStep,
+} from "@/lib/shop/quantity";
 
 const VARIANTS = {
   // Product page purchase panel.
@@ -8,26 +15,34 @@ const VARIANTS = {
     wrap: "inline-flex items-center rounded-xl bg-white ring-1 ring-zinc-200",
     button:
       "h-10 w-10 shrink-0 text-lg font-semibold text-zinc-700 transition hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-40",
-    input: "h-10 w-14 text-base font-semibold",
+    input: "h-10 text-base font-semibold",
+    width: { narrow: "w-14", wide: "w-24" },
   },
   // Cart line.
   cart: {
     wrap: "inline-flex items-center rounded-full bg-zinc-100 text-zinc-900 ring-1 ring-zinc-200",
     button:
       "shrink-0 px-3 py-1 text-sm font-medium text-zinc-900 hover:text-emerald-700 disabled:opacity-40",
-    input: "h-7 w-12 text-sm font-semibold",
+    input: "h-7 text-sm font-semibold",
+    width: { narrow: "w-12", wide: "w-[4.5rem]" },
   },
 } as const;
 
 /**
- * − [number] + with a field the customer can type into, for large amounts.
- * `onCommit` gets a whole number between 1 and `max`: on +/−, on Enter, on
- * leaving the field, and — with `commitWhileTyping` — on every valid keystroke.
+ * − [amount] + with a field the customer can type into. Weight moves in
+ * 50 qr steps and reads "750 qr" / "1,25 kq", volume in 0,5 l steps, other
+ * units in whole numbers (see src/lib/shop/quantity.ts).
+ *
+ * `onCommit` gets an amount on a step, between `min` and `max`: on +/−, on
+ * Enter, on leaving the field, and — with `commitWhileTyping`, whole units
+ * only — on every valid keystroke.
  */
 export function QuantityInput({
   value,
   max,
   onCommit,
+  unit = "piece",
+  min,
   disabled = false,
   commitWhileTyping = false,
   variant = "panel",
@@ -36,6 +51,8 @@ export function QuantityInput({
   value: number;
   max: number;
   onCommit: (quantity: number) => void;
+  unit?: UnitType;
+  min?: number;
   disabled?: boolean;
   commitWhileTyping?: boolean;
   variant?: keyof typeof VARIANTS;
@@ -44,29 +61,28 @@ export function QuantityInput({
   // What is in the field while typing; null shows `value`.
   const [draft, setDraft] = useState<string | null>(null);
   const styles = VARIANTS[variant];
-  const limit = Math.max(1, Math.floor(max));
-
-  function clamp(quantity: number) {
-    return Math.min(limit, Math.max(1, Math.floor(quantity)));
-  }
+  const step = quantityStep(unit);
+  const floor = min ?? step;
+  const wholeUnits = step === 1;
+  const limits = { min: floor, max: Math.max(max, floor) };
 
   function commit(quantity: number) {
-    const next = clamp(quantity);
-    if (next !== value) onCommit(next);
+    const next = normalizeQuantity(unit, quantity, limits);
+    if (next > 0 && next !== value) onCommit(next);
   }
 
   function finishTyping() {
     if (draft === null) return;
-    const parsed = Number(draft);
+    const parsed = parseQuantity(unit, draft);
     setDraft(null);
-    // An emptied field goes back to what it was.
-    if (draft !== "" && Number.isFinite(parsed)) commit(parsed);
+    // An emptied or unreadable field goes back to what it was.
+    if (parsed !== null) commit(parsed);
   }
 
   function handleChange(text: string) {
-    const digits = text.replace(/\D/g, "").slice(0, 6);
-    setDraft(digits);
-    if (commitWhileTyping && digits !== "") commit(Number(digits));
+    const cleaned = wholeUnits ? text.replace(/\D/g, "").slice(0, 6) : text.slice(0, 12);
+    setDraft(cleaned);
+    if (commitWhileTyping && wholeUnits && cleaned !== "") commit(Number(cleaned));
   }
 
   function handleKeyDown(event: KeyboardEvent<HTMLInputElement>) {
@@ -83,8 +99,8 @@ export function QuantityInput({
     <div className={styles.wrap}>
       <button
         type="button"
-        onClick={() => commit(value - 1)}
-        disabled={disabled || value <= 1}
+        onClick={() => commit(value - step)}
+        disabled={disabled || value - step < floor - 1e-9}
         className={styles.button}
         aria-label="Azalt"
       >
@@ -92,21 +108,20 @@ export function QuantityInput({
       </button>
       <input
         type="text"
-        inputMode="numeric"
-        pattern="[0-9]*"
-        value={draft ?? String(value)}
+        inputMode={wholeUnits ? "numeric" : "decimal"}
+        value={draft ?? formatQuantity(unit, value)}
         onChange={(event) => handleChange(event.target.value)}
         onFocus={(event) => event.currentTarget.select()}
         onBlur={finishTyping}
         onKeyDown={handleKeyDown}
         disabled={disabled}
         aria-label={label}
-        className={`${styles.input} min-w-0 bg-transparent text-center text-zinc-900 tabular-nums outline-none focus:rounded-md focus:bg-white focus:ring-2 focus:ring-emerald-500 disabled:opacity-60`}
+        className={`${styles.input} ${wholeUnits ? styles.width.narrow : styles.width.wide} min-w-0 bg-transparent text-center text-zinc-900 tabular-nums outline-none focus:rounded-md focus:bg-white focus:ring-2 focus:ring-emerald-500 disabled:opacity-60`}
       />
       <button
         type="button"
-        onClick={() => commit(value + 1)}
-        disabled={disabled || value >= limit}
+        onClick={() => commit(value + step)}
+        disabled={disabled || value + step > limits.max + 1e-9}
         className={styles.button}
         aria-label="Artır"
       >

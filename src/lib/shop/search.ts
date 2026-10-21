@@ -35,6 +35,7 @@ export async function searchCatalog(query: string): Promise<SearchResults> {
         description,
         unit_type,
         unit_size,
+        min_order_quantity,
         final_price,
         farmer_price,
         quantity_available,

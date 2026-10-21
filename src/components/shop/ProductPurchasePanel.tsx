@@ -4,7 +4,15 @@ import { usePathname, useRouter } from "next/navigation";
 import { useOptimistic, useState, useTransition } from "react";
 import { addToCart, buyNow } from "@/lib/cart/actions";
 import type { ProductDetail } from "@/types/shop";
-import { formatPrice, getDisplayPrice, unitLabel } from "@/lib/shop/format";
+import { formatPrice, getDisplayPrice } from "@/lib/shop/format";
+import {
+  WEIGHT_PRESETS,
+  baseMinQuantity,
+  formatAmount,
+  formatQuantity,
+  initialQuantity,
+  minOrderQuantity,
+} from "@/lib/shop/quantity";
 import { QuantityInput } from "@/components/ui/QuantityInput";
 import { Spinner } from "@/components/ui/Spinner";
 
@@ -12,8 +20,10 @@ export function ProductPurchasePanel({ product }: { product: ProductDetail }) {
   const router = useRouter();
   const pathname = usePathname();
   const [pending, startTransition] = useTransition();
-  const maxQty = Math.max(1, Number(product.quantity_available) || 1);
-  const [quantity, setQuantity] = useState(1);
+  const unit = product.unit_type;
+  const stock = Number(product.quantity_available) || 0;
+  const minQty = minOrderQuantity(unit, product.min_order_quantity);
+  const [quantity, setQuantity] = useState(() => initialQuantity(unit, minQty, stock) || minQty);
   const [added, setAdded] = useState(false);
   // Which button is waiting; both fall back to false when the action ends.
   const [adding, setAdding] = useOptimistic(false);
@@ -21,7 +31,11 @@ export function ProductPurchasePanel({ product }: { product: ProductDetail }) {
 
   const price = getDisplayPrice(product.final_price, product.farmer_price);
   const lineTotal = price * quantity;
-  const outOfStock = !product.in_stock || product.quantity_available <= 0;
+  // Less left than the farmer's minimum can't be ordered either.
+  const outOfStock = !product.in_stock || stock < minQty;
+  const presets =
+    unit === "kg" ? WEIGHT_PRESETS.filter((amount) => amount >= minQty && amount <= stock) : [];
+  const stockLabel = formatAmount(unit, stock, product.unit_size);
 
   function handleAddToCart() {
     if (outOfStock) return;
@@ -56,16 +70,38 @@ export function ProductPurchasePanel({ product }: { product: ProductDetail }) {
         </span>
         <QuantityInput
           value={quantity}
-          max={maxQty}
+          unit={unit}
+          min={minQty}
+          max={stock}
           onCommit={setQuantity}
           disabled={outOfStock}
           commitWhileTyping
         />
       </div>
+      {presets.length > 0 && !outOfStock ? (
+        <div className="mt-3 flex flex-wrap justify-end gap-2">
+          {presets.map((amount) => (
+            <button
+              key={amount}
+              type="button"
+              onClick={() => setQuantity(amount)}
+              aria-pressed={quantity === amount}
+              className={`rounded-full px-3 py-1 text-xs font-semibold ring-1 transition ${
+                quantity === amount
+                  ? "bg-emerald-600 text-white ring-emerald-600"
+                  : "bg-white text-zinc-700 ring-zinc-200 hover:bg-zinc-50"
+              }`}
+            >
+              {formatQuantity(unit, amount)}
+            </button>
+          ))}
+        </div>
+      ) : null}
       <p className="mt-1.5 text-sm text-zinc-500">
-        {outOfStock
-          ? "Stokda yoxdur"
-          : `Anbarda ${product.quantity_available} ${unitLabel(product.unit_type, product.unit_size)} qalıb`}
+        {outOfStock ? "Stokda yoxdur" : `Anbarda ${stockLabel} qalıb`}
+        {!outOfStock && minQty > baseMinQuantity(unit) ? (
+          <span> · Minimum sifariş: {formatAmount(unit, minQty, product.unit_size)}</span>
+        ) : null}
       </p>
 
       <div className="mt-4 border-t border-zinc-200 pt-4">

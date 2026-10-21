@@ -22,6 +22,7 @@ const productSelect = `
   description,
   unit_type,
   unit_size,
+  min_order_quantity,
   final_price,
   farmer_price,
   quantity_available,

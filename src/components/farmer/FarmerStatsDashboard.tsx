@@ -6,9 +6,9 @@ import type { FarmerOrderItem } from "@/lib/farmer/queries";
 import type { FarmerSalesStats } from "@/lib/farmer/stats";
 import type { FarmerRatingSummary } from "@/lib/farmers/queries";
 import { formatDate } from "@/lib/format/date";
-import { unitLabel } from "@/lib/shop/format";
 import { Spinner } from "@/components/ui/Spinner";
 import { CancelOrderItemForm } from "@/components/farmer/CancelOrderItemForm";
+import { formatAmount } from "@/lib/shop/quantity";
 
 const MONTH_NAMES = ["Yanvar", "Fevral", "Mart", "Aprel", "May", "İyun", "İyul", "Avqust", "Sentyabr", "Oktyabr", "Noyabr", "Dekabr"];
 const MONTH_SHORT = ["Yan", "Fev", "Mar", "Apr", "May", "İyn", "İyl", "Avq", "Sen", "Okt", "Noy", "Dek"];
@@ -55,10 +55,6 @@ function relativeTime(value: string, now: number) {
   const days = Math.floor(hours / 24);
   if (days < 7) return `${days} gün əvvəl`;
   return formatDate(value);
-}
-
-function formatQuantity(quantity: number) {
-  return String(Math.round(quantity * 1000) / 1000);
 }
 
 // ---------------------------------------------------------------------------
@@ -286,7 +282,6 @@ function PendingOrderRow({ item, now }: { item: FarmerOrderItem; now: number }) 
   const [state, action, pending] = useActionState(updateOrderItemStatus, {});
   const [cancelling, setCancelling] = useState(false);
   const order = item.orders;
-  const unit = unitLabel(item.unit_type, item.unit_size);
 
   return (
     <li className="py-3.5 first:pt-0 last:pb-0">
@@ -299,8 +294,7 @@ function PendingOrderRow({ item, now }: { item: FarmerOrderItem; now: number }) 
             ) : null}
           </p>
           <p className="mt-0.5 truncate text-sm text-zinc-600">
-            {item.product_title} · {formatQuantity(Number(item.quantity))}
-            {unit ? ` ${unit}` : ""}
+            {item.product_title} · {formatAmount(item.unit_type, item.quantity, item.unit_size)}
           </p>
         </div>
         <div className="shrink-0 text-right">
