@@ -27,3 +27,8 @@ export {
   ShopFiltersSkeleton,
   ShopPageSkeleton,
 } from "./ShopSkeleton";
+export {
+  FarmerProfileSkeleton,
+  FarmersPageSkeleton,
+  SearchPageSkeleton,
+} from "./FarmersSkeleton";

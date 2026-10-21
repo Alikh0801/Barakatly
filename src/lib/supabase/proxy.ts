@@ -25,7 +25,12 @@ export async function updateSession(request: NextRequest) {
     }
   );
 
-  await supabase.auth.getUser();
+  // Refreshes an expired session and writes the new cookies. getClaims()
+  // checks the token locally (against the project's cached signing keys) and
+  // only calls Supabase when the token needs refreshing; getUser() asked the
+  // Auth server on every request, and every page waited for that answer
+  // before sending its first byte.
+  await supabase.auth.getClaims();
 
   return supabaseResponse;
 }

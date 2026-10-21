@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import { Suspense } from "react";
 import { getContactContent } from "@/lib/content/queries";
 
 type FooterLink = {
@@ -80,7 +81,20 @@ function ContactColumn({ phone, email }: { phone: string; email: string }) {
   );
 }
 
-export async function SiteFooter() {
+/**
+ * The footer waits for the contact details, so it streams in on its own:
+ * outside a Suspense boundary it held back the first byte of every page
+ * whenever that cache was cold.
+ */
+export function SiteFooter() {
+  return (
+    <Suspense fallback={null}>
+      <SiteFooterContent />
+    </Suspense>
+  );
+}
+
+async function SiteFooterContent() {
   const contact = await getContactContent();
   const hasContact = Boolean(contact.phone || contact.email);
 
