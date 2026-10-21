@@ -149,8 +149,7 @@ export async function setCartQuantity(
     .eq("status", "approved")
     .maybeSingle();
 
-  // Previously a missing product fell through to the requested quantity, so a
-  // removed or unapproved item could be set to any amount.
+  // A removed or unapproved product can't be set to any amount.
   if (!product) {
     return { ok: false, error: "Bu məhsul artıq mövcud deyil." };
   }

@@ -757,7 +757,7 @@ function BlogPostCard({
   );
 }
 
-export function FarmerBlogFeed({
+function FarmerBlogFeed({
   posts,
   canManage = false,
 }: {

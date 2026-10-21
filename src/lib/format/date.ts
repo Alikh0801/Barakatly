@@ -1,8 +1,7 @@
 /**
  * Dates are always shown in Azerbaijan time (UTC+4), never in the runtime's
- * own zone. Server rendering happens on Vercel in UTC, so Date#getHours() and
- * friends were four hours behind, and the browser then hydrated with the
- * visitor's own zone — two different times for the same order.
+ * own zone: the server renders in UTC and the browser in the visitor's zone,
+ * which would show two different times for the same order.
  */
 const TIME_ZONE = "Asia/Baku";
 

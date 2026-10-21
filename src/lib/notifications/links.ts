@@ -11,7 +11,7 @@ function metadataString(
   return typeof value === "string" && value.length > 0 ? value : null;
 }
 
-export function getNotificationOrderId(
+function getNotificationOrderId(
   metadata: Notification["metadata"],
 ): string | null {
   return metadataString(metadata, "order_id");

@@ -57,7 +57,7 @@ function CheckoutSummarySkeleton() {
   );
 }
 
-export function CheckoutSkeleton() {
+function CheckoutSkeleton() {
   return (
     <div className="grid gap-8 lg:grid-cols-[1fr_360px]">
       <div className="space-y-6">

@@ -83,7 +83,7 @@ export function formatQuantity(unit: UnitType, value: number | string): string {
 }
 
 /** Whether formatQuantity already names the unit. */
-export function quantityHasUnit(unit: UnitType): boolean {
+function quantityHasUnit(unit: UnitType): boolean {
   return unit === "kg" || unit === "liter";
 }
 

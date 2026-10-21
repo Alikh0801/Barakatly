@@ -786,9 +786,7 @@ export async function updateOrderItemStatus(
     return { error: "Sifariş məhsulu tapılmadı." };
   }
 
-  // Farmers cannot read `orders` directly, so the old `orders(...)` embed was
-  // always null and every update skipped the status event and both
-  // notifications. See getFarmerOrderHeaders.
+  // Farmers cannot read `orders` directly; see getFarmerOrderHeaders.
   const order = (await getFarmerOrderHeaders(farmer.id, [item.order_id])).get(
     item.order_id,
   );

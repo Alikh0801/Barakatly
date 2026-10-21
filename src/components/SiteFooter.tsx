@@ -82,9 +82,8 @@ function ContactColumn({ phone, email }: { phone: string; email: string }) {
 }
 
 /**
- * The footer waits for the contact details, so it streams in on its own:
- * outside a Suspense boundary it held back the first byte of every page
- * whenever that cache was cold.
+ * The footer waits for the contact details, so it streams in on its own
+ * rather than holding back the page.
  */
 export function SiteFooter() {
   return (

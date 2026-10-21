@@ -3,7 +3,7 @@ import type { Database } from "@/types/database";
 
 export const PRODUCT_IMAGE_MAX_BYTES = 5 * 1024 * 1024;
 export const MAX_PRODUCT_IMAGES = 5;
-export const PRODUCT_IMAGE_MIME_TYPES = [
+const PRODUCT_IMAGE_MIME_TYPES = [
   "image/jpeg",
   "image/png",
   "image/webp",
@@ -54,10 +54,10 @@ function isOwnProductImagePath(path: string, userId: string): boolean {
 /**
  * Turns storage paths uploaded by the browser into public URLs, in order.
  *
- * The images no longer travel inside the Server Action: five 5 MB photos
- * could never fit Vercel's ~4.5 MB function payload cap, and failed as a
- * bare 413. The paths are client-supplied, so each must sit in the caller's
- * own folder and exist as an image within the size limit.
+ * The browser uploads the images itself, because five 5 MB photos don't fit
+ * Vercel's ~4.5 MB Server Action payload. The paths are client-supplied, so
+ * each must sit in the caller's own folder and exist as an image within the
+ * size limit.
  */
 export async function resolveUploadedProductImages(
   supabase: SupabaseClient<Database>,

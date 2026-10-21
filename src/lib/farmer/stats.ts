@@ -1,7 +1,7 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 
 /** Months shown on the revenue chart, the current one included. */
-export const FARMER_STATS_MONTHS = 6;
+const FARMER_STATS_MONTHS = 6;
 
 const PAGE_SIZE = 1000;
 // Azerbaijan has kept UTC+4 all year since 2016.

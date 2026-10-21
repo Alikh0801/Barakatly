@@ -1,20 +1,8 @@
 export { AuthNavSkeleton } from "./AuthNavSkeleton";
 export { AccountSkeleton } from "./AccountSkeleton";
 export { AuthFormSkeleton } from "./AuthFormSkeleton";
-export {
-  CartPageSkeleton,
-  CartSkeleton,
-} from "./CartSkeleton";
-export {
-  CheckoutPageSkeleton,
-  CheckoutSkeleton,
-} from "./CheckoutSkeleton";
-export {
-  CategoryGridSkeleton,
-  HeroSkeleton,
-  HomePageSkeleton,
-  SectionHeaderSkeleton,
-} from "./HomeSkeleton";
+export { CartPageSkeleton } from "./CartSkeleton";
+export { CheckoutPageSkeleton } from "./CheckoutSkeleton";
 export { OrderDetailSkeleton } from "./OrderDetailSkeleton";
 export {
   OrderListSkeleton,
@@ -22,7 +10,6 @@ export {
 } from "./OrdersSkeleton";
 export { ProductDetailSkeleton } from "./ProductDetailSkeleton";
 export {
-  ProductCardSkeleton,
   ProductGridSkeleton,
   ShopFiltersSkeleton,
   ShopPageSkeleton,

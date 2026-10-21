@@ -80,11 +80,10 @@ export type FarmerOrderHeader = Pick<
  * Order headers for orders that contain this farmer's items, by order id.
  *
  * Farmers have no SELECT on `orders` — the row carries the customer's phone,
- * address and the whole basket's total — so a farmer-session join to it
- * returned nothing: the orders page was always empty, and status updates
- * never notified anyone. This reads with the service role instead, but only
- * orders that really include one of `farmerId`'s items, and only the columns
- * a farmer needs. `farmerId` must come from requireApprovedFarmer().
+ * address and the whole basket's total — so this reads with the service
+ * role, but only orders that really include one of `farmerId`'s items, and
+ * only the columns a farmer needs. `farmerId` must come from
+ * requireApprovedFarmer().
  */
 export async function getFarmerOrderHeaders(
   farmerId: string,

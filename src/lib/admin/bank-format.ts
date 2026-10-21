@@ -1,5 +1,5 @@
 /** Keep only digits from a PAN/card input. */
-export function digitsOnly(value: string): string {
+function digitsOnly(value: string): string {
   return value.replace(/\D/g, "");
 }
 

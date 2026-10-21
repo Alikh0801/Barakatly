@@ -1,13 +1,13 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database, FarmerPostMediaType } from "@/types/database";
 
-export const FARMER_MEDIA_MAX_BYTES = 50 * 1024 * 1024;
-export const FARMER_IMAGE_MIME_TYPES = [
+const FARMER_MEDIA_MAX_BYTES = 50 * 1024 * 1024;
+const FARMER_IMAGE_MIME_TYPES = [
   "image/jpeg",
   "image/png",
   "image/webp",
 ] as const;
-export const FARMER_VIDEO_MIME_TYPES = [
+const FARMER_VIDEO_MIME_TYPES = [
   "video/mp4",
   "video/webm",
   "video/quicktime",
@@ -34,7 +34,7 @@ function mediaTypeForMime(type: string): FarmerPostMediaType | null {
   return null;
 }
 
-export function mediaTypeForFile(file: File): FarmerPostMediaType | null {
+function mediaTypeForFile(file: File): FarmerPostMediaType | null {
   return mediaTypeForMime(file.type);
 }
 

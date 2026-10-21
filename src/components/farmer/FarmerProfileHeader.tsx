@@ -26,7 +26,7 @@ export function memberSinceLabel(createdAt: string): string {
   return Number.isFinite(year) ? `${year}-${ordinalSuffix(year)} ildən üzv` : "Üzv";
 }
 
-export function formatRating(value: number): string {
+function formatRating(value: number): string {
   return value.toFixed(1).replace(".", ",");
 }
 
