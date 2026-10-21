@@ -50,8 +50,8 @@ export function ProductCard({ product }: { product: ProductListItem }) {
   const outOfStock = !product.in_stock || product.quantity_available <= 0;
 
   return (
-    // Hover: the card rises a little with a soft green shadow, the photo
-    // zooms gently inside its frame and the name turns green.
+    // Hover: the card rises a little with a soft green shadow and the name
+    // turns green.
     <article className="group overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-zinc-200 transition duration-300 ease-out hover:shadow-[0_14px_30px_-14px_rgba(31,77,44,0.35)] hover:ring-emerald-200 motion-safe:hover:-translate-y-1">
       {/* data-static-hover: the global a:hover scale(1.02) would otherwise
           zoom the whole image link, which reads as the photo scaling. */}
@@ -59,14 +59,12 @@ export function ProductCard({ product }: { product: ProductListItem }) {
         <Link href={`/shop/${product.id}`} prefetch data-static-hover className="block">
           <div className="relative aspect-[4/3] overflow-hidden">
             {imageUrl ? (
-              <div className="h-full w-full transition-transform duration-500 ease-out motion-safe:group-hover:scale-[1.04]">
-                <ImageWithSkeleton
-                  src={imageUrl}
-                  alt={product.title}
-                  className="h-full w-full object-cover"
-                  skeletonClassName="rounded-none"
-                />
-              </div>
+              <ImageWithSkeleton
+                src={imageUrl}
+                alt={product.title}
+                className="h-full w-full object-cover"
+                skeletonClassName="rounded-none"
+              />
             ) : (
               <ProductImagePlaceholder className="h-full w-full" />
             )}
