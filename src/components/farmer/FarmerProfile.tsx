@@ -853,6 +853,7 @@ export function FarmerProfileDashboard({
     <div className="pb-16">
       <FarmerProfileHeader
         farmName={farmer.farm_name}
+        ownerName={profile.full_name}
         avatarUrl={farmer.avatar_url}
         coverUrl={farmer.cover_url}
         locationText={farmer.location_text}
@@ -976,6 +977,7 @@ export function PublicFarmerProfile({
     <div className="pb-16">
       <FarmerProfileHeader
         farmName={farmer.farm_name}
+        ownerName={farmer.owner_name}
         avatarUrl={farmer.avatar_url}
         coverUrl={farmer.cover_url}
         locationText={farmer.location_text}
