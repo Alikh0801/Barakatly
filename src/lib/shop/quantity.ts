@@ -64,7 +64,7 @@ export function initialQuantity(unit: UnitType, min: number, max: number): numbe
 }
 
 /** "0,75" — Azerbaijani decimal comma, no trailing zeros. */
-function decimal(value: number): string {
+export function decimal(value: number): string {
   return String(Math.round(value * 100) / 100).replace(".", ",");
 }
 

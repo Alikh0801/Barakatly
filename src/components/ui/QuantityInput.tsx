@@ -3,7 +3,7 @@
 import { useState, type KeyboardEvent } from "react";
 import type { UnitType } from "@/types";
 import {
-  formatQuantity,
+  decimal,
   normalizeQuantity,
   parseQuantity,
   quantityStep,
@@ -30,8 +30,9 @@ const VARIANTS = {
 
 /**
  * − [amount] + with a field the customer can type into. Weight moves in
- * 50 qr steps and reads "750 qr" / "1,25 kq", volume in 0,5 l steps, other
- * units in whole numbers (see src/lib/shop/quantity.ts).
+ * 50 qr steps, volume in 0,5 l steps, other units in whole numbers (see
+ * src/lib/shop/quantity.ts). The field holds the bare number in the
+ * product's unit; typing "750" for weight still reads as grams.
  *
  * `onCommit` gets an amount on a step, between `min` and `max`: on +/−, on
  * Enter, on leaving the field, and — with `commitWhileTyping`, whole units
@@ -109,7 +110,9 @@ export function QuantityInput({
       <input
         type="text"
         inputMode={wholeUnits ? "numeric" : "decimal"}
-        value={draft ?? formatQuantity(unit, value)}
+        // Just the number, in the product's unit ("2,5", "0,75"); the unit
+        // is shown beside the price and on the quick picks.
+        value={draft ?? decimal(value)}
         onChange={(event) => handleChange(event.target.value)}
         onFocus={(event) => event.currentTarget.select()}
         onBlur={finishTyping}
