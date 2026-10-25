@@ -8,7 +8,7 @@ import {
   getPaymentBadgeTone,
   getPaymentStatusLabel,
 } from "@/lib/orders/labels";
-import { firstPayment } from "@/lib/orders/payment";
+import { firstPayment, maskedPanLastFour } from "@/lib/orders/payment";
 import { deliveryAddress, recipientName } from "@/lib/orders/delivery";
 import { ITEM_CANCEL_ANNOUNCED } from "@/lib/orders/item-cancel";
 import { getOrderById } from "@/lib/checkout/queries";
@@ -305,9 +305,9 @@ export default async function OrderDetailPage({
                     </dd>
                   </div>
                   <div className="flex justify-between gap-4">
-                    <dt className="text-zinc-500">PAN</dt>
+                    <dt className="text-zinc-500">Kart</dt>
                     <dd className="font-mono font-medium text-zinc-900">
-                      {payment.banks?.pan_number ?? "—"}
+                      {maskedPanLastFour(payment.banks?.pan_number) ?? "—"}
                     </dd>
                   </div>
                 </dl>
