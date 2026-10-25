@@ -1,5 +1,5 @@
-import Image from "next/image";
 import Link from "next/link";
+import { SiteLogo } from "@/components/SiteLogo";
 import { Suspense } from "react";
 import { AuthNav } from "@/components/AuthNav";
 import { CartNav, CartNavServer } from "@/components/CartNav";
@@ -56,11 +56,8 @@ export function SiteHeader({
           prefetch
           className={`inline-flex min-w-0 items-center gap-2 font-semibold tracking-tight transition-colors ${logoText}`}
         >
-          <Image
-            src="/logo/logo.png"
-            alt="Barakatly"
-            width={36}
-            height={36}
+          <SiteLogo
+            size={36}
             loading="eager"
             className="h-9 w-9 shrink-0 rounded-full object-cover ring-1 ring-black/5"
           />

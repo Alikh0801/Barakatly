@@ -1,5 +1,6 @@
 import Image, { getImageProps } from "next/image";
 import Link from "next/link";
+import { SiteLogo } from "@/components/SiteLogo";
 import type { Viewport } from "next";
 import { getAuthImageContent } from "@/lib/content/queries";
 
@@ -82,11 +83,8 @@ export default async function AuthLayout({
             href="/"
             className="inline-flex items-center gap-2.5 font-semibold tracking-tight text-white"
           >
-            <Image
-              src="/logo/logo.png"
-              alt="Barakatly"
-              width={36}
-              height={36}
+            <SiteLogo
+              size={36}
               className="h-9 w-9 shrink-0 rounded-full object-cover ring-2 ring-white/20"
             />
             <span className="text-lg">Barakatly</span>
@@ -121,11 +119,8 @@ export default async function AuthLayout({
               href="/"
               className="inline-flex items-center gap-2 font-semibold tracking-tight text-emerald-800 lg:hidden"
             >
-              <Image
-                src="/logo/logo.png"
-                alt="Barakatly"
-                width={32}
-                height={32}
+              <SiteLogo
+                size={32}
                 className="h-8 w-8 shrink-0 rounded-full object-cover ring-1 ring-black/5"
               />
               Barakatly

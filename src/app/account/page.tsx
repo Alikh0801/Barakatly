@@ -1,5 +1,5 @@
-import Image from "next/image";
 import Link from "next/link";
+import { SiteLogo } from "@/components/SiteLogo";
 import { redirect } from "next/navigation";
 import { getProfile } from "@/lib/auth/session";
 import { AccountProfileForm } from "@/components/account/AccountProfileForm";
@@ -51,11 +51,8 @@ export default async function AccountPage() {
             href="/"
             className="inline-flex items-center gap-2 font-semibold tracking-tight text-emerald-800"
           >
-            <Image
-              src="/logo/logo.png"
-              alt="Barakatly"
-              width={32}
-              height={32}
+            <SiteLogo
+              size={32}
               className="h-8 w-8 shrink-0 rounded-full object-cover ring-1 ring-black/5"
             />
             Barakatly

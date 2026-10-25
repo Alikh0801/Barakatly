@@ -155,6 +155,14 @@ export const AUTH_IMAGE_DEFAULT = {
   items: AUTH_IMAGE_DEFAULT_ITEMS,
 } as const;
 
+export const SITE_LOGO_KEY = "site_logo" as const;
+
+export type SiteLogoItems = {
+  logoUrl: string;
+};
+
+export const SITE_LOGO_DEFAULT_URL = "/logo/logo.png";
+
 export const ABOUT_KEY = "about" as const;
 
 export type AboutValue = {
