@@ -125,7 +125,7 @@ export function AdminLogoPanel({ logoUrl }: { logoUrl: string }) {
           />
           <FileSelectField
             name="logo"
-            accept="image/png,image/webp"
+            accept="image/png,image/jpeg,image/webp"
             caption="Yeni loqo"
             hint="Kvadrat şəkil, ən azı 512×512 piksel. Saytda dairəvi kəsilir, ona görə vacib hissə mərkəzdə olsun."
             onFileChange={(next) => void handleFileChange(next)}
