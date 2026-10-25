@@ -6,9 +6,9 @@
 
 export const SITE_LOGO_MAX_BYTES = 2 * 1024 * 1024;
 export const SITE_LOGO_MIN_SIDE = 512;
-export const SITE_LOGO_MIME_TYPES = ["image/png", "image/webp"] as const;
+export const SITE_LOGO_MIME_TYPES = ["image/png", "image/jpeg", "image/webp"] as const;
 
-export const SITE_LOGO_TYPE_ERROR = "Loqo PNG və ya WebP formatında olmalıdır.";
+export const SITE_LOGO_TYPE_ERROR = "Loqo PNG, JPEG və ya WebP formatında olmalıdır.";
 export const SITE_LOGO_TOO_LARGE_ERROR = "Loqo 2 MB-dan böyük ola bilməz.";
 export const SITE_LOGO_SHAPE_ERROR = `Loqo kvadrat olmalıdır, ən azı ${SITE_LOGO_MIN_SIDE}×${SITE_LOGO_MIN_SIDE} piksel.`;
 
@@ -32,8 +32,8 @@ export function siteLogoError(file: {
 }
 
 /**
- * Reads the type and pixel size from the header of a PNG or WebP file, or
- * returns null for anything else.
+ * Reads the type and pixel size from the header of a PNG, JPEG or WebP
+ * file, or returns null for anything else.
  */
 export function readLogoHeader(
   bytes: Uint8Array,
@@ -50,6 +50,36 @@ export function readLogoHeader(
     ascii(12, 4) === "IHDR"
   ) {
     return { type: "image/png", width: view.getUint32(16), height: view.getUint32(20) };
+  }
+
+  // JPEG: walk the segments to the frame header (SOFn), which holds the
+  // big-endian height and width.
+  if (bytes.length >= 4 && bytes[0] === 0xff && bytes[1] === 0xd8) {
+    let offset = 2;
+    while (offset + 9 <= bytes.length) {
+      if (bytes[offset] !== 0xff) return null;
+      const marker = bytes[offset + 1];
+      if (marker === 0xff) {
+        offset += 1; // fill byte
+        continue;
+      }
+      // SOF0–SOF15, except DHT (C4), JPG (C8) and DAC (CC).
+      if (marker >= 0xc0 && marker <= 0xcf && ![0xc4, 0xc8, 0xcc].includes(marker)) {
+        return {
+          type: "image/jpeg",
+          height: view.getUint16(offset + 5),
+          width: view.getUint16(offset + 7),
+        };
+      }
+      // Markers without a length field.
+      if (marker === 0x01 || (marker >= 0xd0 && marker <= 0xd7)) {
+        offset += 2;
+        continue;
+      }
+      if (marker === 0xd9 || marker === 0xda) return null; // end, or image data
+      offset += 2 + view.getUint16(offset + 2);
+    }
+    return null;
   }
 
   if (bytes.length < 30 || ascii(0, 4) !== "RIFF" || ascii(8, 4) !== "WEBP") {
