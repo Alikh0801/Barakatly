@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { requireAdmin } from "@/lib/admin/auth";
 import { ADMIN_STATUS_TRANSITIONS } from "@/lib/orders/labels";
 import { getOrderStatusLabel } from "@/lib/checkout/labels";
-import { COURIER_READY_ITEM_STATUSES } from "@/lib/orders/courier-handoff";
+import { isReadyForCourier } from "@/lib/orders/courier-ready";
 import { getOrderFarmerProfileIds } from "@/lib/orders/farmers";
 import { ITEM_CANCEL_ANNOUNCED } from "@/lib/orders/item-cancel";
 import { notifyUser } from "@/lib/notifications/helpers";
@@ -329,14 +329,9 @@ export async function advanceOrderStatus(
     const { data: items } = await supabase
       .from("order_items")
       .select("status")
-      .eq("order_id", orderId)
-      .neq("status", "cancelled");
+      .eq("order_id", orderId);
 
-    const notReady = (items ?? []).some(
-      (item) => !COURIER_READY_ITEM_STATUSES.includes(item.status),
-    );
-
-    if (notReady) {
+    if (!isReadyForCourier(items ?? [])) {
       return {
         error: "Bütün fermerlər hazırlığı bitirməyib. Kuryerə göndərmək üçün gözləyin.",
       };

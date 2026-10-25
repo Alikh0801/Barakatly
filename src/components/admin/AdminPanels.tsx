@@ -20,6 +20,7 @@ import {
   getPaymentStatusLabel,
 } from "@/lib/orders/labels";
 import { firstPayment } from "@/lib/orders/payment";
+import { isReadyForCourier } from "@/lib/orders/courier-ready";
 import { deliveryAddress, recipientName } from "@/lib/orders/delivery";
 import { ITEM_CANCEL_ANNOUNCED } from "@/lib/orders/item-cancel";
 import { matchesAdminOrderQuery } from "@/lib/orders/admin-order-filter";
@@ -226,6 +227,9 @@ export function AdminOrdersPanel({
     advanceOrderStatus,
     initialState
   );
+  // The status result shows in the card it was submitted from: at the top
+  // of a long list the admin would not see it.
+  const [statusOrderId, setStatusOrderId] = useState<string | null>(null);
   const [deleteState, deleteAction, deletePending] = useActionState(
     deleteOrders,
     initialState
@@ -314,14 +318,14 @@ export function AdminOrdersPanel({
         </section>
       ) : null}
 
-      {statusState.error || deleteState.error ? (
+      {deleteState.error ? (
         <p className="rounded-xl bg-rose-50 px-3 py-2 text-sm text-rose-700 ring-1 ring-rose-200">
-          {statusState.error || deleteState.error}
+          {deleteState.error}
         </p>
       ) : null}
-      {statusState.success || deleteState.success ? (
+      {deleteState.success ? (
         <p className="rounded-xl bg-emerald-50 px-3 py-2 text-sm text-emerald-800 ring-1 ring-emerald-200">
-          {statusState.success || deleteState.success}
+          {deleteState.success}
         </p>
       ) : null}
 
@@ -385,6 +389,10 @@ export function AdminOrdersPanel({
             const events = order.order_status_events ?? [];
             const isChecked = selected.includes(order.id);
             const farmerMessages = updates.get(order.id);
+            // Couriers only get the order once every farmer is ready; the
+            // action refuses it otherwise.
+            const readyForCourier = isReadyForCourier(items);
+            const statusResult = statusOrderId === order.id ? statusState : null;
 
             return (
               <article
@@ -555,6 +563,7 @@ export function AdminOrdersPanel({
                     {nextStatuses.length > 0 ? (
                       <form
                         action={statusAction}
+                        onSubmit={() => setStatusOrderId(order.id)}
                         className="mt-4 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-end"
                       >
                         <input type="hidden" name="order_id" value={order.id} />
@@ -581,11 +590,15 @@ export function AdminOrdersPanel({
                             <option value="" disabled>
                               Seçin
                             </option>
-                            {nextStatuses.map((status) => (
-                              <option key={status} value={status}>
-                                {getOrderStatusLabel(status as OrderStatus)}
-                              </option>
-                            ))}
+                            {nextStatuses.map((status) => {
+                              const blocked = status === "awaiting_courier" && !readyForCourier;
+                              return (
+                                <option key={status} value={status} disabled={blocked}>
+                                  {getOrderStatusLabel(status as OrderStatus)}
+                                  {blocked ? " (fermerlər hazır deyil)" : ""}
+                                </option>
+                              );
+                            })}
                           </select>
                         </div>
                         {cancelSelection[order.id] ? (
@@ -604,6 +617,16 @@ export function AdminOrdersPanel({
                           Yenilə
                         </button>
                       </form>
+                    ) : null}
+                    {statusResult?.error ? (
+                      <p className="mt-3 rounded-xl bg-rose-50 px-3 py-2 text-sm text-rose-700 ring-1 ring-rose-200">
+                        {statusResult.error}
+                      </p>
+                    ) : null}
+                    {statusResult?.success ? (
+                      <p className="mt-3 rounded-xl bg-emerald-50 px-3 py-2 text-sm text-emerald-800 ring-1 ring-emerald-200">
+                        {statusResult.success}
+                      </p>
                     ) : null}
                   </div>
                 </div>
