@@ -89,7 +89,8 @@ export interface Database {
         Row: {
           id: string;
           profile_id: string;
-          farm_name: string;
+          /** Computed column (owner_name function): the farmer's own name. */
+          owner_name: string | null;
           description: string | null;
           location_text: string | null;
           location_lat: number | null;
@@ -98,7 +99,6 @@ export interface Database {
           status: FarmerStatus;
           verified_at: string | null;
           avatar_url: string | null;
-          pending_farm_name: string | null;
           pending_description: string | null;
           pending_location_text: string | null;
           pending_avatar_url: string | null;
@@ -111,7 +111,6 @@ export interface Database {
         Insert: {
           id?: string;
           profile_id: string;
-          farm_name: string;
           description?: string | null;
           location_text?: string | null;
           location_lat?: number | null;
@@ -120,7 +119,6 @@ export interface Database {
           status?: FarmerStatus;
           verified_at?: string | null;
           avatar_url?: string | null;
-          pending_farm_name?: string | null;
           pending_description?: string | null;
           pending_location_text?: string | null;
           pending_avatar_url?: string | null;
@@ -133,7 +131,6 @@ export interface Database {
         Update: {
           id?: string;
           profile_id?: string;
-          farm_name?: string;
           description?: string | null;
           location_text?: string | null;
           location_lat?: number | null;
@@ -142,7 +139,6 @@ export interface Database {
           status?: FarmerStatus;
           verified_at?: string | null;
           avatar_url?: string | null;
-          pending_farm_name?: string | null;
           pending_description?: string | null;
           pending_location_text?: string | null;
           pending_avatar_url?: string | null;
@@ -888,6 +884,11 @@ export interface Database {
     };
     Views: Record<string, never>;
     Functions: {
+      // Computed column: select it like a column of farmers.
+      owner_name: {
+        Args: { "": Database["public"]["Tables"]["farmers"]["Row"] };
+        Returns: string | null;
+      };
       generate_order_code: {
         Args: Record<string, never>;
         Returns: string;
@@ -895,10 +896,6 @@ export interface Database {
       is_admin: {
         Args: Record<string, never>;
         Returns: boolean;
-      };
-      list_approved_farmer_owner_names: {
-        Args: Record<string, never>;
-        Returns: { farmer_id: string; owner_name: string | null }[];
       };
       admin_page_view_stats: {
         Args: { p_days: number };
@@ -960,7 +957,8 @@ export interface Database {
 }
 
 export type Profile = Database["public"]["Tables"]["profiles"]["Row"];
-export type Farmer = Database["public"]["Tables"]["farmers"]["Row"];
+// owner_name is computed: `select("*")` leaves it out, so rows don't carry it.
+export type Farmer = Omit<Database["public"]["Tables"]["farmers"]["Row"], "owner_name">;
 export type SiteReview = Database["public"]["Tables"]["site_reviews"]["Row"];
 export type FarmerCertificate =
   Database["public"]["Tables"]["farmer_certificates"]["Row"];

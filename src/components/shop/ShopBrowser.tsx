@@ -6,6 +6,7 @@ import { ProductCard } from "@/components/shop/ProductCard";
 import { getDisplayPrice } from "@/lib/shop/format";
 import { PriceRangeFilter } from "@/components/shop/PriceRangeFilter";
 import type { ProductListItem } from "@/types/shop";
+import { farmerDisplayName } from "@/lib/farmers/name";
 
 type ShopSort = "newest" | "price_asc" | "price_desc" | "popular";
 
@@ -93,7 +94,7 @@ function filterAndSortProducts(
     ? products.filter(
         (product) =>
           product.title.toLowerCase().includes(query) ||
-          product.farmer?.farm_name.toLowerCase().includes(query),
+          (product.farmer?.owner_name ?? "").toLowerCase().includes(query),
       )
     : products;
 
@@ -160,7 +161,7 @@ export function ShopBrowser({
       } else {
         map.set(product.farmer.id, {
           id: product.farmer.id,
-          name: product.farmer.farm_name,
+          name: farmerDisplayName(product.farmer.owner_name),
           count: 1,
         });
       }

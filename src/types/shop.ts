@@ -24,7 +24,8 @@ export type ProductListItem = {
   rating_count?: number;
   farmer: {
     id: string;
-    farm_name: string;
+    /** The farmer's own name. */
+    owner_name: string | null;
     status?: string;
   } | null;
   category: {
@@ -37,7 +38,8 @@ export type ProductListItem = {
 export type ProductDetail = Omit<ProductListItem, "farmer"> & {
   farmer: {
     id: string;
-    farm_name: string;
+    /** The farmer's own name. */
+    owner_name: string | null;
     description: string | null;
     location_text: string | null;
     verified_at: string | null;

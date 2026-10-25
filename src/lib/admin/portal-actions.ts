@@ -25,7 +25,7 @@ export async function approveFarmer(
   const supabase = await createClient();
   const { data: farmer, error } = await supabase
     .from("farmers")
-    .select("id, profile_id, farm_name")
+    .select("id, profile_id")
     .eq("id", farmerId)
     .single();
 
@@ -64,7 +64,7 @@ export async function approveFarmer(
     userId: farmer.profile_id,
     type: "farmer_approval",
     title: "Fermer hesabınız təsdiqləndi",
-    body: `${farmer.farm_name} hesabınız aktivdir. İndi məhsul əlavə edə bilərsiniz.`,
+    body: "Fermer hesabınız aktivdir. İndi məhsul əlavə edə bilərsiniz.",
     metadata: { farmer_id: farmer.id },
   });
 
@@ -88,7 +88,7 @@ export async function rejectFarmer(
   const supabase = await createClient();
   const { data: farmer } = await supabase
     .from("farmers")
-    .select("id, profile_id, farm_name")
+    .select("id, profile_id")
     .eq("id", farmerId)
     .single();
 
@@ -105,7 +105,7 @@ export async function rejectFarmer(
     userId: farmer.profile_id,
     type: "farmer_approval",
     title: "Fermer müraciəti rədd edildi",
-    body: `${farmer.farm_name} müraciətiniz rədd edildi. Səbəb: ${reason}`,
+    body: `Fermer müraciətiniz rədd edildi. Səbəb: ${reason}`,
     metadata: { farmer_id: farmer.id },
   });
 
@@ -127,24 +127,22 @@ export async function approveFarmerProfileEdit(
   const { data: farmer } = await supabase
     .from("farmers")
     .select(
-      "id, profile_id, pending_farm_name, pending_description, pending_location_text, pending_avatar_url, pending_cover_url, pending_submitted_at",
+      "id, profile_id, pending_description, pending_location_text, pending_avatar_url, pending_cover_url, pending_submitted_at",
     )
     .eq("id", farmerId)
     .single();
 
-  if (!farmer || !farmer.pending_submitted_at || !farmer.pending_farm_name) {
+  if (!farmer || !farmer.pending_submitted_at) {
     return { error: "Gözləyən dəyişiklik tapılmadı." };
   }
 
   const { error } = await supabase
     .from("farmers")
     .update({
-      farm_name: farmer.pending_farm_name,
       description: farmer.pending_description,
       location_text: farmer.pending_location_text,
       avatar_url: farmer.pending_avatar_url,
       cover_url: farmer.pending_cover_url,
-      pending_farm_name: null,
       pending_description: null,
       pending_location_text: null,
       pending_avatar_url: null,
@@ -201,7 +199,6 @@ export async function rejectFarmerProfileEdit(
   const { error } = await supabase
     .from("farmers")
     .update({
-      pending_farm_name: null,
       pending_description: null,
       pending_location_text: null,
       pending_avatar_url: null,
@@ -244,7 +241,7 @@ export async function suspendFarmer(
   const supabase = await createClient();
   const { data: farmer } = await supabase
     .from("farmers")
-    .select("id, profile_id, farm_name, status")
+    .select("id, profile_id, status")
     .eq("id", farmerId)
     .single();
 
@@ -265,7 +262,7 @@ export async function suspendFarmer(
     userId: farmer.profile_id,
     type: "farmer_approval",
     title: "Fermer hesabınız deaktiv edildi",
-    body: `${farmer.farm_name} hesabınız müvəqqəti dayandırılıb. Məhsullarınız satışda görünmür. Səbəb: ${reason}`,
+    body: `Fermer hesabınız müvəqqəti dayandırılıb. Məhsullarınız satışda görünmür. Səbəb: ${reason}`,
     metadata: { farmer_id: farmer.id },
   });
 
@@ -291,7 +288,7 @@ export async function deleteFarmer(
   const supabase = await createClient();
   const { data: farmer } = await supabase
     .from("farmers")
-    .select("id, profile_id, farm_name")
+    .select("id, profile_id")
     .eq("id", farmerId)
     .single();
 
@@ -332,6 +329,7 @@ export async function deleteFarmer(
     {
       user_metadata: {
         role: "customer",
+        farmer_signup: null,
         farm_name: null,
         farm_location_text: null,
         farm_description: null,
@@ -347,7 +345,7 @@ export async function deleteFarmer(
     userId: farmer.profile_id,
     type: "general",
     title: "Fermer hesabınız silindi",
-    body: `${farmer.farm_name} fermer profili admin tərəfindən silinib. Səbəb: ${reason} Eyni hesabla yenidən fermer qeydiyyatından keçə bilərsiniz.`,
+    body: `Fermer profiliniz admin tərəfindən silinib. Səbəb: ${reason} Eyni hesabla yenidən fermer qeydiyyatından keçə bilərsiniz.`,
     metadata: { farmer_id: farmer.id },
   });
 
@@ -404,7 +402,7 @@ export async function approveProduct(
   const supabase = await createClient();
   const { data: product } = await supabase
     .from("products")
-    .select("id, title, farmer_id, category_id, subcategory_id, farmers(profile_id, farm_name)")
+    .select("id, title, farmer_id, category_id, subcategory_id, farmers(profile_id)")
     .eq("id", productId)
     .single();
 

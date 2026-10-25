@@ -164,17 +164,6 @@ export function FarmerSignUpForm() {
           />
         </div>
         <AzPhoneInput id="phone" name="phone" required />
-        <div>
-          <label htmlFor="farm_name" className="block text-sm font-medium text-zinc-700">
-            Təsərrüfat adı *
-          </label>
-          <input
-            id="farm_name"
-            name="farm_name"
-            required
-            className="mt-1 w-full rounded-xl border border-zinc-200 px-3 py-2.5 text-base text-zinc-900 outline-none ring-emerald-500 focus:ring-2"
-          />
-        </div>
         <RegionSelect required />
         <PasswordInput id="password" name="password" label="Şifrə" autoComplete="new-password" />
         <PasswordInput
@@ -222,11 +211,9 @@ export function FarmerSignUpForm() {
 
 export function CompleteFarmerProfileForm({
   accountEmail = "",
-  defaultFarmName = "",
   defaultPhone = "",
 }: {
   accountEmail?: string;
-  defaultFarmName?: string;
   defaultPhone?: string;
 }) {
   const [state, action, pending] = useActionState(
@@ -237,7 +224,7 @@ export function CompleteFarmerProfileForm({
   return (
     <form action={action} className="space-y-4">
       <p className="rounded-xl bg-emerald-50 px-3 py-2 text-sm text-emerald-800 ring-1 ring-emerald-200">
-        Hesabınız aktivdir. Təsərrüfat məlumatlarını tamamlayın — sonra fermer
+        Hesabınız aktivdir. Fermer məlumatlarını tamamlayın — sonra fermer
         paneli açılacaq.
       </p>
       {accountEmail ? (
@@ -253,18 +240,6 @@ export function CompleteFarmerProfileForm({
           </p>
         </div>
       ) : null}
-      <div>
-        <label htmlFor="farm_name" className="block text-sm font-medium text-zinc-700">
-          Təsərrüfat adı *
-        </label>
-        <input
-          id="farm_name"
-          name="farm_name"
-          required
-          defaultValue={defaultFarmName}
-          className="mt-1 w-full rounded-xl border border-zinc-200 px-3 py-2.5 text-base text-zinc-900 outline-none ring-emerald-500 focus:ring-2"
-        />
-      </div>
       <AzPhoneInput
         id="phone"
         name="phone"
@@ -309,7 +284,7 @@ export function FarmerPendingCard({ farmer }: { farmer: Farmer }) {
             : "text-lg font-semibold text-amber-900"
         }
       >
-        {farmer.farm_name}
+        Fermer hesabı
       </h2>
       <p
         className={

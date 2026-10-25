@@ -93,7 +93,6 @@ begin
   if new.status is distinct from old.status
      or new.verified_at is distinct from old.verified_at
      or new.profile_id is distinct from old.profile_id
-     or new.farm_name is distinct from old.farm_name
      or new.description is distinct from old.description
      or new.location_text is distinct from old.location_text
      or new.location_lat is distinct from old.location_lat

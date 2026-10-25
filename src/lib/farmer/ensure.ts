@@ -2,7 +2,8 @@ import { createClient } from "@/lib/supabase/server";
 import type { Farmer } from "@/types";
 
 type EnsureFarmerInput = {
-  farmName?: string | null;
+  /** Set by the farmer sign-up forms; plain logins never create a farm. */
+  farmerSignup?: boolean;
   description?: string | null;
   locationText?: string | null;
   phone?: string | null;
@@ -39,23 +40,18 @@ export async function ensureFarmerRecord(
     .eq("id", userId)
     .maybeSingle();
 
-  const metaFarmName = String(meta.farm_name ?? "").trim();
-  const explicitFarmName = String(input.farmName ?? "").trim();
-  // Intent is based ONLY on real farm details (signup metadata or an explicit
-  // farm name). A role of admin/farmer must NOT auto-create a pending farmers
-  // row on ordinary login (e.g. Google) — that turned admins into pending
-  // farmers. Admin delete clears the metadata, so a demoted user isn't
-  // recreated. Role stays "customer" until admin approval.
-  const hasFarmerIntent = Boolean(metaFarmName) || Boolean(explicitFarmName);
+  // Intent comes ONLY from a farmer sign-up: the flag the forms set, or the
+  // region older farmer sign-ups stored. A role of admin/farmer must NOT
+  // auto-create a pending farmers row on ordinary login (e.g. Google) — that
+  // turned admins into pending farmers. Admin delete clears the metadata, so
+  // a demoted user isn't recreated. Role stays "customer" until approval.
+  const hasFarmerIntent =
+    Boolean(input.farmerSignup) ||
+    meta.farmer_signup === true ||
+    Boolean(String(meta.farm_location_text ?? "").trim()) ||
+    Boolean(String(meta.farm_name ?? "").trim());
 
   if (!hasFarmerIntent) return null;
-
-  const farmName =
-    explicitFarmName ||
-    String(meta.farm_name ?? "").trim() ||
-    String(profile?.full_name ?? meta.full_name ?? "").trim() ||
-    String(user.email?.split("@")[0] ?? "").trim() ||
-    "Təsərrüfat";
 
   const description =
     String(input.description ?? "").trim() ||
@@ -82,7 +78,6 @@ export async function ensureFarmerRecord(
     .from("farmers")
     .insert({
       profile_id: userId,
-      farm_name: farmName,
       description,
       location_text: locationText,
       status: "pending",

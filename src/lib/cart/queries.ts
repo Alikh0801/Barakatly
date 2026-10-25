@@ -33,7 +33,7 @@ type CartRow = {
     quantity_available: number;
     in_stock: boolean;
     status: string;
-    farmer: { id: string; farm_name: string; status: string; avatar_url: string | null } | null;
+    farmer: { id: string; owner_name: string | null; status: string; avatar_url: string | null } | null;
     product_images: { url: string; sort_order: number }[];
   } | null;
 };
@@ -51,7 +51,7 @@ const cartSelect = `
     quantity_available,
     in_stock,
     status,
-    farmer:farmers ( id, farm_name, status, avatar_url ),
+    farmer:farmers ( id, owner_name, status, avatar_url ),
     product_images ( url, sort_order )
   )
 `;
@@ -94,7 +94,7 @@ export async function getCartItems(): Promise<CartLineItem[]> {
         maxQuantity: product.quantity_available,
         imageUrl: getProductImageUrl(product.product_images),
         farmerId: product.farmer?.id ?? "",
-        farmerName: product.farmer?.farm_name ?? "Fermer",
+        farmerName: product.farmer?.owner_name ?? "Fermer",
         farmerAvatarUrl: product.farmer?.avatar_url ?? null,
       };
     });

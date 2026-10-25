@@ -1,5 +1,6 @@
 import Image from "next/image";
 import type { FarmerRatingSummary } from "@/lib/farmers/queries";
+import { farmerDisplayName } from "@/lib/farmers/name";
 
 
 const TIME_ZONE = "Asia/Baku";
@@ -120,7 +121,6 @@ export type FarmerProfileStats = {
  * a short about card. Shared by the public page and the farmer's own panel.
  */
 export function FarmerProfileHeader({
-  farmName,
   ownerName,
   avatarUrl,
   coverUrl,
@@ -130,8 +130,7 @@ export function FarmerProfileHeader({
   actions,
   coverHint,
 }: {
-  farmName: string;
-  /** The farmer's own name; the heading falls back to the farm's. */
+  /** The farmer's own name; "Fermer" when it is missing. */
   ownerName?: string | null;
   avatarUrl: string | null;
   coverUrl: string | null;
@@ -143,8 +142,7 @@ export function FarmerProfileHeader({
   coverHint?: React.ReactNode;
 }) {
   const { rating } = stats;
-  const owner = ownerName?.trim() || null;
-  const heading = owner ?? farmName;
+  const heading = farmerDisplayName(ownerName);
 
   return (
     <section>
@@ -163,21 +161,12 @@ export function FarmerProfileHeader({
         <div className="absolute inset-x-0 bottom-0 hidden sm:block">
           <div className="mx-auto w-full max-w-6xl px-4 md:px-6">
             <div className="flex min-w-0 items-center gap-2.5 pb-4 pl-[10rem]">
-              <div className="min-w-0">
-                <div className="flex min-w-0 items-center gap-2.5">
-                  <h1 className="min-w-0 break-words text-3xl font-bold leading-tight tracking-tight text-white [text-shadow:0_2px_12px_rgba(0,0,0,0.35)] lg:text-4xl">
-                    {heading}
-                  </h1>
-                  {verified ? (
-                    <VerifiedBadge className="h-7 w-7 shrink-0 text-white drop-shadow" />
-                  ) : null}
-                </div>
-                {owner ? (
-                  <p className="mt-0.5 break-words text-base font-medium text-white/85 [text-shadow:0_1px_8px_rgba(0,0,0,0.35)]">
-                    {farmName}
-                  </p>
-                ) : null}
-              </div>
+              <h1 className="min-w-0 break-words text-3xl font-bold leading-tight tracking-tight text-white [text-shadow:0_2px_12px_rgba(0,0,0,0.35)] lg:text-4xl">
+                {heading}
+              </h1>
+              {verified ? (
+                <VerifiedBadge className="h-7 w-7 shrink-0 text-white drop-shadow" />
+              ) : null}
             </div>
           </div>
         </div>
@@ -198,9 +187,6 @@ export function FarmerProfileHeader({
                 <VerifiedBadge className="h-6 w-6 shrink-0 text-[#2f7a3c]" />
               ) : null}
             </div>
-            {owner ? (
-              <p className="break-words text-sm font-medium text-zinc-600 sm:hidden">{farmName}</p>
-            ) : null}
             {locationText ? (
               <p className="mt-1 inline-flex items-center gap-1.5 text-sm text-zinc-600 sm:mt-0 sm:text-[15px]">
                 <PinIcon className="h-4 w-4 shrink-0 text-[#2f7a3c]" />

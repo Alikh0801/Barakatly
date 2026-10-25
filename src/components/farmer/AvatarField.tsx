@@ -86,10 +86,10 @@ async function exportAvatarBlob(
 }
 
 export function AvatarField({
-  farmName,
+  name,
   initialUrl,
 }: {
-  farmName: string;
+  name: string;
   initialUrl: string | null;
 }) {
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -281,7 +281,7 @@ export function AvatarField({
 
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
         <FarmerAvatarPreview
-          name={farmName}
+          name={name}
           url={displayUrl}
           className="h-20 w-20 text-2xl ring-2 ring-zinc-100"
         />

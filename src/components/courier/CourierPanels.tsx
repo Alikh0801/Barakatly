@@ -16,6 +16,7 @@ import { formatAmount } from "@/lib/shop/quantity";
 import type { CourierOrder } from "@/lib/courier/queries";
 import { deliveryAddress, recipientName } from "@/lib/orders/delivery";
 import type { OrderStatus } from "@/types";
+import { farmerDisplayName } from "@/lib/farmers/name";
 
 const initialState: CourierActionState = {};
 
@@ -61,7 +62,7 @@ function CourierOrderCard({ order }: { order: CourierOrder }) {
       existing.items.push(line);
     } else {
       farmers.set(farmerId, {
-        name: item.farmers?.farm_name ?? "Fermer",
+        name: farmerDisplayName(item.farmers?.owner_name),
         location: item.farmers?.location_text ?? null,
         items: [line],
       });

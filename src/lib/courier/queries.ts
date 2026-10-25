@@ -6,7 +6,7 @@ export type CourierOrderItem = Pick<
   OrderItem,
   "id" | "product_title" | "quantity" | "unit_type" | "unit_size" | "status" | "farmer_id"
 > & {
-  farmers: { farm_name: string; location_text: string | null } | null;
+  farmers: { owner_name: string | null; location_text: string | null } | null;
 };
 
 export type CourierOrder = Omit<Order, "total_amount" | "subtotal" | "delivery_fee"> & {
@@ -44,7 +44,7 @@ export async function getCourierQueue(): Promise<CourierOrder[]> {
         unit_size,
         status,
         farmer_id,
-        farmers (farm_name, location_text)
+        farmers (owner_name, location_text)
       )
     `,
     )

@@ -18,7 +18,7 @@ const wishlistSelect = `
     rating_average,
     rating_count,
     status,
-    farmer:farmers ( id, farm_name, location_text, status ),
+    farmer:farmers ( id, owner_name, location_text, status ),
     category:categories ( slug, name_az ),
     product_images ( url, sort_order )
   )

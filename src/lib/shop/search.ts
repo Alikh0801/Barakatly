@@ -45,7 +45,7 @@ export async function searchCatalog(query: string): Promise<SearchResults> {
         rating_count,
         farmer:farmers (
           id,
-          farm_name,
+          owner_name,
           location_text,
           status
         ),
@@ -70,7 +70,7 @@ export async function searchCatalog(query: string): Promise<SearchResults> {
       .select(
         `
         id,
-        farm_name,
+        owner_name,
         description,
         location_text,
         verified_at,
@@ -80,8 +80,8 @@ export async function searchCatalog(query: string): Promise<SearchResults> {
       `,
       )
       .eq("status", "approved")
-      .ilike("farm_name", pattern)
-      .order("farm_name", { ascending: true })
+      .ilike("owner_name", pattern)
+      .order("owner_name", { ascending: true })
       .limit(24),
   ]);
 
@@ -93,13 +93,12 @@ export async function searchCatalog(query: string): Promise<SearchResults> {
   }
 
   const farmers: PublicFarmer[] = (farmersResult.data ?? [])
-    .filter((farmer) => matchesLiterally(farmer.farm_name))
+    .filter((farmer) => matchesLiterally(farmer.owner_name ?? ""))
     .map((farmer) => {
     const products = Array.isArray(farmer.products) ? farmer.products : [];
     return {
       id: farmer.id,
-      farm_name: farmer.farm_name,
-      owner_name: null,
+      owner_name: farmer.owner_name,
       description: farmer.description,
       location_text: farmer.location_text,
       verified_at: farmer.verified_at,

@@ -16,6 +16,7 @@ import {
 } from "@/lib/farmers/queries";
 import type { FarmerBlogPost } from "@/lib/farmer/queries";
 import { getProfile } from "@/lib/auth/session";
+import { farmerDisplayName } from "@/lib/farmers/name";
 
 export async function generateMetadata({
   params,
@@ -30,7 +31,7 @@ export async function generateMetadata({
 
   const description =
     farmer.description?.slice(0, 160) || "Təsdiqlənmiş fermer profili";
-  const name = farmer.owner_name?.trim() || farmer.farm_name;
+  const name = farmerDisplayName(farmer.owner_name);
 
   return {
     title: name,

@@ -4,11 +4,12 @@ import type { Metadata } from "next";
 import { VerifiedIcon } from "@/components/ui/VerifiedIcon";
 import { getSessionUser } from "@/lib/auth/session";
 import { getFollowedFarmerIds, getPublicFarmers } from "@/lib/farmers/queries";
+import { farmerDisplayName } from "@/lib/farmers/name";
 
 export const metadata: Metadata = {
   title: "Fermerlər",
   description:
-    "Barakatly platformasında təsdiqlənmiş yerli fermerlər və təsərrüfatlar.",
+    "Barakatly platformasında təsdiqlənmiş yerli fermerlər.",
 };
 
 function ViewTab({
@@ -65,7 +66,7 @@ export default async function FarmersPage({
             Fermerlər
           </h1>
           <p className="mt-2 text-sm text-zinc-600">
-            Təsərrüfat profilləri · məhsullar və paylaşımlar
+            Fermer profilləri · məhsullar və paylaşımlar
           </p>
         </div>
         <Link
@@ -151,7 +152,7 @@ export default async function FarmersPage({
                     />
                   ) : (
                     <div className="inline-flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-[#1a3d2b] text-xl font-semibold text-[#d7f5e3]">
-                      {(farmer.owner_name || farmer.farm_name)
+                      {farmerDisplayName(farmer.owner_name)
                         .slice(0, 1)
                         .toUpperCase()}
                     </div>
@@ -161,7 +162,7 @@ export default async function FarmersPage({
                       {/* The farmer's own name; the farm's shows only when
                           no owner name was given. */}
                       <h2 className="text-lg font-bold text-zinc-900 group-hover:text-[#1f5c3d]">
-                        {farmer.owner_name || farmer.farm_name}
+                        {farmerDisplayName(farmer.owner_name)}
                       </h2>
                       {farmer.verified_at ? <VerifiedIcon /> : null}
                     </div>

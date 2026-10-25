@@ -83,12 +83,12 @@ async function labelPages(
       ? supabase.from("products").select("id, title").in("id", productIds)
       : Promise.resolve({ data: [] as { id: string; title: string }[] }),
     farmerIds.length
-      ? supabase.from("farmers").select("id, farm_name").in("id", farmerIds)
-      : Promise.resolve({ data: [] as { id: string; farm_name: string }[] }),
+      ? supabase.from("farmers").select("id, owner_name").in("id", farmerIds)
+      : Promise.resolve({ data: [] as { id: string; owner_name: string | null }[] }),
   ]);
 
   const productTitles = new Map((products.data ?? []).map((p) => [p.id, p.title]));
-  const farmNames = new Map((farmers.data ?? []).map((f) => [f.id, f.farm_name]));
+  const farmerNames = new Map((farmers.data ?? []).map((f) => [f.id, f.owner_name]));
 
   return pages.map((page) => {
     const path = page.label;
@@ -96,7 +96,7 @@ async function labelPages(
     const farmerId = path.match(FARMER_PATH)?.[1];
     let label = PAGE_NAMES[path] ?? path;
     if (productId) label = `Məhsul: ${productTitles.get(productId) ?? "silinmiş məhsul"}`;
-    else if (farmerId) label = `Fermer: ${farmNames.get(farmerId) ?? "silinmiş fermer"}`;
+    else if (farmerId) label = `Fermer: ${farmerNames.get(farmerId) ?? "silinmiş fermer"}`;
     else if (ORDER_PATH.test(path)) label = "Sifariş səhifəsi";
     return { path, label, views: page.views };
   });
