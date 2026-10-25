@@ -351,8 +351,21 @@ async function fetchFeaturedFarmers(limit: number): Promise<FeaturedFarmer[]> {
     )
     .slice(0, limit);
 
-  const ratings = await Promise.all(picked.map((farmer) => getFarmerRatingSummary(farmer.id)));
-  return picked.map((farmer, index) => ({ ...farmer, rating: ratings[index] }));
+  return withRatings(picked);
+}
+
+async function withRatings(farmers: PublicFarmer[]): Promise<FeaturedFarmer[]> {
+  const ratings = await Promise.all(farmers.map((farmer) => getFarmerRatingSummary(farmer.id)));
+  return farmers.map((farmer, index) => ({ ...farmer, rating: ratings[index] }));
+}
+
+/** Every approved farmer with their review rating, for the farmers page. */
+export function getPublicFarmersWithRatings() {
+  return unstable_cache(
+    async () => withRatings(await fetchPublicFarmers()),
+    ["public-farmers-rated"],
+    { revalidate: 300, tags: ["farmers"] },
+  )();
 }
 
 export function getFeaturedFarmers(limit = 3) {
