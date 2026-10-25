@@ -8,7 +8,7 @@ import {
 } from "@/lib/farmer/image-upload";
 
 /** Site image folders the admin panels upload into from the browser. */
-export type SiteImageFolder = "hero" | "auth";
+export type SiteImageFolder = "hero" | "auth" | "logo";
 
 /**
  * Turns a path the admin's browser uploaded into a public URL.

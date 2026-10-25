@@ -3,6 +3,7 @@
 import { revalidatePath, updateTag } from "next/cache";
 import { requireAdmin } from "@/lib/admin/auth";
 import { resolveSiteImagePath } from "@/lib/admin/site-image-upload";
+import { readLogoHeader, siteLogoError, SITE_LOGO_TYPE_ERROR } from "@/lib/admin/site-logo";
 import { isSingleEmoji } from "@/lib/content/emoji";
 import {
   ABOUT_DEFAULT,
@@ -18,6 +19,8 @@ import {
   HERO_DEFAULT,
   HERO_DEFAULT_ITEMS,
   HERO_KEY,
+  SITE_LOGO_DEFAULT_URL,
+  SITE_LOGO_KEY,
   WHY_BARAKATLY_DEFAULT,
   WHY_BARAKATLY_DEFAULT_FEATURES,
   WHY_BARAKATLY_KEY,
@@ -27,6 +30,7 @@ import {
   type FaqItem,
   type HeroItems,
   type HeroStats,
+  type SiteLogoItems,
   HERO_STAT_FIELDS,
   HERO_STAT_MAX_LENGTH,
   type WhyBarakatlyFeature,
@@ -327,6 +331,85 @@ export async function resetAuthImageContent(
 
   revalidateAuthImageContent();
   return { success: "Default giriş şəkli bərpa olundu." };
+}
+
+function revalidateSiteLogo() {
+  updateTag("site-logo");
+  // The logo sits in every header and footer.
+  revalidatePath("/", "layout");
+}
+
+/** Saves a logo the admin's browser uploaded under logo/. */
+export async function updateSiteLogo(
+  _prev: AdminContentActionState,
+  formData: FormData
+): Promise<AdminContentActionState> {
+  await requireAdmin();
+
+  const logoPath = String(formData.get("logo_path") ?? "").trim();
+  if (!logoPath) return { error: "Loqo faylı seçin." };
+
+  const supabase = await createClient();
+  const resolved = await resolveSiteImagePath(supabase, logoPath, "logo");
+  if ("error" in resolved) return { error: resolved.error };
+
+  // The panel checks the file before uploading, but the request can come
+  // from elsewhere: read the stored file's own header.
+  const { data: file, error: downloadError } = await supabase.storage
+    .from("product-images")
+    .download(logoPath);
+  if (downloadError || !file) {
+    console.error("[admin.updateSiteLogo.download]", downloadError?.message);
+    return { error: "Şəkil tapılmadı. Yenidən seçin." };
+  }
+  const header = readLogoHeader(new Uint8Array(await file.arrayBuffer()));
+  if (!header) return { error: SITE_LOGO_TYPE_ERROR };
+  const invalid = siteLogoError({ ...header, size: file.size });
+  if (invalid) return { error: invalid };
+
+  const { error } = await supabase.from("site_content").upsert(
+    {
+      key: SITE_LOGO_KEY,
+      title: "Loqo",
+      body: "",
+      items: { logoUrl: resolved.url } satisfies SiteLogoItems,
+    },
+    { onConflict: "key" }
+  );
+
+  if (error) {
+    console.error("[admin.updateSiteLogo]", error.message);
+    return { error: "Loqo yenilənmədi." };
+  }
+
+  revalidateSiteLogo();
+  return { success: "Loqo yeniləndi." };
+}
+
+export async function resetSiteLogo(
+  _prev: AdminContentActionState,
+  _formData: FormData
+): Promise<AdminContentActionState> {
+  await requireAdmin();
+
+  const supabase = await createClient();
+  const { error } = await supabase.from("site_content").upsert(
+    {
+      key: SITE_LOGO_KEY,
+      title: "Loqo",
+      body: "",
+      items: { logoUrl: SITE_LOGO_DEFAULT_URL } satisfies SiteLogoItems,
+    },
+    { onConflict: "key" }
+  );
+
+  if (error) {
+    console.error("[admin.resetSiteLogo]", error.message);
+    return { error: "Default loqo bərpa edilmədi." };
+  }
+
+  revalidateSiteLogo();
+  return { success: "Default loqo bərpa olundu." };
 }
 
 function revalidateFaqContent() {

@@ -16,6 +16,8 @@ import {
   HERO_DEFAULT,
   HERO_DEFAULT_ITEMS,
   HERO_KEY,
+  SITE_LOGO_DEFAULT_URL,
+  SITE_LOGO_KEY,
   WHY_BARAKATLY_DEFAULT,
   WHY_BARAKATLY_DEFAULT_FEATURES,
   WHY_BARAKATLY_KEY,
@@ -347,6 +349,51 @@ export async function getAdminAuthImageContent(): Promise<AuthImageContent> {
     items: parseAuthImageItems(data.items),
     updated_at: data.updated_at,
   };
+}
+
+function parseSiteLogoUrl(value: unknown): string {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return SITE_LOGO_DEFAULT_URL;
+  }
+  const url = String((value as Record<string, unknown>).logoUrl ?? "").trim();
+  return url || SITE_LOGO_DEFAULT_URL;
+}
+
+async function fetchSiteLogo(): Promise<string> {
+  const supabase = createPublicClient();
+  const { data, error } = await supabase
+    .from("site_content")
+    .select("items")
+    .eq("key", SITE_LOGO_KEY)
+    .maybeSingle();
+
+  if (error) {
+    console.error("[content.getSiteLogo]", error.message);
+    return SITE_LOGO_DEFAULT_URL;
+  }
+  return parseSiteLogoUrl(data?.items);
+}
+
+/** The logo's URL; the bundled /logo/logo.png when none is set. */
+export const getSiteLogo = unstable_cache(fetchSiteLogo, ["site-logo"], {
+  revalidate: 300,
+  tags: ["site-content", "site-logo"],
+});
+
+/** Uncached, for the admin panel. */
+export async function getAdminSiteLogo(): Promise<string> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("site_content")
+    .select("items")
+    .eq("key", SITE_LOGO_KEY)
+    .maybeSingle();
+
+  if (error) {
+    console.error("[admin.getSiteLogo]", error.message);
+    return SITE_LOGO_DEFAULT_URL;
+  }
+  return parseSiteLogoUrl(data?.items);
 }
 
 export type FaqContent = {
