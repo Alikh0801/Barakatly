@@ -199,8 +199,13 @@ async function resolveTaxonomy(
   };
 }
 
+/** The farmer's name for admin messages. */
+function farmerName(profile: { full_name: string | null }) {
+  return profile.full_name?.trim() || "Fermer";
+}
+
 async function notifyNewTaxonomy(
-  farmName: string,
+  farmerName: string,
   labels: string[],
   createdCategoryId?: string,
   createdSubcategoryId?: string,
@@ -214,7 +219,7 @@ async function notifyNewTaxonomy(
   await notifyAdmins({
     type: "category_submission",
     title: "Yeni kateqoriya təsdiq gözləyir",
-    body: `${farmName} yeni ${labels.join(" və ")} əlavə etdi. Təsdiq üçün Kateqoriyalar panelinə baxın.`,
+    body: `${farmerName} yeni ${labels.join(" və ")} əlavə etdi. Təsdiq üçün Kateqoriyalar panelinə baxın.`,
     metadata,
   });
 }
@@ -243,12 +248,11 @@ export async function signUpFarmer(
   const email = String(formData.get("email") ?? "").trim();
   const password = String(formData.get("password") ?? "");
   const passwordConfirm = String(formData.get("password_confirm") ?? "");
-  const farmName = String(formData.get("farm_name") ?? "").trim();
   const locationText = parseRegion(formData);
   const phone = normalizeAzPhone(String(formData.get("phone") ?? ""));
   const captchaToken = String(formData.get("captchaToken") ?? "").trim();
 
-  if (!fullName || !email || !password || !passwordConfirm || !farmName || !phone) {
+  if (!fullName || !email || !password || !passwordConfirm || !phone) {
     return { error: "Mütləq sahələri doldurun." };
   }
 
@@ -289,12 +293,12 @@ export async function signUpFarmer(
     password,
     options: {
       data: {
-        // Stays "customer" until an admin approves; farm details drive the
+        // Stays "customer" until an admin approves; farmer_signup drives the
         // pending farmers row (see ensureFarmerRecord / approveFarmer).
         full_name: fullName,
         role: "customer",
         phone,
-        farm_name: farmName,
+        farmer_signup: true,
         farm_location_text: locationText,
       },
       captchaToken: captchaToken || undefined,
@@ -330,7 +334,6 @@ export async function signUpFarmer(
 
   const { error: farmerError } = await supabase.from("farmers").insert({
     profile_id: userId,
-    farm_name: farmName,
     description: null,
     location_text: locationText,
     status: "pending",
@@ -346,7 +349,7 @@ export async function signUpFarmer(
   await notifyAdmins({
     type: "farmer_registration",
     title: "Yeni fermer qeydiyyatı",
-    body: `${farmName} təsdiq gözləyir.`,
+    body: `${fullName} təsdiq gözləyir.`,
     metadata: { farmer_profile_id: userId },
   });
 
@@ -363,13 +366,8 @@ export async function completeFarmerProfile(
     return { error: "Əvvəlcə daxil olun." };
   }
 
-  const farmName = String(formData.get("farm_name") ?? "").trim();
   const locationText = parseRegion(formData);
   const phone = normalizeAzPhone(String(formData.get("phone") ?? ""));
-
-  if (!farmName) {
-    return { error: "Təsərrüfat adı mütləqdir." };
-  }
 
   if (!locationText) {
     return { error: "Bölgə seçin." };
@@ -386,7 +384,7 @@ export async function completeFarmerProfile(
   }
 
   const farmer = await ensureFarmerRecord(profile.id, {
-    farmName,
+    farmerSignup: true,
     locationText,
     phone,
   });
@@ -409,7 +407,7 @@ export async function completeFarmerProfile(
   if (user) {
     await supabase.auth.updateUser({
       data: {
-        farm_name: farmName,
+        farmer_signup: true,
         farm_location_text: locationText,
         phone,
       },
@@ -420,7 +418,7 @@ export async function completeFarmerProfile(
     await notifyAdmins({
       type: "farmer_registration",
       title: "Yeni fermer qeydiyyatı",
-      body: `${farmName} təsdiq gözləyir.`,
+      body: `${profile.full_name || "Yeni fermer"} təsdiq gözləyir.`,
       metadata: { farmer_id: farmer.id },
     });
   }
@@ -540,7 +538,7 @@ export async function createProduct(
   });
 
   await notifyNewTaxonomy(
-    farmer.farm_name,
+    farmerName(profile),
     taxonomy.createdLabels,
     taxonomy.createdCategoryId,
     taxonomy.createdSubcategoryId,
@@ -641,7 +639,7 @@ export async function updateProduct(
   }
 
   await notifyNewTaxonomy(
-    farmer.farm_name,
+    farmerName(profile),
     taxonomy.createdLabels,
     taxonomy.createdCategoryId,
     taxonomy.createdSubcategoryId,
@@ -830,7 +828,7 @@ export async function updateOrderItemStatus(
   await notifyAdmins({
     type: "general",
     title: "Fermer sifariş statusunu yenilədi",
-    body: `${order.order_code} — ${farmer.farm_name}: "${item.product_title}" → ${statusLabel}.`,
+    body: `${order.order_code} — ${farmerName(profile)}: "${item.product_title}" → ${statusLabel}.`,
     metadata: {
       order_id: order.id,
       order_code: order.order_code,
@@ -928,7 +926,7 @@ export async function cancelOrderItem(
   await notifyAdmins({
     type: "general",
     title: "Fermer məhsulu ləğv etdi",
-    body: `${order.order_code} — ${farmer.farm_name}: "${item.product_title}" (${formatAmount(item.unit_type, item.quantity, item.unit_size)}, ${amount}) ləğv edildi. Səbəb: ${reason}. Müştəriyə bildirin və geri ödənişi edin.`,
+    body: `${order.order_code} — ${farmerName(profile)}: "${item.product_title}" (${formatAmount(item.unit_type, item.quantity, item.unit_size)}, ${amount}) ləğv edildi. Səbəb: ${reason}. Müştəriyə bildirin və geri ödənişi edin.`,
     metadata: {
       order_id: order.id,
       order_code: order.order_code,
@@ -964,7 +962,6 @@ export async function updateFarmerProfile(
   formData: FormData
 ): Promise<FarmerActionState> {
   const { profile, farmer } = await requireApprovedFarmer();
-  const farmName = String(formData.get("farm_name") ?? "").trim();
   const description = String(formData.get("description") ?? "").trim();
   const locationText = String(formData.get("location_text") ?? "").trim();
   const avatarFile = formData.get("avatar");
@@ -972,10 +969,6 @@ export async function updateFarmerProfile(
   // The browser has already uploaded any new cover; only its path is sent.
   const coverPath = String(formData.get("cover_path") ?? "").trim();
   const removeCover = String(formData.get("remove_cover") ?? "") === "1";
-
-  if (!farmName) {
-    return { error: "Təsərrüfat adı mütləqdir." };
-  }
 
   const supabase = await createClient();
   let avatarUrl = farmer.avatar_url;
@@ -1009,7 +1002,6 @@ export async function updateFarmerProfile(
   const proposedLocationText = locationText || null;
 
   const unchanged =
-    farmName === farmer.farm_name &&
     proposedDescription === farmer.description &&
     proposedLocationText === farmer.location_text &&
     avatarUrl === farmer.avatar_url &&
@@ -1022,7 +1014,6 @@ export async function updateFarmerProfile(
   const { error } = await supabase
     .from("farmers")
     .update({
-      pending_farm_name: farmName,
       pending_description: proposedDescription,
       pending_location_text: proposedLocationText,
       pending_avatar_url: avatarUrl,
@@ -1039,7 +1030,7 @@ export async function updateFarmerProfile(
   await notifyAdmins({
     type: "farmer_profile_update",
     title: "Fermer profilini yenilədi",
-    body: `${farmer.farm_name} profilində dəyişiklik etdi. Təsdiq gözləyir.`,
+    body: `${farmerName(profile)} profilində dəyişiklik etdi. Təsdiq gözləyir.`,
     metadata: { farmer_id: farmer.id },
   });
 

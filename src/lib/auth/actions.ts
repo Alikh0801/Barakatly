@@ -171,7 +171,7 @@ export async function verifySignupOtp(
     await notifyAdmins({
       type: "farmer_registration",
       title: "Yeni fermer qeydiyyatı",
-      body: `${farmer.farm_name} təsdiq gözləyir.`,
+      body: `${String(data.user.user_metadata?.full_name ?? "").trim() || "Yeni fermer"} təsdiq gözləyir.`,
       metadata: { farmer_id: farmer.id },
     });
   }

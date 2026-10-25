@@ -5,7 +5,6 @@ import type { ProductListItem } from "@/types/shop";
 
 export type PublicFarmer = {
   id: string;
-  farm_name: string;
   owner_name: string | null;
   description: string | null;
   location_text: string | null;
@@ -32,7 +31,7 @@ const productSelect = `
   rating_count,
   farmer:farmers (
     id,
-    farm_name,
+    owner_name,
     location_text,
     status
   ),
@@ -49,7 +48,7 @@ const productSelect = `
 function mapPublicFarmer(
   farmer: {
     id: string;
-    farm_name: string;
+    owner_name: string | null;
     description: string | null;
     location_text: string | null;
     verified_at: string | null;
@@ -58,7 +57,6 @@ function mapPublicFarmer(
     created_at: string;
     products?: { id: string; status: string }[] | null;
   },
-  ownerName: string | null,
 ): PublicFarmer {
   const products = Array.isArray(farmer.products) ? farmer.products : [];
   const approvedCount = products.filter(
@@ -67,8 +65,7 @@ function mapPublicFarmer(
 
   return {
     id: farmer.id,
-    farm_name: farmer.farm_name,
-    owner_name: ownerName,
+    owner_name: farmer.owner_name,
     description: farmer.description,
     location_text: farmer.location_text,
     verified_at: farmer.verified_at,
@@ -79,21 +76,6 @@ function mapPublicFarmer(
   };
 }
 
-async function fetchOwnerNames(
-  supabase: ReturnType<typeof createPublicClient>,
-): Promise<Map<string, string | null>> {
-  const { data, error } = await supabase.rpc(
-    "list_approved_farmer_owner_names",
-  );
-
-  if (error) {
-    console.error("[farmers.fetchOwnerNames]", error.message);
-    return new Map();
-  }
-
-  return new Map((data ?? []).map((row) => [row.farmer_id, row.owner_name]));
-}
-
 async function fetchPublicFarmers(): Promise<PublicFarmer[]> {
   const supabase = createPublicClient();
   const { data, error } = await supabase
@@ -101,7 +83,7 @@ async function fetchPublicFarmers(): Promise<PublicFarmer[]> {
     .select(
       `
       id,
-      farm_name,
+      owner_name,
       description,
       location_text,
       verified_at,
@@ -112,18 +94,16 @@ async function fetchPublicFarmers(): Promise<PublicFarmer[]> {
     `,
     )
     .eq("status", "approved")
-    .order("farm_name", { ascending: true });
+    .order("owner_name", { ascending: true });
 
   if (error) {
     console.error("[farmers.getPublicFarmers]", error.message);
     return [];
   }
 
-  const ownerNames = await fetchOwnerNames(supabase);
-
   return (
     (data ?? []) as unknown as Parameters<typeof mapPublicFarmer>[0][]
-  ).map((farmer) => mapPublicFarmer(farmer, ownerNames.get(farmer.id) ?? null));
+  ).map((farmer) => mapPublicFarmer(farmer));
 }
 
 async function fetchPublicFarmerById(id: string): Promise<PublicFarmer | null> {
@@ -133,7 +113,7 @@ async function fetchPublicFarmerById(id: string): Promise<PublicFarmer | null> {
     .select(
       `
       id,
-      farm_name,
+      owner_name,
       description,
       location_text,
       verified_at,
@@ -154,12 +134,7 @@ async function fetchPublicFarmerById(id: string): Promise<PublicFarmer | null> {
 
   if (!data) return null;
 
-  const ownerNames = await fetchOwnerNames(supabase);
-
-  return mapPublicFarmer(
-    data as unknown as Parameters<typeof mapPublicFarmer>[0],
-    ownerNames.get(id) ?? null,
-  );
+  return mapPublicFarmer(data as unknown as Parameters<typeof mapPublicFarmer>[0]);
 }
 
 async function fetchFarmerProducts(farmerId: string): Promise<ProductListItem[]> {
@@ -372,7 +347,7 @@ async function fetchFeaturedFarmers(limit: number): Promise<FeaturedFarmer[]> {
       (a, b) =>
         Number(Boolean(b.verified_at)) - Number(Boolean(a.verified_at)) ||
         b.productCount - a.productCount ||
-        a.farm_name.localeCompare(b.farm_name, "az"),
+        (a.owner_name ?? "").localeCompare(b.owner_name ?? "", "az"),
     )
     .slice(0, limit);
 

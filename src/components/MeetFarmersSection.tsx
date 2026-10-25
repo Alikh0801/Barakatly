@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { displaySerif } from "@/lib/fonts";
 import { getFeaturedFarmers, type FeaturedFarmer } from "@/lib/farmers/queries";
+import { farmerDisplayName } from "@/lib/farmers/name";
 
 function PinIcon({ className }: { className?: string }) {
   return (
@@ -38,7 +39,7 @@ function Stars({ average }: { average: number | null }) {
 }
 
 function FarmerCard({ farmer }: { farmer: FeaturedFarmer }) {
-  const name = farmer.owner_name || farmer.farm_name;
+  const name = farmerDisplayName(farmer.owner_name);
   const { average, total } = farmer.rating;
   const ratingLabel =
     average === null
@@ -90,9 +91,6 @@ function FarmerCard({ farmer }: { farmer: FeaturedFarmer }) {
 
       <div className="flex flex-1 flex-col px-4 pb-4 pt-9">
         <h3 className="truncate text-base font-bold text-zinc-900 group-hover:text-[#2f7a3c]">{name}</h3>
-        {farmer.owner_name ? (
-          <p className="truncate text-sm text-zinc-600">{farmer.farm_name}</p>
-        ) : null}
         {farmer.location_text ? (
           <p className="mt-2 flex items-center gap-1.5 text-sm text-zinc-500">
             <PinIcon className="h-4 w-4 shrink-0 text-zinc-400" />

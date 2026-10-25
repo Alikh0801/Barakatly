@@ -10,6 +10,7 @@ import { AddToCartButton } from "@/components/shop/AddToCartButton";
 import { WishlistButton } from "@/components/shop/WishlistButton";
 import { ImageWithSkeleton } from "@/components/ui/ImageWithSkeleton";
 import { ProductImagePlaceholder } from "@/components/shop/ProductImagePlaceholder";
+import { farmerDisplayName } from "@/lib/farmers/name";
 
 function StarRow({ className }: { className: string }) {
   return (
@@ -93,7 +94,7 @@ export function ProductCard({ product }: { product: ProductListItem }) {
           </div>
         </Link>
         <div className="mt-1 truncate text-xs text-zinc-500">
-          {product.farmer?.farm_name ?? "Fermer"}
+          {farmerDisplayName(product.farmer?.owner_name)}
         </div>
         <CardRating average={product.rating_average ?? null} count={product.rating_count ?? 0} />
         {product.category ? (

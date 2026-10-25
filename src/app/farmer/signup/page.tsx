@@ -37,12 +37,11 @@ export default async function FarmerSignUpPage() {
         <h1 className="text-3xl font-semibold text-zinc-900">Fermer ol</h1>
         <p className="mt-2 text-sm text-zinc-600">
           Mövcud hesabınızla davam edirsiniz. Yenidən email və ya şifrə tələb
-          olunmur — yalnız təsərrüfat məlumatlarını doldurun.
+          olunmur — yalnız telefon və bölgəni doldurun.
         </p>
         <div className="mt-8 rounded-3xl bg-white p-6 shadow-sm ring-1 ring-zinc-200">
           <CompleteFarmerProfileForm
             accountEmail={accountEmail}
-            defaultFarmName={String(meta.farm_name ?? profile.full_name ?? "")}
             defaultPhone={String(meta.phone ?? profile.phone ?? "")}
           />
         </div>

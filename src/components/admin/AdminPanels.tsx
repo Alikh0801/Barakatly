@@ -30,6 +30,7 @@ import type {
 } from "@/lib/admin/queries";
 import type { OrderStatus } from "@/types";
 import { formatAmount } from "@/lib/shop/quantity";
+import { farmerDisplayName } from "@/lib/farmers/name";
 
 type ActionResult = { error?: string; success?: string };
 
@@ -489,7 +490,7 @@ export function AdminOrdersPanel({
                                   {item.product_title}
                                 </p>
                                 <p className="text-xs text-zinc-500">
-                                  {item.farmers?.farm_name ?? "Fermer"} ·{" "}
+                                  {farmerDisplayName(item.farmers?.owner_name)} ·{" "}
                                   {formatAmount(item.unit_type, item.quantity, item.unit_size)}
                                   {item.status === "cancelled" ? ` · ${formatPrice(Number(item.line_total))}` : ""}
                                 </p>

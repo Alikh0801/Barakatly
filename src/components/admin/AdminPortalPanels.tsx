@@ -36,6 +36,7 @@ import {
   unitLabel,
 } from "@/lib/shop/format";
 import { formatDateTime } from "@/lib/format/date";
+import { farmerDisplayName } from "@/lib/farmers/name";
 import type {
   AdminCategory,
   AdminCourier,
@@ -208,7 +209,7 @@ function FarmerCard({
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
           <h3 className="break-words text-base font-semibold text-zinc-900">
-            {farmer.farm_name}
+            {farmerDisplayName(farmer.profiles?.full_name)}
           </h3>
           <p className="mt-1 text-xs text-zinc-500">
             Müraciət: {formatDateTime(farmer.created_at)}
@@ -226,9 +227,8 @@ function FarmerCard({
 
       {detailed ? (
         <dl className="mt-4 space-y-3 rounded-xl bg-zinc-50 px-4 py-4 ring-1 ring-zinc-100">
-          <FarmerDetailRow label="Təsərrüfat adı" value={farmer.farm_name} />
           <FarmerDetailRow
-            label="Sahib (ad, soyad)"
+            label="Ad, soyad"
             value={farmer.profiles?.full_name}
           />
           <FarmerDetailRow
@@ -339,7 +339,7 @@ function FarmerCard({
           onSubmit={(event) => {
             if (
               !window.confirm(
-                `"${farmer.farm_name}" fermerini bazadan həmişəlik silmək istəyirsiniz? Məhsulları da silinəcək.`,
+                `"${farmerDisplayName(farmer.profiles?.full_name)}" fermerini bazadan həmişəlik silmək istəyirsiniz? Məhsulları da silinəcək.`,
               )
             ) {
               event.preventDefault();
@@ -424,7 +424,7 @@ function FarmerProfileEditCard({ farmer }: { farmer: AdminFarmer }) {
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
           <h3 className="break-words text-base font-semibold text-zinc-900">
-            {farmer.farm_name}
+            {farmerDisplayName(farmer.profiles?.full_name)}
           </h3>
           <p className="mt-1 text-xs text-zinc-500">
             Göndərildi:{" "}
@@ -439,11 +439,6 @@ function FarmerProfileEditCard({ farmer }: { farmer: AdminFarmer }) {
       </div>
 
       <dl className="mt-4 space-y-3 rounded-xl bg-zinc-50 px-4 py-4 ring-1 ring-zinc-100">
-        <ProfileFieldDiff
-          label="Təsərrüfat adı"
-          before={farmer.farm_name}
-          after={farmer.pending_farm_name}
-        />
         <ProfileFieldDiff
           label="Yerləşmə"
           before={farmer.location_text}
@@ -705,7 +700,7 @@ function ProductCard({
                   {product.title}
                 </h3>
                 <p className="mt-0.5 break-words text-sm text-zinc-500">
-                  {product.farmers?.farm_name ?? "Fermer"}
+                  {farmerDisplayName(product.farmers?.owner_name)}
                 </p>
               </div>
               <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-800 ring-1 ring-amber-200">
@@ -1108,7 +1103,7 @@ function ApprovedPriceCard({ product }: { product: AdminProduct }) {
             {product.title}
           </div>
           <p className="mt-1 break-words text-sm text-zinc-600">
-            {product.farmers?.farm_name ?? "Fermer"} ·{" "}
+            {farmerDisplayName(product.farmers?.owner_name)} ·{" "}
             {product.categories?.name_az ?? "Kateqoriya"}
           </p>
           <p className="mt-2 text-sm text-zinc-700">

@@ -52,6 +52,7 @@ import type { Farmer, FarmerCertificate, Profile } from "@/types";
 import type { FarmerRatingSummary, PublicFarmer } from "@/lib/farmers/queries";
 import type { FarmerSalesStats } from "@/lib/farmer/stats";
 import { formatDateTime } from "@/lib/format/date";
+import { farmerDisplayName } from "@/lib/farmers/name";
 import { validateFarmerMedia } from "@/lib/farmer/media-upload";
 import { uploadPostMediaFile } from "@/lib/farmer/upload-post-media";
 import { useBackgroundUploads } from "@/lib/files/use-background-uploads";
@@ -84,17 +85,17 @@ function getPublicFarmerUrl(farmerId: string) {
 
 function ShareProfileButton({
   farmerId,
-  farmName,
+  name,
 }: {
   farmerId: string;
-  farmName: string;
+  name: string;
 }) {
   const [copied, setCopied] = useState(false);
 
   async function shareProfile() {
     const url = getPublicFarmerUrl(farmerId);
-    const title = `${farmName} — Barakatly`;
-    const text = `${farmName} təsərrüfatına baxın`;
+    const title = `${name} — Barakatly`;
+    const text = `${name} fermer profilinə baxın`;
 
     try {
       if (typeof navigator !== "undefined" && navigator.share) {
@@ -301,7 +302,7 @@ function ProfileAboutForm({
         </p>
       ) : null}
 
-      <AvatarField farmName={farmer.farm_name} initialUrl={farmer.avatar_url} />
+      <AvatarField name={farmerDisplayName(profile.full_name)} initialUrl={farmer.avatar_url} />
 
       {/* Remounted after each save so a sent cover is not sent again. */}
       <CoverField
@@ -310,19 +311,6 @@ function ProfileAboutForm({
         initialUrl={farmer.cover_url}
         onBusyChange={setCoverBusy}
       />
-
-      <div>
-        <label htmlFor="farm_name" className="block text-sm font-medium text-zinc-700">
-          Təsərrüfat adı
-        </label>
-        <input
-          id="farm_name"
-          name="farm_name"
-          required
-          defaultValue={farmer.farm_name}
-          className="mt-1 w-full rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-sm text-zinc-900"
-        />
-      </div>
 
       <RegionSelect defaultValue={farmer.location_text ?? ""} />
 
@@ -852,7 +840,6 @@ export function FarmerProfileDashboard({
   return (
     <div className="pb-16">
       <FarmerProfileHeader
-        farmName={farmer.farm_name}
         ownerName={profile.full_name}
         avatarUrl={farmer.avatar_url}
         coverUrl={farmer.cover_url}
@@ -876,7 +863,7 @@ export function FarmerProfileDashboard({
             >
               Profilə bax
             </Link>
-            <ShareProfileButton farmerId={farmer.id} farmName={farmer.farm_name} />
+            <ShareProfileButton farmerId={farmer.id} name={farmerDisplayName(profile.full_name)} />
           </>
         }
       />
@@ -976,7 +963,6 @@ export function PublicFarmerProfile({
   return (
     <div className="pb-16">
       <FarmerProfileHeader
-        farmName={farmer.farm_name}
         ownerName={farmer.owner_name}
         avatarUrl={farmer.avatar_url}
         coverUrl={farmer.cover_url}
@@ -999,7 +985,7 @@ export function PublicFarmerProfile({
                 isAuthenticated={isAuthenticated}
               />
             )}
-            <ShareProfileButton farmerId={farmer.id} farmName={farmer.farm_name} />
+            <ShareProfileButton farmerId={farmer.id} name={farmerDisplayName(farmer.owner_name)} />
           </>
         }
       />

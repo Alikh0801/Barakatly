@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ProductCard } from "@/components/shop/ProductCard";
 import { VerifiedIcon } from "@/components/ui/VerifiedIcon";
 import { searchCatalog } from "@/lib/shop/search";
+import { farmerDisplayName } from "@/lib/farmers/name";
 
 export const metadata = {
   title: "Axtarış",
@@ -86,7 +87,7 @@ export default async function SearchPage({
                     >
                       <div className="flex items-center gap-2">
                         <span className="font-semibold text-zinc-900">
-                          {farmer.farm_name}
+                          {farmerDisplayName(farmer.owner_name)}
                         </span>
                         {farmer.verified_at ? (
                           <VerifiedIcon className="h-4 w-4" />

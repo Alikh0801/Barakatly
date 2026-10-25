@@ -22,6 +22,7 @@ import {
   getDisplayPrice,
   getProductImageUrl,
 } from "@/lib/shop/format";
+import { farmerDisplayName } from "@/lib/farmers/name";
 
 
 export async function generateMetadata({
@@ -203,13 +204,13 @@ export default async function ProductDetailPage({
                       className="h-full w-full object-cover"
                     />
                   ) : (
-                    farmer.farm_name.slice(0, 2).toUpperCase()
+                    farmerDisplayName(farmer.owner_name).slice(0, 2).toUpperCase()
                   )}
                 </span>
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-1.5">
                     <span className="truncate text-sm font-semibold text-zinc-900">
-                      {farmer.farm_name}
+                      {farmerDisplayName(farmer.owner_name)}
                     </span>
                     {farmer.verified_at ? (
                       <VerifiedIcon className="h-4 w-4 shrink-0" />

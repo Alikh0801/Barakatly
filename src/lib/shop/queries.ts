@@ -18,7 +18,7 @@ const productSelect = `
   rating_count,
   farmer:farmers (
     id,
-    farm_name,
+    owner_name,
     location_text,
     status
   ),
@@ -48,7 +48,7 @@ const productDetailSelect = `
   rating_count,
   farmer:farmers (
     id,
-    farm_name,
+    owner_name,
     description,
     location_text,
     verified_at,

@@ -51,7 +51,7 @@ export async function toggleFollowFarmer(
     .eq("profile_id", profile.id)
     .maybeSingle();
   if (ownFarm) {
-    return { following: false, error: "Öz təsərrüfatınızı izləyə bilməzsiniz." };
+    return { following: false, error: "Öz profilinizi izləyə bilməzsiniz." };
   }
 
   const { error } = await supabase

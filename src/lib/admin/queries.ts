@@ -73,7 +73,7 @@ export type AdminOrderItem = Pick<
   | "line_total"
   | "cancel_reason"
 > & {
-  farmers: { farm_name: string } | null;
+  farmers: { owner_name: string | null } | null;
 };
 
 export type AdminOrderListItem = Order & {
@@ -106,7 +106,7 @@ export async function getAdminOrders(): Promise<AdminOrderListItem[]> {
         farmer_id,
         line_total,
         cancel_reason,
-        farmers (farm_name)
+        farmers (owner_name)
       ),
       order_status_events (
         id,
@@ -162,7 +162,7 @@ export async function getAdminFarmers(): Promise<AdminFarmer[]> {
 }
 
 export type AdminProduct = Product & {
-  farmers: Pick<Farmer, "farm_name"> | null;
+  farmers: { owner_name: string | null } | null;
   categories: { name_az: string; approved: boolean } | null;
   subcategories: { name_az: string; approved: boolean } | null;
   product_images: { url: string; sort_order: number }[] | null;
@@ -175,7 +175,7 @@ export async function getAdminPendingProducts(): Promise<AdminProduct[]> {
     .select(
       `
       *,
-      farmers (farm_name),
+      farmers (owner_name),
       categories:category_id (name_az, approved),
       subcategories:subcategory_id (name_az, approved),
       product_images (url, sort_order)
@@ -199,7 +199,7 @@ export async function getAdminApprovedProducts(): Promise<AdminProduct[]> {
     .select(
       `
       *,
-      farmers (farm_name),
+      farmers (owner_name),
       categories:category_id (name_az, approved),
       subcategories:subcategory_id (name_az, approved),
       product_images (url, sort_order)
