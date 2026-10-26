@@ -4,6 +4,8 @@ import {
   type FarmerProfileTab,
 } from "@/components/farmer/FarmerProfile";
 import { requireFarmer } from "@/lib/farmer/auth";
+import { FARMER_APPLICATION_PATH } from "@/lib/farmer/application";
+import { redirect } from "next/navigation";
 import {
   getFarmerBlogPosts,
   getFarmerOrderItems,
@@ -43,6 +45,11 @@ export default async function FarmerDashboardPage({
   const { profile, farmer } = await requireFarmer();
   const params = await searchParams;
   const initialTab = parseTab(params.tab);
+
+  // Waiting for the admin, or turned down: the page that says so.
+  if (farmer.status === "pending" || farmer.status === "rejected") {
+    redirect(FARMER_APPLICATION_PATH);
+  }
 
   if (farmer.status !== "approved") {
     return (

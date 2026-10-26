@@ -6,6 +6,7 @@ import { notifyUser } from "@/lib/notifications/helpers";
 import { revalidateProductCatalog } from "@/lib/shop/revalidate";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
+import { FARMER_REJECTED_TITLE } from "@/lib/farmer/application";
 import type { UnitType } from "@/types";
 import { isUnitType, parseUnitSize } from "@/lib/shop/format";
 
@@ -104,9 +105,10 @@ export async function rejectFarmer(
   await notifyUser({
     userId: farmer.profile_id,
     type: "farmer_approval",
-    title: "Fermer müraciəti rədd edildi",
+    title: FARMER_REJECTED_TITLE,
     body: `Fermer müraciətiniz rədd edildi. Səbəb: ${reason}`,
-    metadata: { farmer_id: farmer.id },
+    // Read back for the applicant's page and banner.
+    metadata: { farmer_id: farmer.id, reason },
   });
 
   revalidatePath("/admin/farmers");

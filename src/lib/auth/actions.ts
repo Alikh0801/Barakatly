@@ -3,6 +3,10 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import {
+  FARMER_APPLICATION_PATH,
+  notifyApplicationReceived,
+} from "@/lib/farmer/application";
+import {
   emailAlreadyRegistered,
   isDuplicateSignUpUser,
   isEmailNotConfirmed,
@@ -168,12 +172,17 @@ export async function verifySignupOtp(
   // (i.e. this was a farmer signup, not a plain customer one).
   const farmer = await ensureFarmerRecord(data.user.id);
   if (farmer?.status === "pending") {
+    const fullName = String(data.user.user_metadata?.full_name ?? "").trim();
     await notifyAdmins({
       type: "farmer_registration",
       title: "Yeni fermer qeydiyyatı",
-      body: `${String(data.user.user_metadata?.full_name ?? "").trim() || "Yeni fermer"} təsdiq gözləyir.`,
+      body: `${fullName || "Yeni fermer"} təsdiq gözləyir.`,
       metadata: { farmer_id: farmer.id },
     });
+    // The applicant hears it too, and lands on the page that says what
+    // happens next instead of the shop.
+    await notifyApplicationReceived(data.user.id, fullName);
+    redirect(FARMER_APPLICATION_PATH);
   }
 
   const safeNext =
