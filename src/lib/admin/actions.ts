@@ -433,6 +433,11 @@ export async function deleteOrders(
 
     if (error) {
       console.error("[admin.deleteOrders]", error.message);
+      // farmer_payouts keeps its orders (on delete restrict): what a farmer
+      // is owed must not vanish with the order.
+      if (error.code === "23503") {
+        return { error: "Fermer ödənişi olan sifarişi silmək olmaz. Ləğv edə bilərsiniz." };
+      }
       return { error: "Sifarişlər silinmədi." };
     }
   } catch (error) {

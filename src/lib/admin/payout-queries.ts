@@ -68,6 +68,8 @@ export async function getAdminPayouts(
       farmer_name: farmers?.owner_name ?? null,
       items: (farmer_payout_items ?? []).map((item) => ({
         ...item,
+        // A plain text column there; lines copied before units existed have none.
+        unit_type: item.unit_type ?? "piece",
         quantity: Number(item.quantity),
         farmer_unit_price: Number(item.farmer_unit_price),
         line_total: Number(item.line_total),

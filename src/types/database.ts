@@ -229,26 +229,29 @@ export interface Database {
         };
         Relationships: [];
       };
-      // Farmer payouts: created by create_farmer_payouts() when a payment
-      // is confirmed. Admins read and update them; a farmer reads their own.
+      // Farmer payouts (migrations 20261025115108…): created by
+      // create_farmer_payouts() when a payment is confirmed. Admins read and
+      // update them; a farmer reads their own.
       farmer_payout_accounts: {
         Row: {
           id: string;
           farmer_id: string;
           bank_name: string | null;
-          pan_number: string | null;
+          pan_number: string;
           is_active: boolean;
+          created_at: string;
+          updated_at: string;
         };
         Insert: {
           id?: string;
           farmer_id: string;
           bank_name?: string | null;
-          pan_number?: string | null;
+          pan_number: string;
           is_active?: boolean;
         };
         Update: {
           bank_name?: string | null;
-          pan_number?: string | null;
+          pan_number?: string;
           is_active?: boolean;
         };
         Relationships: [];
@@ -266,6 +269,7 @@ export interface Database {
           paid_by: string | null;
           note: string | null;
           created_at: string;
+          updated_at: string;
         };
         Insert: never;
         Update: {
@@ -281,12 +285,16 @@ export interface Database {
       farmer_payout_items: {
         Row: {
           id: string;
+          payout_id: string;
+          order_item_id: string | null;
+          product_id: string | null;
           product_title: string;
           quantity: number;
-          unit_type: UnitType;
+          unit_type: string | null;
           unit_size: string | null;
           farmer_unit_price: number;
           line_total: number;
+          created_at: string;
         };
         Insert: never;
         Update: never;
