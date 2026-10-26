@@ -17,6 +17,7 @@ import {
 import type { FarmerBlogPost } from "@/lib/farmer/queries";
 import { getProfile } from "@/lib/auth/session";
 import { farmerDisplayName } from "@/lib/farmers/name";
+import { DEFAULT_OG_IMAGE } from "@/lib/og-image";
 
 export async function generateMetadata({
   params,
@@ -32,6 +33,10 @@ export async function generateMetadata({
   const description =
     farmer.description?.slice(0, 160) || "Təsdiqlənmiş fermer profili";
   const name = farmerDisplayName(farmer.owner_name);
+  // These openGraph and twitter objects replace the site-wide ones, so they
+  // name their own picture: the avatar, else the cover, else the default card.
+  const ownImage = farmer.avatar_url || farmer.cover_url;
+  const image = ownImage ? { url: ownImage, alt: name } : DEFAULT_OG_IMAGE;
 
   return {
     title: name,
@@ -42,10 +47,9 @@ export async function generateMetadata({
       description,
       type: "website",
       url: `/farmers/${farmer.id}`,
-      images: farmer.avatar_url
-        ? [{ url: farmer.avatar_url, alt: name }]
-        : undefined,
+      images: [image],
     },
+    twitter: { card: "summary_large_image", title: name, description, images: [image.url] },
   };
 }
 

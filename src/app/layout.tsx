@@ -7,6 +7,7 @@ import { RoutePrefetcher } from "@/components/navigation/RoutePrefetcher";
 import { ScrollToTopButton } from "@/components/navigation/ScrollToTopButton";
 import { WishlistLoader } from "@/components/shop/WishlistLoader";
 import { getAppUrl } from "@/lib/auth/urls";
+import { DEFAULT_OG_IMAGE } from "@/lib/og-image";
 import { IS_PRE } from "@/lib/env";
 import "./globals.css";
 
@@ -36,11 +37,11 @@ export const metadata: Metadata = {
   // and shows the default.
   // The test site's tabs say so, so it is never mistaken for the live one.
   title: {
-    default: `${IS_PRE ? "[TEST] " : ""}Barakatly - Təbii Kənd Məhsulları`,
+    default: `${IS_PRE ? "[TEST] " : ""}Barakatly - Fermerdən birbaşa süfrənizə`,
     template: `${IS_PRE ? "[TEST] " : ""}%s - Barakatly`,
   },
   description:
-    "Fermerlərindən birbaşa təzə və organik kənd məhsulları. Yerli fermerləri şüurlu istehlakçılarla birləşdiririk.",
+    "Fermerlərdən birbaşa təzə və organik kənd məhsulları. Yerli fermerləri şüurlu istehlakçılarla birləşdiririk.",
   applicationName: "Barakatly",
   keywords: [
     "Barakatly",
@@ -57,24 +58,17 @@ export const metadata: Metadata = {
     locale: "az_AZ",
     url: appUrl,
     siteName: "Barakatly",
-    title: "Barakatly - Təbii Kənd Məhsulları",
+    title: "Barakatly - Fermerdən birbaşa süfrənizə",
     description:
-      "Fermerlərindən birbaşa təzə və organik kənd məhsulları.",
-    images: [
-      {
-        url: "/hero/kend.jpg",
-        width: 1200,
-        height: 630,
-        alt: "Barakatly — fermerdən süfrəyə",
-      },
-    ],
+      "Fermerlərdən birbaşa təzə və organik kənd məhsulları.",
+    images: [DEFAULT_OG_IMAGE],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Barakatly - Təbii Kənd Məhsulları",
+    title: "Barakatly - Fermerdən birbaşa süfrənizə",
     description:
-      "Fermerlərindən birbaşa təzə və organik kənd məhsulları.",
-    images: ["/hero/kend.jpg"],
+      "Fermerlərdən birbaşa təzə və organik kənd məhsulları.",
+    images: [DEFAULT_OG_IMAGE.url],
   },
   // The test site must never show up in search results.
   robots: IS_PRE ? { index: false, follow: false } : { index: true, follow: true },

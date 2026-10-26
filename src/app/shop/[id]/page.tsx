@@ -23,6 +23,7 @@ import { getProductById, getSimilarProductsByCategory } from "@/lib/shop/queries
 import { getProductImageUrl } from "@/lib/shop/format";
 import { productVariants } from "@/lib/shop/variants";
 import { farmerDisplayName } from "@/lib/farmers/name";
+import { DEFAULT_OG_IMAGE } from "@/lib/og-image";
 
 
 export async function generateMetadata({
@@ -37,6 +38,9 @@ export async function generateMetadata({
   }
 
   const imageUrl = getProductImageUrl(product.product_images);
+  // These openGraph and twitter objects replace the site-wide ones, so they
+  // name their own picture: the product photo, else the default card.
+  const image = imageUrl ? { url: imageUrl, alt: product.title } : DEFAULT_OG_IMAGE;
   const description =
     product.description?.slice(0, 160) ||
     "Fermerdən birbaşa təzə məhsul";
@@ -50,8 +54,9 @@ export async function generateMetadata({
       description,
       type: "website",
       url: `/shop/${product.id}`,
-      images: imageUrl ? [{ url: imageUrl, alt: product.title }] : undefined,
+      images: [image],
     },
+    twitter: { card: "summary_large_image", title: product.title, description, images: [image.url] },
   };
 }
 

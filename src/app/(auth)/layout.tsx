@@ -1,4 +1,4 @@
-import Image, { getImageProps } from "next/image";
+import { getImageProps } from "next/image";
 import Link from "next/link";
 import { SiteLogo } from "@/components/SiteLogo";
 import type { Viewport } from "next";
@@ -28,7 +28,7 @@ function AuthPanelImage({ src }: { src: string }) {
     props: { srcSet, sizes, alt, ...rest },
   } = getImageProps({
     src,
-    alt: "Barakatly — fermerdən süfrəyə",
+    alt: "Barakatly: fermerdən birbaşa süfrənizə",
     fill: true,
     sizes: PANEL_SIZES,
     loading: "eager",
