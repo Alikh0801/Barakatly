@@ -25,6 +25,16 @@ const navItems: NavItem[] = [
     ),
   },
   {
+    href: "/admin/payouts",
+    label: "Fermer ödənişləri",
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-4 w-4">
+        <path d="M4 7h13l3 3-3 3H4V7Z" strokeLinejoin="round" />
+        <path d="M8 17h12M8 17l3-3M8 17l3 3" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    ),
+  },
+  {
     href: "/admin/banks",
     label: "Kartlar",
     icon: (

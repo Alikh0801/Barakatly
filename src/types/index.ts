@@ -6,6 +6,7 @@ export type {
   OrderStatus,
   OrderItemStatus,
   PaymentStatus,
+  FarmerPayoutStatus,
   NotificationType,
   Database,
   Profile,
