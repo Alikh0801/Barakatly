@@ -147,13 +147,60 @@ Barakatly — təsdiq kodunuz: {{ .Token }}
       </p>
     </div>
     <div style="background-color:#f9fafb;padding:16px 32px;text-align:center;border-top:1px solid #e5e7eb;">
-      <span style="font-size:12px;color:#9ca3af;">© Barakatly — Yerli fermerlərdən birbaşa süfrənizə</span>
+      <span style="font-size:12px;color:#9ca3af;">© Barakatly · Fermerdən birbaşa süfrənizə</span>
     </div>
   </div>
 </div>
 ```
 
 Do **not** include `{{ .ConfirmationURL }}` anywhere — only `{{ .Token }}` is used, so there's no link to click. Save the template. No code/env changes needed — the signup form already shows a code-entry step right after "Qeydiyyatdan keç".
+
+### Password reset — same design, code and link
+
+The forgot-password form (`/forgot-password`) takes the 6-digit code; the link opens `/reset-password` for anyone reading the mail on another device. The email shows both, in the signup email's design.
+
+In **Supabase → Authentication → Email Templates → Reset Password**, set:
+
+**Subject:**
+```
+Barakatly — şifrə bərpa kodunuz: {{ .Token }}
+```
+
+**Message body:**
+
+```html
+<div style="background-color:#f4f6f5;padding:32px 16px;font-family:Arial,Helvetica,sans-serif;">
+  <div style="max-width:480px;margin:0 auto;background:#ffffff;border-radius:16px;overflow:hidden;border:1px solid #e5e7eb;">
+    <div style="background-color:#1f5c3d;padding:24px 32px;text-align:center;">
+      <span style="color:#ffffff;font-size:20px;font-weight:700;">🌿 Barakatly</span>
+    </div>
+    <div style="padding:32px;">
+      <h1 style="margin:0 0 12px;font-size:18px;color:#111827;">Şifrə bərpa kodunuz</h1>
+      <p style="margin:0 0 24px;font-size:14px;line-height:22px;color:#4b5563;">
+        Yeni şifrə təyin etmək üçün aşağıdakı kodu şifrə bərpası formasına daxil edin:
+      </p>
+      <div style="background-color:#f0fdf4;border:1px solid #bbf7d0;border-radius:12px;padding:20px;text-align:center;margin-bottom:24px;">
+        <span style="font-size:32px;font-weight:700;letter-spacing:8px;color:#1f5c3d;">{{ .Token }}</span>
+      </div>
+      <p style="margin:0 0 12px;font-size:14px;line-height:22px;color:#4b5563;">
+        Və ya düyməyə basıb yeni şifrəni birbaşa təyin edin:
+      </p>
+      <div style="text-align:center;margin-bottom:24px;">
+        <a href="{{ .ConfirmationURL }}" style="display:inline-block;background-color:#1f5c3d;color:#ffffff;font-size:14px;font-weight:700;text-decoration:none;padding:12px 24px;border-radius:999px;">Şifrəni yenilə</a>
+      </div>
+      <p style="margin:0 0 8px;font-size:13px;color:#6b7280;">
+        Bu kod <strong>1 saat</strong> ərzində keçərlidir.
+      </p>
+      <p style="margin:0;font-size:13px;color:#6b7280;">
+        Bu tələbi siz etməmisinizsə, bu email-i sadəcə nəzərə almayın — şifrəniz dəyişməyəcək.
+      </p>
+    </div>
+    <div style="background-color:#f9fafb;padding:16px 32px;text-align:center;border-top:1px solid #e5e7eb;">
+      <span style="font-size:12px;color:#9ca3af;">© Barakatly · Fermerdən birbaşa süfrənizə</span>
+    </div>
+  </div>
+</div>
+```
 
 ### Google sign-in
 
