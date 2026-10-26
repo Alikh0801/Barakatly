@@ -511,6 +511,8 @@ export interface Database {
           sold_count: number;
           rating_average: number | null;
           rating_count: number;
+          /** Title and farmer name in az_normalize form; a trigger fills it. */
+          search_text: string | null;
           created_at: string;
           updated_at: string;
         };

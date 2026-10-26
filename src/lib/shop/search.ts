@@ -1,7 +1,8 @@
 import { escapeLike } from "@/lib/supabase/like";
 import { createPublicClient } from "@/lib/supabase/public";
 import type { ProductListItem } from "@/types/shop";
-import type { PublicFarmer } from "@/lib/farmers/queries";
+import { getPublicFarmers, type PublicFarmer } from "@/lib/farmers/queries";
+import { azNormalize } from "@/lib/shop/normalize";
 
 export type SearchResults = {
   query: string;
@@ -16,16 +17,17 @@ export async function searchCatalog(query: string): Promise<SearchResults> {
   }
 
   const supabase = createPublicClient();
+  // Matched against products.search_text (title and farmer name in
+  // azNormalize form), so the letters typed don't need to be Azerbaijani.
+  const needle = azNormalize(q);
   // Escape, never strip: stripping turned a query of just "%" or "_" into
   // the pattern "%%", which matched every row.
-  const pattern = `%${escapeLike(q)}%`;
+  const pattern = `%${escapeLike(needle)}%`;
   // `*` can only be approximated in a PostgREST pattern (see escapeLike),
   // so for those queries re-check the rows for the literal text.
-  const needle = q.toLowerCase();
-  const matchesLiterally = (text: string | null | undefined) =>
-    !q.includes("*") || (text ?? "").toLowerCase().includes(needle);
+  const matchesLiterally = (text: string) => !q.includes("*") || azNormalize(text).includes(needle);
 
-  const [productsResult, farmersResult] = await Promise.all([
+  const [productsResult, allFarmers] = await Promise.all([
     supabase
       .from("products")
       .select(
@@ -60,60 +62,30 @@ export async function searchCatalog(query: string): Promise<SearchResults> {
       `,
       )
       .eq("status", "approved")
-      .ilike("title", pattern)
+      .ilike("search_text", pattern)
       // Sold-out products still show up, just below the in-stock ones.
       .order("in_stock", { ascending: false })
       .order("created_at", { ascending: false })
       .limit(24),
-    supabase
-      .from("farmers")
-      .select(
-        `
-        id,
-        owner_name,
-        description,
-        location_text,
-        verified_at,
-        avatar_url,
-        created_at,
-        products ( id, status )
-      `,
-      )
-      .eq("status", "approved")
-      .ilike("owner_name", pattern)
-      .order("owner_name", { ascending: true })
-      .limit(24),
+    // Few farmers, and their name lives in profiles: filter the cached
+    // public list here with the same rule.
+    getPublicFarmers(),
   ]);
 
   if (productsResult.error) {
     console.error("[shop.searchCatalog.products]", productsResult.error.message);
   }
-  if (farmersResult.error) {
-    console.error("[shop.searchCatalog.farmers]", farmersResult.error.message);
-  }
 
-  const farmers: PublicFarmer[] = (farmersResult.data ?? [])
-    .filter((farmer) => matchesLiterally(farmer.owner_name ?? ""))
-    .map((farmer) => {
-    const products = Array.isArray(farmer.products) ? farmer.products : [];
-    return {
-      id: farmer.id,
-      owner_name: farmer.owner_name,
-      description: farmer.description,
-      location_text: farmer.location_text,
-      verified_at: farmer.verified_at,
-      avatar_url: farmer.avatar_url ?? null,
-      cover_url: null,
-      productCount: products.filter((p) => p.status === "approved").length,
-      created_at: farmer.created_at,
-    };
-  });
+  const farmers = allFarmers
+    .filter((farmer) => azNormalize(farmer.owner_name ?? "").includes(needle))
+    .slice(0, 24);
 
   return {
     query: q,
     products: ((productsResult.data ?? []) as unknown as ProductListItem[]).filter(
       (product) =>
-        product.farmer?.status === "approved" && matchesLiterally(product.title),
+        product.farmer?.status === "approved" &&
+        matchesLiterally(`${product.title} ${product.farmer.owner_name ?? ""}`),
     ),
     farmers,
   };
