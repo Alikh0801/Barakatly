@@ -210,7 +210,7 @@ export const ABOUT_DEFAULT_ITEMS: AboutItems = {
 
 export const ABOUT_DEFAULT = {
   key: ABOUT_KEY,
-  title: "Fermerdən süfrəyə — daha təzə, daha yaxın",
+  title: "Fermerdən birbaşa süfrənizə",
   body: "Barakatly yerli fermerlərin məhsullarını şəhər sakinlərinə birbaşa çatdıran marketplace-dir. Məqsədimiz sadədir: təzə qida, ədalətli satış və aydın izləmə.",
   items: ABOUT_DEFAULT_ITEMS,
 } as const;
