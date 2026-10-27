@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { ProductDetailImage } from "@/components/shop/ProductDetailImage";
+import { DeliveryBanner } from "@/components/shop/DeliveryBanner";
 import { ProductPurchasePanel } from "@/components/shop/ProductPurchasePanel";
 import {
   ProductVariantPrice,
@@ -166,6 +167,7 @@ export default async function ProductDetailPage({
             </div>
 
             <ProductVariantPrice />
+            <DeliveryBanner />
 
             <ProductPurchasePanel product={product} />
 
