@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { FarmerCard } from "@/components/farmers/FarmerCard";
+import { PageHeader } from "@/components/ui/PageHeader";
 import { getSessionUser } from "@/lib/auth/session";
 import { getFollowedFarmerIds, getPublicFarmersWithRatings } from "@/lib/farmers/queries";
 
@@ -27,7 +28,7 @@ function ViewTab({
       aria-current={active ? "page" : undefined}
       className={`inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-semibold transition-colors ${
         active
-          ? "bg-[#1f5c3d] text-white"
+          ? "bg-emerald-600 text-white"
           : "text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900"
       }`}
     >
@@ -55,25 +56,19 @@ export default async function FarmersPage({
     : allFarmers;
 
   return (
-    <div className="mx-auto w-full max-w-6xl px-4 py-10 md:px-6 md:py-14">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <h1
-            className="text-3xl font-bold tracking-tight text-zinc-900"
+    <div className="mx-auto w-full max-w-6xl px-4 py-10 md:px-6 md:py-12">
+      <PageHeader
+        title="Fermerlər"
+        description="Fermer profilləri · məhsullar və paylaşımlar"
+        action={
+          <Link
+            href="/farmers/apply"
+            className="inline-flex items-center justify-center rounded-full bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-500"
           >
-            Fermerlər
-          </h1>
-          <p className="mt-2 text-sm text-zinc-600">
-            Fermer profilləri · məhsullar və paylaşımlar
-          </p>
-        </div>
-        <Link
-          href="/farmers/apply"
-          className="inline-flex items-center justify-center rounded-full bg-[#1f5c3d] px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[#184a31]"
-        >
-          Fermer ol
-        </Link>
-      </div>
+            Fermer ol
+          </Link>
+        }
+      />
 
       {user ? (
         <nav
@@ -110,7 +105,7 @@ export default async function FarmersPage({
             </p>
             <Link
               href="/farmers"
-              className="mt-5 inline-flex rounded-full bg-[#1f5c3d] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[#184a31]"
+              className="mt-5 inline-flex rounded-full bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-emerald-500"
             >
               Fermerlərə bax
             </Link>
