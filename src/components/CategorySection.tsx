@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import { CategoryScroller } from "@/components/CategoryScroller";
 import { Pagination } from "@/components/shop/Pagination";
 import { ProductCard } from "@/components/shop/ProductCard";
 import { getCategories, getProducts } from "@/lib/shop/queries";
@@ -52,8 +53,8 @@ export async function CategorySection({
           </p>
         </div>
 
-        <div className="mt-10 -mx-4 overflow-x-auto px-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          <div className="flex w-max min-w-full items-start justify-center gap-4 md:gap-6">
+        <div className="mt-10">
+          <CategoryScroller>
             <Link
               href="/"
               prefetch
@@ -147,7 +148,7 @@ export async function CategorySection({
                 </Link>
               );
             })}
-          </div>
+          </CategoryScroller>
         </div>
 
         <div id="products" className="mt-10 scroll-mt-24">
