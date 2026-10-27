@@ -5,6 +5,20 @@ export type ProductImage = {
   sort_order: number;
 };
 
+/** One size of a product: its own unit, price, stock and photo. */
+export type ProductVariant = {
+  id: string;
+  unit_type: UnitType;
+  unit_size: string | null;
+  farmer_price: number;
+  final_price: number | null;
+  quantity_available: number;
+  in_stock: boolean;
+  sort_order: number;
+  /** Shown when this size is picked; null means the product's first photo. */
+  image_url: string | null;
+};
+
 export type ProductListItem = {
   id: string;
   title: string;
@@ -33,6 +47,8 @@ export type ProductListItem = {
     name_az: string;
   } | null;
   product_images: ProductImage[];
+  /** Its sizes. The unit, price and stock above mirror the default one. */
+  variants: ProductVariant[];
 };
 
 export type ProductDetail = Omit<ProductListItem, "farmer"> & {

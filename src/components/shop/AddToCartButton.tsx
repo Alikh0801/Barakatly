@@ -14,10 +14,10 @@ function useAddToCart() {
   const [added, setAdded] = useState(false);
   const [error, setError] = useState("");
 
-  function add(productId: string, quantity?: number) {
+  function add(productId: string, quantity?: number, variantId?: string) {
     setError("");
     startTransition(async () => {
-      const result = await addToCart(productId, quantity);
+      const result = await addToCart(productId, quantity, variantId);
       if (result.needsAuth) {
         router.push(`/signin?next=${encodeURIComponent(pathname)}`);
         return;
@@ -37,9 +37,12 @@ function useAddToCart() {
 
 export function AddToCartButton({
   product,
+  variantId,
   className = "",
 }: {
   product: ProductListItem;
+  /** The size picked on the card; none means the default one. */
+  variantId?: string;
   className?: string;
 }) {
   const { add, pending, added, error } = useAddToCart();
@@ -48,7 +51,7 @@ export function AddToCartButton({
     <button
       type="button"
       disabled={pending}
-      onClick={() => add(product.id)}
+      onClick={() => add(product.id, undefined, variantId)}
       title={error || undefined}
       className={[
         "inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-white shadow-sm transition disabled:opacity-60",

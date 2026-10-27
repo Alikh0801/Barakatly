@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import type { ProductListItem } from "@/types/shop";
+import { VARIANTS_SELECT } from "@/lib/shop/variants";
 
 const wishlistSelect = `
   created_at,
@@ -20,7 +21,8 @@ const wishlistSelect = `
     status,
     farmer:farmers ( id, owner_name, location_text, status ),
     category:categories ( slug, name_az ),
-    product_images ( url, sort_order )
+    product_images ( url, sort_order ),
+    ${VARIANTS_SELECT}
   )
 `;
 

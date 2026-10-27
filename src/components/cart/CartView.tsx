@@ -161,12 +161,12 @@ export function CartView({
     });
   }
 
-  function changeQuantity(productId: string, quantity: number) {
-    run(`qty:${productId}`, () => setCartQuantity(productId, quantity));
+  function changeQuantity(variantId: string, quantity: number) {
+    run(`qty:${variantId}`, () => setCartQuantity(variantId, quantity));
   }
 
-  function remove(productId: string) {
-    run(`remove:${productId}`, () => removeFromCart(productId));
+  function remove(variantId: string) {
+    run(`remove:${variantId}`, () => removeFromCart(variantId));
   }
 
   function clear() {
@@ -217,7 +217,7 @@ export function CartView({
             <div className="space-y-3">
               {group.items.map((item) => (
                 <div
-                  key={item.productId}
+                  key={item.variantId}
                   className="flex gap-4 rounded-2xl bg-white p-4 shadow-sm ring-1 ring-zinc-200"
                 >
                   <div className="h-20 w-20 shrink-0 overflow-hidden rounded-xl bg-zinc-100">
@@ -240,6 +240,11 @@ export function CartView({
                         >
                           {item.title}
                         </Link>
+                        {item.sizeLabel ? (
+                          <span className="mt-1 inline-flex rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-medium text-emerald-800 ring-1 ring-emerald-200">
+                            Ölçü: {item.sizeLabel}
+                          </span>
+                        ) : null}
                         <p className="mt-1 text-xs text-zinc-500">
                           {formatPrice(item.price)}
                           {formatUnit(item.unitType, item.unitSize)}
@@ -247,11 +252,11 @@ export function CartView({
                       </div>
                       <button
                         type="button"
-                        onClick={() => remove(item.productId)}
+                        onClick={() => remove(item.variantId)}
                         disabled={pending}
                         className="inline-flex shrink-0 items-center gap-1 text-xs text-zinc-500 hover:text-rose-600 disabled:opacity-60"
                       >
-                        {busy === `remove:${item.productId}` ? (
+                        {busy === `remove:${item.variantId}` ? (
                           <Spinner className="h-3 w-3" />
                         ) : null}
                         Sil
@@ -267,12 +272,12 @@ export function CartView({
                         // Above the stock only when stock dropped after it
                         // was added; typing then brings it down to the stock.
                         max={Math.max(item.maxQuantity, item.minQuantity)}
-                        onCommit={(quantity) => changeQuantity(item.productId, quantity)}
+                        onCommit={(quantity) => changeQuantity(item.variantId, quantity)}
                         disabled={pending}
                         label={`${item.title} miqdarı`}
                       />
                       <div className="inline-flex items-center gap-1.5 text-sm font-semibold text-zinc-900">
-                        {busy === `qty:${item.productId}` ? (
+                        {busy === `qty:${item.variantId}` ? (
                           <Spinner className="h-3.5 w-3.5 text-emerald-600" />
                         ) : null}
                         {formatPrice(item.price * item.quantity)}

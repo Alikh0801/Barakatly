@@ -1,5 +1,6 @@
 import { unstable_cache } from "next/cache";
 import { createPublicClient } from "@/lib/supabase/public";
+import { VARIANTS_SELECT } from "@/lib/shop/variants";
 import type { CategoryItem, ProductDetail, ProductListItem } from "@/types/shop";
 
 const productSelect = `
@@ -29,7 +30,8 @@ const productSelect = `
   product_images (
     url,
     sort_order
-  )
+  ),
+  ${VARIANTS_SELECT}
 `;
 
 const productDetailSelect = `
@@ -62,7 +64,8 @@ const productDetailSelect = `
   product_images (
     url,
     sort_order
-  )
+  ),
+  ${VARIANTS_SELECT}
 `;
 
 async function fetchCategories(): Promise<CategoryItem[]> {

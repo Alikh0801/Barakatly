@@ -1,5 +1,7 @@
 import { getSessionUser } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
+import type { ProductVariant } from "@/types/shop";
+import { VARIANTS_SELECT } from "@/lib/shop/variants";
 import type {
   Bank,
   Category,
@@ -166,6 +168,7 @@ export type AdminProduct = Product & {
   categories: { name_az: string; approved: boolean } | null;
   subcategories: { name_az: string; approved: boolean } | null;
   product_images: { url: string; sort_order: number }[] | null;
+  variants: ProductVariant[];
 };
 
 export async function getAdminPendingProducts(): Promise<AdminProduct[]> {
@@ -178,7 +181,8 @@ export async function getAdminPendingProducts(): Promise<AdminProduct[]> {
       farmers (owner_name),
       categories:category_id (name_az, approved),
       subcategories:subcategory_id (name_az, approved),
-      product_images (url, sort_order)
+      product_images (url, sort_order),
+      ${VARIANTS_SELECT}
     `
     )
     .eq("status", "pending")
@@ -202,7 +206,8 @@ export async function getAdminApprovedProducts(): Promise<AdminProduct[]> {
       farmers (owner_name),
       categories:category_id (name_az, approved),
       subcategories:subcategory_id (name_az, approved),
-      product_images (url, sort_order)
+      product_images (url, sort_order),
+      ${VARIANTS_SELECT}
     `
     )
     .eq("status", "approved")

@@ -9,9 +9,12 @@ import type {
   Product,
   Subcategory,
 } from "@/types";
+import type { ProductVariant } from "@/types/shop";
+import { VARIANTS_SELECT } from "@/lib/shop/variants";
 
 export type FarmerProduct = Product & {
   product_images: { id: string; url: string; sort_order: number }[];
+  variants: ProductVariant[];
   categories: Pick<Category, "name_az" | "slug"> | null;
 };
 
@@ -23,6 +26,7 @@ export async function getFarmerProducts(farmerId: string): Promise<FarmerProduct
       `
       *,
       product_images (id, url, sort_order),
+      ${VARIANTS_SELECT},
       categories:category_id (name_az, slug)
     `
     )
@@ -48,6 +52,7 @@ export async function getFarmerProductById(
       `
       *,
       product_images (id, url, sort_order),
+      ${VARIANTS_SELECT},
       categories:category_id (name_az, slug)
     `
     )

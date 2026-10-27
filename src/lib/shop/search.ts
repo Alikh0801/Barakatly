@@ -1,5 +1,6 @@
 import { escapeLike } from "@/lib/supabase/like";
 import { createPublicClient } from "@/lib/supabase/public";
+import { VARIANTS_SELECT } from "@/lib/shop/variants";
 import type { ProductListItem } from "@/types/shop";
 import type { PublicFarmer } from "@/lib/farmers/queries";
 
@@ -56,7 +57,8 @@ export async function searchCatalog(query: string): Promise<SearchResults> {
         product_images (
           url,
           sort_order
-        )
+        ),
+        ${VARIANTS_SELECT}
       `,
       )
       .eq("status", "approved")

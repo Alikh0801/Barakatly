@@ -5,6 +5,8 @@ import { redirect } from "next/navigation";
 import { getSessionUser } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
 import { initialQuantity, minOrderQuantity, normalizeQuantity } from "@/lib/shop/quantity";
+import { defaultVariant, productVariants, variantInStock } from "@/lib/shop/variants";
+import type { ProductVariant } from "@/types/shop";
 
 export type CartActionResult = {
   ok: boolean;
@@ -19,14 +21,15 @@ function revalidateCart() {
 }
 
 /**
- * Adds to the cart. `quantity` is in the product's unit; left out (the
- * product cards' quick button) it is one unit or the product's minimum.
- * The total in the cart always lands on a step, between the minimum and
- * the stock.
+ * Adds a size of a product to the cart. `quantity` is in that size's unit;
+ * left out (the product cards' quick button) it is one unit or the
+ * product's minimum. No `variantId` means the default size. The total in
+ * the cart always lands on a step, between the minimum and the size's stock.
  */
 export async function addToCart(
   productId: string,
   quantity?: number,
+  variantId?: string,
 ): Promise<CartActionResult> {
   const user = await getSessionUser();
   if (!user) {
@@ -41,18 +44,32 @@ export async function addToCart(
 
   const { data: product } = await supabase
     .from("products")
-    .select("id, quantity_available, in_stock, status, farmer_id, unit_type, min_order_quantity")
+    .select(
+      "id, unit_type, unit_size, farmer_price, final_price, quantity_available, in_stock, status, farmer_id, min_order_quantity, variants:product_variants (id, unit_type, unit_size, farmer_price, final_price, quantity_available, in_stock, sort_order, image_url)",
+    )
     .eq("id", productId)
     .eq("status", "approved")
     .maybeSingle();
 
-  if (!product || !product.in_stock || product.quantity_available <= 0) {
+  if (!product) {
     return { ok: false, error: "Bu məhsul hazırda mövcud deyil." };
   }
 
+  const variants = productVariants(product as typeof product & { variants: ProductVariant[] });
+  const variant = variantId
+    ? variants.find((candidate) => candidate.id === variantId)
+    : defaultVariant(variants);
+
+  if (!variant || !variant.id) {
+    return { ok: false, error: "Ölçü seçilmədi." };
+  }
+  if (!variantInStock(variant)) {
+    return { ok: false, error: "Bu ölçü hazırda stokda yoxdur." };
+  }
+
   const limits = {
-    min: minOrderQuantity(product.unit_type, product.min_order_quantity),
-    max: Number(product.quantity_available),
+    min: minOrderQuantity(variant.unit_type, product.min_order_quantity),
+    max: variant.quantity_available,
   };
 
   // A farmer cannot order their own product.
@@ -70,12 +87,12 @@ export async function addToCart(
     .from("cart_items")
     .select("id, quantity")
     .eq("customer_id", user.id)
-    .eq("product_id", productId)
+    .eq("variant_id", variant.id)
     .maybeSingle();
 
-  const adding = quantity ?? initialQuantity(product.unit_type, limits.min, limits.max);
+  const adding = quantity ?? initialQuantity(variant.unit_type, limits.min, limits.max);
   const nextQuantity = normalizeQuantity(
-    product.unit_type,
+    variant.unit_type,
     Number(existing?.quantity ?? 0) + adding,
     limits,
   );
@@ -96,6 +113,7 @@ export async function addToCart(
     const { error } = await supabase.from("cart_items").insert({
       customer_id: user.id,
       product_id: productId,
+      variant_id: variant.id,
       quantity: nextQuantity,
     });
     if (error) {
@@ -116,8 +134,9 @@ export async function addToCart(
 export async function buyNow(
   productId: string,
   quantity?: number,
+  variantId?: string,
 ): Promise<CartActionResult> {
-  const result = await addToCart(productId, quantity);
+  const result = await addToCart(productId, quantity, variantId);
   if (result.needsAuth) {
     redirect(`/signin?next=${encodeURIComponent("/checkout")}`);
   }
@@ -127,8 +146,9 @@ export async function buyNow(
   return result;
 }
 
+/** Sets the amount of one size in the cart (a cart line is one size). */
 export async function setCartQuantity(
-  productId: string,
+  variantId: string,
   quantity: number,
 ): Promise<CartActionResult> {
   const user = await getSessionUser();
@@ -139,29 +159,30 @@ export async function setCartQuantity(
   const supabase = await createClient();
 
   if (quantity <= 0) {
-    return removeFromCart(productId);
+    return removeFromCart(variantId);
   }
 
-  const { data: product } = await supabase
-    .from("products")
-    .select("quantity_available, in_stock, unit_type, min_order_quantity")
-    .eq("id", productId)
-    .eq("status", "approved")
+  const { data: variant } = await supabase
+    .from("product_variants")
+    .select("unit_type, quantity_available, in_stock, product:products!inner (status, min_order_quantity)")
+    .eq("id", variantId)
+    .eq("product.status", "approved")
     .maybeSingle();
 
   // Previously a missing product fell through to the requested quantity, so a
   // removed or unapproved item could be set to any amount.
-  if (!product) {
+  if (!variant) {
     return { ok: false, error: "Bu məhsul artıq mövcud deyil." };
   }
 
-  if (!product.in_stock || product.quantity_available <= 0) {
+  const product = variant.product as unknown as { min_order_quantity: number | null };
+  if (!variant.in_stock || Number(variant.quantity_available) <= 0) {
     return { ok: false, error: "Bu məhsul hazırda stokda yoxdur." };
   }
 
-  const capped = normalizeQuantity(product.unit_type, quantity, {
-    min: minOrderQuantity(product.unit_type, product.min_order_quantity),
-    max: Number(product.quantity_available),
+  const capped = normalizeQuantity(variant.unit_type, quantity, {
+    min: minOrderQuantity(variant.unit_type, product.min_order_quantity),
+    max: Number(variant.quantity_available),
   });
   if (capped <= 0) {
     return { ok: false, error: "Anbarda minimum sifariş qədər məhsul qalmayıb." };
@@ -171,7 +192,7 @@ export async function setCartQuantity(
     .from("cart_items")
     .update({ quantity: capped })
     .eq("customer_id", user.id)
-    .eq("product_id", productId);
+    .eq("variant_id", variantId);
 
   if (error) {
     console.error("[cart.setCartQuantity]", error.message);
@@ -183,7 +204,7 @@ export async function setCartQuantity(
 }
 
 export async function removeFromCart(
-  productId: string,
+  variantId: string,
 ): Promise<CartActionResult> {
   const user = await getSessionUser();
   if (!user) {
@@ -195,7 +216,7 @@ export async function removeFromCart(
     .from("cart_items")
     .delete()
     .eq("customer_id", user.id)
-    .eq("product_id", productId);
+    .eq("variant_id", variantId);
 
   if (error) {
     console.error("[cart.removeFromCart]", error.message);

@@ -1,11 +1,17 @@
+"use client";
+
 import Link from "next/link";
+import { useState } from "react";
 import type { ProductListItem } from "@/types/shop";
+import { formatPrice, formatUnit, getProductImageUrl } from "@/lib/shop/format";
 import {
-  formatPrice,
-  formatUnit,
-  getDisplayPrice,
-  getProductImageUrl,
-} from "@/lib/shop/format";
+  defaultVariant,
+  formatStock,
+  productVariants,
+  variantInStock,
+  variantLabel,
+  variantPrice,
+} from "@/lib/shop/variants";
 import { AddToCartButton } from "@/components/shop/AddToCartButton";
 import { WishlistButton } from "@/components/shop/WishlistButton";
 import { ImageWithSkeleton } from "@/components/ui/ImageWithSkeleton";
@@ -46,9 +52,14 @@ function CardRating({ average, count }: { average: number | null; count: number 
 }
 
 export function ProductCard({ product }: { product: ProductListItem }) {
-  const imageUrl = getProductImageUrl(product.product_images);
-  const price = getDisplayPrice(product.final_price, product.farmer_price);
-  const outOfStock = !product.in_stock || product.quantity_available <= 0;
+  const variants = productVariants(product);
+  const [selectedId, setSelectedId] = useState(() => defaultVariant(variants).id);
+  const selected = variants.find((variant) => variant.id === selectedId) ?? defaultVariant(variants);
+  const hasSizes = variants.length > 1;
+  const imageUrl = selected.image_url ?? getProductImageUrl(product.product_images);
+  const price = variantPrice(selected);
+  // Sold out only once every size is.
+  const outOfStock = !variants.some(variantInStock);
 
   return (
     // Hover: the card rises a little with a soft green shadow and the name
@@ -61,6 +72,7 @@ export function ProductCard({ product }: { product: ProductListItem }) {
           <div className="relative aspect-[4/3] overflow-hidden">
             {imageUrl ? (
               <ImageWithSkeleton
+                key={imageUrl}
                 src={imageUrl}
                 alt={product.title}
                 className="h-full w-full object-cover"
@@ -105,16 +117,54 @@ export function ProductCard({ product }: { product: ProductListItem }) {
           </div>
         ) : null}
 
-        <div className="mt-3 flex min-h-9 items-center justify-between gap-2">
-          <div className="min-w-0 flex items-baseline gap-1">
-            <span className="truncate text-sm font-semibold text-zinc-900">
-              {formatPrice(price)}
-            </span>
-            <span className="shrink-0 text-xs text-zinc-500">
-              {formatUnit(product.unit_type, product.unit_size)}
-            </span>
+        {hasSizes ? (
+          <div className="mt-2.5 flex flex-wrap gap-1.5" role="group" aria-label="Ölçü">
+            {variants.map((variant) => {
+              const available = variantInStock(variant);
+              const active = variant.id === selected.id;
+              return (
+                <button
+                  key={variant.id}
+                  type="button"
+                  onClick={() => setSelectedId(variant.id)}
+                  disabled={!available}
+                  aria-pressed={active}
+                  title={available ? undefined : "Bitib"}
+                  className={[
+                    "rounded-full px-2 py-0.5 text-[11px] font-medium ring-1 transition",
+                    !available
+                      ? "cursor-not-allowed bg-zinc-100 text-zinc-400 line-through ring-zinc-200"
+                      : active
+                        ? "bg-emerald-600 text-white ring-emerald-600"
+                        : "bg-white text-zinc-700 ring-zinc-200 hover:ring-emerald-300",
+                  ].join(" ")}
+                >
+                  {variantLabel(variant.unit_type, variant.unit_size)} · {formatPrice(variantPrice(variant)).replace(".00", "")}
+                </button>
+              );
+            })}
           </div>
-          {outOfStock ? null : <AddToCartButton product={product} />}
+        ) : null}
+
+        <div className="mt-3 flex min-h-9 items-center justify-between gap-2">
+          <div className="min-w-0">
+            <div className="flex items-baseline gap-1">
+              <span className="truncate text-sm font-semibold text-zinc-900">
+                {formatPrice(price)}
+              </span>
+              <span className="shrink-0 text-xs text-zinc-500">
+                {formatUnit(selected.unit_type, selected.unit_size)}
+              </span>
+            </div>
+            {hasSizes && !outOfStock ? (
+              <div className="text-[11px] text-zinc-500">
+                Stokda: {formatStock(selected.unit_type, selected.quantity_available, selected.unit_size)}
+              </div>
+            ) : null}
+          </div>
+          {outOfStock ? null : (
+            <AddToCartButton product={product} variantId={selected.id || undefined} />
+          )}
         </div>
       </div>
     </article>

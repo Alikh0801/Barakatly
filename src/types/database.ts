@@ -380,6 +380,8 @@ export interface Database {
           id: string;
           customer_id: string;
           product_id: string;
+          /** The size in the cart; one row per size. */
+          variant_id: string | null;
           quantity: number;
           created_at: string;
           updated_at: string;
@@ -388,6 +390,7 @@ export interface Database {
           id?: string;
           customer_id: string;
           product_id: string;
+          variant_id?: string | null;
           quantity: number;
           created_at?: string;
           updated_at?: string;
@@ -396,6 +399,7 @@ export interface Database {
           id?: string;
           customer_id?: string;
           product_id?: string;
+          variant_id?: string | null;
           quantity?: number;
           created_at?: string;
           updated_at?: string;
@@ -489,6 +493,46 @@ export interface Database {
           approved?: boolean;
           created_by?: string | null;
           created_at?: string;
+        };
+        Relationships: [];
+      };
+      // One size of a product (migration 20261027120000). products mirrors
+      // the default one: the first in stock.
+      product_variants: {
+        Row: {
+          id: string;
+          product_id: string;
+          unit_type: UnitType;
+          unit_size: string | null;
+          farmer_price: number;
+          final_price: number | null;
+          quantity_available: number;
+          in_stock: boolean;
+          sort_order: number;
+          image_url: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          product_id: string;
+          unit_type: UnitType;
+          unit_size?: string | null;
+          farmer_price: number;
+          final_price?: number | null;
+          quantity_available?: number;
+          in_stock?: boolean;
+          sort_order?: number;
+          image_url?: string | null;
+        };
+        Update: {
+          unit_type?: UnitType;
+          unit_size?: string | null;
+          farmer_price?: number;
+          final_price?: number | null;
+          quantity_available?: number;
+          sort_order?: number;
+          image_url?: string | null;
         };
         Relationships: [];
       };
@@ -692,6 +736,8 @@ export interface Database {
           order_id: string;
           farmer_id: string;
           product_id: string;
+          /** The size bought; null for a size deleted since. */
+          variant_id: string | null;
           product_title: string;
           quantity: number;
           unit_type: UnitType;
@@ -969,6 +1015,7 @@ export type Courier = Database["public"]["Tables"]["couriers"]["Row"];
 export type Category = Database["public"]["Tables"]["categories"]["Row"];
 export type Subcategory = Database["public"]["Tables"]["subcategories"]["Row"];
 export type Product = Database["public"]["Tables"]["products"]["Row"];
+export type ProductVariantRow = Database["public"]["Tables"]["product_variants"]["Row"];
 export type Order = Database["public"]["Tables"]["orders"]["Row"];
 export type OrderItem = Database["public"]["Tables"]["order_items"]["Row"];
 export type OrderStatusEvent =
