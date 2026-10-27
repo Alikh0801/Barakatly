@@ -73,41 +73,47 @@ function FarmerDetailRow({
   );
 }
 
-export function AdminFarmersPanel({ farmers }: { farmers: AdminFarmer[] }) {
-  if (farmers.length === 0) {
-    return (
-      <div className="rounded-3xl bg-white p-8 text-center ring-1 ring-zinc-200">
-        <p className="font-medium text-zinc-900">Fermer yoxdur</p>
-      </div>
-    );
-  }
+type FarmerFilter = "all" | "approved" | "pending" | "rejected" | "suspended";
 
-  const pending = farmers.filter((farmer) => farmer.status === "pending");
-  const others = farmers.filter((farmer) => farmer.status !== "pending");
-  const pendingEdits = farmers.filter(
-    (farmer) => farmer.pending_submitted_at,
-  );
+const FARMER_FILTERS: { value: FarmerFilter; label: string }[] = [
+  { value: "all", label: "Hamısı" },
+  { value: "approved", label: "Təsdiqlənib" },
+  { value: "pending", label: "Gözləyir" },
+  { value: "rejected", label: "Rədd edilib" },
+  { value: "suspended", label: "Deaktiv" },
+];
+
+/** Lower case with the Azerbaijani letters folded, so "gunel" finds "Günel". */
+function foldSearch(text: string): string {
+  return text
+    .toLocaleLowerCase("az")
+    .replace(/ə/g, "e")
+    .replace(/ı/g, "i")
+    .replace(/ö/g, "o")
+    .replace(/ü/g, "u")
+    .replace(/ş/g, "s")
+    .replace(/ç/g, "c")
+    .replace(/ğ/g, "g");
+}
+
+export function AdminFarmersPanel({ farmers }: { farmers: AdminFarmer[] }) {
+  const [filter, setFilter] = useState<FarmerFilter>("all");
+  const [query, setQuery] = useState("");
+  const pendingEdits = farmers.filter((farmer) => farmer.pending_submitted_at);
+
+  const needle = foldSearch(query.trim());
+  const visible = farmers.filter((farmer) => {
+    if (filter !== "all" && farmer.status !== filter) return false;
+    if (!needle) return true;
+    return foldSearch(
+      [farmer.profiles?.full_name, farmer.profiles?.email, farmer.profiles?.phone, farmer.location_text]
+        .filter(Boolean)
+        .join(" "),
+    ).includes(needle);
+  });
 
   return (
     <div className="space-y-8">
-      <section className="space-y-3">
-        <h2 className="text-lg font-semibold text-zinc-900">
-          Gözləyən təsdiqlər
-          <span className="ml-2 text-sm font-normal text-zinc-500">
-            ({pending.length})
-          </span>
-        </h2>
-        {pending.length === 0 ? (
-          <div className="rounded-2xl bg-white p-6 text-sm text-zinc-500 ring-1 ring-zinc-200">
-            Gözləyən fermer müraciəti yoxdur.
-          </div>
-        ) : (
-          pending.map((farmer) => (
-            <FarmerCard key={farmer.id} farmer={farmer} detailed />
-          ))
-        )}
-      </section>
-
       {pendingEdits.length > 0 ? (
         <section className="space-y-3">
           <h2 className="text-lg font-semibold text-zinc-900">
@@ -122,30 +128,126 @@ export function AdminFarmersPanel({ farmers }: { farmers: AdminFarmer[] }) {
         </section>
       ) : null}
 
-      {others.length > 0 ? (
-        <section className="space-y-3">
-          <h2 className="text-lg font-semibold text-zinc-900">
-            Digər fermerlər
-            <span className="ml-2 text-sm font-normal text-zinc-500">
-              ({others.length})
-            </span>
-          </h2>
-          {others.map((farmer) => (
-            <FarmerCard key={farmer.id} farmer={farmer} detailed />
-          ))}
-        </section>
-      ) : null}
+      <section className="space-y-4">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-wrap gap-2">
+            {FARMER_FILTERS.map((option) => (
+              <button
+                key={option.value}
+                type="button"
+                onClick={() => setFilter(option.value)}
+                aria-pressed={filter === option.value}
+                className={[
+                  "rounded-full px-4 py-1.5 text-xs font-semibold transition",
+                  filter === option.value
+                    ? "bg-zinc-900 text-white"
+                    : "bg-white text-zinc-700 ring-1 ring-zinc-200 hover:bg-zinc-50",
+                ].join(" ")}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
+          <label className="relative block sm:w-64">
+            <span className="sr-only">Fermer axtar</span>
+            <svg
+              viewBox="0 0 20 20"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.8"
+              aria-hidden="true"
+              className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400"
+            >
+              <circle cx="9" cy="9" r="5.5" />
+              <path d="m13.5 13.5 3 3" strokeLinecap="round" />
+            </svg>
+            <input
+              type="search"
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder="Fermer axtar..."
+              className="w-full rounded-full border border-zinc-200 bg-white py-2 pl-10 pr-4 text-sm text-zinc-900 placeholder:text-zinc-400"
+            />
+          </label>
+        </div>
+
+        <div className="overflow-x-auto rounded-2xl bg-white shadow-sm ring-1 ring-zinc-200">
+          <table className="w-full min-w-[760px] text-left">
+            <thead>
+              <tr className="border-b border-zinc-100 text-[11px] font-semibold uppercase tracking-wider text-zinc-400">
+                <th className="px-5 py-3.5">Fermer</th>
+                <th className="px-5 py-3.5">Yerləşmə</th>
+                <th className="px-5 py-3.5">Məhsullar</th>
+                <th className="px-5 py-3.5">Gəlir</th>
+                <th className="px-5 py-3.5">Status</th>
+                <th className="px-5 py-3.5">Əməliyyatlar</th>
+              </tr>
+            </thead>
+            <tbody>
+              {visible.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="px-5 py-10 text-center text-sm text-zinc-500">
+                    Fermer tapılmadı.
+                  </td>
+                </tr>
+              ) : (
+                visible.map((farmer) => <FarmerRow key={farmer.id} farmer={farmer} />)
+              )}
+            </tbody>
+          </table>
+        </div>
+      </section>
     </div>
   );
 }
 
-function FarmerCard({
-  farmer,
-  detailed = false,
-}: {
-  farmer: AdminFarmer;
-  detailed?: boolean;
-}) {
+function farmerStatusTone(status: string): string {
+  return status === "pending"
+    ? "bg-amber-50 text-amber-800"
+    : status === "approved"
+      ? "bg-emerald-50 text-emerald-700"
+      : status === "suspended"
+        ? "bg-orange-50 text-orange-800"
+        : status === "rejected"
+          ? "bg-rose-50 text-rose-700"
+          : "bg-zinc-100 text-zinc-700";
+}
+
+function EyeIcon() {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true" className="h-4 w-4">
+      <path d="M1.8 10S4.8 4.5 10 4.5 18.2 10 18.2 10 15.2 15.5 10 15.5 1.8 10 1.8 10Z" strokeLinejoin="round" />
+      <circle cx="10" cy="10" r="2.5" />
+    </svg>
+  );
+}
+
+function EditIcon() {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true" className="h-4 w-4">
+      <path d="M11.5 4.5h-6a1.5 1.5 0 0 0-1.5 1.5v8.5A1.5 1.5 0 0 0 5.5 16H14a1.5 1.5 0 0 0 1.5-1.5v-6" strokeLinecap="round" />
+      <path d="M14.3 3.2a1.4 1.4 0 0 1 2 2L10 11.5 7.5 12.5l1-2.5 5.8-6.8Z" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function TrashIcon() {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true" className="h-4 w-4">
+      <path d="M3.5 5.5h13M8 5.5V4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v1.5M5 5.5l.8 10a1.5 1.5 0 0 0 1.5 1.5h5.4a1.5 1.5 0 0 0 1.5-1.5l.8-10" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+type FarmerPanel = "details" | "manage" | "delete";
+
+/**
+ * One farmer in the table. The eye opens their details, the pencil the
+ * status actions (approve, reject, deactivate, activate), the bin the
+ * delete form; each opens under the row.
+ */
+function FarmerRow({ farmer }: { farmer: AdminFarmer }) {
+  const [panel, setPanel] = useState<FarmerPanel | null>(null);
   const [approveState, approveAction, approvePending] = useActionState(
     approveFarmer,
     initialState
@@ -165,16 +267,6 @@ function FarmerCard({
 
   const busy =
     approvePending || rejectPending || suspendPending || deletePending;
-
-  const statusTone =
-    farmer.status === "pending"
-      ? "bg-amber-50 text-amber-800 ring-amber-200"
-      : farmer.status === "approved"
-        ? "bg-emerald-50 text-emerald-800 ring-emerald-200"
-        : farmer.status === "suspended"
-          ? "bg-orange-50 text-orange-800 ring-orange-200"
-          : "bg-zinc-100 text-zinc-700 ring-zinc-200";
-
   const actionError =
     approveState.error ||
     rejectState.error ||
@@ -186,172 +278,244 @@ function FarmerCard({
     suspendState.success ||
     deleteState.success;
 
+  const name = farmerDisplayName(farmer.profiles?.full_name);
+  const toggle = (next: FarmerPanel) => setPanel((current) => (current === next ? null : next));
+  const iconButton = (active: boolean) =>
+    [
+      "inline-flex h-8 w-8 items-center justify-center rounded-full transition",
+      active ? "bg-zinc-900 text-white" : "bg-zinc-100 text-zinc-500 hover:bg-zinc-200 hover:text-zinc-800",
+    ].join(" ");
+
   return (
-    <article className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-zinc-200">
-      {actionError ? (
-        <p className="mb-3 rounded-xl bg-rose-50 px-3 py-2 text-sm text-rose-700">
-          {actionError}
-        </p>
-      ) : null}
-      {actionSuccess ? (
-        <p className="mb-3 rounded-xl bg-emerald-50 px-3 py-2 text-sm text-emerald-800">
-          {actionSuccess}
-        </p>
-      ) : null}
-
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <div className="min-w-0">
-          <h3 className="break-words text-base font-semibold text-zinc-900">
-            {farmerDisplayName(farmer.profiles?.full_name)}
-          </h3>
-          <p className="mt-1 text-xs text-zinc-500">
-            Müraciət: {formatDateTime(farmer.created_at)}
-          </p>
-        </div>
-        <span
-          className={[
-            "inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ring-1",
-            statusTone,
-          ].join(" ")}
-        >
-          {getFarmerStatusLabel(farmer.status)}
-        </span>
-      </div>
-
-      {detailed ? (
-        <dl className="mt-4 space-y-3 rounded-xl bg-zinc-50 px-4 py-4 ring-1 ring-zinc-100">
-          <FarmerDetailRow
-            label="Ad, soyad"
-            value={farmer.profiles?.full_name}
-          />
-          <FarmerDetailRow
-            label="Email ünvanı"
-            value={farmer.profiles?.email}
-          />
-          <FarmerDetailRow label="Telefon" value={farmer.profiles?.phone} />
-          <FarmerDetailRow label="Yerləşmə" value={farmer.location_text} />
-          {farmer.location_map_url ? (
-            <FarmerDetailRow
-              label="Xəritə linki"
-              value={
-                <a
-                  href={farmer.location_map_url}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="font-medium text-emerald-700 hover:underline"
-                >
-                  Xəritədə aç
-                </a>
-              }
-            />
-          ) : null}
-          <FarmerDetailRow
-            label="Ferma təsviri"
-            value={
-              farmer.description ? (
-                <span className="whitespace-pre-line">{farmer.description}</span>
+    <>
+      <tr className="border-b border-zinc-100 last:border-b-0">
+        <td className="px-5 py-3.5">
+          <div className="flex items-center gap-3">
+            <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-emerald-100 text-xs font-semibold text-emerald-800">
+              {farmer.avatar_url ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={farmer.avatar_url} alt="" className="h-full w-full object-cover" />
               ) : (
-                "—"
-              )
-            }
-          />
-          <FarmerDetailRow
-            label="Status"
-            value={getFarmerStatusLabel(farmer.status)}
-          />
-        </dl>
+                name.slice(0, 2).toUpperCase()
+              )}
+            </span>
+            <div className="min-w-0">
+              <div className="truncate text-sm font-semibold text-zinc-900">{name}</div>
+              <div className="text-xs text-zinc-500">
+                Qoşulub: {new Date(farmer.created_at).getFullYear()}
+              </div>
+            </div>
+          </div>
+        </td>
+        <td className="max-w-[220px] truncate px-5 py-3.5 text-sm text-zinc-500">
+          {farmer.location_text || "—"}
+        </td>
+        <td className="px-5 py-3.5 text-sm text-zinc-700">{farmer.productCount}</td>
+        <td className="px-5 py-3.5 text-sm font-semibold text-emerald-600">
+          {formatPrice(farmer.revenue)}
+        </td>
+        <td className="px-5 py-3.5">
+          <span
+            className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ${farmerStatusTone(farmer.status)}`}
+          >
+            {getFarmerStatusLabel(farmer.status)}
+          </span>
+        </td>
+        <td className="px-5 py-3.5">
+          <div className="flex items-center gap-1.5">
+            <button
+              type="button"
+              onClick={() => toggle("details")}
+              aria-label={`${name} — məlumat`}
+              aria-expanded={panel === "details"}
+              title="Məlumat"
+              className={iconButton(panel === "details")}
+            >
+              <EyeIcon />
+            </button>
+            <button
+              type="button"
+              onClick={() => toggle("manage")}
+              aria-label={`${name} — statusu dəyiş`}
+              aria-expanded={panel === "manage"}
+              title="Statusu dəyiş"
+              className={iconButton(panel === "manage")}
+            >
+              <EditIcon />
+            </button>
+            <button
+              type="button"
+              onClick={() => toggle("delete")}
+              aria-label={`${name} — sil`}
+              aria-expanded={panel === "delete"}
+              title="Sil"
+              className={iconButton(panel === "delete")}
+            >
+              <TrashIcon />
+            </button>
+          </div>
+        </td>
+      </tr>
+
+      {panel || actionError || actionSuccess ? (
+        <tr className="border-b border-zinc-100 bg-zinc-50/70 last:border-b-0">
+          <td colSpan={6} className="px-5 py-4">
+            {actionError ? (
+              <p className="mb-3 rounded-xl bg-rose-50 px-3 py-2 text-sm text-rose-700">
+                {actionError}
+              </p>
+            ) : null}
+            {actionSuccess ? (
+              <p className="mb-3 rounded-xl bg-emerald-50 px-3 py-2 text-sm text-emerald-800">
+                {actionSuccess}
+              </p>
+            ) : null}
+
+            {panel === "details" ? (
+              <dl className="space-y-3">
+                <FarmerDetailRow label="Ad, soyad" value={farmer.profiles?.full_name} />
+                <FarmerDetailRow label="Email ünvanı" value={farmer.profiles?.email} />
+                <FarmerDetailRow label="Telefon" value={farmer.profiles?.phone} />
+                <FarmerDetailRow label="Yerləşmə" value={farmer.location_text} />
+                {farmer.location_map_url ? (
+                  <FarmerDetailRow
+                    label="Xəritə linki"
+                    value={
+                      <a
+                        href={farmer.location_map_url}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="font-medium text-emerald-700 hover:underline"
+                      >
+                        Xəritədə aç
+                      </a>
+                    }
+                  />
+                ) : null}
+                <FarmerDetailRow
+                  label="Ferma təsviri"
+                  value={
+                    farmer.description ? (
+                      <span className="whitespace-pre-line">{farmer.description}</span>
+                    ) : (
+                      "—"
+                    )
+                  }
+                />
+                <FarmerDetailRow label="Müraciət" value={formatDateTime(farmer.created_at)} />
+                {farmer.status === "approved" ? (
+                  <FarmerDetailRow
+                    label="Profil"
+                    value={
+                      <a
+                        href={`/farmers/${farmer.id}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="font-medium text-emerald-700 hover:underline"
+                      >
+                        Səhifəni aç
+                      </a>
+                    }
+                  />
+                ) : null}
+              </dl>
+            ) : null}
+
+            {panel === "manage" ? (
+              <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-start">
+                {farmer.status === "pending" ? (
+                  <>
+                    <form action={approveAction} className="w-full sm:w-auto">
+                      <input type="hidden" name="farmer_id" value={farmer.id} />
+                      <button
+                        type="submit"
+                        disabled={busy}
+                        className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-70 sm:w-auto"
+                      >
+                        {approvePending ? <Spinner className="h-3.5 w-3.5" /> : null}
+                        Təsdiqlə
+                      </button>
+                    </form>
+                    <form action={rejectAction} className="flex w-full flex-col gap-2 sm:w-64">
+                      <input type="hidden" name="farmer_id" value={farmer.id} />
+                      <ReasonInput id={`reject-reason-${farmer.id}`} />
+                      <button
+                        type="submit"
+                        disabled={busy}
+                        className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-white px-4 py-2.5 text-sm font-semibold text-rose-700 ring-1 ring-rose-200 disabled:opacity-70"
+                      >
+                        {rejectPending ? <Spinner className="h-3.5 w-3.5" /> : null}
+                        Rədd et
+                      </button>
+                    </form>
+                  </>
+                ) : null}
+
+                {farmer.status === "suspended" ? (
+                  <form action={approveAction} className="w-full sm:w-auto">
+                    <input type="hidden" name="farmer_id" value={farmer.id} />
+                    <button
+                      type="submit"
+                      disabled={busy}
+                      className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-70 sm:w-auto"
+                    >
+                      {approvePending ? <Spinner className="h-3.5 w-3.5" /> : null}
+                      Aktiv et
+                    </button>
+                  </form>
+                ) : null}
+
+                {farmer.status === "approved" ? (
+                  <form action={suspendAction} className="flex w-full flex-col gap-2 sm:w-64">
+                    <input type="hidden" name="farmer_id" value={farmer.id} />
+                    <ReasonInput id={`suspend-reason-${farmer.id}`} />
+                    <button
+                      type="submit"
+                      disabled={busy}
+                      className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-white px-4 py-2.5 text-sm font-semibold text-orange-800 ring-1 ring-orange-200 disabled:opacity-70"
+                    >
+                      {suspendPending ? <Spinner className="h-3.5 w-3.5" /> : null}
+                      Deaktiv et
+                    </button>
+                  </form>
+                ) : null}
+
+                {farmer.status === "rejected" ? (
+                  <p className="text-sm text-zinc-500">Müraciət rədd edilib.</p>
+                ) : null}
+              </div>
+            ) : null}
+
+            {panel === "delete" ? (
+              <form
+                action={deleteAction}
+                className="flex w-full flex-col gap-2 sm:w-72"
+                onSubmit={(event) => {
+                  if (
+                    !window.confirm(
+                      `"${name}" fermerini bazadan həmişəlik silmək istəyirsiniz? Məhsulları da silinəcək.`,
+                    )
+                  ) {
+                    event.preventDefault();
+                  }
+                }}
+              >
+                <input type="hidden" name="farmer_id" value={farmer.id} />
+                <ReasonInput id={`delete-reason-${farmer.id}`} />
+                <button
+                  type="submit"
+                  disabled={busy}
+                  className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-rose-600 px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-70 sm:w-auto"
+                >
+                  {deletePending ? <Spinner className="h-3.5 w-3.5" /> : null}
+                  Fermeri sil
+                </button>
+              </form>
+            ) : null}
+          </td>
+        </tr>
       ) : null}
-
-      <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
-        {farmer.status === "pending" ? (
-          <>
-            <form action={approveAction} className="w-full sm:w-auto">
-              <input type="hidden" name="farmer_id" value={farmer.id} />
-              <button
-                type="submit"
-                disabled={busy}
-                className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-70 sm:w-auto"
-              >
-                {approvePending ? <Spinner className="h-3.5 w-3.5" /> : null}
-                Təsdiqlə
-              </button>
-            </form>
-            <form
-              action={rejectAction}
-              className="flex w-full flex-col gap-2 sm:w-64"
-            >
-              <input type="hidden" name="farmer_id" value={farmer.id} />
-              <ReasonInput id={`reject-reason-${farmer.id}`} />
-              <button
-                type="submit"
-                disabled={busy}
-                className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-white px-4 py-2.5 text-sm font-semibold text-rose-700 ring-1 ring-rose-200 disabled:opacity-70"
-              >
-                {rejectPending ? <Spinner className="h-3.5 w-3.5" /> : null}
-                Rədd et
-              </button>
-            </form>
-          </>
-        ) : null}
-
-        {farmer.status === "suspended" ? (
-          <form action={approveAction} className="w-full sm:w-auto">
-            <input type="hidden" name="farmer_id" value={farmer.id} />
-            <button
-              type="submit"
-              disabled={busy}
-              className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-70 sm:w-auto"
-            >
-              {approvePending ? <Spinner className="h-3.5 w-3.5" /> : null}
-              Aktiv et
-            </button>
-          </form>
-        ) : null}
-
-        {farmer.status === "approved" ? (
-          <form
-            action={suspendAction}
-            className="flex w-full flex-col gap-2 sm:w-64"
-          >
-            <input type="hidden" name="farmer_id" value={farmer.id} />
-            <ReasonInput id={`suspend-reason-${farmer.id}`} />
-            <button
-              type="submit"
-              disabled={busy}
-              className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-white px-4 py-2.5 text-sm font-semibold text-orange-800 ring-1 ring-orange-200 disabled:opacity-70"
-            >
-              {suspendPending ? <Spinner className="h-3.5 w-3.5" /> : null}
-              Deaktiv et
-            </button>
-          </form>
-        ) : null}
-
-        <form
-          action={deleteAction}
-          className="flex w-full flex-col gap-2 sm:w-64"
-          onSubmit={(event) => {
-            if (
-              !window.confirm(
-                `"${farmerDisplayName(farmer.profiles?.full_name)}" fermerini bazadan həmişəlik silmək istəyirsiniz? Məhsulları da silinəcək.`,
-              )
-            ) {
-              event.preventDefault();
-            }
-          }}
-        >
-          <input type="hidden" name="farmer_id" value={farmer.id} />
-          <ReasonInput id={`delete-reason-${farmer.id}`} />
-          <button
-            type="submit"
-            disabled={busy}
-            className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-rose-600 px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-70 sm:w-auto"
-          >
-            {deletePending ? <Spinner className="h-3.5 w-3.5" /> : null}
-            Fermeri sil
-          </button>
-        </form>
-      </div>
-    </article>
+    </>
   );
 }
 

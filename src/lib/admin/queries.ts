@@ -146,21 +146,78 @@ export type AdminFarmer = Farmer & {
     email: string | null;
     phone: string | null;
   } | null;
+  /** Products on sale now. */
+  productCount: number;
+  /** Confirmed orders' lines, cancelled lines left out (as on the farmer's stats). */
+  revenue: number;
 };
+
+const PAGE_SIZE = 1000;
+
+/** Every row of a paged query; PostgREST returns at most 1000 at a time. */
+async function fetchAllRows<T>(
+  page: (from: number, to: number) => PromiseLike<{ data: T[] | null; error: { message: string } | null }>,
+  label: string,
+): Promise<T[]> {
+  const rows: T[] = [];
+  for (let from = 0; ; from += PAGE_SIZE) {
+    const { data, error } = await page(from, from + PAGE_SIZE - 1);
+    if (error) {
+      console.error(label, error.message);
+      break;
+    }
+    rows.push(...(data ?? []));
+    if ((data ?? []).length < PAGE_SIZE) break;
+  }
+  return rows;
+}
 
 export async function getAdminFarmers(): Promise<AdminFarmer[]> {
   const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("farmers")
-    .select("*, profiles:profile_id (full_name, email, phone)")
-    .order("created_at", { ascending: false });
+  const [{ data, error }, products, lines] = await Promise.all([
+    supabase
+      .from("farmers")
+      .select("*, profiles:profile_id (full_name, email, phone)")
+      .order("created_at", { ascending: false }),
+    fetchAllRows(
+      (from, to) =>
+        supabase.from("products").select("farmer_id").eq("status", "approved").order("id").range(from, to),
+      "[admin.getAdminFarmers.products]",
+    ),
+    fetchAllRows(
+      (from, to) =>
+        supabase
+          .from("order_items")
+          .select("farmer_id, line_total, orders!inner (status)")
+          .neq("status", "cancelled")
+          .not("orders.status", "in", "(awaiting_confirmation,cancelled)")
+          .order("id")
+          .range(from, to),
+      "[admin.getAdminFarmers.revenue]",
+    ),
+  ]);
 
   if (error) {
     console.error("[admin.getAdminFarmers]", error.message);
     return [];
   }
 
-  return (data ?? []) as unknown as AdminFarmer[];
+  const productCounts = new Map<string, number>();
+  for (const product of products) {
+    productCounts.set(product.farmer_id, (productCounts.get(product.farmer_id) ?? 0) + 1);
+  }
+  const revenues = new Map<string, number>();
+  for (const line of lines) {
+    if (!line.farmer_id) continue;
+    revenues.set(line.farmer_id, (revenues.get(line.farmer_id) ?? 0) + Number(line.line_total ?? 0));
+  }
+
+  const farmers = (data ?? []) as unknown as Omit<AdminFarmer, "productCount" | "revenue">[];
+  return farmers.map((farmer) => ({
+    ...farmer,
+    productCount: productCounts.get(farmer.id) ?? 0,
+    revenue: Math.round((revenues.get(farmer.id) ?? 0) * 100) / 100,
+  }));
 }
 
 export type AdminProduct = Product & {
