@@ -12,7 +12,15 @@ function supabaseHostname() {
 
 const supabaseHost = supabaseHostname();
 
+// Link-preview crawlers get the title, description and picture in the
+// <head> of a fully rendered page instead of streamed after it. This is
+// Next.js's own list (html-bots.ts), which setting the option replaces, plus
+// the messengers it leaves out: Telegram, Viber, Pinterest, Snapchat.
+const LINK_PREVIEW_BOTS =
+  /[\w-]+-Google|Google-[\w-]+|Chrome-Lighthouse|Slurp|DuckDuckBot|baiduspider|yandex|sogou|bitlybot|tumblr|vkShare|quora link preview|redditbot|ia_archiver|Bingbot|BingPreview|applebot|facebookexternalhit|facebookcatalog|Twitterbot|LinkedInBot|Slackbot|Discordbot|WhatsApp|SkypeUriPreview|Yeti|googleweblight|TelegramBot|Viber|Pinterest|Snapchat/i;
+
 const nextConfig: NextConfig = {
+  htmlLimitedBots: LINK_PREVIEW_BOTS,
   experimental: {
     staleTimes: {
       dynamic: 30,
