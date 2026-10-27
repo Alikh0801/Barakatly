@@ -31,6 +31,7 @@ import { formatPrice, getProductImageUrl } from "@/lib/shop/format";
 import { formatStock, productVariants, variantLabel } from "@/lib/shop/variants";
 import { formatDateTime } from "@/lib/format/date";
 import { farmerDisplayName } from "@/lib/farmers/name";
+import { azNormalize } from "@/lib/shop/normalize";
 import type {
   AdminCategory,
   AdminCourier,
@@ -83,29 +84,16 @@ const FARMER_FILTERS: { value: FarmerFilter; label: string }[] = [
   { value: "suspended", label: "Deaktiv" },
 ];
 
-/** Lower case with the Azerbaijani letters folded, so "gunel" finds "Günel". */
-function foldSearch(text: string): string {
-  return text
-    .toLocaleLowerCase("az")
-    .replace(/ə/g, "e")
-    .replace(/ı/g, "i")
-    .replace(/ö/g, "o")
-    .replace(/ü/g, "u")
-    .replace(/ş/g, "s")
-    .replace(/ç/g, "c")
-    .replace(/ğ/g, "g");
-}
-
 export function AdminFarmersPanel({ farmers }: { farmers: AdminFarmer[] }) {
   const [filter, setFilter] = useState<FarmerFilter>("all");
   const [query, setQuery] = useState("");
   const pendingEdits = farmers.filter((farmer) => farmer.pending_submitted_at);
 
-  const needle = foldSearch(query.trim());
+  const needle = azNormalize(query);
   const visible = farmers.filter((farmer) => {
     if (filter !== "all" && farmer.status !== filter) return false;
     if (!needle) return true;
-    return foldSearch(
+    return azNormalize(
       [farmer.profiles?.full_name, farmer.profiles?.email, farmer.profiles?.phone, farmer.location_text]
         .filter(Boolean)
         .join(" "),
