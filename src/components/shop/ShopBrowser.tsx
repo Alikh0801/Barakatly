@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import type { ReactNode } from "react";
 import { ProductCard } from "@/components/shop/ProductCard";
+import { ShopViewToggle, useShopView } from "@/components/shop/ShopViewToggle";
 import { getDisplayPrice } from "@/lib/shop/format";
 import { PriceRangeFilter } from "@/components/shop/PriceRangeFilter";
 import type { ProductListItem } from "@/types/shop";
@@ -151,6 +152,7 @@ export function ShopBrowser({
   const [minPrice, setMinPrice] = useState("");
   const [maxPrice, setMaxPrice] = useState("");
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
+  const [view, setView] = useShopView();
 
   const farmerOptions = useMemo<FarmerOption[]>(() => {
     const map = new Map<string, FarmerOption>();
@@ -321,9 +323,12 @@ export function ShopBrowser({
             </span>
           ) : null}
         </button>
-        <span className="text-sm text-zinc-500">
-          {filteredProducts.length} məhsul
-        </span>
+        <div className="flex items-center gap-3">
+          <span className="text-sm text-zinc-500">
+            {filteredProducts.length} məhsul
+          </span>
+          <ShopViewToggle view={view} onChange={setView} />
+        </div>
       </div>
 
       <div className="mt-6 lg:grid lg:grid-cols-[280px_1fr] lg:items-start lg:gap-8">
@@ -348,9 +353,12 @@ export function ShopBrowser({
             ) : (
               <span />
             )}
-            <span className="text-sm text-zinc-500">
-              {filteredProducts.length} məhsul
-            </span>
+            <div className="flex items-center gap-3">
+              <span className="text-sm text-zinc-500">
+                {filteredProducts.length} məhsul
+              </span>
+              <ShopViewToggle view={view} onChange={setView} />
+            </div>
           </div>
 
           {activeCategoryName ? (
@@ -363,11 +371,19 @@ export function ShopBrowser({
           ) : null}
 
           {filteredProducts.length > 0 ? (
-            <div className="mt-4 grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 lg:mt-4 lg:grid-cols-2 lg:gap-6 xl:grid-cols-3">
-              {filteredProducts.map((product) => (
-                <ProductCard key={product.id} product={product} />
-              ))}
-            </div>
+            view === "list" ? (
+              <div className="mt-4 flex flex-col gap-3 sm:gap-4">
+                {filteredProducts.map((product) => (
+                  <ProductCard key={product.id} product={product} layout="list" />
+                ))}
+              </div>
+            ) : (
+              <div className="mt-4 grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 lg:mt-4 lg:grid-cols-2 lg:gap-6 xl:grid-cols-3">
+                {filteredProducts.map((product) => (
+                  <ProductCard key={product.id} product={product} />
+                ))}
+              </div>
+            )
           ) : (
             <div className="mt-4 rounded-3xl bg-white p-10 text-center shadow-sm ring-1 ring-zinc-200">
               <p className="text-lg font-medium text-zinc-900">
