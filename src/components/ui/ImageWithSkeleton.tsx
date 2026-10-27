@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { useState } from "react";
 import { Skeleton } from "@/components/ui/Skeleton";
+import { ProductImagePlaceholder } from "@/components/shop/ProductImagePlaceholder";
 
 export function ImageWithSkeleton({
   src,
@@ -22,7 +23,18 @@ export function ImageWithSkeleton({
   sizes?: string;
   preload?: boolean;
 }) {
-  const [loaded, setLoaded] = useState(false);
+  // Both keyed to the src, so a new image starts over. next/image itself
+  // calls onLoad for an image that finished before hydration (it checks
+  // img.complete once mounted) and re-fires an error lost before it.
+  const [loadedSrc, setLoadedSrc] = useState<string | null>(null);
+  const [failedSrc, setFailedSrc] = useState<string | null>(null);
+  const loaded = loadedSrc === src;
+
+  // A failed image (a 402 from the image optimizer, a deleted file) shows the
+  // same placeholder as a product without photos, not an endless skeleton.
+  if (failedSrc === src) {
+    return <ProductImagePlaceholder className={fill ? "h-full w-full" : "h-full w-full min-h-20"} />;
+  }
 
   return (
     <div
@@ -49,7 +61,8 @@ export function ImageWithSkeleton({
         fill={fill}
         sizes={sizes}
         preload={preload}
-        onLoad={() => setLoaded(true)}
+        onLoad={() => setLoadedSrc(src)}
+        onError={() => setFailedSrc(src)}
         className={[
           fill ? "z-10 object-cover" : "relative z-10",
           loaded ? "opacity-100" : "opacity-0",
