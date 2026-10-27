@@ -51,7 +51,18 @@ function CardRating({ average, count }: { average: number | null; count: number 
   );
 }
 
-export function ProductCard({ product }: { product: ProductListItem }) {
+/**
+ * A product in a catalog. "grid" is the usual tile; "list" lays the same
+ * card out in a row (photo left, details right) for the shop's list view.
+ */
+export function ProductCard({
+  product,
+  layout = "grid",
+}: {
+  product: ProductListItem;
+  layout?: "grid" | "list";
+}) {
+  const list = layout === "list";
   const variants = productVariants(product);
   const [selectedId, setSelectedId] = useState(() => defaultVariant(variants).id);
   const selected = variants.find((variant) => variant.id === selectedId) ?? defaultVariant(variants);
@@ -63,14 +74,21 @@ export function ProductCard({ product }: { product: ProductListItem }) {
 
   return (
     // Hover: the card rises a little with a soft green shadow and the name
-    // turns green. A column the height of its grid row, so the price row
-    // sits at the foot, level with its neighbours', however long the title.
-    <article className="group flex h-full flex-col overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-zinc-200 transition duration-300 ease-out hover:shadow-[0_14px_30px_-14px_rgba(31,77,44,0.35)] hover:ring-emerald-200 motion-safe:hover:-translate-y-1">
+    // turns green. As a tile, a column the height of its grid row, so the
+    // price row sits at the foot, level with its neighbours', however long
+    // the title.
+    <article className={`group flex overflow-hidden rounded-2xl ${list ? "flex-row" : "h-full flex-col"} bg-white shadow-sm ring-1 ring-zinc-200 transition duration-300 ease-out hover:shadow-[0_14px_30px_-14px_rgba(31,77,44,0.35)] hover:ring-emerald-200 motion-safe:hover:-translate-y-1`}>
       {/* data-static-hover: the global a:hover scale(1.02) would otherwise
           zoom the whole image link, which reads as the photo scaling. */}
-      <div className="relative">
-        <Link href={`/shop/${product.id}`} prefetch data-static-hover className="block">
-          <div className="relative aspect-[4/3] overflow-hidden">
+      <div className={list ? "relative w-32 shrink-0 sm:w-56" : "relative"}>
+        <Link href={`/shop/${product.id}`} prefetch data-static-hover className="block h-full">
+          <div
+            className={
+              list
+                ? "relative h-full min-h-32 overflow-hidden sm:min-h-40"
+                : "relative aspect-[4/3] overflow-hidden"
+            }
+          >
             {imageUrl ? (
               <ImageWithSkeleton
                 key={imageUrl}
@@ -96,11 +114,11 @@ export function ProductCard({ product }: { product: ProductListItem }) {
           productId={product.id}
           productTitle={product.title}
           // z-20: the photo itself sits on z-10 and would cover the heart.
-          className="absolute right-2.5 top-2.5 z-20"
+          className={`absolute z-20 ${list ? "right-2 top-2" : "right-2.5 top-2.5"}`}
         />
       </div>
 
-      <div className="flex flex-1 flex-col p-3 sm:p-4">
+      <div className="flex min-w-0 flex-1 flex-col p-3 sm:p-4">
         <Link href={`/shop/${product.id}`} prefetch data-static-hover>
           <div className="break-words text-sm font-semibold text-zinc-900 transition-colors group-hover:text-emerald-700">
             {product.title}
@@ -110,6 +128,11 @@ export function ProductCard({ product }: { product: ProductListItem }) {
           {farmerDisplayName(product.farmer?.owner_name)}
         </div>
         <CardRating average={product.rating_average ?? null} count={product.rating_count ?? 0} />
+        {list && product.description ? (
+          <p className="mt-2 hidden text-sm leading-relaxed text-zinc-600 sm:line-clamp-2">
+            {product.description}
+          </p>
+        ) : null}
         {product.category ? (
           <div className="mt-2">
             <span className="inline-flex rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-medium text-emerald-700 ring-1 ring-emerald-200">
