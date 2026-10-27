@@ -19,7 +19,6 @@ import {
 import { SimilarProducts } from "@/components/shop/SimilarProducts";
 import { VerifiedIcon } from "@/components/ui/VerifiedIcon";
 import { getProductById, getSimilarProductsByCategory } from "@/lib/shop/queries";
-import { getPublicFarmerProducts } from "@/lib/farmers/queries";
 import { getProductImageUrl } from "@/lib/shop/format";
 import { productVariants } from "@/lib/shop/variants";
 import { farmerDisplayName } from "@/lib/farmers/name";
@@ -106,22 +105,13 @@ export default async function ProductDetailPage({
   ]);
   const ratingSummary = summarizeRatings(reviews);
 
-  const farmerProducts = farmer ? await getPublicFarmerProducts(farmer.id) : [];
-  const farmerOtherProducts = farmerProducts.filter((p) => p.id !== product.id);
-
-  const similarProducts =
-    farmerOtherProducts.length > 0
-      ? farmerOtherProducts.slice(0, 4)
-      : product.category
-        ? await getSimilarProductsByCategory(product.category.slug, product.id)
-        : [];
-
-  const similarHref =
-    farmerOtherProducts.length > 0 && farmer
-      ? `/farmers/${farmer.id}`
-      : product.category
-        ? `/shop?category=${product.category.slug}`
-        : "/shop";
+  // Same category as this product, from any farmer.
+  const similarProducts = product.category
+    ? await getSimilarProductsByCategory(product.category.slug, product.id)
+    : [];
+  const similarHref = product.category
+    ? `/shop?category=${product.category.slug}`
+    : "/shop";
 
   return (
     <div className="mx-auto w-full max-w-6xl px-4 py-10 md:px-6 md:py-12">
