@@ -63,8 +63,9 @@ export function ProductCard({ product }: { product: ProductListItem }) {
 
   return (
     // Hover: the card rises a little with a soft green shadow and the name
-    // turns green.
-    <article className="group overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-zinc-200 transition duration-300 ease-out hover:shadow-[0_14px_30px_-14px_rgba(31,77,44,0.35)] hover:ring-emerald-200 motion-safe:hover:-translate-y-1">
+    // turns green. A column the height of its grid row, so the price row
+    // sits at the foot, level with its neighbours', however long the title.
+    <article className="group flex h-full flex-col overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-zinc-200 transition duration-300 ease-out hover:shadow-[0_14px_30px_-14px_rgba(31,77,44,0.35)] hover:ring-emerald-200 motion-safe:hover:-translate-y-1">
       {/* data-static-hover: the global a:hover scale(1.02) would otherwise
           zoom the whole image link, which reads as the photo scaling. */}
       <div className="relative">
@@ -99,9 +100,9 @@ export function ProductCard({ product }: { product: ProductListItem }) {
         />
       </div>
 
-      <div className="p-3 sm:p-4">
+      <div className="flex flex-1 flex-col p-3 sm:p-4">
         <Link href={`/shop/${product.id}`} prefetch data-static-hover>
-          <div className="line-clamp-2 text-sm font-semibold text-zinc-900 transition-colors group-hover:text-emerald-700">
+          <div className="break-words text-sm font-semibold text-zinc-900 transition-colors group-hover:text-emerald-700">
             {product.title}
           </div>
         </Link>
@@ -146,7 +147,7 @@ export function ProductCard({ product }: { product: ProductListItem }) {
           </div>
         ) : null}
 
-        <div className="mt-3 flex min-h-9 items-center justify-between gap-2">
+        <div className="mt-auto flex min-h-9 items-center justify-between gap-2 pt-3">
           <div className="min-w-0">
             <div className="flex items-baseline gap-1">
               <span className="truncate text-sm font-semibold text-zinc-900">
