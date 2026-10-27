@@ -1,20 +1,23 @@
 import { AdminAuthImagePanel } from "@/components/admin/AdminAuthImagePanel";
 import { AdminHeroPanel } from "@/components/admin/AdminHeroPanel";
 import { AdminLogoPanel } from "@/components/admin/AdminLogoPanel";
+import { AdminOgImagePanel } from "@/components/admin/AdminOgImagePanel";
 import { AdminPageShell } from "@/components/admin/AdminPageShell";
 import {
   getAdminAuthImageContent,
   getAdminHeroContent,
+  getAdminOgImage,
   getAdminSiteLogo,
 } from "@/lib/content/queries";
 
 export const metadata = { title: "Hero - Admin" };
 
 export default async function AdminHeroPage() {
-  const [heroContent, authImageContent, logoUrl] = await Promise.all([
+  const [heroContent, authImageContent, logoUrl, ogImage] = await Promise.all([
     getAdminHeroContent(),
     getAdminAuthImageContent(),
     getAdminSiteLogo(),
+    getAdminOgImage(),
   ]);
 
   return (
@@ -33,6 +36,7 @@ export default async function AdminHeroPage() {
           items={authImageContent.items}
         />
         <AdminLogoPanel logoUrl={logoUrl} />
+        <AdminOgImagePanel imageUrl={ogImage.imageUrl} />
       </div>
     </AdminPageShell>
   );

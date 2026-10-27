@@ -17,7 +17,7 @@ import {
 import type { FarmerBlogPost } from "@/lib/farmer/queries";
 import { getProfile } from "@/lib/auth/session";
 import { farmerDisplayName } from "@/lib/farmers/name";
-import { DEFAULT_OG_IMAGE } from "@/lib/og-image";
+import { getDefaultOgImage } from "@/lib/og-image";
 
 export async function generateMetadata({
   params,
@@ -36,7 +36,7 @@ export async function generateMetadata({
   // These openGraph and twitter objects replace the site-wide ones, so they
   // name their own picture: the avatar, else the cover, else the default card.
   const ownImage = farmer.avatar_url || farmer.cover_url;
-  const image = ownImage ? { url: ownImage, alt: name } : DEFAULT_OG_IMAGE;
+  const image = ownImage ? { url: ownImage, alt: name } : await getDefaultOgImage();
 
   return {
     title: name,

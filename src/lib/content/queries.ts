@@ -16,6 +16,9 @@ import {
   HERO_DEFAULT,
   HERO_DEFAULT_ITEMS,
   HERO_KEY,
+  OG_IMAGE_DEFAULT,
+  OG_IMAGE_KEY,
+  type OgImageItems,
   SITE_LOGO_DEFAULT_URL,
   SITE_LOGO_KEY,
   WHY_BARAKATLY_DEFAULT,
@@ -394,6 +397,53 @@ export async function getAdminSiteLogo(): Promise<string> {
     return SITE_LOGO_DEFAULT_URL;
   }
   return parseSiteLogoUrl(data?.items);
+}
+
+function parseOgImage(value: unknown): OgImageItems {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return OG_IMAGE_DEFAULT;
+  const record = value as Record<string, unknown>;
+  const imageUrl = String(record.imageUrl ?? "").trim();
+  const width = Number(record.width);
+  const height = Number(record.height);
+  if (!imageUrl || !(width > 0) || !(height > 0)) return OG_IMAGE_DEFAULT;
+  return { imageUrl, width, height };
+}
+
+async function fetchOgImage(): Promise<OgImageItems> {
+  const supabase = createPublicClient();
+  const { data, error } = await supabase
+    .from("site_content")
+    .select("items")
+    .eq("key", OG_IMAGE_KEY)
+    .maybeSingle();
+
+  if (error) {
+    console.error("[content.getOgImage]", error.message);
+    return OG_IMAGE_DEFAULT;
+  }
+  return parseOgImage(data?.items);
+}
+
+/** The link-preview picture; the bundled /og-image.jpg when none is set. */
+export const getOgImage = unstable_cache(fetchOgImage, ["og-image"], {
+  revalidate: 300,
+  tags: ["site-content", "og-image"],
+});
+
+/** Uncached, for the admin panel. */
+export async function getAdminOgImage(): Promise<OgImageItems> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("site_content")
+    .select("items")
+    .eq("key", OG_IMAGE_KEY)
+    .maybeSingle();
+
+  if (error) {
+    console.error("[admin.getOgImage]", error.message);
+    return OG_IMAGE_DEFAULT;
+  }
+  return parseOgImage(data?.items);
 }
 
 export type FaqContent = {
