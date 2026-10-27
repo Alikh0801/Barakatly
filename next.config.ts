@@ -26,6 +26,11 @@ const nextConfig: NextConfig = {
     },
   },
   images: {
+    // Served straight from Supabase Storage, not through Vercel's optimizer:
+    // its monthly quota ran out and every new size answered 402, leaving
+    // grey boxes on phones. Our photos are 100–500 KB, so the cost is small.
+    // While this is on, formats and minimumCacheTTL below have no effect.
+    unoptimized: true,
     formats: ["image/avif", "image/webp"],
     // Every upload gets a new file name (timestamp + UUID), so an image at a
     // given URL never changes. The default 4-hour TTL made Vercel transform

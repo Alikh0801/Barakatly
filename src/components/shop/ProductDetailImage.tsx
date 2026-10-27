@@ -229,6 +229,10 @@ export function ProductDetailImage({
   const touchStartX = useRef<number | null>(null);
   // Which lightbox image has finished loading; any other shows a spinner.
   const [lightboxLoadedUrl, setLightboxLoadedUrl] = useState<string | null>(null);
+  // Photos that failed to load (say a 402 from the image optimizer): they
+  // show the no-photo placeholder instead of an endless skeleton or spinner.
+  const [failedUrls, setFailedUrls] = useState<ReadonlySet<string>>(() => new Set());
+  const markFailed = (url: string) => setFailedUrls((current) => new Set(current).add(url));
   const frameRef = useRef<HTMLDivElement>(null);
   const { zoom, dragging, zoomAt, reset: resetZoom, handlers: zoomHandlers } = useZoomPan(frameRef, lightboxOpen);
   const zoomed = zoom.scale > 1;
@@ -311,7 +315,9 @@ export function ProductDetailImage({
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
       >
-        {!loaded ? (
+        {failedUrls.has(active.url) ? (
+          <ProductImagePlaceholder className="absolute inset-0 h-full w-full" />
+        ) : !loaded ? (
           <Skeleton className="absolute inset-0 rounded-none" />
         ) : null}
         <Image
@@ -322,6 +328,7 @@ export function ProductDetailImage({
           preload
           sizes="(max-width: 1024px) 100vw, 50vw"
           onLoad={() => setLoaded(true)}
+          onError={() => markFailed(active.url)}
           onClick={() => setLightboxOpen(true)}
           className={[
             "cursor-zoom-in object-contain transition-opacity duration-300",
@@ -367,13 +374,18 @@ export function ProductDetailImage({
                   : "ring-transparent hover:ring-zinc-200",
               ].join(" ")}
             >
-              <Image
-                src={image.url}
-                alt=""
-                fill
-                sizes="64px"
-                className="object-cover"
-              />
+              {failedUrls.has(image.url) ? (
+                <ProductImagePlaceholder className="h-full w-full [&_svg]:h-6 [&_svg]:w-6" />
+              ) : (
+                <Image
+                  src={image.url}
+                  alt=""
+                  fill
+                  sizes="64px"
+                  onError={() => markFailed(image.url)}
+                  className="object-cover"
+                />
+              )}
             </button>
           ))}
         </div>
@@ -436,7 +448,11 @@ export function ProductDetailImage({
                   className="scale-110 object-cover opacity-50 blur-2xl"
                 />
                 <div className="absolute inset-0 bg-black/30" aria-hidden="true" />
-                {lightboxLoadedUrl !== active.url ? (
+                {failedUrls.has(active.url) ? (
+                  <span className="absolute inset-0 flex items-center justify-center text-sm text-white/80">
+                    Şəkil yüklənmədi
+                  </span>
+                ) : lightboxLoadedUrl !== active.url ? (
                   <span className="absolute inset-0 flex items-center justify-center text-white/80">
                     <Spinner className="h-6 w-6" />
                   </span>
@@ -454,6 +470,7 @@ export function ProductDetailImage({
                     // A sharper file once zoomed; until then the frame-sized one.
                     sizes={zoomed ? "(max-width: 1100px) 200vw, 2200px" : "(max-width: 1100px) 100vw, 1100px"}
                     onLoad={() => setLightboxLoadedUrl(active.url)}
+                    onError={() => markFailed(active.url)}
                     className={[
                       "object-contain transition-opacity duration-300",
                       lightboxLoadedUrl === active.url ? "opacity-100" : "opacity-0",
@@ -539,7 +556,18 @@ export function ProductDetailImage({
                           : "opacity-50 ring-transparent hover:opacity-80",
                       ].join(" ")}
                     >
-                      <Image src={image.url} alt="" fill sizes="56px" className="object-cover" />
+                      {failedUrls.has(image.url) ? (
+                        <ProductImagePlaceholder className="h-full w-full [&_svg]:h-5 [&_svg]:w-5" />
+                      ) : (
+                        <Image
+                          src={image.url}
+                          alt=""
+                          fill
+                          sizes="56px"
+                          onError={() => markFailed(image.url)}
+                          className="object-cover"
+                        />
+                      )}
                     </button>
                   ))}
                 </div>
