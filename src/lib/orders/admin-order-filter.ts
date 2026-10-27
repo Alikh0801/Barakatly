@@ -1,4 +1,5 @@
 import type { OrderItem } from "@/types";
+import { azNormalize } from "@/lib/shop/normalize";
 
 /** Minimal shape needed for live admin order search. */
 export type AdminOrderSearchItem = {
@@ -12,19 +13,20 @@ export function matchesAdminOrderQuery(
   order: AdminOrderSearchItem,
   query: string
 ): boolean {
-  const needle = query.trim().toLowerCase();
+  // Case and Azerbaijani letters aside, as on the shop's search.
+  const needle = azNormalize(query);
   if (!needle) return true;
 
-  if (order.id.toLowerCase().includes(needle)) return true;
-  if (order.order_code.toLowerCase().includes(needle)) return true;
+  if (azNormalize(order.id).includes(needle)) return true;
+  if (azNormalize(order.order_code).includes(needle)) return true;
 
-  const customerName = order.customer?.full_name?.toLowerCase() ?? "";
-  const customerEmail = order.customer?.email?.toLowerCase() ?? "";
+  const customerName = azNormalize(order.customer?.full_name ?? "");
+  const customerEmail = azNormalize(order.customer?.email ?? "");
   if (customerName.includes(needle) || customerEmail.includes(needle)) {
     return true;
   }
 
   return (order.order_items ?? []).some((item) =>
-    item.product_title.toLowerCase().includes(needle)
+    azNormalize(item.product_title).includes(needle)
   );
 }

@@ -7,6 +7,7 @@ import { getDisplayPrice } from "@/lib/shop/format";
 import { PriceRangeFilter } from "@/components/shop/PriceRangeFilter";
 import type { ProductListItem } from "@/types/shop";
 import { farmerDisplayName } from "@/lib/farmers/name";
+import { azNormalize, compareAz } from "@/lib/shop/normalize";
 
 type ShopSort = "newest" | "price_asc" | "price_desc" | "popular";
 
@@ -89,12 +90,12 @@ function filterAndSortProducts(
     maxPrice: number | null;
   },
 ): ProductListItem[] {
-  const query = q.trim().toLowerCase();
+  // The same rule as /search: title and farmer name, Azerbaijani letters
+  // or not.
+  const query = azNormalize(q);
   let filtered = query
-    ? products.filter(
-        (product) =>
-          product.title.toLowerCase().includes(query) ||
-          (product.farmer?.owner_name ?? "").toLowerCase().includes(query),
+    ? products.filter((product) =>
+        azNormalize(`${product.title} ${product.farmer?.owner_name ?? ""}`).includes(query),
       )
     : products;
 
@@ -166,7 +167,7 @@ export function ShopBrowser({
         });
       }
     }
-    return [...map.values()].sort((a, b) => a.name.localeCompare(b.name, "az"));
+    return [...map.values()].sort((a, b) => compareAz(a.name, b.name));
   }, [products]);
 
   // The slider always starts at 0 so it has a track to drag along even when
