@@ -781,7 +781,7 @@ export function CheckoutForm({
             <h2 className={cardTitleClass}>Sifariş xülasəsi</h2>
             <ul className="mt-4 space-y-3">
               {items.map((item) => (
-                <li key={item.productId} className="flex items-center gap-3">
+                <li key={item.variantId} className="flex items-center gap-3">
                   <span className="relative h-11 w-11 shrink-0 overflow-hidden rounded-lg bg-zinc-100 ring-1 ring-zinc-200/70">
                     {item.imageUrl ? (
                       <Image src={item.imageUrl} alt="" fill sizes="44px" className="object-cover" />
@@ -789,6 +789,9 @@ export function CheckoutForm({
                   </span>
                   <span className="min-w-0 flex-1">
                     <span className="block truncate text-sm font-medium text-zinc-900">{item.title}</span>
+                    {item.sizeLabel ? (
+                      <span className="block text-xs text-zinc-500">Ölçü: {item.sizeLabel}</span>
+                    ) : null}
                     <span className="block text-xs text-zinc-500">
                       {formatAmount(item.unitType, item.quantity, item.unitSize)} · {formatPrice(item.price)}
                       {formatUnit(item.unitType, item.unitSize)}

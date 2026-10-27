@@ -60,6 +60,8 @@ import {
   unitLabel,
 } from "@/lib/shop/format";
 import type { FarmerOrderItem, FarmerProduct } from "@/lib/farmer/queries";
+import { MAX_PRODUCT_VARIANTS, type VariantFormRow } from "@/lib/farmer/variant-form";
+import { isSoldByWeight, productVariants } from "@/lib/shop/variants";
 import type {
   Category,
   Farmer,
@@ -317,6 +319,174 @@ function minOrderInput(unit: UnitType) {
   return { label: unitLabel(unit), step: 1, fromQuantity: (count: number) => count };
 }
 
+type VariantDraft = VariantFormRow & { key: string };
+
+function newVariantDraft(unit: UnitType = "kg"): VariantDraft {
+  return {
+    key: `new-${Math.random().toString(36).slice(2)}`,
+    unit_type: unit,
+    unit_size: "",
+    farmer_price: "",
+    quantity_available: "0",
+    image_index: "",
+  };
+}
+
+/** The form's size rows: the product's own sizes, or one empty row for a new product. */
+function initialVariantDrafts(product: FarmerProduct | undefined, imageUrls: string[]): VariantDraft[] {
+  if (!product) return [newVariantDraft()];
+  return productVariants(product).map((variant) => {
+    const imageIndex = variant.image_url ? imageUrls.indexOf(variant.image_url) : -1;
+    return {
+      key: variant.id || "default",
+      id: variant.id || undefined,
+      unit_type: variant.unit_type,
+      unit_size: variant.unit_size ?? "",
+      farmer_price: String(variant.farmer_price),
+      quantity_available: String(variant.quantity_available),
+      image_index: imageIndex >= 0 ? String(imageIndex) : "",
+    };
+  });
+}
+
+/**
+ * The sizes a product is sold in, e.g. «banka (kq)» and «banka 1,5 kq»: each
+ * with its own unit, price, stock and (optionally) photo. Sent to the server
+ * as JSON in the "variants" field.
+ */
+function VariantRowsEditor({
+  rows,
+  onChange,
+  photoCount,
+}: {
+  rows: VariantDraft[];
+  onChange: (rows: VariantDraft[]) => void;
+  photoCount: number;
+}) {
+  const inputClass =
+    "mt-1 w-full rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-base text-zinc-900";
+
+  function update(key: string, patch: Partial<VariantDraft>) {
+    onChange(rows.map((row) => (row.key === key ? { ...row, ...patch } : row)));
+  }
+
+  return (
+    <div>
+      <span className="block text-sm font-medium text-zinc-700">Ölçülər</span>
+      <div className="mt-2 space-y-3">
+        {rows.map((row, index) => {
+          const unit = row.unit_type as UnitType;
+          const sizes = UNIT_SIZES[unit] ?? [];
+          const sizeRequired = SIZE_REQUIRED_UNITS.includes(unit);
+          return (
+            <div key={row.key} className="rounded-2xl bg-zinc-50 p-4 ring-1 ring-zinc-200">
+              <div className="flex items-center justify-between gap-3">
+                <span className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
+                  Ölçü {index + 1}
+                </span>
+                {rows.length > 1 ? (
+                  <button
+                    type="button"
+                    onClick={() => onChange(rows.filter((other) => other.key !== row.key))}
+                    className="text-xs font-medium text-rose-600 hover:text-rose-700"
+                  >
+                    Sil
+                  </button>
+                ) : null}
+              </div>
+              <div className="mt-2 grid gap-3 sm:grid-cols-2">
+                <label className="block text-sm text-zinc-700">
+                  Vahid
+                  <select
+                    value={row.unit_type}
+                    onChange={(event) => update(row.key, { unit_type: event.target.value, unit_size: "" })}
+                    className={inputClass}
+                  >
+                    {UNIT_TYPES.map((option) => (
+                      <option key={option} value={option}>
+                        {unitLabel(option)}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                {sizes.length > 0 ? (
+                  <label className="block text-sm text-zinc-700">
+                    Ölçü
+                    {sizeRequired ? null : <span className="text-zinc-400"> (istəyə görə)</span>}
+                    <select
+                      value={row.unit_size}
+                      required={sizeRequired}
+                      onChange={(event) => update(row.key, { unit_size: event.target.value })}
+                      className={inputClass}
+                    >
+                      <option value="">{sizeRequired ? "Seçin" : "Ölçüsüz"}</option>
+                      {sizes.map((size) => (
+                        <option key={size} value={size}>
+                          {unitLabel(unit, size)}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                ) : null}
+                <label className="block text-sm text-zinc-700">
+                  Fermer qiyməti (₼)
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="0.01"
+                    required
+                    value={row.farmer_price}
+                    onChange={(event) => update(row.key, { farmer_price: event.target.value })}
+                    className={inputClass}
+                  />
+                </label>
+                <label className="block text-sm text-zinc-700">
+                  Əldə olan ({isSoldByWeight(unit, row.unit_size) ? "kq" : unitLabel(unit)})
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    required
+                    value={row.quantity_available}
+                    onChange={(event) => update(row.key, { quantity_available: event.target.value })}
+                    className={inputClass}
+                  />
+                </label>
+                {rows.length > 1 && photoCount > 1 ? (
+                  <label className="block text-sm text-zinc-700">
+                    Şəkil <span className="text-zinc-400">(istəyə görə)</span>
+                    <select
+                      value={row.image_index}
+                      onChange={(event) => update(row.key, { image_index: event.target.value })}
+                      className={inputClass}
+                    >
+                      <option value="">Əsas şəkil</option>
+                      {Array.from({ length: photoCount }, (_, photo) => (
+                        <option key={photo} value={String(photo)}>
+                          {photo + 1}-ci şəkil
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                ) : null}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+      {rows.length < MAX_PRODUCT_VARIANTS ? (
+        <button
+          type="button"
+          onClick={() => onChange([...rows, newVariantDraft(rows[rows.length - 1]?.unit_type as UnitType)])}
+          className="mt-3 inline-flex items-center rounded-full bg-white px-4 py-2 text-sm font-semibold text-emerald-700 ring-1 ring-emerald-200 transition hover:bg-emerald-50"
+        >
+          + Ölçü əlavə et
+        </button>
+      ) : null}
+    </div>
+  );
+}
+
 export function FarmerProductForm({
   categories,
   subcategories,
@@ -347,12 +517,14 @@ export function FarmerProductForm({
     () => images.map((file) => URL.createObjectURL(file)),
     [images],
   );
-  const [unitType, setUnitType] = useState<UnitType>(
-    (product?.unit_type as UnitType) ?? "kg",
+  const [variants, setVariants] = useState<VariantDraft[]>(() =>
+    initialVariantDrafts(product, existingImages.map((image) => image.url)),
   );
-  const [unitSize, setUnitSize] = useState(product?.unit_size ?? "");
-  const unitSizes = UNIT_SIZES[unitType] ?? [];
+  // The minimum order is one for all sizes, in the first size's unit.
+  const unitType = (variants[0]?.unit_type as UnitType) ?? "kg";
   const minOrderField = minOrderInput(unitType);
+  // New photos replace the old ones, so a size's photo pick counts in those.
+  const photoCount = images.length > 0 ? images.length : existingImages.length;
   const [categoryId, setCategoryId] = useState<string>(
     product?.category_id ?? "",
   );
@@ -459,82 +631,30 @@ export function FarmerProductForm({
           className="mt-1 w-full rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-base text-zinc-900"
         />
       </div>
-      <div className="grid gap-4 sm:grid-cols-2">
-        <div>
-          <label htmlFor="category_id" className="block text-sm font-medium text-zinc-700">
-            Kateqoriya
-          </label>
-          <select
-            id="category_id"
-            name="category_id"
-            required
-            value={categoryId}
-            onChange={(event) => {
-              setCategoryId(event.target.value);
-              setSubcategoryId("");
-            }}
-            className="mt-1 w-full rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-base text-zinc-900"
-          >
-            <option value="">Seçin</option>
-            {categories.map((category) => (
-              <option key={category.id} value={category.id}>
-                {category.name_az}
-              </option>
-            ))}
-            <option value="__new__">+ Yeni kateqoriya əlavə et</option>
-          </select>
-        </div>
-        <div>
-          <label htmlFor="unit_type" className="block text-sm font-medium text-zinc-700">
-            Vahid
-          </label>
-          <select
-            id="unit_type"
-            name="unit_type"
-            required
-            value={unitType}
-            onChange={(event) => {
-              setUnitType(event.target.value as UnitType);
-              setUnitSize("");
-            }}
-            className="mt-1 w-full rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-base text-zinc-900"
-          >
-            {UNIT_TYPES.map((unit) => (
-              <option key={unit} value={unit}>
-                {unitLabel(unit)}
-              </option>
-            ))}
-          </select>
-        </div>
-      </div>
-
-      {unitSizes.length > 0 ? (
-        <div>
-          <label htmlFor="unit_size" className="block text-sm font-medium text-zinc-700">
-            Ölçü
-            {SIZE_REQUIRED_UNITS.includes(unitType) ? null : (
-              <span className="font-normal text-zinc-400"> (istəyə görə)</span>
-            )}
-          </label>
-          <select
-            id="unit_size"
-            name="unit_size"
-            required={SIZE_REQUIRED_UNITS.includes(unitType)}
-            value={unitSize}
-            onChange={(event) => setUnitSize(event.target.value)}
-            className="mt-1 w-full rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-base text-zinc-900"
-          >
-            <option value="">
-              {SIZE_REQUIRED_UNITS.includes(unitType) ? "Seçin" : "Ölçüsüz"}
+      <div>
+        <label htmlFor="category_id" className="block text-sm font-medium text-zinc-700">
+          Kateqoriya
+        </label>
+        <select
+          id="category_id"
+          name="category_id"
+          required
+          value={categoryId}
+          onChange={(event) => {
+            setCategoryId(event.target.value);
+            setSubcategoryId("");
+          }}
+          className="mt-1 w-full rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-base text-zinc-900"
+        >
+          <option value="">Seçin</option>
+          {categories.map((category) => (
+            <option key={category.id} value={category.id}>
+              {category.name_az}
             </option>
-            {unitSizes.map((size) => (
-              <option key={size} value={size}>
-                {unitLabel(unitType, size)}
-              </option>
-            ))}
-          </select>
-        </div>
-      ) : null}
+          ))}
+          <option value="__new__">+ Yeni kateqoriya əlavə et</option>
+        </select>
+      </div>
 
       {categoryId === "__new__" ? (
         <div>
@@ -607,41 +727,19 @@ export function FarmerProductForm({
           </p>
         </div>
       ) : null}
-      <div className="grid gap-4 sm:grid-cols-2">
-        <div>
-          <label htmlFor="farmer_price" className="block text-sm font-medium text-zinc-700">
-            Fermer qiyməti (₼)
-          </label>
-          <input
-            id="farmer_price"
-            name="farmer_price"
-            type="number"
-            step="0.01"
-            min="0.01"
-            required
-            defaultValue={product?.farmer_price}
-            className="mt-1 w-full rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-base text-zinc-900"
-          />
-        </div>
-        <div>
-          <label
-            htmlFor="quantity_available"
-            className="block text-sm font-medium text-zinc-700"
-          >
-            Əldə olan ({unitLabel(unitType, unitSize)})
-          </label>
-          <input
-            id="quantity_available"
-            name="quantity_available"
-            type="number"
-            step="0.01"
-            min="0"
-            required
-            defaultValue={product?.quantity_available ?? 0}
-            className="mt-1 w-full rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-base text-zinc-900"
-          />
-        </div>
-      </div>
+      <VariantRowsEditor rows={variants} onChange={setVariants} photoCount={photoCount} />
+      <input
+        type="hidden"
+        name="variants"
+        value={JSON.stringify(variants.map((row) => ({
+          id: row.id,
+          unit_type: row.unit_type,
+          unit_size: row.unit_size,
+          farmer_price: row.farmer_price,
+          quantity_available: row.quantity_available,
+          image_index: row.image_index,
+        })))}
+      />
       <div>
         <label htmlFor="min_order_quantity" className="block text-sm font-medium text-zinc-700">
           Minimum sifariş ({minOrderField.label})
@@ -940,18 +1038,20 @@ export function FarmerProductsList({ products }: { products: FarmerProduct[] }) 
                 <p className="mt-1 text-sm text-zinc-500">
                   {product.categories?.name_az ?? "Kateqoriya"}
                 </p>
-                <p className="mt-2 text-sm text-zinc-700">
-                  Təklif: {formatPrice(product.farmer_price)}
-                  {formatUnit(product.unit_type as UnitType, product.unit_size)}
-                  {product.final_price != null ? (
-                    <span className="ml-2 text-emerald-800">
-                      · Son qiymət: {formatPrice(product.final_price)}
-                      {formatUnit(product.unit_type as UnitType, product.unit_size)}
-                    </span>
-                  ) : (
-                    <span className="ml-2 text-amber-700">· Son qiymət gözlənilir</span>
-                  )}
-                </p>
+                {productVariants(product).map((variant) => (
+                  <p key={variant.id || "default"} className="mt-2 text-sm text-zinc-700">
+                    Təklif: {formatPrice(variant.farmer_price)}
+                    {formatUnit(variant.unit_type, variant.unit_size)}
+                    {variant.final_price != null ? (
+                      <span className="ml-2 text-emerald-800">
+                        · Son qiymət: {formatPrice(variant.final_price)}
+                        {formatUnit(variant.unit_type, variant.unit_size)}
+                      </span>
+                    ) : (
+                      <span className="ml-2 text-amber-700">· Son qiymət gözlənilir</span>
+                    )}
+                  </p>
+                ))}
               </div>
               <span className="inline-flex shrink-0 rounded-full bg-zinc-100 px-2.5 py-0.5 text-xs font-medium text-zinc-700 ring-1 ring-zinc-200">
                 {getProductStatusLabel(product.status)}

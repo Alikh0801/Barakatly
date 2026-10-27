@@ -1,5 +1,6 @@
 import { unstable_cache } from "next/cache";
 import { createPublicClient } from "@/lib/supabase/public";
+import { VARIANTS_SELECT } from "@/lib/shop/variants";
 import type { FarmerCertificate } from "@/types";
 import type { ProductListItem } from "@/types/shop";
 
@@ -42,7 +43,8 @@ const productSelect = `
   product_images (
     url,
     sort_order
-  )
+  ),
+  ${VARIANTS_SELECT}
 `;
 
 function mapPublicFarmer(

@@ -27,14 +27,8 @@ import {
 } from "@/lib/orders/labels";
 import { Spinner } from "@/components/ui/Spinner";
 import { FormPendingSpinner } from "@/components/ui/FormPendingSpinner";
-import {
-  formatPrice,
-  getProductImageUrl,
-  SIZE_REQUIRED_UNITS,
-  UNIT_SIZES,
-  UNIT_TYPES,
-  unitLabel,
-} from "@/lib/shop/format";
+import { formatPrice, getProductImageUrl } from "@/lib/shop/format";
+import { formatStock, productVariants, variantLabel } from "@/lib/shop/variants";
 import { formatDateTime } from "@/lib/format/date";
 import { farmerDisplayName } from "@/lib/farmers/name";
 import type {
@@ -43,7 +37,6 @@ import type {
   AdminFarmer,
   AdminProduct,
 } from "@/lib/admin/queries";
-import type { UnitType } from "@/types";
 
 const initialState: AdminPortalActionState = {};
 
@@ -741,14 +734,17 @@ function ProductCard({
             </div>
 
             <div className="mt-3 flex flex-wrap items-center gap-2">
-              <span className="inline-flex items-center gap-1.5 rounded-lg bg-zinc-50 px-2.5 py-1 text-xs font-medium text-zinc-700 ring-1 ring-zinc-100">
-                <TagIcon className="h-3.5 w-3.5 text-zinc-400" />
-                Təklif: {formatPrice(product.farmer_price)}
-              </span>
-              <span className="inline-flex items-center gap-1.5 rounded-lg bg-zinc-50 px-2.5 py-1 text-xs font-medium text-zinc-700 ring-1 ring-zinc-100">
-                <BoxIcon className="h-3.5 w-3.5 text-zinc-400" />
-                {product.quantity_available} {unitLabel(product.unit_type, product.unit_size)}
-              </span>
+              {productVariants(product).map((variant) => (
+                <span
+                  key={variant.id || "default"}
+                  className="inline-flex items-center gap-1.5 rounded-lg bg-zinc-50 px-2.5 py-1 text-xs font-medium text-zinc-700 ring-1 ring-zinc-100"
+                >
+                  <TagIcon className="h-3.5 w-3.5 text-zinc-400" />
+                  {variantLabel(variant.unit_type, variant.unit_size)} · Təklif: {formatPrice(variant.farmer_price)}
+                  <BoxIcon className="ml-1 h-3.5 w-3.5 text-zinc-400" />
+                  {formatStock(variant.unit_type, variant.quantity_available, variant.unit_size)}
+                </span>
+              ))}
               <button
                 type="button"
                 onClick={() => setEditing((v) => !v)}
@@ -783,24 +779,7 @@ function ProductCard({
           className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-end"
         >
           <input type="hidden" name="product_id" value={product.id} />
-          <div className="w-full sm:w-40">
-            <label
-              htmlFor={`price-${product.id}`}
-              className="block text-xs font-medium text-zinc-600"
-            >
-              Final qiymət (₼)
-            </label>
-            <input
-              id={`price-${product.id}`}
-              name="final_price"
-              type="number"
-              step="0.01"
-              min="0.01"
-              required
-              defaultValue={product.farmer_price}
-              className="mt-1 w-full rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-base text-zinc-900 sm:text-sm"
-            />
-          </div>
+          <VariantFinalPriceInputs product={product} idPrefix="price" fallback="farmer" />
           <button
             type="submit"
             disabled={approvePending || rejectPending || taxonomyPending}
@@ -841,10 +820,6 @@ function ProductEditForm({
     initialState
   );
   const [categoryId, setCategoryId] = useState(product.category_id);
-  const [unitType, setUnitType] = useState(product.unit_type as UnitType);
-  const [unitSize, setUnitSize] = useState(product.unit_size ?? "");
-  const unitSizes = UNIT_SIZES[unitType] ?? [];
-  const sizeRequired = SIZE_REQUIRED_UNITS.includes(unitType);
   const [subcategoryId, setSubcategoryId] = useState(
     product.subcategory_id ?? ""
   );
@@ -861,8 +836,6 @@ function ProductEditForm({
 
   const fieldClass =
     "mt-1 w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-900";
-  const disabledFieldClass =
-    "mt-1 w-full rounded-xl border border-zinc-200 bg-zinc-100 px-3 py-2 text-sm text-zinc-500";
 
   return (
     <div className="mt-4 space-y-3">
@@ -939,67 +912,6 @@ function ProductEditForm({
         </label>
       </div>
 
-      <div className="grid gap-3 sm:grid-cols-3">
-        <label className="block">
-          <span className="text-xs font-medium text-zinc-600">Vahid</span>
-          <select
-            name="unit_type"
-            required
-            value={unitType}
-            onChange={(event) => {
-              setUnitType(event.target.value as UnitType);
-              setUnitSize("");
-            }}
-            className={fieldClass}
-          >
-            {UNIT_TYPES.map((unit) => (
-              <option key={unit} value={unit}>
-                {unitLabel(unit)}
-              </option>
-            ))}
-          </select>
-          {unitSizes.length > 0 ? (
-            <select
-              name="unit_size"
-              required={sizeRequired}
-              value={unitSize}
-              onChange={(event) => setUnitSize(event.target.value)}
-              aria-label="Ölçü"
-              className={`${fieldClass} mt-2`}
-            >
-              <option value="">{sizeRequired ? "Ölçü seçin" : "Ölçüsüz"}</option>
-              {unitSizes.map((size) => (
-                <option key={size} value={size}>
-                  {size}
-                </option>
-              ))}
-            </select>
-          ) : null}
-        </label>
-        <label className="block">
-          <span className="text-xs font-medium text-zinc-600">
-            Fermer qiyməti (₼)
-          </span>
-          <input
-            type="number"
-            value={product.farmer_price}
-            disabled
-            readOnly
-            className={disabledFieldClass}
-          />
-        </label>
-        <label className="block">
-          <span className="text-xs font-medium text-zinc-600">Əldə olan</span>
-          <input
-            type="number"
-            value={product.quantity_available}
-            disabled
-            readOnly
-            className={disabledFieldClass}
-          />
-        </label>
-      </div>
-
       <button
         type="submit"
         disabled={pending}
@@ -1063,6 +975,53 @@ function SubcategoryRenameForm({
   );
 }
 
+/** One final-price field per size ("final_price_<size id>"). */
+function VariantFinalPriceInputs({
+  product,
+  idPrefix,
+  fallback,
+}: {
+  product: AdminProduct;
+  idPrefix: string;
+  /** What the field starts at: the farmer's offer, or the current final price. */
+  fallback: "farmer" | "final";
+}) {
+  const variants = productVariants(product);
+  const several = variants.length > 1;
+  return (
+    <div className="flex flex-wrap gap-2">
+      {variants.map((variant) => {
+        const id = `${idPrefix}-${product.id}-${variant.id}`;
+        return (
+          <div key={variant.id || "default"} className="w-full sm:w-40">
+            <label htmlFor={id} className="block text-xs font-medium text-zinc-600">
+              {several
+                ? `${variantLabel(variant.unit_type, variant.unit_size)} (₼)`
+                : fallback === "final"
+                  ? "Yeni son qiymət (₼)"
+                  : "Final qiymət (₼)"}
+            </label>
+            <input
+              id={id}
+              name={`final_price_${variant.id}`}
+              type="number"
+              step="0.01"
+              min="0.01"
+              required
+              defaultValue={
+                fallback === "final"
+                  ? (variant.final_price ?? variant.farmer_price)
+                  : variant.farmer_price
+              }
+              className="mt-1 w-full rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-base text-zinc-900 sm:text-sm"
+            />
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 function ApprovedPriceCard({ product }: { product: AdminProduct }) {
   const [state, action, pending] = useActionState(
     updateProductFinalPrice,
@@ -1106,12 +1065,13 @@ function ApprovedPriceCard({ product }: { product: AdminProduct }) {
             {farmerDisplayName(product.farmers?.owner_name)} ·{" "}
             {product.categories?.name_az ?? "Kateqoriya"}
           </p>
-          <p className="mt-2 text-sm text-zinc-700">
-            Təklif: {formatPrice(product.farmer_price)} · Son:{" "}
-            {product.final_price != null
-              ? formatPrice(product.final_price)
-              : "—"}
-          </p>
+          {productVariants(product).map((variant) => (
+            <p key={variant.id || "default"} className="mt-2 text-sm text-zinc-700">
+              {variantLabel(variant.unit_type, variant.unit_size)} · Təklif:{" "}
+              {formatPrice(variant.farmer_price)} · Son:{" "}
+              {variant.final_price != null ? formatPrice(variant.final_price) : "—"}
+            </p>
+          ))}
         </div>
       </div>
 
@@ -1120,24 +1080,7 @@ function ApprovedPriceCard({ product }: { product: AdminProduct }) {
         className="mt-4 flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-end"
       >
         <input type="hidden" name="product_id" value={product.id} />
-        <div className="w-full sm:w-36">
-          <label
-            htmlFor={`approved-price-${product.id}`}
-            className="block text-xs font-medium text-zinc-600"
-          >
-            Yeni son qiymət (₼)
-          </label>
-          <input
-            id={`approved-price-${product.id}`}
-            name="final_price"
-            type="number"
-            step="0.01"
-            min="0.01"
-            required
-            defaultValue={product.final_price ?? product.farmer_price}
-            className="mt-1 w-full rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-base text-zinc-900 sm:text-sm"
-          />
-        </div>
+        <VariantFinalPriceInputs product={product} idPrefix="approved-price" fallback="final" />
         <button
           type="submit"
           disabled={pending}

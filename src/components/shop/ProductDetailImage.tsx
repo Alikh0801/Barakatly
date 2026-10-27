@@ -13,6 +13,7 @@ import { createPortal } from "react-dom";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { Spinner } from "@/components/ui/Spinner";
 import { ProductImagePlaceholder } from "@/components/shop/ProductImagePlaceholder";
+import { useOptionalProductVariant } from "@/components/shop/ProductVariantContext";
 
 type ProductImage = { url: string; sort_order: number };
 
@@ -223,7 +224,13 @@ export function ProductDetailImage({
   alt: string;
 }) {
   const sorted = [...images].sort((a, b) => a.sort_order - b.sort_order);
-  const [activeIndex, setActiveIndex] = useState(0);
+  // Picking a size with its own photo jumps to that photo (adjusted while
+  // rendering, not in an effect).
+  const variantImage = useOptionalProductVariant()?.selected.image_url ?? null;
+  const [shownVariantImage, setShownVariantImage] = useState(variantImage);
+  const [activeIndex, setActiveIndex] = useState(() =>
+    Math.max(0, variantImage ? sorted.findIndex((image) => image.url === variantImage) : 0),
+  );
   const [loaded, setLoaded] = useState(false);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const touchStartX = useRef<number | null>(null);
@@ -236,6 +243,15 @@ export function ProductDetailImage({
   const frameRef = useRef<HTMLDivElement>(null);
   const { zoom, dragging, zoomAt, reset: resetZoom, handlers: zoomHandlers } = useZoomPan(frameRef, lightboxOpen);
   const zoomed = zoom.scale > 1;
+
+  if (variantImage !== shownVariantImage) {
+    setShownVariantImage(variantImage);
+    const index = variantImage ? sorted.findIndex((image) => image.url === variantImage) : -1;
+    if (index >= 0 && index !== activeIndex) {
+      setActiveIndex(index);
+      setLoaded(false);
+    }
+  }
 
   function showImage(index: number) {
     const next = (index + sorted.length) % sorted.length;

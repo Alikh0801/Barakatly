@@ -4,6 +4,10 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { ProductDetailImage } from "@/components/shop/ProductDetailImage";
 import { ProductPurchasePanel } from "@/components/shop/ProductPurchasePanel";
+import {
+  ProductVariantPrice,
+  ProductVariantProvider,
+} from "@/components/shop/ProductVariantContext";
 import { ProductTabs } from "@/components/shop/ProductTabs";
 import { WishlistButton } from "@/components/shop/WishlistButton";
 import { getSessionUser } from "@/lib/auth/session";
@@ -16,12 +20,8 @@ import { SimilarProducts } from "@/components/shop/SimilarProducts";
 import { VerifiedIcon } from "@/components/ui/VerifiedIcon";
 import { getProductById, getSimilarProductsByCategory } from "@/lib/shop/queries";
 import { getPublicFarmerProducts } from "@/lib/farmers/queries";
-import {
-  formatPrice,
-  formatUnit,
-  getDisplayPrice,
-  getProductImageUrl,
-} from "@/lib/shop/format";
+import { getProductImageUrl } from "@/lib/shop/format";
+import { productVariants } from "@/lib/shop/variants";
 import { farmerDisplayName } from "@/lib/farmers/name";
 import { DEFAULT_OG_IMAGE } from "@/lib/og-image";
 
@@ -97,7 +97,6 @@ export default async function ProductDetailPage({
 
   if (!product) notFound();
 
-  const price = getDisplayPrice(product.final_price, product.farmer_price);
   const farmer = product.farmer;
 
   const [reviews, canReview, sessionUser] = await Promise.all([
@@ -146,101 +145,96 @@ export default async function ProductDetailPage({
         <span className="truncate text-zinc-700">{product.title}</span>
       </nav>
 
-      <div className="mt-6 grid items-start gap-10 lg:grid-cols-2 lg:gap-12">
-        <div className="overflow-hidden rounded-3xl bg-zinc-100 ring-1 ring-zinc-200 lg:sticky lg:top-24">
-          <ProductDetailImage images={product.product_images} alt={product.title} />
-        </div>
-
-        <div>
-          <div className="flex flex-wrap items-center gap-2 text-sm text-zinc-500">
-            {ratingSummary.total > 0 ? (
-              <>
-                <span className="inline-flex items-center gap-1 font-medium text-amber-600">
-                  <StarIcon />
-                  {ratingSummary.average.toFixed(1)}
-                </span>
-                <span className="text-zinc-300">·</span>
-                <span>{ratingSummary.total} rəy</span>
-              </>
-            ) : (
-              <span>Hələ rəy yoxdur</span>
-            )}
-            <span className="text-zinc-300">·</span>
-            <span>{product.sold_count} satış</span>
+      <ProductVariantProvider variants={productVariants(product)}>
+        <div className="mt-6 grid items-start gap-10 lg:grid-cols-2 lg:gap-12">
+          <div className="overflow-hidden rounded-3xl bg-zinc-100 ring-1 ring-zinc-200 lg:sticky lg:top-24">
+            <ProductDetailImage images={product.product_images} alt={product.title} />
           </div>
 
-          <div className="mt-2 flex items-start justify-between gap-3">
-            <h1 className="min-w-0 break-words text-3xl font-semibold tracking-tight text-zinc-900 md:text-4xl">
-              {product.title}
-            </h1>
-            <WishlistButton
-              productId={product.id}
-              productTitle={product.title}
-              className="mt-1 h-11 w-11 shrink-0"
-            />
-          </div>
+          <div>
+            <div className="flex flex-wrap items-center gap-2 text-sm text-zinc-500">
+              {ratingSummary.total > 0 ? (
+                <>
+                  <span className="inline-flex items-center gap-1 font-medium text-amber-600">
+                    <StarIcon />
+                    {ratingSummary.average.toFixed(1)}
+                  </span>
+                  <span className="text-zinc-300">·</span>
+                  <span>{ratingSummary.total} rəy</span>
+                </>
+              ) : (
+                <span>Hələ rəy yoxdur</span>
+              )}
+              <span className="text-zinc-300">·</span>
+              <span>{product.sold_count} satış</span>
+            </div>
 
-          <div className="mt-5 flex items-baseline gap-2">
-            <span className="text-3xl font-semibold text-zinc-900">
-              {formatPrice(price)}
-            </span>
-            <span className="text-sm text-zinc-500">
-              {formatUnit(product.unit_type, product.unit_size)}
-            </span>
-          </div>
+            <div className="mt-2 flex items-start justify-between gap-3">
+              <h1 className="min-w-0 break-words text-3xl font-semibold tracking-tight text-zinc-900 md:text-4xl">
+                {product.title}
+              </h1>
+              <WishlistButton
+                productId={product.id}
+                productTitle={product.title}
+                className="mt-1 h-11 w-11 shrink-0"
+              />
+            </div>
 
-          <ProductPurchasePanel product={product} />
+            <ProductVariantPrice />
 
-          <p className="mt-4 inline-flex items-center gap-1.5 text-xs text-zinc-500">
-            <ShieldIcon />
-            Təhlükəsiz ödəniş · Fermerdən birbaşa göndərilir
-          </p>
+            <ProductPurchasePanel product={product} />
 
-          <section className="mt-8 rounded-2xl bg-zinc-50 p-4 ring-1 ring-zinc-100">
-            {farmer ? (
-              <div className="flex items-center gap-3">
-                <span className="inline-flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full bg-emerald-100 text-sm font-semibold text-emerald-800">
-                  {farmer.avatar_url ? (
-                    <Image
-                      src={farmer.avatar_url}
-                      alt=""
-                      width={44}
-                      height={44}
-                      className="h-full w-full object-cover"
-                    />
-                  ) : (
-                    farmerDisplayName(farmer.owner_name).slice(0, 2).toUpperCase()
-                  )}
-                </span>
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-1.5">
-                    <span className="truncate text-sm font-semibold text-zinc-900">
-                      {farmerDisplayName(farmer.owner_name)}
-                    </span>
-                    {farmer.verified_at ? (
-                      <VerifiedIcon className="h-4 w-4 shrink-0" />
+            <p className="mt-4 inline-flex items-center gap-1.5 text-xs text-zinc-500">
+              <ShieldIcon />
+              Təhlükəsiz ödəniş · Fermerdən birbaşa göndərilir
+            </p>
+
+            <section className="mt-8 rounded-2xl bg-zinc-50 p-4 ring-1 ring-zinc-100">
+              {farmer ? (
+                <div className="flex items-center gap-3">
+                  <span className="inline-flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full bg-emerald-100 text-sm font-semibold text-emerald-800">
+                    {farmer.avatar_url ? (
+                      <Image
+                        src={farmer.avatar_url}
+                        alt=""
+                        width={44}
+                        height={44}
+                        className="h-full w-full object-cover"
+                      />
+                    ) : (
+                      farmerDisplayName(farmer.owner_name).slice(0, 2).toUpperCase()
+                    )}
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-1.5">
+                      <span className="truncate text-sm font-semibold text-zinc-900">
+                        {farmerDisplayName(farmer.owner_name)}
+                      </span>
+                      {farmer.verified_at ? (
+                        <VerifiedIcon className="h-4 w-4 shrink-0" />
+                      ) : null}
+                    </div>
+                    {farmer.location_text ? (
+                      <p className="truncate text-xs text-zinc-500">
+                        {farmer.location_text}
+                      </p>
                     ) : null}
                   </div>
-                  {farmer.location_text ? (
-                    <p className="truncate text-xs text-zinc-500">
-                      {farmer.location_text}
-                    </p>
-                  ) : null}
+                  <Link
+                    href={`/farmers/${farmer.id}`}
+                    prefetch
+                    className="shrink-0 rounded-full bg-white px-3.5 py-2 text-xs font-semibold text-zinc-700 ring-1 ring-zinc-200 transition hover:bg-zinc-100"
+                  >
+                    Profil
+                  </Link>
                 </div>
-                <Link
-                  href={`/farmers/${farmer.id}`}
-                  prefetch
-                  className="shrink-0 rounded-full bg-white px-3.5 py-2 text-xs font-semibold text-zinc-700 ring-1 ring-zinc-200 transition hover:bg-zinc-100"
-                >
-                  Profil
-                </Link>
-              </div>
-            ) : (
-              <p className="text-sm text-zinc-500">Satıcı məlumatı mövcud deyil.</p>
-            )}
-          </section>
+              ) : (
+                <p className="text-sm text-zinc-500">Satıcı məlumatı mövcud deyil.</p>
+              )}
+            </section>
+          </div>
         </div>
-      </div>
+      </ProductVariantProvider>
 
       <ProductTabs
         description={product.description}

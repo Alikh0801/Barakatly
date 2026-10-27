@@ -83,12 +83,13 @@ export function formatQuantity(unit: UnitType, value: number | string): string {
 }
 
 /** Whether formatQuantity already names the unit. */
-function quantityHasUnit(unit: UnitType): boolean {
+export function quantityHasUnit(unit: UnitType): boolean {
   return unit === "kg" || unit === "liter";
 }
 
-/** "750 qr", "1,5 l", "3 banka (0,5 kq)" — an amount with its unit. */
+/** "750 qr", "1,5 l", "3 banka (0,5 kq)", "2 kq" for a jar sold by weight — an amount with its unit. */
 export function formatAmount(unit: UnitType, value: number | string, size?: string | null): string {
+  if (unit === "jar" && size === "kq") return `${decimal(Number(value))} kq`;
   const amount = formatQuantity(unit, value);
   return quantityHasUnit(unit) ? amount : `${amount} ${unitLabel(unit, size)}`;
 }

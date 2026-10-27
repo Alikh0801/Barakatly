@@ -55,10 +55,90 @@ import {
 } from "@/lib/farmer/application";
 import { slugifyAz } from "@/lib/admin/slug";
 import type { OrderItemStatus, UnitType } from "@/types";
-import { isUnitType, parseUnitSize } from "@/lib/shop/format";
 import { formatAmount, parseMinOrderInput } from "@/lib/shop/quantity";
+import { parseVariantRows, type ParsedVariant } from "@/lib/farmer/variant-form";
 
 type AdminClient = ReturnType<typeof createAdminClient>;
+type ServerClient = Awaited<ReturnType<typeof createClient>>;
+
+function minOrderError(unitType: UnitType): string {
+  return unitType === "kg"
+    ? "Minimum sifariş 50 qr-ın misli olmalıdır (məs: 250, 500)."
+    : unitType === "liter"
+      ? "Minimum sifariş 0,5 litrin misli olmalıdır (məs: 0.5, 1, 1.5)."
+      : "Minimum sifariş tam ədəd olmalıdır.";
+}
+
+/**
+ * Writes a product's sizes from the form: a row keeps the size it names by
+ * id (or, failing that, by unit and size), new rows are added, and sizes no
+ * longer in the form are removed. Every final price is cleared, since the
+ * product goes back to review. `imageUrls` are the product's photos in
+ * order, for each row's photo pick.
+ */
+async function saveProductVariants(
+  supabase: ServerClient,
+  productId: string,
+  rows: ParsedVariant[],
+  imageUrls: string[],
+): Promise<string | null> {
+  const { data: existing, error } = await supabase
+    .from("product_variants")
+    .select("id, unit_type, unit_size")
+    .eq("product_id", productId);
+  if (error) return error.message;
+
+  const key = (unit: string, size: string | null) => `${unit}|${size ?? ""}`;
+  const remaining = new Map((existing ?? []).map((variant) => [variant.id, variant]));
+  const matched = rows.map((row) => {
+    let id = row.id && remaining.has(row.id) ? row.id : null;
+    if (!id) {
+      id =
+        [...remaining.values()].find(
+          (variant) => key(variant.unit_type, variant.unit_size) === key(row.unit_type, row.unit_size),
+        )?.id ?? null;
+    }
+    if (id) remaining.delete(id);
+    return { row, id };
+  });
+
+  // Removed first, so a row can take over a size that was just freed.
+  if (remaining.size > 0) {
+    const { error: deleteError } = await supabase
+      .from("product_variants")
+      .delete()
+      .in("id", [...remaining.keys()]);
+    if (deleteError) return deleteError.message;
+  }
+
+  const fields = (row: ParsedVariant) => ({
+    unit_type: row.unit_type,
+    unit_size: row.unit_size,
+    farmer_price: row.farmer_price,
+    final_price: null,
+    quantity_available: row.quantity_available,
+    sort_order: row.sort_order,
+    image_url: row.image_index === null ? null : (imageUrls[row.image_index] ?? null),
+  });
+
+  for (const { row, id } of matched) {
+    if (!id) continue;
+    const { error: updateError } = await supabase
+      .from("product_variants")
+      .update(fields(row))
+      .eq("id", id);
+    if (updateError) return updateError.message;
+  }
+
+  const added = matched.filter((entry) => !entry.id);
+  if (added.length > 0) {
+    const { error: insertError } = await supabase
+      .from("product_variants")
+      .insert(added.map(({ row }) => ({ product_id: productId, ...fields(row) })));
+    if (insertError) return insertError.message;
+  }
+  return null;
+}
 
 async function uniqueCategorySlug(
   admin: AdminClient,
@@ -441,9 +521,6 @@ export async function createProduct(
 
   const title = String(formData.get("title") ?? "").trim();
   const description = String(formData.get("description") ?? "").trim();
-  const unitType = String(formData.get("unit_type") ?? "").trim() as UnitType;
-  const farmerPrice = Number(formData.get("farmer_price") ?? 0);
-  const quantity = Number(formData.get("quantity_available") ?? 0);
   // Storage paths of photos the browser already uploaded (see
   // resolveUploadedProductImages for why the files are not sent here).
   const imagePaths = formData
@@ -451,33 +528,18 @@ export async function createProduct(
     .map((value) => String(value).trim())
     .filter(Boolean);
 
-  if (!title || !description || !unitType) {
+  if (!title || !description) {
     return { error: "Bütün sahələr mütləqdir." };
   }
 
-  if (!isUnitType(unitType)) {
-    return { error: "Vahid tipi yanlışdır." };
-  }
+  const variants = parseVariantRows(String(formData.get("variants") ?? ""));
+  if ("error" in variants) return { error: variants.error };
+  const first = variants[0];
 
-  const unitSize = parseUnitSize(unitType, String(formData.get("unit_size") ?? ""));
-  if (unitSize === null) {
-    return { error: "Ölçünü seçin." };
-  }
-
-  const minOrder = parseMinOrderInput(unitType, String(formData.get("min_order_quantity") ?? ""));
+  // One minimum for every size, in the first size's unit.
+  const minOrder = parseMinOrderInput(first.unit_type, String(formData.get("min_order_quantity") ?? ""));
   if (minOrder === "invalid") {
-    return {
-      error:
-        unitType === "kg"
-          ? "Minimum sifariş 50 qr-ın misli olmalıdır (məs: 250, 500)."
-          : unitType === "liter"
-            ? "Minimum sifariş 0,5 litrin misli olmalıdır (məs: 0.5, 1, 1.5)."
-            : "Minimum sifariş tam ədəd olmalıdır.",
-    };
-  }
-
-  if (!(farmerPrice > 0) || !(quantity >= 0)) {
-    return { error: "Qiymət və miqdar düzgün deyil." };
+    return { error: minOrderError(first.unit_type) };
   }
 
   if (imagePaths.length === 0) {
@@ -506,12 +568,14 @@ export async function createProduct(
       subcategory_id: taxonomy.subcategoryId,
       title,
       description,
-      unit_type: unitType,
-      unit_size: unitSize || null,
+      // The first size; the sizes below overwrite these (products mirrors
+      // its default size).
+      unit_type: first.unit_type,
+      unit_size: first.unit_size,
       min_order_quantity: minOrder,
-      farmer_price: farmerPrice,
-      quantity_available: quantity,
-      in_stock: quantity > 0,
+      farmer_price: first.farmer_price,
+      quantity_available: first.quantity_available,
+      in_stock: first.quantity_available > 0,
       status: "pending",
     })
     .select("id")
@@ -534,6 +598,13 @@ export async function createProduct(
     console.error("[farmer.createProduct.image]", imageError.message);
     await supabase.from("products").delete().eq("id", product.id);
     return { error: "Şəkillər saxlanılmadı. Yenidən cəhd edin." };
+  }
+
+  const variantError = await saveProductVariants(supabase, product.id, variants, images.urls);
+  if (variantError) {
+    console.error("[farmer.createProduct.variants]", variantError);
+    await supabase.from("products").delete().eq("id", product.id);
+    return { error: "Ölçülər saxlanılmadı. Yenidən cəhd edin." };
   }
 
   await notifyAdmins({
@@ -567,9 +638,6 @@ export async function updateProduct(
 
   const title = String(formData.get("title") ?? "").trim();
   const description = String(formData.get("description") ?? "").trim();
-  const unitType = String(formData.get("unit_type") ?? "").trim() as UnitType;
-  const farmerPrice = Number(formData.get("farmer_price") ?? 0);
-  const quantity = Number(formData.get("quantity_available") ?? 0);
   // Storage paths of photos the browser already uploaded (see
   // resolveUploadedProductImages for why the files are not sent here).
   const imagePaths = formData
@@ -577,29 +645,18 @@ export async function updateProduct(
     .map((value) => String(value).trim())
     .filter(Boolean);
 
-  if (!productId || !title || !description || !unitType) {
+  if (!productId || !title || !description) {
     return { error: "Bütün sahələr mütləqdir." };
   }
 
-  if (!isUnitType(unitType)) {
-    return { error: "Vahid tipi yanlışdır." };
-  }
+  const variants = parseVariantRows(String(formData.get("variants") ?? ""));
+  if ("error" in variants) return { error: variants.error };
+  const first = variants[0];
 
-  const unitSize = parseUnitSize(unitType, String(formData.get("unit_size") ?? ""));
-  if (unitSize === null) {
-    return { error: "Ölçünü seçin." };
-  }
-
-  const minOrder = parseMinOrderInput(unitType, String(formData.get("min_order_quantity") ?? ""));
+  // One minimum for every size, in the first size's unit.
+  const minOrder = parseMinOrderInput(first.unit_type, String(formData.get("min_order_quantity") ?? ""));
   if (minOrder === "invalid") {
-    return {
-      error:
-        unitType === "kg"
-          ? "Minimum sifariş 50 qr-ın misli olmalıdır (məs: 250, 500)."
-          : unitType === "liter"
-            ? "Minimum sifariş 0,5 litrin misli olmalıdır (məs: 0.5, 1, 1.5)."
-            : "Minimum sifariş tam ədəd olmalıdır.",
-    };
+    return { error: minOrderError(first.unit_type) };
   }
 
   if (imagePaths.length > MAX_PRODUCT_IMAGES) {
@@ -620,27 +677,24 @@ export async function updateProduct(
   const taxonomy = await resolveTaxonomy(formData, profile.id);
   if ("error" in taxonomy) return { error: taxonomy.error };
 
-  const { error } = await supabase
+  const { data: updated, error } = await supabase
     .from("products")
     .update({
       title,
       description,
       category_id: taxonomy.categoryId,
       subcategory_id: taxonomy.subcategoryId,
-      unit_type: unitType,
-      unit_size: unitSize || null,
       min_order_quantity: minOrder,
-      farmer_price: farmerPrice,
-      quantity_available: quantity,
-      in_stock: quantity > 0,
       status: "pending",
       final_price: null,
     })
     .eq("id", productId)
-    .eq("farmer_id", farmer.id);
+    .eq("farmer_id", farmer.id)
+    .select("id")
+    .maybeSingle();
 
-  if (error) {
-    console.error("[farmer.updateProduct]", error.message);
+  if (error || !updated) {
+    console.error("[farmer.updateProduct]", error?.message);
     return { error: "Məhsul yenilənmədi." };
   }
 
@@ -665,6 +719,23 @@ export async function updateProduct(
       console.error("[farmer.updateProduct.image]", imageError.message);
       return { error: "Şəkillər yenilənmədi." };
     }
+  }
+
+  // Each size's photo pick counts in the gallery as it is now.
+  let imageUrls = newImageUrls;
+  if (imageUrls.length === 0) {
+    const { data: current } = await supabase
+      .from("product_images")
+      .select("url")
+      .eq("product_id", productId)
+      .order("sort_order", { ascending: true });
+    imageUrls = (current ?? []).map((image) => image.url);
+  }
+
+  const variantError = await saveProductVariants(supabase, productId, variants, imageUrls);
+  if (variantError) {
+    console.error("[farmer.updateProduct.variants]", variantError);
+    return { error: "Ölçülər yenilənmədi." };
   }
 
   await notifyAdmins({

@@ -7,8 +7,7 @@ import { revalidateProductCatalog } from "@/lib/shop/revalidate";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { FARMER_REJECTED_TITLE } from "@/lib/farmer/application";
-import type { UnitType } from "@/types";
-import { isUnitType, parseUnitSize } from "@/lib/shop/format";
+import { formatUnit } from "@/lib/shop/format";
 
 export type AdminPortalActionState = {
   error?: string;
@@ -390,16 +389,60 @@ async function pendingTaxonomyError(
   return null;
 }
 
+type ServerClient = Awaited<ReturnType<typeof createClient>>;
+
+/**
+ * Reads the final price of every size of a product from the form
+ * ("final_price_<size id>") and saves them. Returns an error message, or
+ * the prices saved, as "5.00 ₼ / banka (kq)" lines for the notification.
+ */
+async function saveVariantFinalPrices(
+  supabase: ServerClient,
+  productId: string,
+  formData: FormData,
+): Promise<{ error: string } | { lines: string[] }> {
+  const { data: variants, error } = await supabase
+    .from("product_variants")
+    .select("id, unit_type, unit_size")
+    .eq("product_id", productId)
+    .order("sort_order", { ascending: true });
+  if (error || !variants || variants.length === 0) return { error: "Məhsulun ölçüləri tapılmadı." };
+
+  const prices = variants.map((variant) => ({
+    variant,
+    price: Number(String(formData.get(`final_price_${variant.id}`) ?? "").replace(",", ".")),
+  }));
+  if (prices.some(({ price }) => !(price > 0) || !Number.isFinite(price))) {
+    return { error: "Hər ölçü üçün final qiymət daxil edin." };
+  }
+
+  for (const { variant, price } of prices) {
+    const { error: updateError } = await supabase
+      .from("product_variants")
+      .update({ final_price: Math.round(price * 100) / 100 })
+      .eq("id", variant.id);
+    if (updateError) {
+      console.error("[admin.saveVariantFinalPrices]", updateError.message);
+      return { error: "Qiymət yenilənmədi." };
+    }
+  }
+
+  return {
+    lines: prices.map(
+      ({ variant, price }) =>
+        `${price.toFixed(2)} ₼${formatUnit(variant.unit_type, variant.unit_size)}`,
+    ),
+  };
+}
+
 export async function approveProduct(
   _prev: AdminPortalActionState,
   formData: FormData
 ): Promise<AdminPortalActionState> {
   await requireAdmin();
   const productId = String(formData.get("product_id") ?? "");
-  const finalPrice = Number(formData.get("final_price") ?? 0);
 
   if (!productId) return { error: "Məhsul tapılmadı." };
-  if (!(finalPrice > 0)) return { error: "Final qiymət daxil edin." };
 
   const supabase = await createClient();
   const { data: product } = await supabase
@@ -417,12 +460,13 @@ export async function approveProduct(
   );
   if (taxonomyError) return { error: taxonomyError };
 
+  // Each size's final price; products.final_price follows its default size.
+  const saved = await saveVariantFinalPrices(supabase, productId, formData);
+  if ("error" in saved) return { error: saved.error };
+
   const { error } = await supabase
     .from("products")
-    .update({
-      status: "approved",
-      final_price: finalPrice,
-    })
+    .update({ status: "approved" })
     .eq("id", productId);
 
   if (error) return { error: "Məhsul təsdiqlənmədi." };
@@ -455,10 +499,8 @@ export async function updateProductFinalPrice(
 ): Promise<AdminPortalActionState> {
   await requireAdmin();
   const productId = String(formData.get("product_id") ?? "");
-  const finalPrice = Number(formData.get("final_price") ?? 0);
 
   if (!productId) return { error: "Məhsul tapılmadı." };
-  if (!(finalPrice > 0)) return { error: "Final qiymət daxil edin." };
 
   const supabase = await createClient();
   const { data: product } = await supabase
@@ -470,13 +512,8 @@ export async function updateProductFinalPrice(
 
   if (!product) return { error: "Təsdiqlənmiş məhsul tapılmadı." };
 
-  const { error } = await supabase
-    .from("products")
-    .update({ final_price: finalPrice })
-    .eq("id", productId)
-    .eq("status", "approved");
-
-  if (error) return { error: "Qiymət yenilənmədi." };
+  const saved = await saveVariantFinalPrices(supabase, productId, formData);
+  if ("error" in saved) return { error: saved.error };
 
   const farmer = Array.isArray(product.farmers)
     ? product.farmers[0]
@@ -487,7 +524,7 @@ export async function updateProductFinalPrice(
       userId: farmer.profile_id,
       type: "product_approval",
       title: "Son qiymət yeniləndi",
-      body: `"${product.title}" üçün yeni son qiymət: ${finalPrice.toFixed(2)} ₼`,
+      body: `"${product.title}" üçün yeni son qiymət: ${saved.lines.join(", ")}`,
       metadata: { product_id: product.id },
     });
   }
@@ -510,19 +547,10 @@ export async function updateProductByAdmin(
   const description = String(formData.get("description") ?? "").trim();
   const categoryId = String(formData.get("category_id") ?? "").trim();
   const subcategoryId = String(formData.get("subcategory_id") ?? "").trim();
-  const unitType = String(formData.get("unit_type") ?? "").trim();
 
   if (!productId) return { error: "Məhsul tapılmadı." };
   if (!title || !description || !categoryId) {
     return { error: "Ad, təsvir və kateqoriya mütləqdir." };
-  }
-  if (!isUnitType(unitType)) {
-    return { error: "Vahid tipi yanlışdır." };
-  }
-
-  const unitSize = parseUnitSize(unitType, String(formData.get("unit_size") ?? ""));
-  if (unitSize === null) {
-    return { error: "Ölçünü seçin." };
   }
 
   const supabase = await createClient();
@@ -538,7 +566,7 @@ export async function updateProductByAdmin(
     if (taxonomyError) return { error: taxonomyError };
   }
 
-  // Note: farmer_price and quantity_available are intentionally not touched here —
+  // Sizes (unit, farmer price, stock) are intentionally not touched here —
   // the farmer's offer stays as submitted.
   const { error } = await supabase
     .from("products")
@@ -547,8 +575,6 @@ export async function updateProductByAdmin(
       description,
       category_id: categoryId,
       subcategory_id: subcategoryId || null,
-      unit_type: unitType as UnitType,
-      unit_size: unitSize || null,
     })
     .eq("id", productId);
 

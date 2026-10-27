@@ -25,10 +25,15 @@ import { createClient } from "@/lib/supabase/server";
 import { PROMO_COOKIE, describePromoError } from "@/lib/promo/constants";
 import { getAppliedPromo } from "@/lib/promo/server";
 import { formatAmount, isOnStep, minOrderQuantity } from "@/lib/shop/quantity";
+import type { UnitType } from "@/types";
 
 export type CheckoutCartItem = {
   productId: string;
+  /** The size; null only for a line saved before sizes existed. */
+  variantId: string | null;
   quantity: number;
+  unitType: UnitType | null;
+  unitSize: string | null;
 };
 
 export type PlaceOrderState = {
@@ -142,7 +147,7 @@ export async function placeOrder(
   // Read the cart straight from the server so the client cannot tamper with it.
   const { data: cartRows, error: cartError } = await supabase
     .from("cart_items")
-    .select("product_id, quantity")
+    .select("product_id, variant_id, quantity, variant:product_variants (unit_type, unit_size)")
     .eq("customer_id", user.id);
 
   if (cartError) {
@@ -152,7 +157,16 @@ export async function placeOrder(
 
   const cartItems: CheckoutCartItem[] = (cartRows ?? [])
     .filter((row) => row.quantity > 0)
-    .map((row) => ({ productId: row.product_id, quantity: row.quantity }));
+    .map((row) => {
+      const variant = row.variant as unknown as { unit_type: UnitType; unit_size: string | null } | null;
+      return {
+        productId: row.product_id,
+        variantId: row.variant_id,
+        quantity: row.quantity,
+        unitType: variant?.unit_type ?? null,
+        unitSize: variant?.unit_size ?? null,
+      };
+    });
 
   if (cartItems.length === 0) {
     return { error: "Səbətiniz boşdur." };
@@ -188,9 +202,12 @@ export async function placeOrder(
   for (const item of cartItems) {
     const product = (cartProducts ?? []).find((row) => row.id === item.productId);
     if (!product) continue;
-    const min = minOrderQuantity(product.unit_type, product.min_order_quantity);
-    if (Number(item.quantity) < min - 1e-9 || !isOnStep(product.unit_type, Number(item.quantity))) {
-      const amount = formatAmount(product.unit_type, min, product.unit_size);
+    // A size's own unit; a line without one counts as the product's default.
+    const unit = item.unitType ?? product.unit_type;
+    const size = item.unitType ? item.unitSize : product.unit_size;
+    const min = minOrderQuantity(unit, product.min_order_quantity);
+    if (Number(item.quantity) < min - 1e-9 || !isOnStep(unit, Number(item.quantity))) {
+      const amount = formatAmount(unit, min, size);
       return {
         error: `"${product.title}" üçün minimum sifariş: ${amount}. Səbətdə miqdarı dəyişin.`,
       };
@@ -226,6 +243,7 @@ export async function placeOrder(
       p_receipt_url: receiptPath,
       p_items: cartItems.map((item) => ({
         product_id: item.productId,
+        variant_id: item.variantId,
         quantity: item.quantity,
       })),
       p_promo_code: promoCode,
