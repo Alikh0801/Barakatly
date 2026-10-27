@@ -3,6 +3,7 @@ import { ProductCard } from "@/components/shop/ProductCard";
 import { VerifiedIcon } from "@/components/ui/VerifiedIcon";
 import { searchCatalog } from "@/lib/shop/search";
 import { farmerDisplayName } from "@/lib/farmers/name";
+import { PageHeader } from "@/components/ui/PageHeader";
 
 export const metadata = {
   title: "Axtarış",
@@ -19,12 +20,7 @@ export default async function SearchPage({
 
   return (
       <div className="mx-auto w-full max-w-6xl px-4 py-10 md:px-6 md:py-12">
-        <h1 className="text-3xl font-semibold tracking-tight text-zinc-900">
-          Axtarış
-        </h1>
-        <p className="mt-2 text-sm text-zinc-500">
-          Məhsul və ya ferma adı ilə axtarın
-        </p>
+        <PageHeader title="Axtarış" description="Məhsul və ya ferma adı ilə axtarın" />
 
         <form action="/search" className="mt-6 flex gap-2">
           <input

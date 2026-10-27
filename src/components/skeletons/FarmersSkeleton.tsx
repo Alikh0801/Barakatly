@@ -21,7 +21,7 @@ function FarmerCardSkeleton() {
 /** /farmers while the list loads. */
 export function FarmersPageSkeleton() {
   return (
-    <div className="mx-auto w-full max-w-6xl px-4 py-10 md:px-6 md:py-14">
+    <div className="mx-auto w-full max-w-6xl px-4 py-10 md:px-6 md:py-12">
       <Skeleton className="h-9 w-40" />
       <Skeleton className="mt-3 h-4 w-64" />
       <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
