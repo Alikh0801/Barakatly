@@ -17,10 +17,10 @@ function ArrowIcon({ direction }: { direction: "left" | "right" }) {
 }
 
 /**
- * The home page's category tiles. From 1024 px they sit in a grid, so
- * every category is on screen. Narrower, they scroll sideways: a fade and
- * an arrow on each side that has more tiles show there is more, and the
- * arrows scroll by most of a screen.
+ * The home page's category tiles in one row that scrolls sideways. A fade
+ * and an arrow on each side that has more tiles show there is more; the
+ * arrows scroll by most of the row, and a mouse wheel scrolls it too until
+ * it reaches an end, then the page scrolls on.
  */
 export function CategoryScroller({ children }: { children: React.ReactNode }) {
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -34,12 +34,23 @@ export function CategoryScroller({ children }: { children: React.ReactNode }) {
         left: element.scrollLeft > 4,
         right: element.scrollLeft + element.clientWidth < element.scrollWidth - 4,
       });
+    // A vertical wheel turn moves the row while it has more that way.
+    const onWheel = (event: WheelEvent) => {
+      if (Math.abs(event.deltaY) <= Math.abs(event.deltaX)) return;
+      const atStart = element.scrollLeft <= 0;
+      const atEnd = element.scrollLeft + element.clientWidth >= element.scrollWidth - 1;
+      if ((event.deltaY < 0 && atStart) || (event.deltaY > 0 && atEnd)) return;
+      event.preventDefault();
+      element.scrollLeft += event.deltaY;
+    };
     element.addEventListener("scroll", update, { passive: true });
+    element.addEventListener("wheel", onWheel, { passive: false });
     // Also fires once right away, with the first measurements.
     const observer = new ResizeObserver(update);
     observer.observe(element);
     return () => {
       element.removeEventListener("scroll", update);
+      element.removeEventListener("wheel", onWheel);
       observer.disconnect();
     };
   }, []);
@@ -50,17 +61,17 @@ export function CategoryScroller({ children }: { children: React.ReactNode }) {
     element.scrollBy({ left: direction * element.clientWidth * 0.8, behavior: "smooth" });
   }
 
-  const fade = "pointer-events-none absolute inset-y-0 z-10 w-14 transition-opacity duration-200 lg:hidden";
+  const fade = "pointer-events-none absolute inset-y-0 z-10 w-14 transition-opacity duration-200";
   const arrow =
-    "absolute top-8 z-20 inline-flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-white text-zinc-700 shadow-md ring-1 ring-zinc-200 transition hover:bg-zinc-50 sm:top-9 lg:hidden";
+    "absolute top-8 z-20 inline-flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-white text-zinc-700 shadow-md ring-1 ring-zinc-200 transition hover:bg-zinc-50 sm:top-9";
 
   return (
     <div className="relative -mx-4">
       <div
         ref={scrollRef}
-        className="overflow-x-auto px-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden lg:overflow-visible"
+        className="overflow-x-auto px-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       >
-        <div className="flex w-max min-w-full items-start justify-center gap-4 md:gap-6 lg:grid lg:w-full lg:grid-cols-[repeat(auto-fill,minmax(104px,1fr))] lg:justify-items-center lg:gap-x-4 lg:gap-y-6">
+        <div className="flex w-max min-w-full items-start justify-center gap-4 md:gap-6">
           {children}
         </div>
       </div>
