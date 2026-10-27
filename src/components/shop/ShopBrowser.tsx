@@ -332,9 +332,11 @@ export function ShopBrowser({
       </div>
 
       <div className="mt-6 lg:grid lg:grid-cols-[280px_1fr] lg:items-start lg:gap-8">
+        {/* On wide screens the filters stay in view beside the products and,
+            when taller than the screen, scroll on their own. */}
         <aside
           className={[
-            "mb-6 lg:sticky lg:top-24 lg:mb-0",
+            "mb-6 lg:sticky lg:top-24 lg:mb-0 lg:max-h-[calc(100dvh-7rem)] lg:overflow-y-auto lg:overscroll-contain lg:rounded-2xl lg:[scrollbar-width:thin]",
             mobileFiltersOpen ? "block" : "hidden lg:block",
           ].join(" ")}
         >
