@@ -186,20 +186,21 @@ async function fetchSimilarProductsByCategory(
     .neq("id", excludeProductId)
     .order("in_stock", { ascending: false })
     .order("created_at", { ascending: false })
-    .limit(limit);
+    // Extra rows, since products of unapproved farmers are dropped below.
+    .limit(limit * 3);
 
   if (error) {
     console.error("[shop.getSimilarProductsByCategory]", error.message);
     return [];
   }
 
-  return ((data ?? []) as unknown as ProductListItem[]).filter(
-    (product) => product.farmer?.status === "approved",
-  );
+  return ((data ?? []) as unknown as ProductListItem[])
+    .filter((product) => product.farmer?.status === "approved")
+    .slice(0, limit);
 }
 
-/** Same-category products from other farmers, used as a fallback when a
- * product's own farmer has no other listings to show as "similar". */
+/** Other products of the same category, from any farmer: the product
+ * page's "Bənzər məhsullar". */
 export function getSimilarProductsByCategory(
   categorySlug: string,
   excludeProductId: string,
