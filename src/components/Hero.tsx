@@ -37,11 +37,18 @@ function HeroImage({
   // Art direction: portrait screens get the portrait upload instead of a
   // thin slice of the landscape one. getImageProps cannot emit a preload
   // <link> for a <picture>, so the <img> is marked high priority instead.
+  // With images unoptimized (next.config) getImageProps gives no srcSet, and
+  // a <source> without one is skipped: every screen then fell through to the
+  // <img>, the portrait upload. The plain URL is a valid srcset too.
+  const { props: desktopProps } = getImageProps({
+    src: imageUrl,
+    alt: "",
+    fill: true,
+    sizes: DESKTOP_SIZES,
+  });
+  const desktopSrcSet = desktopProps.srcSet ?? desktopProps.src;
   const {
-    props: { srcSet: desktopSrcSet },
-  } = getImageProps({ src: imageUrl, alt: "", fill: true, sizes: DESKTOP_SIZES });
-  const {
-    props: { srcSet: mobileSrcSet, ...rest },
+    props: { srcSet: mobileOptimizedSrcSet, ...rest },
   } = getImageProps({
     src: mobileImageUrl,
     alt: "",
@@ -50,6 +57,7 @@ function HeroImage({
     loading: "eager",
     fetchPriority: "high",
   });
+  const mobileSrcSet = mobileOptimizedSrcSet ?? rest.src;
 
   return (
     <picture>

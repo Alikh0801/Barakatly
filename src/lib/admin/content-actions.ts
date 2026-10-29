@@ -4,6 +4,7 @@ import { revalidatePath, updateTag } from "next/cache";
 import { requireAdmin } from "@/lib/admin/auth";
 import { resolveSiteImagePath } from "@/lib/admin/site-image-upload";
 import { readLogoHeader, siteLogoError, SITE_LOGO_TYPE_ERROR } from "@/lib/admin/site-logo";
+import { ogImageError, OG_IMAGE_TYPE_ERROR } from "@/lib/admin/og-image-rules";
 import { isSingleEmoji } from "@/lib/content/emoji";
 import {
   ABOUT_DEFAULT,
@@ -19,6 +20,9 @@ import {
   HERO_DEFAULT,
   HERO_DEFAULT_ITEMS,
   HERO_KEY,
+  OG_IMAGE_DEFAULT,
+  OG_IMAGE_KEY,
+  type OgImageItems,
   SITE_LOGO_DEFAULT_URL,
   SITE_LOGO_KEY,
   WHY_BARAKATLY_DEFAULT,
@@ -154,7 +158,10 @@ export async function updateHeroContent(
     const resolved = await resolveSiteImagePath(supabase, mobileImagePath, "hero");
     if ("error" in resolved) return { error: `Mobil şəkil: ${resolved.error}` };
     mobileImageUrl = resolved.url;
-  } else if (String(formData.get("remove_mobile_image") ?? "") === "1") {
+  } else if (imagePath || String(formData.get("remove_mobile_image") ?? "") === "1") {
+    // A new background on its own replaces the picture on every screen: an
+    // older portrait upload kept showing on phones and looked like the new
+    // one hadn't saved.
     mobileImageUrl = "";
   }
 
@@ -410,6 +417,89 @@ export async function resetSiteLogo(
 
   revalidateSiteLogo();
   return { success: "Default loqo bərpa olundu." };
+}
+
+function revalidateOgImage() {
+  updateTag("og-image");
+  // Every page's preview falls back to it.
+  revalidatePath("/", "layout");
+}
+
+/** Saves a link-preview picture the admin's browser uploaded under og/. */
+export async function updateOgImage(
+  _prev: AdminContentActionState,
+  formData: FormData
+): Promise<AdminContentActionState> {
+  await requireAdmin();
+
+  const imagePath = String(formData.get("og_path") ?? "").trim();
+  if (!imagePath) return { error: "Şəkil faylı seçin." };
+
+  const supabase = await createClient();
+  const resolved = await resolveSiteImagePath(supabase, imagePath, "og");
+  if ("error" in resolved) return { error: resolved.error };
+
+  // The panel checks the file before uploading, but the request can come
+  // from elsewhere: read the stored file's own header.
+  const { data: file, error: downloadError } = await supabase.storage
+    .from("product-images")
+    .download(imagePath);
+  if (downloadError || !file) {
+    console.error("[admin.updateOgImage.download]", downloadError?.message);
+    return { error: "Şəkil tapılmadı. Yenidən seçin." };
+  }
+  const header = readLogoHeader(new Uint8Array(await file.arrayBuffer()));
+  if (!header) return { error: OG_IMAGE_TYPE_ERROR };
+  const invalid = ogImageError({ ...header, size: file.size });
+  if (invalid) return { error: invalid };
+
+  const { error } = await supabase.from("site_content").upsert(
+    {
+      key: OG_IMAGE_KEY,
+      title: "Link preview şəkli",
+      body: "",
+      items: {
+        imageUrl: resolved.url,
+        width: header.width,
+        height: header.height,
+      } satisfies OgImageItems,
+    },
+    { onConflict: "key" }
+  );
+
+  if (error) {
+    console.error("[admin.updateOgImage]", error.message);
+    return { error: "Şəkil yenilənmədi." };
+  }
+
+  revalidateOgImage();
+  return { success: "Preview şəkli yeniləndi." };
+}
+
+export async function resetOgImage(
+  _prev: AdminContentActionState,
+  _formData: FormData
+): Promise<AdminContentActionState> {
+  await requireAdmin();
+
+  const supabase = await createClient();
+  const { error } = await supabase.from("site_content").upsert(
+    {
+      key: OG_IMAGE_KEY,
+      title: "Link preview şəkli",
+      body: "",
+      items: OG_IMAGE_DEFAULT,
+    },
+    { onConflict: "key" }
+  );
+
+  if (error) {
+    console.error("[admin.resetOgImage]", error.message);
+    return { error: "Default şəkil bərpa edilmədi." };
+  }
+
+  revalidateOgImage();
+  return { success: "Default preview şəkli bərpa olundu." };
 }
 
 function revalidateFaqContent() {

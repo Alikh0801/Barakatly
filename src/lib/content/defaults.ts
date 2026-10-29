@@ -163,6 +163,21 @@ export type SiteLogoItems = {
 
 export const SITE_LOGO_DEFAULT_URL = "/logo/logo.png";
 
+/** The link-preview picture (WhatsApp, Telegram, Facebook) the admin sets. */
+export const OG_IMAGE_KEY = "og_image" as const;
+
+export type OgImageItems = {
+  imageUrl: string;
+  width: number;
+  height: number;
+};
+
+export const OG_IMAGE_DEFAULT: OgImageItems = {
+  imageUrl: "/og-image.jpg",
+  width: 1200,
+  height: 630,
+};
+
 export const ABOUT_KEY = "about" as const;
 
 export type AboutValue = {

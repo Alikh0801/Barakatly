@@ -7,7 +7,7 @@ import { RoutePrefetcher } from "@/components/navigation/RoutePrefetcher";
 import { ScrollToTopButton } from "@/components/navigation/ScrollToTopButton";
 import { WishlistLoader } from "@/components/shop/WishlistLoader";
 import { getAppUrl } from "@/lib/auth/urls";
-import { DEFAULT_OG_IMAGE } from "@/lib/og-image";
+import { getDefaultOgImage } from "@/lib/og-image";
 import { IS_PRE } from "@/lib/env";
 import "./globals.css";
 
@@ -30,52 +30,56 @@ const geistMono = Geist_Mono({
 
 const appUrl = getAppUrl();
 
-export const metadata: Metadata = {
-  metadataBase: new URL(appUrl),
-  // Every page title gets "- Barakatly" appended here, so a new page can
-  // never ship without the brand. The home page sets no title of its own
-  // and shows the default.
-  // The test site's tabs say so, so it is never mistaken for the live one.
-  title: {
-    default: `${IS_PRE ? "[TEST] " : ""}Barakatly - Fermerdən birbaşa süfrənizə`,
-    template: `${IS_PRE ? "[TEST] " : ""}%s - Barakatly`,
-  },
-  description:
-    "Fermerlərdən birbaşa təzə və organik kənd məhsulları. Yerli fermerləri şüurlu istehlakçılarla birləşdiririk.",
-  applicationName: "Barakatly",
-  keywords: [
-    "Barakatly",
-    "organik",
-    "fermer",
-    "kənd məhsulları",
-    "Azərbaycan",
-    "təzə meyvə",
-    "tərəvəz",
-  ],
-  authors: [{ name: "Barakatly" }],
-  openGraph: {
-    type: "website",
-    locale: "az_AZ",
-    url: appUrl,
-    siteName: "Barakatly",
-    title: "Barakatly - Fermerdən birbaşa süfrənizə",
+export async function generateMetadata(): Promise<Metadata> {
+  // The preview picture can be changed in the admin panel.
+  const ogImage = await getDefaultOgImage();
+  return {
+    metadataBase: new URL(appUrl),
+    // Every page title gets "- Barakatly" appended here, so a new page can
+    // never ship without the brand. The home page sets no title of its own
+    // and shows the default.
+    // The test site's tabs say so, so it is never mistaken for the live one.
+    title: {
+      default: `${IS_PRE ? "[TEST] " : ""}Barakatly - Fermerdən birbaşa süfrənizə`,
+      template: `${IS_PRE ? "[TEST] " : ""}%s - Barakatly`,
+    },
     description:
-      "Fermerlərdən birbaşa təzə və organik kənd məhsulları.",
-    images: [DEFAULT_OG_IMAGE],
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: "Barakatly - Fermerdən birbaşa süfrənizə",
-    description:
-      "Fermerlərdən birbaşa təzə və organik kənd məhsulları.",
-    images: [DEFAULT_OG_IMAGE.url],
-  },
-  // The test site must never show up in search results.
-  robots: IS_PRE ? { index: false, follow: false } : { index: true, follow: true },
-  alternates: {
-    canonical: "/",
-  },
-};
+      "Fermerlərdən birbaşa təzə və organik kənd məhsulları. Yerli fermerləri şüurlu istehlakçılarla birləşdiririk.",
+    applicationName: "Barakatly",
+    keywords: [
+      "Barakatly",
+      "organik",
+      "fermer",
+      "kənd məhsulları",
+      "Azərbaycan",
+      "təzə meyvə",
+      "tərəvəz",
+    ],
+    authors: [{ name: "Barakatly" }],
+    openGraph: {
+      type: "website",
+      locale: "az_AZ",
+      url: appUrl,
+      siteName: "Barakatly",
+      title: "Barakatly - Fermerdən birbaşa süfrənizə",
+      description:
+        "Fermerlərdən birbaşa təzə və organik kənd məhsulları.",
+      images: [ogImage],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: "Barakatly - Fermerdən birbaşa süfrənizə",
+      description:
+        "Fermerlərdən birbaşa təzə və organik kənd məhsulları.",
+      images: [ogImage.url],
+    },
+    // The test site must never show up in search results.
+    robots: IS_PRE ? { index: false, follow: false } : { index: true, follow: true },
+    alternates: {
+      canonical: "/",
+    },
+  };
+}
 
 export default function RootLayout({
   children,

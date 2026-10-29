@@ -80,7 +80,7 @@ export function AdminHeroPanel({
             name="image"
             accept="image/jpeg,image/png,image/webp"
             caption="Yeni şəkil"
-            hint="Üfüqi şəkil, ən azı 2400×1600 piksel tövsiyə olunur. JPEG, PNG və ya WebP, maksimum 5 MB. Boş buraxsanız mövcud şəkil qalır."
+            hint="Üfüqi şəkil, ən azı 2400×1600 piksel. JPEG, PNG və ya WebP, maksimum 5 MB. Bütün cihazlarda göstərilir; mobil şəkil də seçilməyibsə, köhnə mobil şəkil silinir."
           />
         </div>
 
