@@ -158,7 +158,10 @@ export async function updateHeroContent(
     const resolved = await resolveSiteImagePath(supabase, mobileImagePath, "hero");
     if ("error" in resolved) return { error: `Mobil şəkil: ${resolved.error}` };
     mobileImageUrl = resolved.url;
-  } else if (String(formData.get("remove_mobile_image") ?? "") === "1") {
+  } else if (imagePath || String(formData.get("remove_mobile_image") ?? "") === "1") {
+    // A new background on its own replaces the picture on every screen: an
+    // older portrait upload kept showing on phones and looked like the new
+    // one hadn't saved.
     mobileImageUrl = "";
   }
 
