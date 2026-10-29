@@ -9,6 +9,7 @@ import { firstPayment } from "@/lib/orders/payment";
 import { getCustomerOrders } from "@/lib/checkout/queries";
 import { formatPrice, formatUnit, getProductImageUrl } from "@/lib/shop/format";
 import { formatDateTime } from "@/lib/format/date";
+import { DeliveryDate } from "@/components/orders/DeliveryDate";
 import { formatAmount } from "@/lib/shop/quantity";
 
 export async function OrdersList() {
@@ -64,6 +65,7 @@ export async function OrdersList() {
                     </span>
                   ) : null}
                 </div>
+                <DeliveryDate createdAt={order.created_at} status={order.status} className="mt-2" />
               </div>
               <div className="text-right">
                 <div className="font-semibold text-zinc-900">

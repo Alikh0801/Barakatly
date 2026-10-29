@@ -14,6 +14,7 @@ import { ITEM_CANCEL_ANNOUNCED } from "@/lib/orders/item-cancel";
 import { getOrderById } from "@/lib/checkout/queries";
 import { formatPrice, formatUnit, getProductImageUrl } from "@/lib/shop/format";
 import { formatDateTime } from "@/lib/format/date";
+import { DeliveryDate } from "@/components/orders/DeliveryDate";
 import { getProfile } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
 import { getMySiteReview } from "@/lib/reviews/site";
@@ -101,6 +102,7 @@ export default async function OrderDetailPage({
             <p className="mt-2 text-sm text-zinc-500">
               {formatDateTime(order.created_at)}
             </p>
+            <DeliveryDate createdAt={order.created_at} status={order.status} className="mt-2" />
           </div>
           <div className="flex flex-wrap gap-2">
             <span

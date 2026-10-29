@@ -13,6 +13,7 @@ import { Spinner } from "@/components/ui/Spinner";
 import { OrderStatusTimeline } from "@/components/orders/OrderStatusTimeline";
 import { formatPrice } from "@/lib/shop/format";
 import { formatDateTime } from "@/lib/format/date";
+import { DeliveryDate } from "@/components/orders/DeliveryDate";
 import {
   ADMIN_STATUS_TRANSITIONS,
   getOrderItemStatusLabel,
@@ -433,6 +434,7 @@ export function AdminOrdersPanel({
                         <p className="mt-1 text-sm text-zinc-500">
                           {formatDateTime(order.created_at)}
                         </p>
+                        <DeliveryDate createdAt={order.created_at} status={order.status} className="mt-1.5" />
                         <p className="mt-2 break-all text-sm text-zinc-700">
                           {order.customer?.full_name ??
                             order.customer?.email ??

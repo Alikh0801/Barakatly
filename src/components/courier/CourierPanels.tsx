@@ -12,6 +12,7 @@ import {
 } from "@/lib/orders/labels";
 import { Spinner } from "@/components/ui/Spinner";
 import { formatDateTime } from "@/lib/format/date";
+import { DeliveryDate } from "@/components/orders/DeliveryDate";
 import { formatAmount } from "@/lib/shop/quantity";
 import type { CourierOrder } from "@/lib/courier/queries";
 import { deliveryAddress, recipientName } from "@/lib/orders/delivery";
@@ -86,6 +87,7 @@ function CourierOrderCard({ order }: { order: CourierOrder }) {
         <div>
           <div className="font-semibold text-zinc-900">{order.order_code}</div>
           <p className="mt-1 text-sm text-zinc-500">{formatDateTime(order.created_at)}</p>
+          <DeliveryDate createdAt={order.created_at} status={order.status} className="mt-1.5" />
           {recipientName(order) ? (
             <p className="mt-2 text-sm font-medium text-zinc-900">
               Alıcı: {recipientName(order)}
