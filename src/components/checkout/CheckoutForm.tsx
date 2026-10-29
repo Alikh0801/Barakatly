@@ -251,6 +251,7 @@ export function CheckoutForm({
   items,
   userId,
   promo,
+  deliveryDate,
 }: {
   banks: Bank[];
   defaultPhone?: string | null;
@@ -261,6 +262,8 @@ export function CheckoutForm({
   userId: string;
   /** The code applied in the cart; placeOrder() judges it again. */
   promo: AppliedPromo | null;
+  /** The Sunday an order placed now arrives, e.g. "1 noyabr, bazar". */
+  deliveryDate: string;
 }) {
   const router = useRouter();
   const [state, formAction, pending] = useActionState(placeOrder, initialState);
@@ -718,6 +721,10 @@ export function CheckoutForm({
                   <dd className="mt-0.5 font-medium text-zinc-900">{phone}</dd>
                 </div>
                 <div className="sm:col-span-2">
+                  <dt className="text-zinc-500">Çatdırılma günü</dt>
+                  <dd className="mt-0.5 font-medium text-zinc-900">{deliveryDate}</dd>
+                </div>
+                <div className="sm:col-span-2">
                   <dt className="text-zinc-500">Ünvan</dt>
                   <dd className="mt-0.5 font-medium text-zinc-900">
                     {[city, district.trim(), address.trim()].filter(Boolean).join(", ")}
@@ -819,6 +826,10 @@ export function CheckoutForm({
               <div className="flex justify-between">
                 <dt className="text-[#8a4b2b]">Çatdırılma</dt>
                 <dd className="text-zinc-900">{formatPrice(DELIVERY_FEE)}</dd>
+              </div>
+              <div className="flex justify-between">
+                <dt className="text-[#8a4b2b]">Çatdırılma günü</dt>
+                <dd className="font-medium text-emerald-800">{deliveryDate}</dd>
               </div>
               <div className="flex justify-between border-t border-zinc-100 pt-3 text-base font-semibold text-zinc-900">
                 <dt>Cəmi</dt>

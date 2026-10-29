@@ -1,5 +1,6 @@
 import { DELIVERY_FEE } from "@/lib/checkout/constants";
 import { formatPrice } from "@/lib/shop/format";
+import { deliveryLabel } from "@/lib/orders/delivery-date";
 
 function TruckIcon() {
   return (
@@ -11,7 +12,10 @@ function TruckIcon() {
   );
 }
 
-/** On the product page: orders are delivered at the weekend, on Sundays. */
+/**
+ * On the product page: the Sunday an order placed now arrives (see
+ * deliveryDateFor). The page renders per request, so "now" is current.
+ */
 export function DeliveryBanner() {
   return (
     <div className="mt-5 flex items-start gap-3 rounded-2xl bg-emerald-50 px-4 py-3.5 ring-1 ring-emerald-100">
@@ -20,10 +24,11 @@ export function DeliveryBanner() {
       </span>
       <div>
         <p className="text-sm font-semibold text-emerald-900">
-          Təxmini çatdırılma: həftə sonu (bazar günü)
+          Bu gün sifariş versəniz, çatdırılma: {deliveryLabel(new Date())}
         </p>
         <p className="mt-0.5 text-xs text-emerald-800">
-          Çatdırılma haqqı: {formatPrice(DELIVERY_FEE)}
+          Cümə 14:00-dan sonra verilən sifarişlər növbəti bazar günü çatdırılır · Çatdırılma haqqı:{" "}
+          {formatPrice(DELIVERY_FEE)}
         </p>
       </div>
     </div>

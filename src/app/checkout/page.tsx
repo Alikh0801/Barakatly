@@ -7,6 +7,7 @@ import { getProfile } from "@/lib/auth/session";
 import { getCartItems } from "@/lib/cart/queries";
 import { getAppliedPromo } from "@/lib/promo/server";
 import { displaySerif } from "@/lib/fonts";
+import { deliveryLabel } from "@/lib/orders/delivery-date";
 
 export const metadata = {
   title: "Ödəniş",
@@ -47,6 +48,7 @@ export default async function CheckoutPage() {
             items={items}
             userId={profile.id}
             promo={promo}
+            deliveryDate={deliveryLabel(new Date())}
           />
         </div>
       </div>
