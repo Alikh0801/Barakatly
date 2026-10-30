@@ -49,6 +49,10 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { getFarmerOrderHeaders } from "@/lib/farmer/queries";
 import { isOrderHandedOver } from "@/lib/orders/courier-handoff";
 import { createClient } from "@/lib/supabase/server";
+import {
+  FARMER_APPLICATION_PATH,
+  notifyApplicationReceived,
+} from "@/lib/farmer/application";
 import { slugifyAz } from "@/lib/admin/slug";
 import type { OrderItemStatus, UnitType } from "@/types";
 import { formatAmount, parseMinOrderInput } from "@/lib/shop/quantity";
@@ -432,8 +436,9 @@ export async function signUpFarmer(
     body: `${fullName} təsdiq gözləyir.`,
     metadata: { farmer_profile_id: userId },
   });
+  await notifyApplicationReceived(userId, fullName);
 
-  redirect("/farmer");
+  redirect(FARMER_APPLICATION_PATH);
 }
 
 /** Completes farm profile for an already authenticated farmer (no new auth user). */
@@ -501,10 +506,11 @@ export async function completeFarmerProfile(
       body: `${profile.full_name || "Yeni fermer"} təsdiq gözləyir.`,
       metadata: { farmer_id: farmer.id },
     });
+    await notifyApplicationReceived(profile.id, profile.full_name);
   }
 
   revalidatePath("/farmer");
-  redirect("/farmer");
+  redirect(farmer.status === "pending" ? FARMER_APPLICATION_PATH : "/farmer");
 }
 
 export async function createProduct(
@@ -855,9 +861,7 @@ export async function updateOrderItemStatus(
     return { error: "Sifariş məhsulu tapılmadı." };
   }
 
-  // Farmers cannot read `orders` directly, so the old `orders(...)` embed was
-  // always null and every update skipped the status event and both
-  // notifications. See getFarmerOrderHeaders.
+  // Farmers cannot read `orders` directly; see getFarmerOrderHeaders.
   const order = (await getFarmerOrderHeaders(farmer.id, [item.order_id])).get(
     item.order_id,
   );

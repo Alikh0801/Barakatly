@@ -4,6 +4,7 @@ import { Suspense } from "react";
 import { AuthNav } from "@/components/AuthNav";
 import { CartNav, CartNavServer } from "@/components/CartNav";
 import { HeaderShell } from "@/components/header/HeaderShell";
+import { FarmerApplicationBanner } from "@/components/header/FarmerApplicationBanner";
 import { MobileNav } from "@/components/MobileNav";
 import { NavLink } from "@/components/navigation/NavLink";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
@@ -50,6 +51,9 @@ export function SiteHeader({
 
   return (
     <HeaderShell mode={isHero ? "scroll" : "static"}>
+      <Suspense fallback={null}>
+        <FarmerApplicationBanner />
+      </Suspense>
       <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-2 px-4 py-4 md:px-6">
         <Link
           href="/"

@@ -34,6 +34,7 @@ export type OrderItemStatus =
   | "delivered"
   | "cancelled";
 export type PaymentStatus = "pending" | "confirmed" | "rejected";
+export type FarmerPayoutStatus = "pending" | "paid";
 export type FarmerPostMediaType = "image" | "video";
 export type NotificationType =
   | "farmer_registration"
@@ -226,6 +227,77 @@ export interface Database {
           file_type?: "image" | "pdf";
           created_at?: string;
         };
+        Relationships: [];
+      };
+      // Farmer payouts (migrations 20261025115108…): created by
+      // create_farmer_payouts() when a payment is confirmed. Admins read and
+      // update them; a farmer reads their own.
+      farmer_payout_accounts: {
+        Row: {
+          id: string;
+          farmer_id: string;
+          bank_name: string | null;
+          pan_number: string;
+          is_active: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          farmer_id: string;
+          bank_name?: string | null;
+          pan_number: string;
+          is_active?: boolean;
+        };
+        Update: {
+          bank_name?: string | null;
+          pan_number?: string;
+          is_active?: boolean;
+        };
+        Relationships: [];
+      };
+      farmer_payouts: {
+        Row: {
+          id: string;
+          order_id: string;
+          farmer_id: string;
+          amount: number;
+          bank_name: string | null;
+          pan_number: string | null;
+          status: FarmerPayoutStatus;
+          paid_at: string | null;
+          paid_by: string | null;
+          note: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: never;
+        Update: {
+          bank_name?: string | null;
+          pan_number?: string | null;
+          status?: FarmerPayoutStatus;
+          paid_at?: string | null;
+          paid_by?: string | null;
+          note?: string | null;
+        };
+        Relationships: [];
+      };
+      farmer_payout_items: {
+        Row: {
+          id: string;
+          payout_id: string;
+          order_item_id: string | null;
+          product_id: string | null;
+          product_title: string;
+          quantity: number;
+          unit_type: string | null;
+          unit_size: string | null;
+          farmer_unit_price: number;
+          line_total: number;
+          created_at: string;
+        };
+        Insert: never;
+        Update: never;
         Relationships: [];
       };
       promo_codes: {
@@ -555,6 +627,8 @@ export interface Database {
           sold_count: number;
           rating_average: number | null;
           rating_count: number;
+          /** Title and farmer name in az_normalize form; a trigger fills it. */
+          search_text: string | null;
           created_at: string;
           updated_at: string;
         };

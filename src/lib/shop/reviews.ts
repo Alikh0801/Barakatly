@@ -27,7 +27,7 @@ type ReviewRow = {
   customer_name: string | null;
 };
 
-export const EMPTY_RATING_SUMMARY: ProductRatingSummary = {
+const EMPTY_RATING_SUMMARY: ProductRatingSummary = {
   average: 0,
   total: 0,
   breakdown: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 },

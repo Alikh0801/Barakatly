@@ -117,7 +117,7 @@ export type HeroItems = {
   stats: HeroStats;
 };
 
-export const HERO_DEFAULT_IMAGE_URL =
+const HERO_DEFAULT_IMAGE_URL =
   "https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=2400&q=80";
 
 export const HERO_DEFAULT_ITEMS: HeroItems = {
@@ -141,7 +141,7 @@ export type AuthImageItems = {
   imageUrl: string;
 };
 
-export const AUTH_IMAGE_DEFAULT_URL = "/hero/kend.jpg";
+const AUTH_IMAGE_DEFAULT_URL = "/hero/kend.jpg";
 
 export const AUTH_IMAGE_DEFAULT_ITEMS: AuthImageItems = {
   highlight: "birbaşa süfrənizə.",

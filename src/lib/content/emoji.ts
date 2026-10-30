@@ -27,8 +27,6 @@ export const FEATURE_EMOJI_GROUPS: { id: string; label: string; emojis: string[]
   },
 ];
 
-export const FEATURE_EMOJI_SUGGESTIONS = FEATURE_EMOJI_GROUPS.flatMap((group) => group.emojis);
-
 /**
  * True when the value is exactly one emoji. A single emoji can be several
  * code points (skin tones, flags, "👨‍🌾" joined with zero-width joiners), so this

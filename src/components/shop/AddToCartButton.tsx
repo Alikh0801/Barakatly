@@ -4,7 +4,6 @@ import { usePathname, useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { addToCart } from "@/lib/cart/actions";
 import type { ProductListItem } from "@/types/shop";
-import { formatPrice, formatUnit, getDisplayPrice } from "@/lib/shop/format";
 import { Spinner } from "@/components/ui/Spinner";
 
 function useAddToCart() {
@@ -81,35 +80,5 @@ export function AddToCartButton({
         </svg>
       )}
     </button>
-  );
-}
-
-export function AddToCartButtonLarge({
-  product,
-}: {
-  product: ProductListItem;
-}) {
-  const { add, pending, added, error } = useAddToCart();
-  const price = getDisplayPrice(product.final_price, product.farmer_price);
-
-  return (
-    <div className="space-y-2">
-      <button
-        type="button"
-        disabled={pending}
-        onClick={() => add(product.id)}
-        className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-emerald-500 disabled:opacity-60"
-      >
-        {pending ? <Spinner className="h-4 w-4" /> : null}
-        {added
-          ? "Səbətə əlavə olundu"
-          : `Səbətə əlavə et — ${formatPrice(price)}${formatUnit(product.unit_type, product.unit_size)}`}
-      </button>
-      {error ? (
-        <p className="rounded-xl bg-rose-50 px-3 py-2 text-sm text-rose-700 ring-1 ring-rose-200">
-          {error}
-        </p>
-      ) : null}
-    </div>
   );
 }

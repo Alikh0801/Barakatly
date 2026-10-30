@@ -8,8 +8,8 @@ import type { Database } from "@/types/database";
  * check it here.
  */
 
-export const COVER_MAX_BYTES = 10 * 1024 * 1024;
-export const CERTIFICATE_MAX_BYTES = 10 * 1024 * 1024;
+const COVER_MAX_BYTES = 10 * 1024 * 1024;
+const CERTIFICATE_MAX_BYTES = 10 * 1024 * 1024;
 
 const IMAGE_EXTENSIONS: Record<string, string> = {
   "image/jpeg": "jpg",
@@ -21,9 +21,9 @@ const CERTIFICATE_EXTENSIONS: Record<string, string> = {
   "application/pdf": "pdf",
 };
 
-export const COVER_TYPE_ERROR = "Yalnız JPEG, PNG və ya WebP şəkil qəbul olunur.";
+const COVER_TYPE_ERROR = "Yalnız JPEG, PNG və ya WebP şəkil qəbul olunur.";
 export const COVER_TOO_LARGE_ERROR = "Şəkil 10 MB-dan böyük ola bilməz.";
-export const CERTIFICATE_TYPE_ERROR =
+const CERTIFICATE_TYPE_ERROR =
   "Yalnız JPEG, PNG, WebP şəkil və ya PDF fayl qəbul olunur.";
 export const CERTIFICATE_TOO_LARGE_ERROR = "Fayl 10 MB-dan böyük ola bilməz.";
 const NOT_FOUND_ERROR = "Fayl tapılmadı. Yenidən seçin.";

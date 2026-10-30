@@ -4,9 +4,12 @@ import {
   type FarmerProfileTab,
 } from "@/components/farmer/FarmerProfile";
 import { requireFarmer } from "@/lib/farmer/auth";
+import { FARMER_APPLICATION_PATH } from "@/lib/farmer/application";
+import { redirect } from "next/navigation";
 import {
   getFarmerBlogPosts,
   getFarmerOrderItems,
+  getFarmerPayouts,
   getFarmerProducts,
 } from "@/lib/farmer/queries";
 import {
@@ -23,6 +26,7 @@ function parseTab(value?: string): FarmerProfileTab {
     value === "stats" ||
     value === "products" ||
     value === "orders" ||
+    value === "payouts" ||
     value === "about" ||
     value === "certificates" ||
     value === "posts" ||
@@ -42,6 +46,11 @@ export default async function FarmerDashboardPage({
   const params = await searchParams;
   const initialTab = parseTab(params.tab);
 
+  // Waiting for the admin, or turned down: the page that says so.
+  if (farmer.status === "pending" || farmer.status === "rejected") {
+    redirect(FARMER_APPLICATION_PATH);
+  }
+
   if (farmer.status !== "approved") {
     return (
       <div className="mx-auto w-full max-w-3xl px-4 py-10 md:px-6">
@@ -53,7 +62,7 @@ export default async function FarmerDashboardPage({
     );
   }
 
-  const [products, orders, posts, followerCount, rating, certificates, sales] =
+  const [products, orders, posts, followerCount, rating, certificates, sales, payouts] =
     await Promise.all([
       getFarmerProducts(farmer.id),
       getFarmerOrderItems(farmer.id),
@@ -62,6 +71,7 @@ export default async function FarmerDashboardPage({
       getFarmerRatingSummary(farmer.id),
       getFarmerCertificates(farmer.id),
       getFarmerSalesStats(farmer.id),
+      getFarmerPayouts(farmer.id),
     ]);
 
   const monthStart = currentBakuMonthStart();
@@ -86,6 +96,7 @@ export default async function FarmerDashboardPage({
       certificates={certificates}
       sales={sales}
       productCounts={productCounts}
+      payouts={payouts}
     />
   );
 }

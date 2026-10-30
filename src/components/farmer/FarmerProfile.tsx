@@ -45,8 +45,10 @@ import { ProductCard } from "@/components/shop/ProductCard";
 import type {
   FarmerBlogPost,
   FarmerOrderItem,
+  FarmerPayout,
   FarmerProduct,
 } from "@/lib/farmer/queries";
+import { FarmerPayoutsList } from "@/components/farmer/FarmerPayouts";
 import type { ProductListItem } from "@/types/shop";
 import type { Farmer, FarmerCertificate, Profile } from "@/types";
 import type { FarmerRatingSummary, PublicFarmer } from "@/lib/farmers/queries";
@@ -75,7 +77,14 @@ const displayFont = Syne({
 type ActionResult = { error?: string; success?: string };
 const initialState: ActionResult = {};
 
-export type FarmerProfileTab = "stats" | "posts" | "products" | "orders" | "certificates" | "about";
+export type FarmerProfileTab =
+  | "stats"
+  | "posts"
+  | "products"
+  | "orders"
+  | "payouts"
+  | "certificates"
+  | "about";
 export type PublicFarmerProfileTab = "products" | "posts" | "about" | "certificates";
 
 function getPublicFarmerUrl(farmerId: string) {
@@ -745,7 +754,7 @@ function BlogPostCard({
   );
 }
 
-export function FarmerBlogFeed({
+function FarmerBlogFeed({
   posts,
   canManage = false,
 }: {
@@ -806,6 +815,7 @@ export function FarmerProfileDashboard({
   certificates,
   sales,
   productCounts,
+  payouts,
 }: {
   farmer: Farmer;
   profile: Profile;
@@ -818,6 +828,7 @@ export function FarmerProfileDashboard({
   certificates: FarmerCertificate[];
   sales: FarmerSalesStats;
   productCounts: FarmerProductCounts;
+  payouts: FarmerPayout[];
 }) {
   const [tab, selectTab] = useTabInUrl<FarmerProfileTab>(initialTab);
 
@@ -826,6 +837,7 @@ export function FarmerProfileDashboard({
     { id: "posts", label: "Paylaşımlar" },
     { id: "products", label: "Məhsullar" },
     { id: "orders", label: "Sifarişlər" },
+    { id: "payouts", label: "Ödənişlərim" },
     { id: "certificates", label: "Sertifikatlar" },
     { id: "about", label: "Redaktə" },
   ];
@@ -905,6 +917,10 @@ export function FarmerProfileDashboard({
 
           <div className={tab === "orders" ? "block" : "hidden"}>
             <FarmerOrdersList items={orders} />
+          </div>
+
+          <div className={tab === "payouts" ? "max-w-3xl" : "hidden"}>
+            <FarmerPayoutsList payouts={payouts} />
           </div>
 
           <div className={tab === "certificates" ? "block" : "hidden"}>

@@ -1,5 +1,6 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
+import { maskedPanLastFour } from "@/lib/orders/payment";
 import type {
   Category,
   FarmerPost,
@@ -85,11 +86,10 @@ export type FarmerOrderHeader = Pick<
  * Order headers for orders that contain this farmer's items, by order id.
  *
  * Farmers have no SELECT on `orders` — the row carries the customer's phone,
- * address and the whole basket's total — so a farmer-session join to it
- * returned nothing: the orders page was always empty, and status updates
- * never notified anyone. This reads with the service role instead, but only
- * orders that really include one of `farmerId`'s items, and only the columns
- * a farmer needs. `farmerId` must come from requireApprovedFarmer().
+ * address and the whole basket's total — so this reads with the service
+ * role, but only orders that really include one of `farmerId`'s items, and
+ * only the columns a farmer needs. `farmerId` must come from
+ * requireApprovedFarmer().
  */
 export async function getFarmerOrderHeaders(
   farmerId: string,
@@ -252,4 +252,44 @@ export async function getShopSubcategories(): Promise<Subcategory[]> {
   }
 
   return data ?? [];
+}
+
+export type FarmerPayout = {
+  id: string;
+  order_code: string;
+  amount: number;
+  status: "pending" | "paid";
+  paid_at: string | null;
+  created_at: string;
+  /** "•••• 5678": the card's last four digits only. */
+  card: string | null;
+};
+
+/** The farmer's own payouts (RLS shows no one else's), newest first. */
+export async function getFarmerPayouts(farmerId: string): Promise<FarmerPayout[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("farmer_payouts")
+    .select("id, order_id, amount, status, paid_at, created_at, pan_number")
+    .eq("farmer_id", farmerId)
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    console.error("[farmer.getFarmerPayouts]", error.message);
+    return [];
+  }
+
+  // Farmers can't read orders under RLS; their order codes come the same way
+  // as on the orders tab.
+  const headers = await getFarmerOrderHeaders(farmerId, [
+    ...new Set((data ?? []).map((payout) => payout.order_id)),
+  ]);
+
+  // The full card number stays on the server.
+  return (data ?? []).map(({ pan_number, order_id, ...payout }) => ({
+    ...payout,
+    amount: Number(payout.amount),
+    order_code: headers.get(order_id)?.order_code ?? "—",
+    card: maskedPanLastFour(pan_number),
+  }));
 }

@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { requireAdmin } from "@/lib/admin/auth";
 import { ADMIN_STATUS_TRANSITIONS } from "@/lib/orders/labels";
 import { getOrderStatusLabel } from "@/lib/checkout/labels";
-import { COURIER_READY_ITEM_STATUSES } from "@/lib/orders/courier-handoff";
+import { isReadyForCourier } from "@/lib/orders/courier-ready";
 import { getOrderFarmerProfileIds } from "@/lib/orders/farmers";
 import { ITEM_CANCEL_ANNOUNCED } from "@/lib/orders/item-cancel";
 import { notifyUser } from "@/lib/notifications/helpers";
@@ -332,14 +332,9 @@ export async function advanceOrderStatus(
     const { data: items } = await supabase
       .from("order_items")
       .select("status")
-      .eq("order_id", orderId)
-      .neq("status", "cancelled");
+      .eq("order_id", orderId);
 
-    const notReady = (items ?? []).some(
-      (item) => !COURIER_READY_ITEM_STATUSES.includes(item.status),
-    );
-
-    if (notReady) {
+    if (!isReadyForCourier(items ?? [])) {
       return {
         error: "Bütün fermerlər hazırlığı bitirməyib. Kuryerə göndərmək üçün gözləyin.",
       };
@@ -441,6 +436,11 @@ export async function deleteOrders(
 
     if (error) {
       console.error("[admin.deleteOrders]", error.message);
+      // farmer_payouts keeps its orders (on delete restrict): what a farmer
+      // is owed must not vanish with the order.
+      if (error.code === "23503") {
+        return { error: "Fermer ödənişi olan sifarişi silmək olmaz. Ləğv edə bilərsiniz." };
+      }
       return { error: "Sifarişlər silinmədi." };
     }
   } catch (error) {

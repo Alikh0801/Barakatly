@@ -23,6 +23,7 @@ import {
   getPaymentStatusLabel,
 } from "@/lib/orders/labels";
 import { firstPayment } from "@/lib/orders/payment";
+import { isReadyForCourier } from "@/lib/orders/courier-ready";
 import { deliveryAddress, recipientName } from "@/lib/orders/delivery";
 import { ITEM_CANCEL_ANNOUNCED } from "@/lib/orders/item-cancel";
 import { matchesAdminOrderQuery } from "@/lib/orders/admin-order-filter";
@@ -345,6 +346,8 @@ function AdminOrderCard({
   farmerMessages,
   statusAction,
   statusPending,
+  statusResult,
+  onStatusSubmit,
 }: {
   order: AdminOrderListItemWithReceipt;
   checked: boolean;
@@ -352,6 +355,9 @@ function AdminOrderCard({
   farmerMessages?: string[];
   statusAction: (formData: FormData) => void;
   statusPending: boolean;
+  /** The last status change's result, when it was made from this card. */
+  statusResult: ActionResult | null;
+  onStatusSubmit: () => void;
 }) {
   const [cancelling, setCancelling] = useState(false);
   const nextStatuses = ADMIN_STATUS_TRANSITIONS[order.status] ?? [];
@@ -362,9 +368,7 @@ function AdminOrderCard({
   const events = order.order_status_events ?? [];
   // Couriers only get the order once every farmer is ready; the action
   // refuses it otherwise.
-  const readyForCourier = items.every(
-    (item) => item.status === "cancelled" || item.status === "ready" || item.status === "awaiting_pickup",
-  );
+  const readyForCourier = isReadyForCourier(items);
   const blocked = (status: OrderStatus) => status === "awaiting_courier" && !readyForCourier;
 
   // The customer's status against what the farmers have marked. Farmers
@@ -635,7 +639,7 @@ function AdminOrderCard({
               Müştəri statusunu dəyiş
             </p>
             {cancelling ? (
-              <form action={statusAction} className="flex w-full flex-col gap-2 sm:w-80">
+              <form action={statusAction} onSubmit={onStatusSubmit} className="flex w-full flex-col gap-2 sm:w-80">
                 <input type="hidden" name="order_id" value={order.id} />
                 <input type="hidden" name="next_status" value="cancelled" />
                 <ReasonInput id={`cancel-reason-${order.id}`} />
@@ -660,7 +664,7 @@ function AdminOrderCard({
             ) : (
               <div className="flex flex-wrap items-center gap-2 sm:justify-end">
                 {forwardStatuses.length > 0 ? (
-                  <form action={statusAction} className="flex items-center gap-1.5">
+                  <form action={statusAction} onSubmit={onStatusSubmit} className="flex items-center gap-1.5">
                     <input type="hidden" name="order_id" value={order.id} />
                     <label htmlFor={`next-${order.id}`} className="sr-only">
                       Yeni status
@@ -701,7 +705,7 @@ function AdminOrderCard({
                   </button>
                 ) : null}
                 {suggested ? (
-                  <form action={statusAction} className="w-full sm:w-auto">
+                  <form action={statusAction} onSubmit={onStatusSubmit} className="w-full sm:w-auto">
                     <input type="hidden" name="order_id" value={order.id} />
                     <button
                       type="submit"
@@ -720,6 +724,17 @@ function AdminOrderCard({
           </div>
         ) : null}
       </div>
+      {statusResult?.error || statusResult?.success ? (
+        <p
+          className={`border-t px-4 py-2.5 text-sm sm:px-5 ${
+            statusResult.error
+              ? "border-rose-100 bg-rose-50 text-rose-700"
+              : "border-emerald-100 bg-emerald-50 text-emerald-800"
+          }`}
+        >
+          {statusResult.error || statusResult.success}
+        </p>
+      ) : null}
     </article>
   );
 }
@@ -745,6 +760,9 @@ export function AdminOrdersPanel({
     advanceOrderStatus,
     initialState
   );
+  // The status result shows in the card it was submitted from: at the top
+  // of a long list the admin would not see it.
+  const [statusOrderId, setStatusOrderId] = useState<string | null>(null);
   const [deleteState, deleteAction, deletePending] = useActionState(
     deleteOrders,
     initialState
@@ -830,14 +848,14 @@ export function AdminOrdersPanel({
         </section>
       ) : null}
 
-      {statusState.error || deleteState.error ? (
+      {deleteState.error ? (
         <p className="rounded-xl bg-rose-50 px-3 py-2 text-sm text-rose-700 ring-1 ring-rose-200">
-          {statusState.error || deleteState.error}
+          {deleteState.error}
         </p>
       ) : null}
-      {statusState.success || deleteState.success ? (
+      {deleteState.success ? (
         <p className="rounded-xl bg-emerald-50 px-3 py-2 text-sm text-emerald-800 ring-1 ring-emerald-200">
-          {statusState.success || deleteState.success}
+          {deleteState.success}
         </p>
       ) : null}
 
@@ -902,6 +920,8 @@ export function AdminOrdersPanel({
               farmerMessages={updates.get(order.id)}
               statusAction={statusAction}
               statusPending={statusPending}
+              statusResult={statusOrderId === order.id ? statusState : null}
+              onStatusSubmit={() => setStatusOrderId(order.id)}
             />
           ))}
         </>

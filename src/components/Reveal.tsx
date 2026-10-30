@@ -24,10 +24,9 @@ export function Reveal({
     }
 
     // Shows once the top edge is in the lower part of the screen, or the
-    // section is already above it (a reload restored the scroll). This used
-    // a 15% threshold, and a section taller than about six screens — the
-    // home page products once the shop grew — could never show 15% of
-    // itself at once, so it stayed invisible until the page was zoomed out.
+    // section is already above it (a reload restored the scroll). Any pixel
+    // counts: a share-of-height threshold never triggers on a section taller
+    // than the screen allows, such as a long product list.
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting || entry.boundingClientRect.top < 0) {
