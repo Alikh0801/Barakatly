@@ -170,25 +170,39 @@ export function ProductCard({
           </div>
         ) : null}
 
-        <div className="mt-auto flex min-h-9 items-center justify-between gap-2 pt-3">
-          <div className="min-w-0">
-            <div className="flex items-baseline gap-1">
-              <span className="truncate text-sm font-semibold text-zinc-900">
-                {formatPrice(price)}
-              </span>
-              <span className="shrink-0 text-xs text-zinc-500">
-                {formatUnit(selected.unit_type, selected.unit_size)}
-              </span>
-            </div>
-            {hasSizes && !outOfStock ? (
-              <div className="text-[11px] text-zinc-500">
-                Stokda: {formatStock(selected.unit_type, selected.quantity_available, selected.unit_size)}
+        {/* The price is never cut short. On a phone the unit ("/banka
+            (0,7 kq)") takes its own line under it, the full card wide, on
+            every card alike so neighbours stay level; from sm it sits beside
+            the price. */}
+        <div className="mt-auto pt-3">
+          <div className="flex min-h-9 items-center justify-between gap-2">
+            <div className="min-w-0">
+              <div className="flex items-baseline gap-1">
+                <span className="whitespace-nowrap text-sm font-semibold text-zinc-900">
+                  {formatPrice(price)}
+                </span>
+                <span className="hidden truncate text-xs text-zinc-500 sm:inline">
+                  {formatUnit(selected.unit_type, selected.unit_size)}
+                </span>
               </div>
-            ) : null}
+              {hasSizes && !outOfStock ? (
+                <div className="hidden text-[11px] text-zinc-500 sm:block">
+                  Stokda: {formatStock(selected.unit_type, selected.quantity_available, selected.unit_size)}
+                </div>
+              ) : null}
+            </div>
+            {outOfStock ? null : (
+              <AddToCartButton product={product} variantId={selected.id || undefined} />
+            )}
           </div>
-          {outOfStock ? null : (
-            <AddToCartButton product={product} variantId={selected.id || undefined} />
-          )}
+          <div className="mt-0.5 truncate text-xs text-zinc-500 sm:hidden">
+            {formatUnit(selected.unit_type, selected.unit_size)}
+          </div>
+          {hasSizes && !outOfStock ? (
+            <div className="truncate text-[11px] text-zinc-500 sm:hidden">
+              Stokda: {formatStock(selected.unit_type, selected.quantity_available, selected.unit_size)}
+            </div>
+          ) : null}
         </div>
       </div>
     </article>
