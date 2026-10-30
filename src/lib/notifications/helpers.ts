@@ -1,5 +1,4 @@
 import { createAdminClient } from "@/lib/supabase/admin";
-import { createClient } from "@/lib/supabase/server";
 import { adminLinkForType, sendAdminTelegram } from "@/lib/notifications/telegram";
 import type { NotificationType } from "@/types";
 
@@ -57,7 +56,11 @@ export async function insertEventAndNotify(params: {
     body: string;
   } | null;
 }) {
-  const supabase = await createClient();
+  // Events and notifications are written only from the server: the API
+  // can't insert them (migration 20261030120000). Every caller is a server
+  // action that has already checked the farmer, courier or admin may touch
+  // this order.
+  const supabase = createAdminClient();
 
   const { error: eventError } = await supabase
     .from("order_status_events")
@@ -98,7 +101,9 @@ export async function notifyUser(params: {
   body: string;
   metadata?: Record<string, string>;
 }) {
-  const supabase = await createClient();
+  // Server only, like insertEventAndNotify: callers are admin and courier
+  // actions that pick the recipient themselves.
+  const supabase = createAdminClient();
   const { error } = await supabase.from("notifications").insert({
     user_id: params.userId,
     title: params.title,
