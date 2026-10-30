@@ -16,9 +16,9 @@ import { formatDateTime } from "@/lib/format/date";
 import { DeliveryDate } from "@/components/orders/DeliveryDate";
 import {
   ADMIN_STATUS_TRANSITIONS,
+  ORDER_STATUS_FLOW,
   getOrderItemStatusLabel,
   getOrderStatusLabel,
-  getOrderStatusTone,
   getPaymentBadgeTone,
   getPaymentStatusLabel,
 } from "@/lib/orders/labels";
@@ -220,16 +220,6 @@ const ITEM_STATUS_TONE: Record<OrderItemStatus, string> = {
   cancelled: "bg-rose-50 text-rose-800 ring-rose-200",
 };
 
-/** What the order's main button says for each status it can move to. */
-const ORDER_ACTION_LABEL: Partial<Record<OrderStatus, string>> = {
-  confirmed: "Təsdiqlə",
-  farmer_accepted: "Fermer qəbul etdi",
-  preparing: "Hazırlanır",
-  awaiting_courier: "Kuryerə ver",
-  picked_up: "Kuryer götürdü",
-  delivered: "Çatdırıldı",
-};
-
 const ORDER_STEPS = ["Ödəniş", "Fermerlər", "Kuryer", "Çatdırıldı"];
 
 /** Index of the step the order is on; ORDER_STEPS.length once delivered. */
@@ -249,27 +239,39 @@ function orderStepIndex(status: OrderStatus): number {
   }
 }
 
-const READY_ITEM_STATUSES: OrderItemStatus[] = ["ready", "awaiting_pickup", "picked_up", "delivered"];
+/** How far along a line is, to compare it with the customer's status. */
+const ITEM_RANK: Record<OrderItemStatus, number> = {
+  new: 0,
+  accepted: 1,
+  preparing: 2,
+  ready: 3,
+  awaiting_pickup: 3,
+  picked_up: 4,
+  delivered: 5,
+  cancelled: -1,
+};
 
-/** How far the farmers have got with the lines still on the order. */
-function farmerProgress(items: AdminOrderItem[]): { label: string; tone: string } | null {
-  const live = items.filter((item) => item.status !== "cancelled");
-  if (live.length === 0) return null;
-  const accepted = live.filter((item) => item.status !== "new").length;
-  const ready = live.filter((item) => READY_ITEM_STATUSES.includes(item.status)).length;
-  if (accepted < live.length) {
-    return {
-      label: `Fermerlər: ${accepted}/${live.length} qəbul etdi`,
-      tone: "bg-amber-50 text-amber-800 ring-amber-200",
-    };
-  }
-  if (ready < live.length) {
-    return {
-      label: `Hazır: ${ready}/${live.length}`,
-      tone: "bg-sky-50 text-sky-800 ring-sky-200",
-    };
-  }
-  return { label: "Məhsullar hazırdır", tone: "bg-emerald-50 text-emerald-800 ring-emerald-200" };
+/** The customer status each line rank adds up to. */
+const STATUS_FOR_RANK: OrderStatus[] = [
+  "confirmed",
+  "farmer_accepted",
+  "preparing",
+  "awaiting_courier",
+  "picked_up",
+  "delivered",
+];
+
+/**
+ * The customer status the farmers' lines add up to: as far as the slowest
+ * line still on the order. Null with no lines left.
+ */
+function statusFromFarmers(items: AdminOrderItem[]): OrderStatus | null {
+  const ranks = items.filter((item) => item.status !== "cancelled").map((item) => ITEM_RANK[item.status]);
+  return ranks.length > 0 ? STATUS_FOR_RANK[Math.min(...ranks)] : null;
+}
+
+function flowIndex(status: OrderStatus): number {
+  return ORDER_STATUS_FLOW.indexOf(status);
 }
 
 function Chip({ tone, children }: { tone: string; children: React.ReactNode }) {
@@ -319,6 +321,23 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
   return <h3 className="text-[11px] font-semibold uppercase tracking-wide text-zinc-500">{children}</h3>;
 }
 
+function EyeIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true" className="h-3.5 w-3.5">
+      <path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z" />
+      <circle cx="12" cy="12" r="3" />
+    </svg>
+  );
+}
+
+function FarmerIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true" className="h-3.5 w-3.5">
+      <path d="M4 20c1-4 4-6 8-6s7 2 8 6M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z" />
+    </svg>
+  );
+}
+
 function AdminOrderCard({
   order,
   checked,
@@ -336,13 +355,28 @@ function AdminOrderCard({
 }) {
   const [cancelling, setCancelling] = useState(false);
   const nextStatuses = ADMIN_STATUS_TRANSITIONS[order.status] ?? [];
-  const primaryStatus = nextStatuses.find((status) => status !== "cancelled");
-  const otherStatuses = nextStatuses.filter((status) => status !== "cancelled" && status !== primaryStatus);
+  const forwardStatuses: OrderStatus[] = nextStatuses.filter((status) => status !== "cancelled");
   const canCancel = nextStatuses.includes("cancelled");
   const paymentStatus = firstPayment(order.payments)?.status ?? "pending";
   const items = order.order_items ?? [];
   const events = order.order_status_events ?? [];
-  const progress = order.status === "cancelled" || order.status === "delivered" ? null : farmerProgress(items);
+  // Couriers only get the order once every farmer is ready; the action
+  // refuses it otherwise.
+  const readyForCourier = items.every(
+    (item) => item.status === "cancelled" || item.status === "ready" || item.status === "awaiting_pickup",
+  );
+  const blocked = (status: OrderStatus) => status === "awaiting_courier" && !readyForCourier;
+
+  // The customer's status against what the farmers have marked. Farmers
+  // only see an order once it's paid, so before that there's nothing to
+  // compare.
+  const running = !(["awaiting_confirmation", "cancelled", "delivered"] as OrderStatus[]).includes(order.status);
+  const fromFarmers = running ? statusFromFarmers(items) : null;
+  const farmersAhead =
+    fromFarmers !== null && flowIndex(fromFarmers) > flowIndex(order.status) && forwardStatuses.includes(fromFarmers);
+  const farmersBehind = fromFarmers !== null && flowIndex(fromFarmers) < flowIndex(order.status);
+  // The main button moves the customer up to what the farmers have marked.
+  const suggested = farmersAhead && fromFarmers && !blocked(fromFarmers) ? fromFarmers : null;
 
   const recipient = recipientName(order);
   const customerName = order.customer?.full_name ?? order.customer?.email ?? null;
@@ -383,37 +417,82 @@ function AdminOrderCard({
         </div>
       ) : null}
 
-      {/* Header: what, when, how much, where it stands. */}
-      <div className="px-4 pt-4 sm:px-5">
-        <div className="flex items-start gap-3">
-          <input
-            type="checkbox"
-            checked={checked}
-            onChange={onToggle}
-            aria-label={`${order.order_code} seç`}
-            className="mt-1 h-4 w-4 shrink-0 rounded border-zinc-300 text-emerald-600 focus:ring-emerald-500"
-          />
-          <div className="min-w-0 flex-1">
-            <div className="flex items-start justify-between gap-3">
-              <div className="min-w-0">
-                <span className="font-semibold text-zinc-900">#{order.order_code}</span>
-                <span className="ml-2 text-sm text-zinc-500">{formatDateTime(order.created_at)}</span>
-              </div>
-              <span className="shrink-0 text-lg font-semibold text-zinc-900">{formatPrice(order.total_amount)}</span>
+      {/* Header: what, when, how much. */}
+      <div className="flex items-start gap-3 px-4 pt-4 sm:px-5">
+        <input
+          type="checkbox"
+          checked={checked}
+          onChange={onToggle}
+          aria-label={`${order.order_code} seç`}
+          className="mt-1 h-4 w-4 shrink-0 rounded border-zinc-300 text-emerald-600 focus:ring-emerald-500"
+        />
+        <div className="min-w-0 flex-1">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <span className="font-semibold text-zinc-900">#{order.order_code}</span>
+              <span className="ml-2 text-sm text-zinc-500">{formatDateTime(order.created_at)}</span>
             </div>
-            <div className="mt-2 flex flex-wrap items-center gap-1.5">
-              <Chip tone={getOrderStatusTone(order.status)}>{getOrderStatusLabel(order.status)}</Chip>
-              <Chip tone={getPaymentBadgeTone(paymentStatus)}>Ödəniş: {getPaymentStatusLabel(paymentStatus)}</Chip>
-              {progress ? <Chip tone={progress.tone}>{progress.label}</Chip> : null}
-              <DeliveryDate createdAt={order.created_at} status={order.status} />
-            </div>
-            {order.status !== "cancelled" ? (
-              <div className="mt-3">
-                <OrderSteps status={order.status} />
-              </div>
-            ) : null}
+            <span className="shrink-0 text-lg font-semibold text-zinc-900">{formatPrice(order.total_amount)}</span>
+          </div>
+          <div className="mt-2 flex flex-wrap items-center gap-1.5">
+            <Chip tone={getPaymentBadgeTone(paymentStatus)}>Ödəniş: {getPaymentStatusLabel(paymentStatus)}</Chip>
+            <DeliveryDate createdAt={order.created_at} status={order.status} />
           </div>
         </div>
+      </div>
+
+      {/* The two statuses, side by side: what the customer sees, which the
+          admin sets, and what the farmers have marked on their lines. */}
+      <div className="mt-4 grid gap-3 px-4 sm:grid-cols-2 sm:px-5">
+        <section className="rounded-xl bg-emerald-50/60 p-3 ring-1 ring-emerald-100">
+          <p className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-emerald-800">
+            <EyeIcon />
+            Müştərinin gördüyü status
+          </p>
+          <p className="mt-1 text-base font-semibold text-zinc-900">{getOrderStatusLabel(order.status)}</p>
+          {order.status !== "cancelled" ? (
+            <div className="mt-2.5">
+              <OrderSteps status={order.status} />
+            </div>
+          ) : null}
+          {order.status === "awaiting_confirmation" ? (
+            <p className="mt-2 text-xs text-amber-700">Ödəniş təsdiqi gözlənilir</p>
+          ) : farmersAhead && fromFarmers ? (
+            <p className="mt-2 text-xs font-medium text-sky-700">
+              Fermerlərə görə: {getOrderStatusLabel(fromFarmers)}
+            </p>
+          ) : farmersBehind ? (
+            <p className="mt-2 text-xs font-medium text-amber-700">⚠ Fermerlərin statusundan irəlidədir</p>
+          ) : fromFarmers ? (
+            <p className="mt-2 text-xs font-medium text-emerald-700">✓ Fermerlərin statusuna uyğundur</p>
+          ) : null}
+        </section>
+
+        <section className="rounded-xl bg-zinc-50 p-3 ring-1 ring-zinc-200">
+          <p className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-zinc-600">
+            <FarmerIcon />
+            Fermerlərin qeyd etdiyi status
+          </p>
+          <ul className="mt-1.5 space-y-1.5">
+            {[...farmers.entries()].map(([farmerId, group]) => {
+              const counts = new Map<OrderItemStatus, number>();
+              for (const item of group.items) counts.set(item.status, (counts.get(item.status) ?? 0) + 1);
+              return (
+                <li key={farmerId} className="flex flex-wrap items-center justify-between gap-1.5">
+                  <span className="min-w-0 truncate text-sm text-zinc-800">{group.name}</span>
+                  <span className="flex flex-wrap gap-1">
+                    {[...counts.entries()].map(([status, count]) => (
+                      <Chip key={status} tone={ITEM_STATUS_TONE[status] ?? ITEM_STATUS_TONE.new}>
+                        {getOrderItemStatusLabel(status)}
+                        {counts.size > 1 || count > 1 ? ` · ${count}` : ""}
+                      </Chip>
+                    ))}
+                  </span>
+                </li>
+              );
+            })}
+          </ul>
+        </section>
       </div>
 
       {/* Customer and delivery | payment. */}
@@ -478,7 +557,7 @@ function AdminOrderCard({
         </section>
       </div>
 
-      {/* Lines, by farmer. */}
+      {/* Lines, by farmer, each with the status its farmer marked. */}
       {items.length > 0 ? (
         <section className="px-4 py-3 sm:px-5">
           <SectionTitle>Məhsullar</SectionTitle>
@@ -535,7 +614,8 @@ function AdminOrderCard({
         </section>
       ) : null}
 
-      {/* Footer: history on the left, what the admin can do next on the right. */}
+      {/* Footer: history on the left; on the right, changing the status the
+          customer sees. */}
       <div className="flex flex-col gap-3 border-t border-zinc-100 bg-zinc-50/70 px-4 py-3 sm:flex-row sm:items-start sm:justify-between sm:px-5">
         <details className="min-w-0 flex-1 text-sm">
           <summary className="cursor-pointer font-medium text-zinc-700">
@@ -550,6 +630,10 @@ function AdminOrderCard({
 
         {nextStatuses.length > 0 ? (
           <div className="flex flex-col gap-2 sm:items-end">
+            <p className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-emerald-800">
+              <EyeIcon />
+              Müştəri statusunu dəyiş
+            </p>
             {cancelling ? (
               <form action={statusAction} className="flex w-full flex-col gap-2 sm:w-80">
                 <input type="hidden" name="order_id" value={order.id} />
@@ -574,64 +658,65 @@ function AdminOrderCard({
                 </div>
               </form>
             ) : (
-              <div className="flex flex-wrap gap-2 sm:justify-end">
+              <div className="flex flex-wrap items-center gap-2 sm:justify-end">
+                {forwardStatuses.length > 0 ? (
+                  <form action={statusAction} className="flex items-center gap-1.5">
+                    <input type="hidden" name="order_id" value={order.id} />
+                    <label htmlFor={`next-${order.id}`} className="sr-only">
+                      Yeni status
+                    </label>
+                    <select
+                      id={`next-${order.id}`}
+                      name="next_status"
+                      required
+                      defaultValue=""
+                      className="max-w-[14rem] rounded-full border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-700"
+                    >
+                      <option value="" disabled>
+                        Status seçin…
+                      </option>
+                      {forwardStatuses.map((status) => (
+                        <option key={status} value={status} disabled={blocked(status)}>
+                          {getOrderStatusLabel(status)}
+                          {blocked(status) ? " (fermerlər hazır deyil)" : ""}
+                        </option>
+                      ))}
+                    </select>
+                    <button
+                      type="submit"
+                      disabled={statusPending}
+                      className="rounded-full px-3 py-2 text-sm font-semibold text-emerald-700 ring-1 ring-emerald-200 hover:bg-emerald-50 disabled:opacity-70"
+                    >
+                      Yenilə
+                    </button>
+                  </form>
+                ) : null}
                 {canCancel ? (
                   <button
                     type="button"
                     onClick={() => setCancelling(true)}
-                    className="flex-1 rounded-full bg-white px-4 py-2 text-sm font-medium text-rose-700 ring-1 ring-rose-200 hover:bg-rose-50 sm:flex-none"
+                    className="rounded-full bg-white px-4 py-2 text-sm font-medium text-rose-700 ring-1 ring-rose-200 hover:bg-rose-50"
                   >
                     Ləğv et
                   </button>
                 ) : null}
-                {primaryStatus ? (
-                  <form action={statusAction} className="flex-1 sm:flex-none">
+                {suggested ? (
+                  <form action={statusAction} className="w-full sm:w-auto">
                     <input type="hidden" name="order_id" value={order.id} />
                     <button
                       type="submit"
                       name="next_status"
-                      value={primaryStatus}
+                      value={suggested}
                       disabled={statusPending}
                       className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-500 disabled:opacity-70"
                     >
                       {statusPending ? <Spinner className="h-3.5 w-3.5" /> : null}
-                      {ORDER_ACTION_LABEL[primaryStatus] ?? getOrderStatusLabel(primaryStatus)} →
+                      Fermerlərə uyğunlaşdır: {getOrderStatusLabel(suggested)}
                     </button>
                   </form>
                 ) : null}
               </div>
             )}
-            {!cancelling && otherStatuses.length > 0 ? (
-              <form action={statusAction} className="flex items-center gap-2">
-                <input type="hidden" name="order_id" value={order.id} />
-                <label htmlFor={`other-${order.id}`} className="sr-only">
-                  Başqa status
-                </label>
-                <select
-                  id={`other-${order.id}`}
-                  name="next_status"
-                  required
-                  defaultValue=""
-                  className="rounded-full border border-zinc-200 bg-white px-3 py-1.5 text-xs text-zinc-700"
-                >
-                  <option value="" disabled>
-                    Başqa status…
-                  </option>
-                  {otherStatuses.map((status) => (
-                    <option key={status} value={status}>
-                      {getOrderStatusLabel(status)}
-                    </option>
-                  ))}
-                </select>
-                <button
-                  type="submit"
-                  disabled={statusPending}
-                  className="rounded-full px-2 py-1.5 text-xs font-semibold text-emerald-700 hover:bg-emerald-50 disabled:opacity-70"
-                >
-                  Keç
-                </button>
-              </form>
-            ) : null}
           </div>
         ) : null}
       </div>
