@@ -23,7 +23,7 @@ import {
   getPaymentStatusLabel,
 } from "@/lib/orders/labels";
 import { firstPayment } from "@/lib/orders/payment";
-import { isReadyForCourier } from "@/lib/orders/courier-ready";
+import { adminCanSetStatus, statusFromLines, statusOwner } from "@/lib/orders/admin-status";
 import { deliveryAddress, recipientName } from "@/lib/orders/delivery";
 import { ITEM_CANCEL_ANNOUNCED } from "@/lib/orders/item-cancel";
 import { matchesAdminOrderQuery } from "@/lib/orders/admin-order-filter";
@@ -240,37 +240,6 @@ function orderStepIndex(status: OrderStatus): number {
   }
 }
 
-/** How far along a line is, to compare it with the customer's status. */
-const ITEM_RANK: Record<OrderItemStatus, number> = {
-  new: 0,
-  accepted: 1,
-  preparing: 2,
-  ready: 3,
-  awaiting_pickup: 3,
-  picked_up: 4,
-  delivered: 5,
-  cancelled: -1,
-};
-
-/** The customer status each line rank adds up to. */
-const STATUS_FOR_RANK: OrderStatus[] = [
-  "confirmed",
-  "farmer_accepted",
-  "preparing",
-  "awaiting_courier",
-  "picked_up",
-  "delivered",
-];
-
-/**
- * The customer status the farmers' lines add up to: as far as the slowest
- * line still on the order. Null with no lines left.
- */
-function statusFromFarmers(items: AdminOrderItem[]): OrderStatus | null {
-  const ranks = items.filter((item) => item.status !== "cancelled").map((item) => ITEM_RANK[item.status]);
-  return ranks.length > 0 ? STATUS_FOR_RANK[Math.min(...ranks)] : null;
-}
-
 function flowIndex(status: OrderStatus): number {
   return ORDER_STATUS_FLOW.indexOf(status);
 }
@@ -366,16 +335,15 @@ function AdminOrderCard({
   const paymentStatus = firstPayment(order.payments)?.status ?? "pending";
   const items = order.order_items ?? [];
   const events = order.order_status_events ?? [];
-  // Couriers only get the order once every farmer is ready; the action
-  // refuses it otherwise.
-  const readyForCourier = isReadyForCourier(items);
-  const blocked = (status: OrderStatus) => status === "awaiting_courier" && !readyForCourier;
+  // A step its owner (farmers, then the courier) hasn't marked on every
+  // line can't be shown to the customer; the action refuses it too.
+  const blocked = (status: OrderStatus) => !adminCanSetStatus(status, items);
 
   // The customer's status against what the farmers have marked. Farmers
   // only see an order once it's paid, so before that there's nothing to
   // compare.
   const running = !(["awaiting_confirmation", "cancelled", "delivered"] as OrderStatus[]).includes(order.status);
-  const fromFarmers = running ? statusFromFarmers(items) : null;
+  const fromFarmers = running ? statusFromLines(items) : null;
   const farmersAhead =
     fromFarmers !== null && flowIndex(fromFarmers) > flowIndex(order.status) && forwardStatuses.includes(fromFarmers);
   const farmersBehind = fromFarmers !== null && flowIndex(fromFarmers) < flowIndex(order.status);
@@ -463,7 +431,7 @@ function AdminOrderCard({
             <p className="mt-2 text-xs text-amber-700">Ödəniş təsdiqi gözlənilir</p>
           ) : farmersAhead && fromFarmers ? (
             <p className="mt-2 text-xs font-medium text-sky-700">
-              Fermerlərə görə: {getOrderStatusLabel(fromFarmers)}
+              {statusOwner(fromFarmers) === "kuryer" ? "Kuryerə" : "Fermerlərə"} görə: {getOrderStatusLabel(fromFarmers)}
             </p>
           ) : farmersBehind ? (
             <p className="mt-2 text-xs font-medium text-amber-700">⚠ Fermerlərin statusundan irəlidədir</p>
@@ -682,7 +650,7 @@ function AdminOrderCard({
                       {forwardStatuses.map((status) => (
                         <option key={status} value={status} disabled={blocked(status)}>
                           {getOrderStatusLabel(status)}
-                          {blocked(status) ? " (fermerlər hazır deyil)" : ""}
+                          {blocked(status) ? ` (${statusOwner(status)} hələ qeyd etməyib)` : ""}
                         </option>
                       ))}
                     </select>
@@ -715,7 +683,7 @@ function AdminOrderCard({
                       className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-500 disabled:opacity-70"
                     >
                       {statusPending ? <Spinner className="h-3.5 w-3.5" /> : null}
-                      Fermerlərə uyğunlaşdır: {getOrderStatusLabel(suggested)}
+                      {statusOwner(suggested) === "kuryer" ? "Kuryerə" : "Fermerlərə"} uyğunlaşdır: {getOrderStatusLabel(suggested)}
                     </button>
                   </form>
                 ) : null}

@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { requireAdmin } from "@/lib/admin/auth";
 import { ADMIN_STATUS_TRANSITIONS } from "@/lib/orders/labels";
 import { getOrderStatusLabel } from "@/lib/checkout/labels";
-import { isReadyForCourier } from "@/lib/orders/courier-ready";
+import { adminCanSetStatus, statusOwner } from "@/lib/orders/admin-status";
 import { getOrderFarmerProfileIds } from "@/lib/orders/farmers";
 import { ITEM_CANCEL_ANNOUNCED } from "@/lib/orders/item-cancel";
 import { notifyUser } from "@/lib/notifications/helpers";
@@ -325,20 +325,21 @@ export async function advanceOrderStatus(
     return { error: "Bu status keçidinə icazə verilmir." };
   }
 
-  // Don't let an order into the courier queue while some farmer's items
-  // aren't actually ready yet — a courier could otherwise be sent to pick
-  // up a shipment that's only partially prepared.
-  if (nextStatus === "awaiting_courier") {
-    const { data: items } = await supabase
-      .from("order_items")
-      .select("status")
-      .eq("order_id", orderId);
+  // The customer may only see a step its owner has marked on every line:
+  // the farmers up to "kuryer gözləyir", the courier for "götürüldü" and
+  // "çatdırıldı".
+  const { data: items } = await supabase
+    .from("order_items")
+    .select("status")
+    .eq("order_id", orderId);
 
-    if (!isReadyForCourier(items ?? [])) {
-      return {
-        error: "Bütün fermerlər hazırlığı bitirməyib. Kuryerə göndərmək üçün gözləyin.",
-      };
-    }
+  if (!adminCanSetStatus(nextStatus, items ?? [])) {
+    return {
+      error:
+        statusOwner(nextStatus) === "kuryer"
+          ? "Kuryer bu statusu hələ qeyd etməyib."
+          : "Bütün fermerlər bu statusu hələ qeyd etməyib.",
+    };
   }
 
   const { error: updateError } = await supabase
@@ -349,19 +350,6 @@ export async function advanceOrderStatus(
   if (updateError) {
     console.error("[admin.advanceOrderStatus]", updateError.message);
     return { error: "Status yenilənmədi." };
-  }
-
-  // Picked up or delivered by the admin's word: the lines follow, so farmers
-  // don't keep seeing them as waiting for the courier. Cancelled lines stay.
-  if (nextStatus === "picked_up" || nextStatus === "delivered") {
-    const { error: itemsError } = await supabase
-      .from("order_items")
-      .update({ status: nextStatus })
-      .eq("order_id", orderId)
-      .not("status", "in", nextStatus === "delivered" ? "(cancelled,delivered)" : "(cancelled,picked_up,delivered)");
-    if (itemsError) {
-      console.error("[admin.advanceOrderStatus.items]", itemsError.message);
-    }
   }
 
   const baseNotification = notificationForOrderStatus(nextStatus);
