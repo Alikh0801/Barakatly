@@ -2,6 +2,8 @@ import { isActionNeededNotification } from "@/lib/orders/labels";
 import { createClient } from "@/lib/supabase/server";
 import type { Notification } from "@/types";
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 function metadataString(
   metadata: Notification["metadata"],
   key: string,
@@ -47,7 +49,9 @@ export async function resolvePendingActionNotificationIds(
       if (profileId) profileIds.add(profileId);
     }
 
-    const ids = [...farmerIds, ...profileIds];
+    // Only real UUIDs go into the hand-built .or() filter, so a value in
+    // the metadata can never add a condition of its own.
+    const ids = [...farmerIds, ...profileIds].filter((id) => UUID_RE.test(id));
     if (ids.length > 0) {
       const { data } = await supabase
         .from("farmers")

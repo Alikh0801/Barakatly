@@ -79,7 +79,10 @@ async function insertEventAndNotify(params: {
     body: string;
   } | null;
 }) {
-  const supabase = await createClient();
+  // Events and notifications are written only from the server (the API
+  // can't insert them, migration 20261030120000); the caller is an admin
+  // action that has already checked who is asking.
+  const supabase = createAdminClient();
 
   await supabase.from("order_status_events").insert({
     order_id: params.orderId,
@@ -493,7 +496,8 @@ export async function announceItemCancellation(
   const amount = `${Number(item.line_total).toFixed(2)} ₼`;
   const reason = item.cancel_reason ? ` Səbəb: ${item.cancel_reason}.` : "";
 
-  const { error } = await supabase.from("order_status_events").insert({
+  const writer = createAdminClient();
+  const { error } = await writer.from("order_status_events").insert({
     order_id: item.order_id,
     order_item_id: itemId,
     status: ITEM_CANCEL_ANNOUNCED,
@@ -505,7 +509,7 @@ export async function announceItemCancellation(
     return { error: "Bildirilmədi. Yenidən cəhd edin." };
   }
 
-  await supabase.from("notifications").insert({
+  await writer.from("notifications").insert({
     user_id: order.customer_id,
     title: "Məhsul ləğv edildi",
     body: `${order.order_code} — "${item.product_title}" sifarişinizdən çıxarıldı.${reason} Bu məhsulun məbləği (${amount}) sizə qaytarılacaq.`,
