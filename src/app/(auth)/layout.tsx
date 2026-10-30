@@ -25,7 +25,7 @@ const BLANK_IMAGE = "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAAL
  */
 function AuthPanelImage({ src }: { src: string }) {
   const {
-    props: { srcSet, sizes, alt, ...rest },
+    props: { src: imageSrc, srcSet, sizes, alt, ...rest },
   } = getImageProps({
     src,
     alt: "Barakatly: fermerdən birbaşa süfrənizə",
@@ -36,7 +36,9 @@ function AuthPanelImage({ src }: { src: string }) {
 
   return (
     <picture>
-      <source media={PANEL_MEDIA} srcSet={srcSet} sizes={sizes} />
+      {/* With images.unoptimized there is no srcset, only the file itself:
+          without it the <source> was empty and every screen got the blank. */}
+      <source media={PANEL_MEDIA} srcSet={srcSet ?? imageSrc} sizes={srcSet ? sizes : undefined} />
       <img {...rest} alt={alt} src={BLANK_IMAGE} className="object-cover" />
     </picture>
   );
