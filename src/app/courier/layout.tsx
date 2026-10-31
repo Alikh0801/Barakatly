@@ -14,7 +14,10 @@ export default async function CourierLayout({
   return (
     <PortalShell
       title="Kuryer · Barakatly"
-      links={[{ href: "/courier", label: "Növbə" }]}
+      links={[
+        { href: "/courier", label: "Növbə" },
+        { href: "/courier/history", label: "Tarixçə" },
+      ]}
     >
       {children}
     </PortalShell>

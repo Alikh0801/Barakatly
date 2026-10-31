@@ -7,6 +7,7 @@ import {
 } from "@/lib/courier/actions";
 import { getOrderItemStatusLabel, getOrderStatusLabel } from "@/lib/orders/labels";
 import { Spinner } from "@/components/ui/Spinner";
+import { OrderStatusTimeline } from "@/components/orders/OrderStatusTimeline";
 import { formatDateTime } from "@/lib/format/date";
 import { DeliveryDate } from "@/components/orders/DeliveryDate";
 import { formatAmount } from "@/lib/shop/quantity";
@@ -41,7 +42,17 @@ function getCourierStatusOptionLabel(status: OrderStatus): string {
   return getOrderStatusLabel(status);
 }
 
+/** When a closed order was delivered, or given up on. */
+function closedAt(order: CourierOrder): string | null {
+  const event = [...order.order_status_events]
+    .reverse()
+    .find((e) => !e.order_item_id && (e.status === "delivered" || e.status === "cancelled"));
+  return event?.created_at ?? null;
+}
+
 function CourierOrderCard({ order }: { order: CourierOrder }) {
+  const closed = order.status === "delivered" || order.status === "cancelled";
+  const closedTime = closed ? closedAt(order) : null;
   const [state, action, pending] = useActionState(
     advanceCourierOrder,
     initialState
@@ -90,9 +101,12 @@ function CourierOrderCard({ order }: { order: CourierOrder }) {
               Alıcı: {recipientName(order)}
             </p>
           ) : null}
-          <p className={`${recipientName(order) ? "mt-1" : "mt-2"} text-sm text-zinc-700`}>
-            Müştəri telefonu: {order.contact_phone}
-          </p>
+          {/* A closed order no longer needs the customer's phone. */}
+          {closed ? null : (
+            <p className={`${recipientName(order) ? "mt-1" : "mt-2"} text-sm text-zinc-700`}>
+              Müştəri telefonu: {order.contact_phone}
+            </p>
+          )}
           <p className="mt-1 text-sm text-zinc-600">
             Çatdırılma: {deliveryAddress(order) ?? "Ünvan qeyd olunmayıb"}
           </p>
@@ -102,11 +116,16 @@ function CourierOrderCard({ order }: { order: CourierOrder }) {
             </p>
           ) : null}
         </div>
-        <div className="text-xs font-medium text-zinc-700">
+        <div className="text-xs font-medium text-zinc-700 sm:text-right">
           {/* Picked up but not yet shown to the customer by the admin. */}
           {order.picked_up_by_me && order.status === "awaiting_courier"
             ? "Götürülüb"
-            : getOrderStatusLabel(order.status)}
+            : order.status === "cancelled"
+              ? "Çatdırıla bilmədi"
+              : getOrderStatusLabel(order.status)}
+          {closedTime ? (
+            <div className="mt-0.5 font-normal text-zinc-500">{formatDateTime(closedTime)}</div>
+          ) : null}
         </div>
       </div>
 
@@ -128,6 +147,16 @@ function CourierOrderCard({ order }: { order: CourierOrder }) {
           </div>
         ))}
       </div>
+
+      <details className="mt-4 rounded-xl bg-zinc-50 p-3 text-sm ring-1 ring-zinc-100">
+        <summary className="cursor-pointer font-medium text-zinc-800">
+          Sifariş tarixçəsi
+          <span className="ml-1 font-normal text-zinc-500">({order.order_status_events.length})</span>
+        </summary>
+        <div className="mt-3">
+          <OrderStatusTimeline events={order.order_status_events} compact />
+        </div>
+      </details>
 
       {nextStatuses.length > 0 ? (
         <form action={action} className="mt-4 flex flex-wrap items-end gap-2">
@@ -171,6 +200,25 @@ export function CourierQueue({ orders }: { orders: CourierOrder[] }) {
     return (
       <div className="rounded-3xl bg-white p-8 text-center ring-1 ring-zinc-200">
         <p className="font-medium text-zinc-900">Hazırda çatdırılacaq sifariş yoxdur</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-3">
+      {orders.map((order) => (
+        <CourierOrderCard key={order.id} order={order} />
+      ))}
+    </div>
+  );
+}
+
+/** Orders this courier has delivered, or could not deliver. */
+export function CourierHistory({ orders }: { orders: CourierOrder[] }) {
+  if (orders.length === 0) {
+    return (
+      <div className="rounded-3xl bg-white p-8 text-center ring-1 ring-zinc-200">
+        <p className="font-medium text-zinc-900">Hələ bağlanmış sifariş yoxdur</p>
       </div>
     );
   }

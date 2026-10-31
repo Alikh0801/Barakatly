@@ -100,7 +100,14 @@ export function getOrderItemStatusLabel(status: OrderItemStatus): string {
   }
 }
 
-export function getEventStatusLabel(status: string): string {
+export function getEventStatusLabel(status: string, onLine = false): string {
+  // A line's own mark ("preparing", "picked_up"…) reads as the line's
+  // status, not the order's: "Kuryer tərəfindən götürüldü", not "Kuryer
+  // yola çıxdı".
+  if (onLine && status !== "item_cancel_announced") {
+    return getOrderItemStatusLabel(status as OrderItemStatus);
+  }
+
   const orderStatuses: OrderStatus[] = [
     "awaiting_confirmation",
     "confirmed",

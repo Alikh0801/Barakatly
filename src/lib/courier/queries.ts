@@ -1,7 +1,7 @@
 import { requireCourier } from "@/lib/courier/auth";
 import { createClient } from "@/lib/supabase/server";
 import { courierNextStatuses, isPickedUpBy } from "@/lib/orders/courier-steps";
-import type { Order, OrderItem, OrderStatus } from "@/types";
+import type { Order, OrderItem, OrderStatus, OrderStatusEvent } from "@/types";
 
 export type CourierOrderItem = Pick<
   OrderItem,
@@ -12,19 +12,15 @@ export type CourierOrderItem = Pick<
 
 export type CourierOrder = Omit<Order, "total_amount" | "subtotal" | "delivery_fee"> & {
   order_items: CourierOrderItem[];
+  /** Oldest first. */
+  order_status_events: OrderStatusEvent[];
   /** What this courier may mark next (see courierNextStatuses). */
   next_statuses: OrderStatus[];
   /** Picked up by this courier, whatever the customer is shown yet. */
   picked_up_by_me: boolean;
 };
 
-export async function getCourierQueue(): Promise<CourierOrder[]> {
-  const { courier } = await requireCourier();
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("orders")
-    .select(
-      `
+const COURIER_ORDER_SELECT = `
       id,
       order_code,
       customer_id,
@@ -50,9 +46,25 @@ export async function getCourierQueue(): Promise<CourierOrder[]> {
         status,
         farmer_id,
         farmers (owner_name, location_text)
-      )
-    `,
-    )
+      ),
+      order_status_events (id, order_id, order_item_id, status, changed_by, note, created_at)
+    `;
+
+function sortEvents<T extends { order_status_events: OrderStatusEvent[] | null }>(order: T): T {
+  return {
+    ...order,
+    order_status_events: [...(order.order_status_events ?? [])].sort((a, b) =>
+      a.created_at.localeCompare(b.created_at),
+    ),
+  };
+}
+
+export async function getCourierQueue(): Promise<CourierOrder[]> {
+  const { courier } = await requireCourier();
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("orders")
+    .select(COURIER_ORDER_SELECT)
     .in("status", ["awaiting_courier", "picked_up"])
     .order("created_at", { ascending: true });
 
@@ -67,8 +79,33 @@ export async function getCourierQueue(): Promise<CourierOrder[]> {
   return orders
     .filter((order) => !order.courier_id || order.courier_id === courier.id)
     .map((order) => ({
-      ...order,
+      ...sortEvents(order),
       next_statuses: courierNextStatuses(order, courier.id),
       picked_up_by_me: isPickedUpBy(order, courier.id),
     }));
+}
+
+/**
+ * The orders this courier has closed: delivered, or could not be delivered.
+ * Newest first, the last 100.
+ */
+export async function getCourierHistory(): Promise<CourierOrder[]> {
+  const { courier } = await requireCourier();
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("orders")
+    .select(COURIER_ORDER_SELECT)
+    .eq("courier_id", courier.id)
+    .in("status", ["delivered", "cancelled"])
+    .order("updated_at", { ascending: false })
+    .limit(100);
+
+  if (error) {
+    console.error("[courier.getCourierHistory]", error.message);
+    return [];
+  }
+
+  return ((data ?? []) as unknown as Omit<CourierOrder, "next_statuses" | "picked_up_by_me">[]).map(
+    (order) => ({ ...sortEvents(order), next_statuses: [], picked_up_by_me: true }),
+  );
 }

@@ -43,7 +43,7 @@ export function OrderStatusTimeline({
           />
           <div>
             <div className="text-sm font-medium text-zinc-900">
-              {getEventStatusLabel(event.status)}
+              {getEventStatusLabel(event.status, Boolean(event.order_item_id))}
             </div>
             {event.note ? (
               <p className="mt-0.5 text-sm text-zinc-600">{event.note}</p>
