@@ -56,6 +56,22 @@ function describePlaceOrderError(message: string): string {
     const title = message.slice("OUT_OF_STOCK:".length);
     return `"${title}" üçün kifayət qədər miqdar yoxdur.`;
   }
+  // The checks below are made here first; place_order() repeats them for
+  // direct calls (migration 20261031120000), so they surface only if the
+  // two ever disagree.
+  if (message.startsWith("QUANTITY_RULE:")) {
+    const title = message.slice("QUANTITY_RULE:".length);
+    return `"${title}" üçün miqdar minimumdan azdır və ya düzgün deyil. Səbətdə miqdarı dəyişin.`;
+  }
+  if (message === "INVALID_QUANTITY") return "Səbətdəki miqdarlardan biri düzgün deyil.";
+  if (message === "OWN_PRODUCT") {
+    return "Öz məhsulunuza sifariş verə bilməzsiniz. Onu səbətdən çıxarın.";
+  }
+  if (message === "BANK_NOT_FOUND") return "Seçilmiş bank tapılmadı.";
+  if (message === "RECEIPT_NOT_FOUND") return "Çek tapılmadı. Yenidən yükləyin.";
+  if (message === "RECEIPT_TOO_LARGE") return RECEIPT_TOO_LARGE_ERROR;
+  if (message === "RECEIPT_TYPE") return RECEIPT_TYPE_ERROR;
+  if (message === "INVALID_DETAILS") return "Çatdırılma məlumatlarını yoxlayın.";
   return "Sifariş yaradıla bilmədi. Yenidən cəhd edin.";
 }
 
