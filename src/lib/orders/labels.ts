@@ -40,22 +40,9 @@ export const FARMER_ITEM_STATUS_TRANSITIONS: Record<
   accepted: ["preparing"],
   preparing: ["ready"],
   ready: ["awaiting_pickup"],
-  awaiting_pickup: ["picked_up"],
+  // The farmer's last step: the courier marks the pick-up.
+  awaiting_pickup: [],
   picked_up: [],
-  delivered: [],
-  cancelled: [],
-};
-
-export const COURIER_ORDER_STATUS_TRANSITIONS: Record<
-  OrderStatus,
-  OrderStatus[]
-> = {
-  awaiting_confirmation: [],
-  confirmed: [],
-  farmer_accepted: [],
-  preparing: [],
-  awaiting_courier: ["picked_up"],
-  picked_up: ["delivered", "cancelled"],
   delivered: [],
   cancelled: [],
 };

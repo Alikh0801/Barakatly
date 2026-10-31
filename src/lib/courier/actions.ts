@@ -2,11 +2,9 @@
 
 import { revalidatePath } from "next/cache";
 import { requireCourier } from "@/lib/courier/auth";
-import {
-  COURIER_ORDER_STATUS_TRANSITIONS,
-  getOrderStatusLabel,
-} from "@/lib/orders/labels";
-import { insertEventAndNotify, notifyUser } from "@/lib/notifications/helpers";
+import { getOrderStatusLabel } from "@/lib/orders/labels";
+import { courierNextStatuses } from "@/lib/orders/courier-steps";
+import { insertEventAndNotify, notifyAdmins, notifyUser } from "@/lib/notifications/helpers";
 import { getOrderFarmerProfileIds } from "@/lib/orders/farmers";
 import { createClient } from "@/lib/supabase/server";
 import type { NotificationType, OrderItemStatus, OrderStatus } from "@/types";
@@ -24,13 +22,6 @@ function notificationForStatus(
   title: string;
   body: string;
 } | null {
-  if (status === "picked_up") {
-    return {
-      type: "order_picked_up",
-      title: "Kuryer yola çıxdı",
-      body: "Kuryer sifarişinizi götürdü və çatdırmağa yola düşdü.",
-    };
-  }
   if (status === "delivered") {
     return {
       type: "order_delivered",
@@ -93,7 +84,7 @@ export async function advanceCourierOrder(
   const supabase = await createClient();
   const { data: order, error } = await supabase
     .from("orders")
-    .select("id, customer_id, status, order_code, courier_id")
+    .select("id, customer_id, status, order_code, courier_id, order_items (id, product_title, status)")
     .eq("id", orderId)
     .single();
 
@@ -105,59 +96,106 @@ export async function advanceCourierOrder(
     return { error: "Bu sifariş artıq başqa kuryer tərəfindən götürülüb." };
   }
 
-  const allowed = COURIER_ORDER_STATUS_TRANSITIONS[order.status] ?? [];
-  if (!allowed.includes(nextStatus)) {
+  const lines = (order.order_items ?? []) as unknown as { status: OrderItemStatus }[];
+  if (!courierNextStatuses({ ...order, order_items: lines }, courier.id).includes(nextStatus)) {
     return { error: "Bu status keçidinə icazə verilmir." };
   }
 
-  // Claim the order on the courier's own row too — RLS only allows this
-  // update to affect a row that's unclaimed or already claimed by this
-  // courier, so a second courier racing for the same order gets 0 rows
-  // back here instead of silently overwriting the first courier's claim.
-  const { data: updatedOrders, error: updateError } = await supabase
-    .from("orders")
-    .update({ status: nextStatus, courier_id: courier.id })
-    .eq("id", orderId)
-    .select("id");
+  if (nextStatus === "picked_up") {
+    // Picking up is the courier's mark on the lines; the customer sees
+    // "Kuryer yola çıxdı" only once the admin sets it. The claim goes on
+    // the order: RLS lets the update touch an unclaimed order or this
+    // courier's own, so a second courier racing for it gets 0 rows.
+    const { data: claimed, error: claimError } = await supabase
+      .from("orders")
+      .update({ courier_id: courier.id })
+      .eq("id", orderId)
+      .select("id");
 
-  if (updateError) {
-    console.error("[courier.advanceCourierOrder]", updateError.message);
-    return { error: "Status yenilənmədi." };
-  }
+    if (claimError) {
+      console.error("[courier.advanceCourierOrder.claim]", claimError.message);
+      return { error: "Status yenilənmədi." };
+    }
+    if (!claimed || claimed.length === 0) {
+      return { error: "Bu sifariş artıq başqa kuryer tərəfindən götürülüb." };
+    }
 
-  if (!updatedOrders || updatedOrders.length === 0) {
-    return { error: "Bu sifariş artıq başqa kuryer tərəfindən götürülüb." };
-  }
-
-  // A failed delivery is reported as an order cancellation — the
-  // orders_cancel_cascade trigger (024/025) picks it up automatically,
-  // cascading order_items to "cancelled" and restoring product stock, no
-  // matter which code path set the status. Only picked_up/delivered need
-  // the manual item-status bump here.
-  if (nextStatus !== "cancelled") {
-    const itemStatus: OrderItemStatus =
-      nextStatus === "delivered" ? "delivered" : "picked_up";
-    const priorItemStatuses: OrderItemStatus[] =
-      nextStatus === "delivered" ? ["picked_up"] : ["ready", "awaiting_pickup"];
-
-    await supabase
+    const { data: pickedLines, error: linesError } = await supabase
       .from("order_items")
-      .update({ status: itemStatus })
+      .update({ status: "picked_up" })
       .eq("order_id", orderId)
-      .in("status", priorItemStatuses);
-  }
+      .in("status", ["ready", "awaiting_pickup"])
+      .select("id, product_title");
 
-  await insertEventAndNotify({
-    orderId: order.id,
-    customerId: order.customer_id,
-    status: nextStatus,
-    note:
-      nextStatus === "cancelled"
-        ? `Kuryer: çatdırıla bilmədi. Səbəb: ${reason}`
-        : `Kuryer: ${getOrderStatusLabel(nextStatus)}`,
-    changedBy: profile.id,
-    notification: notificationForStatus(nextStatus, reason),
-  });
+    if (linesError) {
+      console.error("[courier.advanceCourierOrder.lines]", linesError.message);
+      return { error: "Status yenilənmədi." };
+    }
+
+    // One event per line, as farmers' marks are: line events stay off the
+    // customer's status tracker.
+    for (const line of pickedLines ?? []) {
+      await insertEventAndNotify({
+        orderId: order.id,
+        customerId: order.customer_id,
+        orderItemId: line.id,
+        status: "picked_up",
+        note: `Kuryer: ${line.product_title} götürüldü`,
+        changedBy: profile.id,
+        notification: null,
+      });
+    }
+
+    // Shown in red on the admin's orders page, like a farmer's update.
+    await notifyAdmins({
+      type: "general",
+      title: "Kuryer sifarişi götürdü",
+      body: `${order.order_code} — kuryer məhsulları götürdü.`,
+      metadata: {
+        order_id: order.id,
+        order_code: order.order_code,
+        item_status: "picked_up",
+      },
+    });
+  } else {
+    // Delivered, or could not be: the customer sees it at once.
+    const { data: updatedOrders, error: updateError } = await supabase
+      .from("orders")
+      .update({ status: nextStatus, courier_id: courier.id })
+      .eq("id", orderId)
+      .select("id");
+
+    if (updateError) {
+      console.error("[courier.advanceCourierOrder]", updateError.message);
+      return { error: "Status yenilənmədi." };
+    }
+
+    if (!updatedOrders || updatedOrders.length === 0) {
+      return { error: "Bu sifariş artıq başqa kuryer tərəfindən götürülüb." };
+    }
+
+    // A failed delivery is an order cancellation: orders_cancel_cascade
+    // cancels the lines and puts the stock back. Delivered lines follow here.
+    if (nextStatus === "delivered") {
+      await supabase
+        .from("order_items")
+        .update({ status: "delivered" })
+        .eq("order_id", orderId)
+        .eq("status", "picked_up");
+    }
+
+    await insertEventAndNotify({
+      orderId: order.id,
+      customerId: order.customer_id,
+      status: nextStatus,
+      note:
+        nextStatus === "cancelled"
+          ? `Kuryer: çatdırıla bilmədi. Səbəb: ${reason}`
+          : `Kuryer: ${getOrderStatusLabel(nextStatus)}`,
+      changedBy: profile.id,
+      notification: notificationForStatus(nextStatus, reason),
+    });
+  }
 
   const farmerNotification = farmerNotificationForStatus(nextStatus, reason);
   if (farmerNotification) {

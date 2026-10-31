@@ -1,6 +1,7 @@
 import { requireCourier } from "@/lib/courier/auth";
 import { createClient } from "@/lib/supabase/server";
-import type { Order, OrderItem } from "@/types";
+import { courierNextStatuses, isPickedUpBy } from "@/lib/orders/courier-steps";
+import type { Order, OrderItem, OrderStatus } from "@/types";
 
 export type CourierOrderItem = Pick<
   OrderItem,
@@ -11,6 +12,10 @@ export type CourierOrderItem = Pick<
 
 export type CourierOrder = Omit<Order, "total_amount" | "subtotal" | "delivery_fee"> & {
   order_items: CourierOrderItem[];
+  /** What this courier may mark next (see courierNextStatuses). */
+  next_statuses: OrderStatus[];
+  /** Picked up by this courier, whatever the customer is shown yet. */
+  picked_up_by_me: boolean;
 };
 
 export async function getCourierQueue(): Promise<CourierOrder[]> {
@@ -58,8 +63,12 @@ export async function getCourierQueue(): Promise<CourierOrder[]> {
 
   // Unclaimed orders are visible to every courier; once claimed (picked_up),
   // only the courier holding it should see it in their own queue.
-  const orders = (data ?? []) as unknown as CourierOrder[];
-  return orders.filter(
-    (order) => !order.courier_id || order.courier_id === courier.id,
-  );
+  const orders = (data ?? []) as unknown as Omit<CourierOrder, "next_statuses" | "picked_up_by_me">[];
+  return orders
+    .filter((order) => !order.courier_id || order.courier_id === courier.id)
+    .map((order) => ({
+      ...order,
+      next_statuses: courierNextStatuses(order, courier.id),
+      picked_up_by_me: isPickedUpBy(order, courier.id),
+    }));
 }

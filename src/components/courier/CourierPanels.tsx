@@ -5,11 +5,7 @@ import {
   advanceCourierOrder,
   type CourierActionState,
 } from "@/lib/courier/actions";
-import {
-  COURIER_ORDER_STATUS_TRANSITIONS,
-  getOrderItemStatusLabel,
-  getOrderStatusLabel,
-} from "@/lib/orders/labels";
+import { getOrderItemStatusLabel, getOrderStatusLabel } from "@/lib/orders/labels";
 import { Spinner } from "@/components/ui/Spinner";
 import { formatDateTime } from "@/lib/format/date";
 import { DeliveryDate } from "@/components/orders/DeliveryDate";
@@ -40,6 +36,7 @@ function ReasonInput({ id }: { id: string }) {
 }
 
 function getCourierStatusOptionLabel(status: OrderStatus): string {
+  if (status === "picked_up") return "Götürdüm";
   if (status === "cancelled") return "Çatdırıla bilmədi";
   return getOrderStatusLabel(status);
 }
@@ -49,7 +46,7 @@ function CourierOrderCard({ order }: { order: CourierOrder }) {
     advanceCourierOrder,
     initialState
   );
-  const nextStatuses = COURIER_ORDER_STATUS_TRANSITIONS[order.status] ?? [];
+  const nextStatuses = order.next_statuses;
   const [selectedStatus, setSelectedStatus] = useState<OrderStatus | "">(
     nextStatuses[0] ?? ""
   );
@@ -106,7 +103,10 @@ function CourierOrderCard({ order }: { order: CourierOrder }) {
           ) : null}
         </div>
         <div className="text-xs font-medium text-zinc-700">
-          {getOrderStatusLabel(order.status)}
+          {/* Picked up but not yet shown to the customer by the admin. */}
+          {order.picked_up_by_me && order.status === "awaiting_courier"
+            ? "Götürülüb"
+            : getOrderStatusLabel(order.status)}
         </div>
       </div>
 
