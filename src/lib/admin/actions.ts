@@ -103,6 +103,14 @@ async function insertEventAndNotify(params: {
 }
 
 
+/** What the settle functions raise, as the admin should read it. */
+function settleError(message: string, fallback: string): string {
+  if (message.includes("ALREADY_SETTLED")) return "Bu ödəniş artıq emal olunub.";
+  if (message.includes("ORDER_NOT_AWAITING")) return "Sifariş artıq ödəniş gözləmir.";
+  if (message.includes("NOT_FOUND")) return "Ödəniş tapılmadı.";
+  return fallback;
+}
+
 export async function confirmPayment(
   _prev: ActionResult,
   formData: FormData
@@ -112,50 +120,19 @@ export async function confirmPayment(
 
   if (!paymentId) return { error: "Ödəniş tapılmadı." };
 
+  // The payment and the order are written together, in one transaction,
+  // and only while the payment is still pending (migration 20261031090000).
   const supabase = await createClient();
-  const { data: payment, error: paymentError } = await supabase
-    .from("payments")
-    .select("id, order_id, status, orders(id, customer_id, status, order_code)")
-    .eq("id", paymentId)
+  const { data: settled, error: settleErr } = await supabase
+    .rpc("confirm_payment", { p_payment_id: paymentId })
     .single();
 
-  if (paymentError || !payment) {
-    return { error: "Ödəniş tapılmadı." };
+  if (settleErr || !settled) {
+    console.error("[admin.confirmPayment]", settleErr?.message);
+    return { error: settleError(settleErr?.message ?? "", "Ödəniş təsdiqlənmədi.") };
   }
 
-  if (payment.status !== "pending") {
-    return { error: "Bu ödəniş artıq emal olunub." };
-  }
-
-  const order = Array.isArray(payment.orders)
-    ? payment.orders[0]
-    : payment.orders;
-
-  if (!order) return { error: "Sifariş tapılmadı." };
-
-  const { error: updatePaymentError } = await supabase
-    .from("payments")
-    .update({
-      status: "confirmed",
-      confirmed_by: admin.id,
-      confirmed_at: new Date().toISOString(),
-    })
-    .eq("id", paymentId);
-
-  if (updatePaymentError) {
-    console.error("[admin.confirmPayment]", updatePaymentError.message);
-    return { error: "Ödəniş təsdiqlənmədi." };
-  }
-
-  const { error: updateOrderError } = await supabase
-    .from("orders")
-    .update({ status: "confirmed" })
-    .eq("id", order.id);
-
-  if (updateOrderError) {
-    console.error("[admin.confirmPayment.order]", updateOrderError.message);
-    return { error: "Sifariş statusu yenilənmədi." };
-  }
+  const order = { id: settled.order_id, customer_id: settled.customer_id, order_code: settled.order_code };
 
   await insertEventAndNotify({
     orderId: order.id,
@@ -219,48 +196,19 @@ export async function rejectPayment(
   if (!paymentId) return { error: "Ödəniş tapılmadı." };
   if (!reason) return { error: "Rədd səbəbini qeyd edin." };
 
+  // Payment rejected and order cancelled together, only while the payment
+  // is still pending (migration 20261031090000).
   const supabase = await createClient();
-  const { data: payment, error: paymentError } = await supabase
-    .from("payments")
-    .select("id, order_id, status, orders(id, customer_id, order_code)")
-    .eq("id", paymentId)
+  const { data: settled, error: settleErr } = await supabase
+    .rpc("reject_payment", { p_payment_id: paymentId })
     .single();
 
-  if (paymentError || !payment) {
-    return { error: "Ödəniş tapılmadı." };
+  if (settleErr || !settled) {
+    console.error("[admin.rejectPayment]", settleErr?.message);
+    return { error: settleError(settleErr?.message ?? "", "Ödəniş rədd edilmədi.") };
   }
 
-  if (payment.status !== "pending") {
-    return { error: "Bu ödəniş artıq emal olunub." };
-  }
-
-  const order = Array.isArray(payment.orders)
-    ? payment.orders[0]
-    : payment.orders;
-
-  if (!order) return { error: "Sifariş tapılmadı." };
-
-  const { error: updatePaymentError } = await supabase
-    .from("payments")
-    .update({
-      status: "rejected",
-      confirmed_by: admin.id,
-      confirmed_at: new Date().toISOString(),
-    })
-    .eq("id", paymentId);
-
-  if (updatePaymentError) {
-    return { error: "Ödəniş rədd edilmədi." };
-  }
-
-  const { error: updateOrderError } = await supabase
-    .from("orders")
-    .update({ status: "cancelled" })
-    .eq("id", order.id);
-
-  if (updateOrderError) {
-    return { error: "Sifariş ləğv edilmədi." };
-  }
+  const order = { id: settled.order_id, customer_id: settled.customer_id, order_code: settled.order_code };
 
   await insertEventAndNotify({
     orderId: order.id,

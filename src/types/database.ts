@@ -1060,6 +1060,14 @@ export interface Database {
         Args: { p_code: string };
         Returns: Json;
       };
+      confirm_payment: {
+        Args: { p_payment_id: string };
+        Returns: { order_id: string; customer_id: string; order_code: string }[];
+      };
+      reject_payment: {
+        Args: { p_payment_id: string };
+        Returns: { order_id: string; customer_id: string; order_code: string }[];
+      };
     };
     Enums: {
       user_role: UserRole;
