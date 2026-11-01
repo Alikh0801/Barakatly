@@ -1,5 +1,6 @@
+import Link from "next/link";
 import { displaySerif } from "@/lib/fonts";
-import { getApprovedSiteReviews, type PublicSiteReview } from "@/lib/reviews/site";
+import { getFeaturedReviews, type FeaturedReview } from "@/lib/reviews/featured";
 
 // Soft tints for the initial when a reviewer has no photo.
 const AVATAR_TINTS = [
@@ -8,7 +9,7 @@ const AVATAR_TINTS = [
   "bg-sky-100 text-sky-800",
 ];
 
-// Columns follow the number of approved reviews, so one or two still sit
+// Columns follow the number of picked reviews, so one or two still sit
 // centred. With three, tablets show two: a third would sit alone.
 const GRID_BY_COUNT: Record<number, string> = {
   1: "mx-auto max-w-md",
@@ -34,7 +35,7 @@ function Stars({ rating }: { rating: number }) {
   );
 }
 
-function ReviewCard({ review, index }: { review: PublicSiteReview; index: number }) {
+function ReviewCard({ review, index }: { review: FeaturedReview; index: number }) {
   return (
     <figure className="flex h-full flex-col rounded-2xl bg-[#f8f8f6] p-6 ring-1 ring-zinc-200/70">
       <Stars rating={review.rating} />
@@ -46,13 +47,18 @@ function ReviewCard({ review, index }: { review: PublicSiteReview; index: number
           aria-hidden="true"
           className={`inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-semibold ${AVATAR_TINTS[index % AVATAR_TINTS.length]}`}
         >
-          {review.display_name.slice(0, 1).toUpperCase()}
+          {review.displayName.slice(0, 1).toUpperCase()}
         </span>
         <span className="min-w-0">
           <span className="block truncate text-[15px] font-semibold text-zinc-900">
-            {review.display_name}
+            {review.displayName}
           </span>
-          <span className="block truncate text-xs text-zinc-500">{review.city}</span>
+          <Link
+            href={`/shop/${review.productId}`}
+            className="block truncate text-xs text-emerald-700 hover:underline"
+          >
+            {review.productTitle}
+          </Link>
         </span>
       </figcaption>
     </figure>
@@ -60,11 +66,12 @@ function ReviewCard({ review, index }: { review: PublicSiteReview; index: number
 }
 
 /**
- * "What customers say": reviews of Barakatly that an admin approved. Hidden
- * until there is at least one - never filled with sample quotes.
+ * "What customers say": product reviews an admin picked, each naming the
+ * product. Hidden until there is at least one - never filled with sample
+ * quotes.
  */
 export async function TestimonialsSection() {
-  const reviews = await getApprovedSiteReviews(3);
+  const reviews = await getFeaturedReviews(3);
   if (reviews.length === 0) return null;
 
   return (

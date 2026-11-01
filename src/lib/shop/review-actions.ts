@@ -1,6 +1,7 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
+import { FEATURED_REVIEWS_TAG } from "@/lib/reviews/featured-constants";
 import { getSessionUser } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
 
@@ -56,7 +57,10 @@ export async function submitProductReview(
     };
   }
 
+  // An edit takes the review off the home page until an admin picks it again.
+  updateTag(FEATURED_REVIEWS_TAG);
   revalidatePath(`/shop/${productId}`);
+  revalidatePath("/orders/[id]", "page");
   return { success: "Rəyiniz paylaşıldı. Təşəkkürlər!" };
 }
 
@@ -81,6 +85,8 @@ export async function deleteProductReview(
     return { error: "Rəy silinmədi. Yenidən cəhd edin." };
   }
 
+  updateTag(FEATURED_REVIEWS_TAG);
   revalidatePath(`/shop/${productId}`);
+  revalidatePath("/orders/[id]", "page");
   return { success: "Rəyiniz silindi." };
 }

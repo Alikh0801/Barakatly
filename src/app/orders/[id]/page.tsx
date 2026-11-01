@@ -17,8 +17,10 @@ import { formatDateTime } from "@/lib/format/date";
 import { DeliveryDate } from "@/components/orders/DeliveryDate";
 import { getProfile } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
-import { getMySiteReview } from "@/lib/reviews/site";
-import { SiteReviewForm } from "@/components/reviews/SiteReviewForm";
+import {
+  OrderProductReviews,
+  type ReviewableProduct,
+} from "@/components/reviews/OrderProductReviews";
 import { formatAmount } from "@/lib/shop/quantity";
 
 export async function generateMetadata({
@@ -53,9 +55,34 @@ export default async function OrderDetailPage({
   const order = await getOrderById(id);
   if (!order) notFound();
 
-  // A delivered order is what lets a customer review Barakatly itself.
-  const siteReview =
-    order.status === "delivered" ? await getMySiteReview(profile.id) : null;
+  // A delivered order: the customer reviews each product they received
+  // (the database only takes a review of a delivered line).
+  let reviewable: ReviewableProduct[] = [];
+  if (order.status === "delivered") {
+    const delivered = new Map<string, ReviewableProduct>();
+    for (const item of order.order_items) {
+      if (item.status !== "delivered" || delivered.has(item.product_id)) continue;
+      delivered.set(item.product_id, {
+        productId: item.product_id,
+        title: item.product_title,
+        imageUrl: getProductImageUrl(item.products?.product_images ?? []),
+        existing: null,
+      });
+    }
+    if (delivered.size > 0) {
+      const supabase = await createClient();
+      const { data: mine } = await supabase
+        .from("product_reviews")
+        .select("product_id, rating, comment")
+        .eq("customer_id", profile.id)
+        .in("product_id", [...delivered.keys()]);
+      for (const review of mine ?? []) {
+        const product = delivered.get(review.product_id);
+        if (product) product.existing = { rating: review.rating, comment: review.comment };
+      }
+    }
+    reviewable = [...delivered.values()];
+  }
 
   const payment = firstPayment(order.payments);
   const events = order.order_status_events ?? [];
@@ -133,9 +160,7 @@ export default async function OrderDetailPage({
               events={events}
               createdAt={order.created_at}
             />
-            {order.status === "delivered" ? (
-              <SiteReviewForm existing={siteReview} />
-            ) : null}
+            <OrderProductReviews products={reviewable} />
 
             <section className="rounded-3xl bg-white p-5 shadow-sm ring-1 ring-zinc-200 sm:p-6">
               <div className="flex flex-wrap items-end justify-between gap-2">

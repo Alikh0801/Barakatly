@@ -703,6 +703,8 @@ export interface Database {
           customer_id: string;
           rating: number;
           comment: string | null;
+          /** When an admin put it on the home page; null when not there. */
+          featured_at: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -712,6 +714,7 @@ export interface Database {
           customer_id: string;
           rating: number;
           comment?: string | null;
+          featured_at?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -721,6 +724,7 @@ export interface Database {
           customer_id?: string;
           rating?: number;
           comment?: string | null;
+          featured_at?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -1038,6 +1042,17 @@ export interface Database {
           rating: number;
           comment: string | null;
           created_at: string;
+        }[];
+      };
+      list_featured_product_reviews: {
+        Args: { p_limit?: number };
+        Returns: {
+          id: string;
+          rating: number;
+          comment: string;
+          display_name: string;
+          product_id: string;
+          product_title: string;
         }[];
       };
       place_order: {

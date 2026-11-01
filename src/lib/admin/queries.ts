@@ -388,7 +388,6 @@ export type AdminNavBadges = {
   farmers: number;
   products: number;
   categories: number;
-  reviews: number;
 };
 
 async function countRows(
@@ -398,8 +397,7 @@ async function countRows(
     | "farmers"
     | "products"
     | "categories"
-    | "subcategories"
-    | "site_reviews",
+    | "subcategories",
   filters: { column: string; value: string | boolean }[],
 ): Promise<number> {
   const supabase = await createClient();
@@ -500,7 +498,6 @@ export async function getAdminNavBadges(): Promise<AdminNavBadges> {
     products,
     unapprovedCategories,
     unapprovedSubcategories,
-    reviews,
     farmerUpdates,
   ] = await Promise.all([
       countRows("payments", [{ column: "status", value: "pending" }]),
@@ -511,7 +508,6 @@ export async function getAdminNavBadges(): Promise<AdminNavBadges> {
       countRows("products", [{ column: "status", value: "pending" }]),
       countRows("categories", [{ column: "approved", value: false }]),
       countRows("subcategories", [{ column: "approved", value: false }]),
-      countRows("site_reviews", [{ column: "status", value: "pending" }]),
       countUnseenFarmerOrderUpdates(),
     ]);
 
@@ -522,6 +518,5 @@ export async function getAdminNavBadges(): Promise<AdminNavBadges> {
     farmers,
     products,
     categories: unapprovedCategories + unapprovedSubcategories,
-    reviews,
   };
 }
