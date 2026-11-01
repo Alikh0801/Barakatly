@@ -273,9 +273,8 @@ export async function advanceOrderStatus(
     return { error: "Bu status keçidinə icazə verilmir." };
   }
 
-  // The customer may only see a step its owner has marked on every line:
-  // the farmers up to "kuryer gözləyir", the courier for "götürüldü" and
-  // "çatdırıldı".
+  // A farmers' stage (up to "kuryer gözləyir") needs at least one farmer to
+  // have marked it; the courier's stages and cancelling are always open.
   const { data: items } = await supabase
     .from("order_items")
     .select("status")
@@ -286,7 +285,7 @@ export async function advanceOrderStatus(
       error:
         statusOwner(nextStatus) === "kuryer"
           ? "Kuryer bu statusu hələ qeyd etməyib."
-          : "Bütün fermerlər bu statusu hələ qeyd etməyib.",
+          : "Fermerlərdən heç biri bu statusu hələ qeyd etməyib.",
     };
   }
 

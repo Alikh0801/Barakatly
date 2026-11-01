@@ -2,8 +2,9 @@ import { ORDER_STATUS_FLOW } from "@/lib/orders/labels";
 import type { OrderItemStatus, OrderStatus } from "@/types";
 
 /**
- * The admin sets the status the customer sees. The farmers' stages wait for
- * the farmers' marks on every line (up to "kuryer gözləyir"); the courier's
+ * The admin sets the status the customer sees. A farmers' stage (up to
+ * "kuryer gözləyir") opens once any farmer on the order has marked it, so
+ * one farmer who hasn't moved yet doesn't hold up the rest. The courier's
  * stages, "Kuryer yola çıxdı" and "Çatdırıldı", the admin may set freely,
  * as may cancelling.
  */
@@ -37,11 +38,11 @@ const STATUS_FOR_RANK: OrderStatus[] = [
 
 /**
  * The furthest customer status the lines still on the order allow: as far
- * as the slowest line. Null when every line is cancelled.
+ * as the line furthest along. Null when every line is cancelled.
  */
 export function statusFromLines(items: { status: OrderItemStatus }[]): OrderStatus | null {
   const ranks = items.filter((item) => item.status !== "cancelled").map((item) => ITEM_RANK[item.status]);
-  return ranks.length > 0 ? STATUS_FOR_RANK[Math.min(...ranks)] : null;
+  return ranks.length > 0 ? STATUS_FOR_RANK[Math.max(...ranks)] : null;
 }
 
 /** Whether the lines allow the admin to show `target` to the customer. */
