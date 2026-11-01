@@ -2,11 +2,10 @@ import { ORDER_STATUS_FLOW } from "@/lib/orders/labels";
 import type { OrderItemStatus, OrderStatus } from "@/types";
 
 /**
- * The admin sets the status the customer sees, but only up to what the
- * owners of each stage have marked on the lines: farmers up to "kuryer
- * gözləyir", the courier for "götürüldü" and "çatdırıldı". A step nobody
- * has marked yet can't be set from the admin panel. Cancelling is always
- * allowed.
+ * The admin sets the status the customer sees. The farmers' stages wait for
+ * the farmers' marks on every line (up to "kuryer gözləyir"); the courier's
+ * stages, "Kuryer yola çıxdı" and "Çatdırıldı", the admin may set freely,
+ * as may cancelling.
  */
 
 /** How far along a line is. */
@@ -47,7 +46,7 @@ export function statusFromLines(items: { status: OrderItemStatus }[]): OrderStat
 
 /** Whether the lines allow the admin to show `target` to the customer. */
 export function adminCanSetStatus(target: OrderStatus, items: { status: OrderItemStatus }[]): boolean {
-  if (target === "cancelled") return true;
+  if (target === "cancelled" || target === "picked_up" || target === "delivered") return true;
   const reached = statusFromLines(items);
   return reached !== null && ORDER_STATUS_FLOW.indexOf(target) <= ORDER_STATUS_FLOW.indexOf(reached);
 }
