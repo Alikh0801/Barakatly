@@ -2,6 +2,7 @@
 
 import { revalidatePath, updateTag } from "next/cache";
 import { requireAdmin } from "@/lib/admin/auth";
+import { logAdminAction } from "@/lib/audit/log";
 import { notifyUser } from "@/lib/notifications/helpers";
 import { revalidateProductCatalog } from "@/lib/shop/revalidate";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -18,7 +19,7 @@ export async function approveFarmer(
   _prev: AdminPortalActionState,
   formData: FormData
 ): Promise<AdminPortalActionState> {
-  await requireAdmin();
+  const actor = await requireAdmin();
   const farmerId = String(formData.get("farmer_id") ?? "");
   if (!farmerId) return { error: "Fermer tapılmadı." };
 
@@ -72,6 +73,7 @@ export async function approveFarmer(
   revalidatePath("/admin", "layout");
   revalidatePath("/farmer");
   revalidatePath("/notifications");
+  await logAdminAction(actor, "farmer.approved", { type: "farmer", id: farmer.id }, { profile_id: farmer.profile_id });
   return { success: "Fermer təsdiqləndi." };
 }
 
@@ -79,7 +81,7 @@ export async function rejectFarmer(
   _prev: AdminPortalActionState,
   formData: FormData
 ): Promise<AdminPortalActionState> {
-  await requireAdmin();
+  const actor = await requireAdmin();
   const farmerId = String(formData.get("farmer_id") ?? "");
   const reason = String(formData.get("reason") ?? "").trim();
   if (!farmerId) return { error: "Fermer tapılmadı." };
@@ -113,6 +115,7 @@ export async function rejectFarmer(
   revalidatePath("/admin/farmers");
   revalidatePath("/admin", "layout");
   revalidatePath("/notifications");
+  await logAdminAction(actor, "farmer.rejected", { type: "farmer", id: farmer.id }, { profile_id: farmer.profile_id, reason });
   return { success: "Fermer rədd edildi." };
 }
 
@@ -120,7 +123,7 @@ export async function approveFarmerProfileEdit(
   _prev: AdminPortalActionState,
   formData: FormData
 ): Promise<AdminPortalActionState> {
-  await requireAdmin();
+  const actor = await requireAdmin();
   const farmerId = String(formData.get("farmer_id") ?? "");
   if (!farmerId) return { error: "Fermer tapılmadı." };
 
@@ -173,6 +176,8 @@ export async function approveFarmerProfileEdit(
   revalidatePath("/notifications");
   updateTag("farmers");
 
+  await logAdminAction(actor, "farmer.profile_edit_approved", { type: "farmer", id: farmerId });
+
   return { success: "Dəyişikliklər təsdiqləndi və yayımlandı." };
 }
 
@@ -180,7 +185,7 @@ export async function rejectFarmerProfileEdit(
   _prev: AdminPortalActionState,
   formData: FormData
 ): Promise<AdminPortalActionState> {
-  await requireAdmin();
+  const actor = await requireAdmin();
   const farmerId = String(formData.get("farmer_id") ?? "");
   const reason = String(formData.get("reason") ?? "").trim();
   if (!farmerId) return { error: "Fermer tapılmadı." };
@@ -226,6 +231,8 @@ export async function rejectFarmerProfileEdit(
   revalidatePath("/farmer");
   revalidatePath("/notifications");
 
+  await logAdminAction(actor, "farmer.profile_edit_rejected", { type: "farmer", id: farmerId }, { reason });
+
   return { success: "Dəyişikliklər rədd edildi." };
 }
 
@@ -233,7 +240,7 @@ export async function suspendFarmer(
   _prev: AdminPortalActionState,
   formData: FormData
 ): Promise<AdminPortalActionState> {
-  await requireAdmin();
+  const actor = await requireAdmin();
   const farmerId = String(formData.get("farmer_id") ?? "");
   const reason = String(formData.get("reason") ?? "").trim();
   if (!farmerId) return { error: "Fermer tapılmadı." };
@@ -273,6 +280,7 @@ export async function suspendFarmer(
   revalidatePath("/farmer");
   revalidatePath("/farmers");
   revalidatePath("/notifications");
+  await logAdminAction(actor, "farmer.suspended", { type: "farmer", id: farmer.id }, { profile_id: farmer.profile_id, previous_status: farmer.status, reason });
   return { success: "Fermer deaktiv edildi." };
 }
 
@@ -280,7 +288,7 @@ export async function deleteFarmer(
   _prev: AdminPortalActionState,
   formData: FormData
 ): Promise<AdminPortalActionState> {
-  await requireAdmin();
+  const actor = await requireAdmin();
   const farmerId = String(formData.get("farmer_id") ?? "");
   const reason = String(formData.get("reason") ?? "").trim();
   if (!farmerId) return { error: "Fermer tapılmadı." };
@@ -312,6 +320,8 @@ export async function deleteFarmer(
         "Fermer silinmədi, çünki sifariş tarixçəsi var. Sifariş tarixçəsini qorumaq üçün silmək əvəzinə \"Deaktiv et\" seçimindən istifadə edin.",
     };
   }
+
+  await logAdminAction(actor, "farmer.deleted", { type: "farmer", id: farmer.id }, { profile_id: farmer.profile_id, reason });
 
   // Keep auth account; demote profile and clear farmer metadata so they can
   // re-apply via /farmer/signup with the same login.
@@ -439,7 +449,7 @@ export async function approveProduct(
   _prev: AdminPortalActionState,
   formData: FormData
 ): Promise<AdminPortalActionState> {
-  await requireAdmin();
+  const actor = await requireAdmin();
   const productId = String(formData.get("product_id") ?? "");
 
   if (!productId) return { error: "Məhsul tapılmadı." };
@@ -490,6 +500,7 @@ export async function approveProduct(
   revalidatePath("/farmer/products");
   revalidatePath("/notifications");
   revalidateProductCatalog(productId);
+  await logAdminAction(actor, "product.approved", { type: "product", id: product.id }, { title: product.title, final_prices: saved.lines });
   return { success: "Məhsul təsdiqləndi." };
 }
 
@@ -497,7 +508,7 @@ export async function updateProductFinalPrice(
   _prev: AdminPortalActionState,
   formData: FormData
 ): Promise<AdminPortalActionState> {
-  await requireAdmin();
+  const actor = await requireAdmin();
   const productId = String(formData.get("product_id") ?? "");
 
   if (!productId) return { error: "Məhsul tapılmadı." };
@@ -534,6 +545,7 @@ export async function updateProductFinalPrice(
   revalidatePath("/farmer/products");
   revalidatePath("/notifications");
   revalidateProductCatalog(productId);
+  await logAdminAction(actor, "product.final_price_updated", { type: "product", id: product.id }, { title: product.title, final_prices: saved.lines });
   return { success: "Son qiymət yeniləndi." };
 }
 
@@ -541,7 +553,7 @@ export async function updateProductByAdmin(
   _prev: AdminPortalActionState,
   formData: FormData
 ): Promise<AdminPortalActionState> {
-  await requireAdmin();
+  const actor = await requireAdmin();
   const productId = String(formData.get("product_id") ?? "");
   const title = String(formData.get("title") ?? "").trim();
   const description = String(formData.get("description") ?? "").trim();
@@ -587,6 +599,7 @@ export async function updateProductByAdmin(
   revalidatePath("/admin", "layout");
   revalidatePath("/farmer/products");
   revalidateProductCatalog(productId);
+  await logAdminAction(actor, "product.updated", { type: "product", id: productId }, { title, category_id: categoryId, subcategory_id: subcategoryId || null });
   return { success: "Məhsul yeniləndi." };
 }
 
@@ -594,7 +607,7 @@ export async function rejectProduct(
   _prev: AdminPortalActionState,
   formData: FormData
 ): Promise<AdminPortalActionState> {
-  await requireAdmin();
+  const actor = await requireAdmin();
   const productId = String(formData.get("product_id") ?? "");
   const reason = String(formData.get("reason") ?? "").trim();
   if (!productId) return { error: "Məhsul tapılmadı." };
@@ -635,6 +648,7 @@ export async function rejectProduct(
   revalidatePath("/farmer/products");
   revalidatePath("/notifications");
   revalidateProductCatalog(productId);
+  await logAdminAction(actor, "product.rejected", { type: "product", id: product.id }, { title: product.title, reason });
   return { success: "Məhsul rədd edildi." };
 }
 
@@ -642,7 +656,7 @@ export async function createCourier(
   _prev: AdminPortalActionState,
   formData: FormData
 ): Promise<AdminPortalActionState> {
-  await requireAdmin();
+  const actor = await requireAdmin();
 
   const fullName = String(formData.get("full_name") ?? "").trim();
   const email = String(formData.get("email") ?? "").trim();
@@ -685,6 +699,8 @@ export async function createCourier(
     if (courierError) {
       return { error: "Kuryer profili yaradıla bilmədi." };
     }
+
+    await logAdminAction(actor, "courier.created", { type: "profile", id: data.user.id }, { email, full_name: fullName });
   } catch (error) {
     console.error("[admin.createCourier]", error);
     return {
@@ -702,7 +718,7 @@ export async function toggleCourierActive(
   _prev: AdminPortalActionState,
   formData: FormData
 ): Promise<AdminPortalActionState> {
-  await requireAdmin();
+  const actor = await requireAdmin();
   const courierId = String(formData.get("courier_id") ?? "");
   const isActive = String(formData.get("is_active") ?? "") === "true";
 
@@ -736,5 +752,6 @@ export async function toggleCourierActive(
 
   revalidatePath("/admin/couriers");
   revalidatePath("/notifications");
+  await logAdminAction(actor, isActive ? "courier.deactivated" : "courier.activated", { type: "courier", id: courier.id }, { profile_id: courier.profile_id });
   return { success: "Kuryer statusu yeniləndi." };
 }

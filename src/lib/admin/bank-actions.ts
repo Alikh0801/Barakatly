@@ -2,6 +2,7 @@
 
 import { revalidatePath, updateTag } from "next/cache";
 import { requireAdmin } from "@/lib/admin/auth";
+import { logAdminAction } from "@/lib/audit/log";
 import { normalizePan } from "@/lib/admin/bank-format";
 import { createClient } from "@/lib/supabase/server";
 
@@ -20,7 +21,7 @@ export async function createBank(
   _prev: AdminBankActionState,
   formData: FormData
 ): Promise<AdminBankActionState> {
-  await requireAdmin();
+  const admin = await requireAdmin();
 
   const name = String(formData.get("name") ?? "").trim();
   const pan = normalizePan(String(formData.get("pan_number") ?? ""));
@@ -40,6 +41,8 @@ export async function createBank(
     return { error: "Bank məlumatı əlavə edilmədi." };
   }
 
+  await logAdminAction(admin, "bank.created", { type: "bank", id: null }, { name, pan_number: pan });
+
   revalidateBanks();
   return { success: "Bank məlumatı əlavə olundu." };
 }
@@ -48,7 +51,7 @@ export async function updateBank(
   _prev: AdminBankActionState,
   formData: FormData
 ): Promise<AdminBankActionState> {
-  await requireAdmin();
+  const admin = await requireAdmin();
 
   const id = String(formData.get("bank_id") ?? "");
   const name = String(formData.get("name") ?? "").trim();
@@ -59,6 +62,12 @@ export async function updateBank(
   if (!pan) return { error: "Kart nömrəsi 16 rəqəm olmalıdır." };
 
   const supabase = await createClient();
+  // The card customers pay to: the old number is kept too.
+  const { data: previous } = await supabase
+    .from("banks")
+    .select("name, pan_number")
+    .eq("id", id)
+    .maybeSingle();
   const { error } = await supabase
     .from("banks")
     .update({ name, pan_number: pan })
@@ -69,6 +78,8 @@ export async function updateBank(
     return { error: "Bank məlumatı yenilənmədi." };
   }
 
+  await logAdminAction(admin, "bank.updated", { type: "bank", id }, { previous: previous ?? null, name, pan_number: pan });
+
   revalidateBanks();
   return { success: "Bank məlumatı yeniləndi." };
 }
@@ -77,7 +88,7 @@ export async function toggleBankActive(
   _prev: AdminBankActionState,
   formData: FormData
 ): Promise<AdminBankActionState> {
-  await requireAdmin();
+  const admin = await requireAdmin();
 
   const id = String(formData.get("bank_id") ?? "");
   const isActive = String(formData.get("is_active") ?? "") === "true";
@@ -94,6 +105,8 @@ export async function toggleBankActive(
     return { error: "Bank statusu yenilənmədi." };
   }
 
+  await logAdminAction(admin, isActive ? "bank.deactivated" : "bank.activated", { type: "bank", id });
+
   revalidateBanks();
   return {
     success: !isActive
@@ -106,7 +119,7 @@ export async function deleteBank(
   _prev: AdminBankActionState,
   formData: FormData
 ): Promise<AdminBankActionState> {
-  await requireAdmin();
+  const admin = await requireAdmin();
 
   const id = String(formData.get("bank_id") ?? "");
   if (!id) return { error: "Bank tapılmadı." };
@@ -129,11 +142,12 @@ export async function deleteBank(
     };
   }
 
-  const { error } = await supabase.from("banks").delete().eq("id", id);
+  const { data: deleted, error } = await supabase.from("banks").delete().eq("id", id).select();
   if (error) {
     console.error("[admin.deleteBank]", error.message);
     return { error: "Bank silinmədi." };
   }
+  await logAdminAction(admin, "bank.deleted", { type: "bank", id }, { bank: deleted?.[0] ?? null });
 
   revalidateBanks();
   return { success: "Bank məlumatı silindi." };

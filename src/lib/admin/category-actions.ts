@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { requireAdmin } from "@/lib/admin/auth";
+import { logAdminAction } from "@/lib/audit/log";
 import { uploadCategoryImage } from "@/lib/admin/category-image-upload";
 import { MAX_CATEGORY_POSITION } from "@/lib/admin/category-constants";
 import { slugifyAz } from "@/lib/admin/slug";
@@ -88,7 +89,7 @@ export async function createCategory(
   _prev: AdminPortalActionState,
   formData: FormData
 ): Promise<AdminPortalActionState> {
-  await requireAdmin();
+  const admin = await requireAdmin();
 
   const nameAz = String(formData.get("name_az") ?? "").trim();
   const image = formData.get("image");
@@ -144,6 +145,7 @@ export async function createCategory(
   }
 
   revalidateCategories();
+  await logAdminAction(admin, "category.created", { type: "category", id: created.id }, { name_az: nameAz });
   return { success: "Kateqoriya əlavə olundu." };
 }
 
@@ -151,7 +153,7 @@ export async function updateCategory(
   _prev: AdminPortalActionState,
   formData: FormData
 ): Promise<AdminPortalActionState> {
-  await requireAdmin();
+  const admin = await requireAdmin();
 
   const id = String(formData.get("category_id") ?? "");
   const nameAz = String(formData.get("name_az") ?? "").trim();
@@ -220,6 +222,7 @@ export async function updateCategory(
   }
 
   revalidateCategories();
+  await logAdminAction(admin, "category.updated", { type: "category", id }, { name_az: nameAz });
   return { success: "Kateqoriya yeniləndi." };
 }
 
@@ -227,7 +230,7 @@ export async function deleteCategory(
   _prev: AdminPortalActionState,
   formData: FormData
 ): Promise<AdminPortalActionState> {
-  await requireAdmin();
+  const admin = await requireAdmin();
 
   const id = String(formData.get("category_id") ?? "");
   if (!id) return { error: "Kateqoriya tapılmadı." };
@@ -265,6 +268,7 @@ export async function deleteCategory(
   }
 
   revalidateCategories();
+  await logAdminAction(admin, "category.deleted", { type: "category", id });
   return { success: "Kateqoriya silindi." };
 }
 
@@ -272,7 +276,7 @@ export async function approveCategory(
   _prev: AdminPortalActionState,
   formData: FormData
 ): Promise<AdminPortalActionState> {
-  await requireAdmin();
+  const admin = await requireAdmin();
 
   const id = String(formData.get("category_id") ?? "");
   if (!id) return { error: "Kateqoriya tapılmadı." };
@@ -324,6 +328,7 @@ export async function approveCategory(
 
   revalidateCategories();
   revalidatePath("/notifications");
+  await logAdminAction(admin, "category.approved", { type: "category", id });
   return { success: "Kateqoriya təsdiqləndi." };
 }
 
@@ -350,7 +355,7 @@ export async function createSubcategory(
   _prev: AdminPortalActionState,
   formData: FormData
 ): Promise<AdminPortalActionState> {
-  await requireAdmin();
+  const admin = await requireAdmin();
 
   const categoryId = String(formData.get("category_id") ?? "");
   const nameAz = String(formData.get("name_az") ?? "").trim();
@@ -375,6 +380,7 @@ export async function createSubcategory(
   }
 
   revalidateCategories();
+  await logAdminAction(admin, "subcategory.created", { type: "category", id: categoryId }, { name_az: nameAz });
   return { success: "Alt kateqoriya əlavə olundu." };
 }
 
@@ -382,7 +388,7 @@ export async function approveSubcategory(
   _prev: AdminPortalActionState,
   formData: FormData
 ): Promise<AdminPortalActionState> {
-  await requireAdmin();
+  const admin = await requireAdmin();
 
   const id = String(formData.get("subcategory_id") ?? "");
   if (!id) return { error: "Alt kateqoriya tapılmadı." };
@@ -416,6 +422,7 @@ export async function approveSubcategory(
 
   revalidateCategories();
   revalidatePath("/notifications");
+  await logAdminAction(admin, "subcategory.approved", { type: "subcategory", id });
   return { success: "Alt kateqoriya təsdiqləndi." };
 }
 
@@ -423,7 +430,7 @@ export async function renameSubcategory(
   _prev: AdminPortalActionState,
   formData: FormData
 ): Promise<AdminPortalActionState> {
-  await requireAdmin();
+  const admin = await requireAdmin();
 
   const id = String(formData.get("subcategory_id") ?? "");
   const nameAz = String(formData.get("name_az") ?? "").trim();
@@ -444,6 +451,7 @@ export async function renameSubcategory(
 
   revalidateCategories();
   revalidatePath("/admin/products");
+  await logAdminAction(admin, "subcategory.renamed", { type: "subcategory", id }, { name_az: nameAz });
   return { success: "Alt kateqoriya adı yeniləndi." };
 }
 
@@ -451,7 +459,7 @@ export async function deleteSubcategory(
   _prev: AdminPortalActionState,
   formData: FormData
 ): Promise<AdminPortalActionState> {
-  await requireAdmin();
+  const admin = await requireAdmin();
 
   const id = String(formData.get("subcategory_id") ?? "");
   if (!id) return { error: "Alt kateqoriya tapılmadı." };
@@ -465,5 +473,6 @@ export async function deleteSubcategory(
   }
 
   revalidateCategories();
+  await logAdminAction(admin, "subcategory.deleted", { type: "subcategory", id });
   return { success: "Alt kateqoriya silindi." };
 }

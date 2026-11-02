@@ -5,6 +5,7 @@ import { getSessionUser } from "@/lib/auth/session";
 import { isEmailRateLimited, translateAuthError } from "@/lib/auth/signup";
 import { getAuthCallbackUrl, getSupabaseEnvError } from "@/lib/auth/urls";
 import { createClient } from "@/lib/supabase/server";
+import { logAuthFailure } from "@/lib/audit/log";
 
 export type PasswordResetState = {
   error?: string;
@@ -51,7 +52,7 @@ export async function requestPasswordReset(
   });
 
   if (error) {
-    console.error("[auth.requestPasswordReset]", error.message);
+    await logAuthFailure("password_reset_request", email, error.message);
     // The limit means a code went out moments ago: carry on to the code step.
     if (isEmailRateLimited(error.message)) {
       return {
@@ -94,13 +95,13 @@ export async function resetPasswordWithCode(
     type: "recovery",
   });
   if (verifyError) {
-    console.error("[auth.resetPasswordWithCode.verify]", verifyError.message);
+    await logAuthFailure("password_reset_code", email, verifyError.message);
     return { resetEmail: email, error: translateAuthError(verifyError.message) };
   }
 
   const { error: updateError } = await supabase.auth.updateUser({ password });
   if (updateError) {
-    console.error("[auth.resetPasswordWithCode.update]", updateError.message);
+    await logAuthFailure("password_reset_update", email, updateError.message);
     return { resetEmail: email, error: translateAuthError(updateError.message) };
   }
 
@@ -125,7 +126,7 @@ export async function setNewPassword(
   const supabase = await createClient();
   const { error } = await supabase.auth.updateUser({ password });
   if (error) {
-    console.error("[auth.setNewPassword]", error.message);
+    await logAuthFailure("password_reset_update", user.email ?? "", error.message);
     return { error: translateAuthError(error.message) };
   }
 

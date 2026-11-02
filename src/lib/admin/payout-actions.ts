@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { requireAdmin } from "@/lib/admin/auth";
+import { logAdminAction } from "@/lib/audit/log";
 import { normalizePan } from "@/lib/admin/bank-format";
 import { createClient } from "@/lib/supabase/server";
 
@@ -45,6 +46,8 @@ export async function markPayoutPaid(
   }
   if (!data || data.length === 0) return { error: "Bu ödəniş artıq ödənilib." };
 
+  await logAdminAction(admin, "payout.paid", { type: "farmer_payout", id: payoutId }, note ? { note } : {});
+
   revalidatePayouts();
   return { success: "Ödənildi kimi qeyd olundu." };
 }
@@ -54,7 +57,7 @@ export async function revertPayout(
   _prev: PayoutActionState,
   formData: FormData,
 ): Promise<PayoutActionState> {
-  await requireAdmin();
+  const admin = await requireAdmin();
   const payoutId = String(formData.get("payout_id") ?? "");
   if (!payoutId) return { error: "Ödəniş tapılmadı." };
 
@@ -72,6 +75,8 @@ export async function revertPayout(
   }
   if (!data || data.length === 0) return { error: "Bu ödəniş artıq gözləyir." };
 
+  await logAdminAction(admin, "payout.reverted", { type: "farmer_payout", id: payoutId });
+
   revalidatePayouts();
   return { success: "Ödəniş yenidən gözləyənlərə qaytarıldı." };
 }
@@ -85,7 +90,7 @@ export async function saveFarmerPayoutAccount(
   _prev: PayoutActionState,
   formData: FormData,
 ): Promise<PayoutActionState> {
-  await requireAdmin();
+  const admin = await requireAdmin();
   const farmerId = String(formData.get("farmer_id") ?? "");
   const bankName = String(formData.get("bank_name") ?? "").trim();
   const pan = normalizePan(String(formData.get("pan_number") ?? ""));
@@ -96,6 +101,12 @@ export async function saveFarmerPayoutAccount(
   if (!pan) return { error: "Kart nömrəsi 16 rəqəm olmalıdır." };
 
   const supabase = await createClient();
+  const { data: previous } = await supabase
+    .from("farmer_payout_accounts")
+    .select("bank_name, pan_number")
+    .eq("farmer_id", farmerId)
+    .maybeSingle();
+
   const { error } = await supabase
     .from("farmer_payout_accounts")
     .upsert(
@@ -107,6 +118,13 @@ export async function saveFarmerPayoutAccount(
     console.error("[admin.saveFarmerPayoutAccount]", error.message);
     return { error: "Kart saxlanılmadı." };
   }
+
+  // Where a farmer's money goes: the old card is kept too.
+  await logAdminAction(admin, "payout_account.saved", { type: "farmer", id: farmerId }, {
+    previous: previous ?? null,
+    bank_name: bankName,
+    pan_number: pan,
+  });
 
   const { error: payoutsError } = await supabase
     .from("farmer_payouts")

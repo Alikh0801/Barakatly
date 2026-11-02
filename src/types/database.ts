@@ -891,6 +891,32 @@ export interface Database {
         };
         Relationships: [];
       };
+      audit_log: {
+        Row: {
+          id: number;
+          created_at: string;
+          actor_id: string | null;
+          actor_email: string | null;
+          action: string;
+          target_type: string | null;
+          target_id: string | null;
+          details: Json;
+          ip: string | null;
+          user_agent: string | null;
+        };
+        Insert: {
+          actor_id?: string | null;
+          actor_email?: string | null;
+          action: string;
+          target_type?: string | null;
+          target_id?: string | null;
+          details?: Json;
+          ip?: string | null;
+          user_agent?: string | null;
+        };
+        Update: never;
+        Relationships: [];
+      };
       banks: {
         Row: {
           id: string;
@@ -1082,6 +1108,10 @@ export interface Database {
       reject_payment: {
         Args: { p_payment_id: string };
         Returns: { order_id: string; customer_id: string; order_code: string }[];
+      };
+      admin_delete_orders: {
+        Args: { p_order_ids: string[] };
+        Returns: number;
       };
     };
     Enums: {

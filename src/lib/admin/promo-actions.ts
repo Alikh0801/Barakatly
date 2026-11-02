@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { requireAdmin } from "@/lib/admin/auth";
+import { logAdminAction } from "@/lib/audit/log";
 import { PROMO_CODE_PATTERN, normalizePromoCode } from "@/lib/promo/constants";
 import { createClient } from "@/lib/supabase/server";
 
@@ -27,7 +28,7 @@ export async function savePromoCode(
   _prev: AdminPromoActionState,
   formData: FormData,
 ): Promise<AdminPromoActionState> {
-  await requireAdmin();
+  const admin = await requireAdmin();
 
   const id = String(formData.get("id") ?? "").trim();
   const code = normalizePromoCode(String(formData.get("code") ?? ""));
@@ -92,12 +93,14 @@ export async function savePromoCode(
     return { error: "Promokod yadda saxlanmadı." };
   }
 
+  await logAdminAction(admin, id ? "promo_code.updated" : "promo_code.created", { type: "promo_code", id: id || code }, row);
+
   revalidatePromoCodes();
   return { success: id ? "Promokod yeniləndi." : `"${code}" promokodu yaradıldı.` };
 }
 
 export async function setPromoCodeActive(id: string, active: boolean): Promise<AdminPromoActionState> {
-  await requireAdmin();
+  const admin = await requireAdmin();
   const supabase = await createClient();
   const { error } = await supabase
     .from("promo_codes")
@@ -107,19 +110,21 @@ export async function setPromoCodeActive(id: string, active: boolean): Promise<A
     console.error("[admin.setPromoCodeActive]", error.message);
     return { error: "Status dəyişmədi." };
   }
+  await logAdminAction(admin, active ? "promo_code.activated" : "promo_code.deactivated", { type: "promo_code", id });
   revalidatePromoCodes();
   return {};
 }
 
 /** Orders that used it keep the code's text and their discount. */
 export async function deletePromoCode(id: string): Promise<AdminPromoActionState> {
-  await requireAdmin();
+  const admin = await requireAdmin();
   const supabase = await createClient();
-  const { error } = await supabase.from("promo_codes").delete().eq("id", id);
+  const { data: deleted, error } = await supabase.from("promo_codes").delete().eq("id", id).select();
   if (error) {
     console.error("[admin.deletePromoCode]", error.message);
     return { error: "Promokod silinmədi." };
   }
+  await logAdminAction(admin, "promo_code.deleted", { type: "promo_code", id }, { promo_code: deleted?.[0] ?? null });
   revalidatePromoCodes();
   return {};
 }

@@ -17,6 +17,7 @@ import { getSupabaseEnvError } from "@/lib/auth/urls";
 import { ensureFarmerRecord } from "@/lib/farmer/ensure";
 import { notifyAdmins } from "@/lib/notifications/helpers";
 import { safeNext } from "@/lib/url/safe-next";
+import { logAuthFailure } from "@/lib/audit/log";
 
 export type AuthActionState = {
   error?: string;
@@ -49,6 +50,7 @@ export async function signIn(
   });
 
   if (error) {
+    await logAuthFailure("signin", email, error.message);
     // Şifrə düzgündür, amma email hələ təsdiqlənməyib: istifadəçi qeydiyyatda
     // gələn kodu yaza bilmədən səhifəni bağlayıb. Onu OTP addımına qaytar —
     // kod hələ də etibarlıdır, orada "yenidən göndər" də var.
@@ -160,7 +162,7 @@ export async function verifySignupOtp(
   });
 
   if (error || !data.user) {
-    console.error("[auth.verifySignupOtp]", error?.message);
+    await logAuthFailure("signup_otp", email, error?.message ?? "no user");
     return {
       otpEmail: email,
       error: translateAuthError(error?.message ?? "invalid token"),
@@ -208,7 +210,7 @@ export async function resendSignupOtp(
   });
 
   if (error) {
-    console.error("[auth.resendSignupOtp]", error.message);
+    await logAuthFailure("signup_otp_resend", email, error.message);
     return { otpEmail: email, error: translateAuthError(error.message) };
   }
 

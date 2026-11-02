@@ -2,6 +2,7 @@
 
 import { revalidatePath, updateTag } from "next/cache";
 import { requireAdmin } from "@/lib/admin/auth";
+import { logAdminAction } from "@/lib/audit/log";
 import { FEATURED_REVIEWS_TAG } from "@/lib/reviews/featured-constants";
 import { createClient } from "@/lib/supabase/server";
 
@@ -12,7 +13,7 @@ export async function setReviewFeatured(
   _prev: FeaturedReviewActionState,
   formData: FormData,
 ): Promise<FeaturedReviewActionState> {
-  await requireAdmin();
+  const admin = await requireAdmin();
   const reviewId = String(formData.get("review_id") ?? "").trim();
   const featured = String(formData.get("featured") ?? "") === "true";
   if (!reviewId) return { error: "Rəy tapılmadı." };
@@ -38,6 +39,8 @@ export async function setReviewFeatured(
     return { error: "Rəy yenilənmədi." };
   }
 
+  await logAdminAction(admin, featured ? "review.featured" : "review.unfeatured", { type: "product_review", id: reviewId });
+
   updateTag(FEATURED_REVIEWS_TAG);
   revalidatePath("/admin/reviews");
   revalidatePath("/");
@@ -49,7 +52,7 @@ export async function deleteReviewAsAdmin(
   _prev: FeaturedReviewActionState,
   formData: FormData,
 ): Promise<FeaturedReviewActionState> {
-  await requireAdmin();
+  const admin = await requireAdmin();
   const reviewId = String(formData.get("review_id") ?? "").trim();
   if (!reviewId) return { error: "Rəy tapılmadı." };
 
@@ -58,12 +61,14 @@ export async function deleteReviewAsAdmin(
     .from("product_reviews")
     .delete()
     .eq("id", reviewId)
-    .select("product_id");
+    .select();
 
   if (error || !data?.length) {
     console.error("[reviews.deleteReviewAsAdmin]", error?.message);
     return { error: "Rəy silinmədi." };
   }
+
+  await logAdminAction(admin, "review.deleted", { type: "product_review", id: reviewId }, { review: data[0] });
 
   updateTag(FEATURED_REVIEWS_TAG);
   revalidatePath("/admin/reviews");

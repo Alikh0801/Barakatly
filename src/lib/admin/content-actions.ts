@@ -2,6 +2,7 @@
 
 import { revalidatePath, updateTag } from "next/cache";
 import { requireAdmin } from "@/lib/admin/auth";
+import { logAdminAction } from "@/lib/audit/log";
 import { resolveSiteImagePath } from "@/lib/admin/site-image-upload";
 import { readLogoHeader, siteLogoError, SITE_LOGO_TYPE_ERROR } from "@/lib/admin/site-logo";
 import { ogImageError, OG_IMAGE_TYPE_ERROR } from "@/lib/admin/og-image-rules";
@@ -132,7 +133,7 @@ export async function updateHeroContent(
   _prev: AdminContentActionState,
   formData: FormData
 ): Promise<AdminContentActionState> {
-  await requireAdmin();
+  const admin = await requireAdmin();
 
   const supabase = await createClient();
   const { data: existing } = await supabase
@@ -190,6 +191,7 @@ export async function updateHeroContent(
   }
 
   revalidateHeroContent();
+  await logAdminAction(admin, "content.update_hero_content", { type: "site_content", id: null });
   return { success: "Hero bölməsi yeniləndi." };
 }
 
@@ -197,7 +199,7 @@ export async function resetHeroContent(
   _prev: AdminContentActionState,
   _formData: FormData
 ): Promise<AdminContentActionState> {
-  await requireAdmin();
+  const admin = await requireAdmin();
 
   const supabase = await createClient();
   // The button restores the text and photo; the figures are kept.
@@ -227,6 +229,7 @@ export async function resetHeroContent(
   }
 
   revalidateHeroContent();
+  await logAdminAction(admin, "content.reset_hero_content", { type: "site_content", id: null });
   return { success: "Default Hero məzmunu bərpa olundu." };
 }
 
@@ -266,7 +269,7 @@ export async function updateAuthImageContent(
   _prev: AdminContentActionState,
   formData: FormData
 ): Promise<AdminContentActionState> {
-  await requireAdmin();
+  const admin = await requireAdmin();
 
   const supabase = await createClient();
   const { data: existing } = await supabase
@@ -311,6 +314,7 @@ export async function updateAuthImageContent(
   }
 
   revalidateAuthImageContent();
+  await logAdminAction(admin, "content.update_auth_image_content", { type: "site_content", id: null });
   return { success: "Giriş səhifəsi yeniləndi." };
 }
 
@@ -318,7 +322,7 @@ export async function resetAuthImageContent(
   _prev: AdminContentActionState,
   _formData: FormData
 ): Promise<AdminContentActionState> {
-  await requireAdmin();
+  const admin = await requireAdmin();
 
   const supabase = await createClient();
   const { error } = await supabase.from("site_content").upsert(
@@ -337,6 +341,7 @@ export async function resetAuthImageContent(
   }
 
   revalidateAuthImageContent();
+  await logAdminAction(admin, "content.reset_auth_image_content", { type: "site_content", id: null });
   return { success: "Default giriş şəkli bərpa olundu." };
 }
 
@@ -351,7 +356,7 @@ export async function updateSiteLogo(
   _prev: AdminContentActionState,
   formData: FormData
 ): Promise<AdminContentActionState> {
-  await requireAdmin();
+  const admin = await requireAdmin();
 
   const logoPath = String(formData.get("logo_path") ?? "").trim();
   if (!logoPath) return { error: "Loqo faylı seçin." };
@@ -390,6 +395,7 @@ export async function updateSiteLogo(
   }
 
   revalidateSiteLogo();
+  await logAdminAction(admin, "content.update_site_logo", { type: "site_content", id: null });
   return { success: "Loqo yeniləndi." };
 }
 
@@ -397,7 +403,7 @@ export async function resetSiteLogo(
   _prev: AdminContentActionState,
   _formData: FormData
 ): Promise<AdminContentActionState> {
-  await requireAdmin();
+  const admin = await requireAdmin();
 
   const supabase = await createClient();
   const { error } = await supabase.from("site_content").upsert(
@@ -416,6 +422,7 @@ export async function resetSiteLogo(
   }
 
   revalidateSiteLogo();
+  await logAdminAction(admin, "content.reset_site_logo", { type: "site_content", id: null });
   return { success: "Default loqo bərpa olundu." };
 }
 
@@ -430,7 +437,7 @@ export async function updateOgImage(
   _prev: AdminContentActionState,
   formData: FormData
 ): Promise<AdminContentActionState> {
-  await requireAdmin();
+  const admin = await requireAdmin();
 
   const imagePath = String(formData.get("og_path") ?? "").trim();
   if (!imagePath) return { error: "Şəkil faylı seçin." };
@@ -473,6 +480,7 @@ export async function updateOgImage(
   }
 
   revalidateOgImage();
+  await logAdminAction(admin, "content.update_og_image", { type: "site_content", id: null });
   return { success: "Preview şəkli yeniləndi." };
 }
 
@@ -480,7 +488,7 @@ export async function resetOgImage(
   _prev: AdminContentActionState,
   _formData: FormData
 ): Promise<AdminContentActionState> {
-  await requireAdmin();
+  const admin = await requireAdmin();
 
   const supabase = await createClient();
   const { error } = await supabase.from("site_content").upsert(
@@ -499,6 +507,7 @@ export async function resetOgImage(
   }
 
   revalidateOgImage();
+  await logAdminAction(admin, "content.reset_og_image", { type: "site_content", id: null });
   return { success: "Default preview şəkli bərpa olundu." };
 }
 
@@ -535,7 +544,7 @@ export async function updateWhyBarakatlyContent(
   _prev: AdminContentActionState,
   formData: FormData
 ): Promise<AdminContentActionState> {
-  await requireAdmin();
+  const admin = await requireAdmin();
 
   const title = String(formData.get("title") ?? "").trim();
   const body = String(formData.get("body") ?? "").trim();
@@ -576,6 +585,7 @@ export async function updateWhyBarakatlyContent(
   }
 
   revalidateWhyContent();
+  await logAdminAction(admin, "content.update_why_barakatly_content", { type: "site_content", id: null });
   return { success: "Niyə Barakatly? bölməsi yeniləndi." };
 }
 
@@ -583,7 +593,7 @@ export async function resetWhyBarakatlyContent(
   _prev: AdminContentActionState,
   _formData: FormData
 ): Promise<AdminContentActionState> {
-  await requireAdmin();
+  const admin = await requireAdmin();
 
   const supabase = await createClient();
   const { error } = await supabase.from("site_content").upsert(
@@ -602,6 +612,7 @@ export async function resetWhyBarakatlyContent(
   }
 
   revalidateWhyContent();
+  await logAdminAction(admin, "content.reset_why_barakatly_content", { type: "site_content", id: null });
   return { success: "Default məzmun bərpa olundu." };
 }
 
@@ -609,7 +620,7 @@ export async function updateFaqContent(
   _prev: AdminContentActionState,
   formData: FormData
 ): Promise<AdminContentActionState> {
-  await requireAdmin();
+  const admin = await requireAdmin();
 
   const title = String(formData.get("title") ?? "").trim();
   const items = parseFaqForm(formData);
@@ -641,6 +652,7 @@ export async function updateFaqContent(
   }
 
   revalidateFaqContent();
+  await logAdminAction(admin, "content.update_faq_content", { type: "site_content", id: null });
   return { success: "Tez-tez verilən suallar yeniləndi." };
 }
 
@@ -648,7 +660,7 @@ export async function resetFaqContent(
   _prev: AdminContentActionState,
   _formData: FormData
 ): Promise<AdminContentActionState> {
-  await requireAdmin();
+  const admin = await requireAdmin();
 
   const supabase = await createClient();
   const { error } = await supabase.from("site_content").upsert(
@@ -667,6 +679,7 @@ export async function resetFaqContent(
   }
 
   revalidateFaqContent();
+  await logAdminAction(admin, "content.reset_faq_content", { type: "site_content", id: null });
   return { success: "Default FAQ bərpa olundu." };
 }
 
@@ -719,7 +732,7 @@ export async function updateAboutContent(
   _prev: AdminContentActionState,
   formData: FormData
 ): Promise<AdminContentActionState> {
-  await requireAdmin();
+  const admin = await requireAdmin();
 
   const title = String(formData.get("title") ?? "").trim();
   const body = String(formData.get("body") ?? "").trim();
@@ -754,6 +767,7 @@ export async function updateAboutContent(
   }
 
   revalidateAboutContent();
+  await logAdminAction(admin, "content.update_about_content", { type: "site_content", id: null });
   return { success: "Haqqımızda səhifəsi yeniləndi." };
 }
 
@@ -761,7 +775,7 @@ export async function resetAboutContent(
   _prev: AdminContentActionState,
   _formData: FormData
 ): Promise<AdminContentActionState> {
-  await requireAdmin();
+  const admin = await requireAdmin();
 
   const supabase = await createClient();
   const { error } = await supabase.from("site_content").upsert(
@@ -783,6 +797,7 @@ export async function resetAboutContent(
   }
 
   revalidateAboutContent();
+  await logAdminAction(admin, "content.reset_about_content", { type: "site_content", id: null });
   return { success: "Default Haqqımızda məzmunu bərpa olundu." };
 }
 
@@ -796,7 +811,7 @@ export async function updateContactContent(
   _prev: AdminContentActionState,
   formData: FormData
 ): Promise<AdminContentActionState> {
-  await requireAdmin();
+  const admin = await requireAdmin();
 
   const phone = String(formData.get("phone") ?? "").trim();
   const email = String(formData.get("email") ?? "").trim();
@@ -823,6 +838,7 @@ export async function updateContactContent(
   updateTag("contact");
   revalidatePath("/", "layout");
   revalidatePath("/admin/content");
+  await logAdminAction(admin, "content.update_contact_content", { type: "site_content", id: null });
   return {
     success:
       phone || email

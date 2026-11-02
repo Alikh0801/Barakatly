@@ -8,6 +8,7 @@ import { adminCanSetStatus, statusOwner } from "@/lib/orders/admin-status";
 import { getOrderFarmerProfileIds } from "@/lib/orders/farmers";
 import { ITEM_CANCEL_ANNOUNCED } from "@/lib/orders/item-cancel";
 import { notifyUser } from "@/lib/notifications/helpers";
+import { logAdminAction } from "@/lib/audit/log";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import type { NotificationType, OrderStatus } from "@/types";
@@ -84,21 +85,27 @@ async function insertEventAndNotify(params: {
   // action that has already checked who is asking.
   const supabase = createAdminClient();
 
-  await supabase.from("order_status_events").insert({
+  const { error: eventError } = await supabase.from("order_status_events").insert({
     order_id: params.orderId,
     status: params.status,
     changed_by: params.adminId,
     note: params.note,
   });
+  if (eventError) {
+    console.error("[admin.orderEvent]", params.orderId, params.status, eventError.message);
+  }
 
   if (params.notification) {
-    await supabase.from("notifications").insert({
+    const { error: notifyError } = await supabase.from("notifications").insert({
       user_id: params.customerId,
       title: params.notification.title,
       body: params.notification.body,
       type: params.notification.type,
       metadata: { order_id: params.orderId },
     });
+    if (notifyError) {
+      console.error("[admin.orderNotification]", params.orderId, params.status, notifyError.message);
+    }
   }
 }
 
@@ -133,6 +140,11 @@ export async function confirmPayment(
   }
 
   const order = { id: settled.order_id, customer_id: settled.customer_id, order_code: settled.order_code };
+
+  await logAdminAction(admin, "payment.confirmed", { type: "order", id: order.id }, {
+    payment_id: paymentId,
+    order_code: order.order_code,
+  });
 
   await insertEventAndNotify({
     orderId: order.id,
@@ -209,6 +221,12 @@ export async function rejectPayment(
   }
 
   const order = { id: settled.order_id, customer_id: settled.customer_id, order_code: settled.order_code };
+
+  await logAdminAction(admin, "payment.rejected", { type: "order", id: order.id }, {
+    payment_id: paymentId,
+    order_code: order.order_code,
+    reason,
+  });
 
   await insertEventAndNotify({
     orderId: order.id,
@@ -313,6 +331,13 @@ export async function advanceOrderStatus(
     }
   }
 
+  await logAdminAction(admin, "order.status_changed", { type: "order", id: order.id }, {
+    order_code: order.order_code,
+    from: order.status,
+    to: nextStatus,
+    ...(reason ? { reason } : {}),
+  });
+
   const baseNotification = notificationForOrderStatus(nextStatus);
   const notification =
     nextStatus === "cancelled" && baseNotification
@@ -364,7 +389,7 @@ export async function deleteOrders(
   _prev: ActionResult,
   formData: FormData
 ): Promise<ActionResult> {
-  await requireAdmin();
+  const admin = await requireAdmin();
 
   const orderIds = formData
     .getAll("order_ids")
@@ -376,26 +401,23 @@ export async function deleteOrders(
     return { error: "Silmək üçün sifariş seçin." };
   }
 
-  try {
-    const adminClient = createAdminClient();
-    const { error } = await adminClient
-      .from("orders")
-      .delete()
-      .in("id", uniqueIds);
+  // Deleted as the admin (migration 20261102150000): each order, with its
+  // lines, payment and status history, is copied into audit_log under
+  // their id before it goes. All of them or none.
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("admin_delete_orders", { p_order_ids: uniqueIds });
 
-    if (error) {
-      console.error("[admin.deleteOrders]", error.message);
-      // farmer_payouts keeps its orders (on delete restrict): what a farmer
-      // is owed must not vanish with the order.
-      if (error.code === "23503") {
-        return { error: "Fermer ödənişi olan sifarişi silmək olmaz. Ləğv edə bilərsiniz." };
-      }
-      return { error: "Sifarişlər silinmədi." };
+  if (error) {
+    console.error("[admin.deleteOrders]", error.message);
+    // farmer_payouts keeps its orders (on delete restrict): what a farmer
+    // is owed must not vanish with the order.
+    if (error.code === "23503") {
+      return { error: "Fermer ödənişi olan sifarişi silmək olmaz. Ləğv edə bilərsiniz." };
     }
-  } catch (error) {
-    console.error("[admin.deleteOrders]", error);
-    return { error: "Sifarişlər silinmədi. Service role yoxlanılsın." };
+    return { error: "Sifarişlər silinmədi." };
   }
+
+  await logAdminAction(admin, "orders.deleted", { type: "order", id: null }, { order_ids: uniqueIds });
 
   revalidatePath("/admin", "layout");
   revalidatePath("/admin/orders");
@@ -457,6 +479,11 @@ export async function announceItemCancellation(
     console.error("[admin.announceItemCancellation]", error.message);
     return { error: "Bildirilmədi. Yenidən cəhd edin." };
   }
+
+  await logAdminAction(admin, "order_item.cancel_announced", { type: "order_item", id: itemId }, {
+    order_id: item.order_id,
+    order_code: order.order_code,
+  });
 
   await writer.from("notifications").insert({
     user_id: order.customer_id,
