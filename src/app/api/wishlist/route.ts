@@ -1,6 +1,7 @@
 import { revalidatePath } from "next/cache";
 import type { NextRequest } from "next/server";
 import { getSessionUser } from "@/lib/auth/session";
+import { sameOrigin } from "@/lib/http/same-origin";
 import { createClient } from "@/lib/supabase/server";
 
 /**
@@ -16,16 +17,6 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 const json = (body: unknown, status = 200) =>
   Response.json(body, { status, headers: { "Cache-Control": "no-store" } });
-
-function sameOrigin(request: NextRequest) {
-  const origin = request.headers.get("origin");
-  if (!origin) return false;
-  try {
-    return new URL(origin).host === request.headers.get("host");
-  } catch {
-    return false;
-  }
-}
 
 /** The product ids the visitor has hearted; `ids: null` for guests. */
 export async function GET() {

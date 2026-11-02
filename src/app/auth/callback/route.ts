@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { ensureFarmerRecord } from "@/lib/farmer/ensure";
 import { createClient } from "@/lib/supabase/server";
 import type { EmailOtpType } from "@supabase/supabase-js";
+import { safeNext } from "@/lib/url/safe-next";
 
 async function finalizeAuthSession(origin: string, next: string) {
   const supabase = await createClient();
@@ -13,9 +14,7 @@ async function finalizeAuthSession(origin: string, next: string) {
     await ensureFarmerRecord(user.id);
   }
 
-  const safeNext =
-    next.startsWith("/") && !next.startsWith("//") ? next : "/shop";
-  return NextResponse.redirect(`${origin}${safeNext}`);
+  return NextResponse.redirect(`${origin}${safeNext(next)}`);
 }
 
 export async function GET(request: Request) {

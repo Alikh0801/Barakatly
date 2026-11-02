@@ -16,6 +16,7 @@ import {
 import { getSupabaseEnvError } from "@/lib/auth/urls";
 import { ensureFarmerRecord } from "@/lib/farmer/ensure";
 import { notifyAdmins } from "@/lib/notifications/helpers";
+import { safeNext } from "@/lib/url/safe-next";
 
 export type AuthActionState = {
   error?: string;
@@ -57,9 +58,7 @@ export async function signIn(
     return { error: translateAuthError(error.message) };
   }
 
-  const safeNext =
-    next.startsWith("/") && !next.startsWith("//") ? next : "/shop";
-  redirect(safeNext);
+  redirect(safeNext(next));
 }
 
 export async function signUp(
@@ -185,9 +184,7 @@ export async function verifySignupOtp(
     redirect(FARMER_APPLICATION_PATH);
   }
 
-  const safeNext =
-    next.startsWith("/") && !next.startsWith("//") ? next : "/shop";
-  redirect(safeNext);
+  redirect(safeNext(next));
 }
 
 export async function resendSignupOtp(

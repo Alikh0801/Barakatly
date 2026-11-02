@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { SignInForm } from "@/components/auth/SignInForm";
+import { safeNext } from "@/lib/url/safe-next";
 
 export const metadata = {
   title: "Daxil ol",
@@ -12,7 +13,8 @@ export default async function SignInPage({
 }) {
   const params = await searchParams;
   const linkExpired = params.error === "auth" && params.message === "link-expired";
-  const next = params.next?.startsWith("/") ? params.next : undefined;
+  // Only a path on this site; "/\\evil.com" and the like are dropped.
+  const next = params.next ? safeNext(params.next, "") || undefined : undefined;
 
   return (
     <div className="w-full max-w-md rounded-3xl bg-white p-5 shadow-xl shadow-zinc-200/60 ring-1 ring-zinc-200/70 sm:p-8">

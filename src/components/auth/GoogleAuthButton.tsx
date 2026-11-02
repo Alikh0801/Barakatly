@@ -3,6 +3,7 @@
 import { useEffect, useId, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { Spinner } from "@/components/ui/Spinner";
+import { safeNext } from "@/lib/url/safe-next";
 
 function GoogleIcon() {
   return (
@@ -100,14 +101,13 @@ export function GoogleAuthButton({ next }: { next?: string }) {
     setPending(true);
     setError("");
 
-    const safeNext =
-      next && next.startsWith("/") && !next.startsWith("//") ? next : "/shop";
+    const target = safeNext(next);
 
     const supabase = createClient();
     const { data, error: oauthError } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(safeNext)}`,
+        redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(target)}`,
         skipBrowserRedirect: true,
         // Without this Google skips its account chooser when the browser
         // has a single signed-in account that already granted access, so
