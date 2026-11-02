@@ -11,6 +11,7 @@ import { validateCertificateFile } from "@/lib/farmer/profile-files";
 import { FileSelectField } from "@/components/ui/FileSelectField";
 import { Spinner } from "@/components/ui/Spinner";
 import type { FarmerCertificate } from "@/types";
+import { safeHref } from "@/lib/url/safe-href";
 
 type ActionResult = { error?: string; success?: string };
 const initialState: ActionResult = {};
@@ -31,35 +32,45 @@ function CertificateCard({
   certificate: FarmerCertificate;
   footer?: React.ReactNode;
 }) {
+  const href = safeHref(certificate.file_url);
+  const preview = (
+    <div className="flex aspect-[4/3] items-center justify-center bg-[#f1f3ee]">
+      {certificate.file_type === "image" ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={certificate.file_url}
+          alt=""
+          loading="lazy"
+          className="h-full w-full object-contain p-2"
+        />
+      ) : (
+        <div className="flex flex-col items-center gap-2 text-[#2f7a3c]">
+          <DocumentIcon className="h-12 w-12" />
+          <span className="rounded-full bg-white px-2.5 py-0.5 text-xs font-semibold ring-1 ring-zinc-200">
+            PDF
+          </span>
+        </div>
+      )}
+    </div>
+  );
+
   return (
     <article className="overflow-hidden rounded-2xl bg-white ring-1 ring-zinc-200/70">
-      <a
-        href={certificate.file_url}
-        target="_blank"
-        rel="noreferrer"
-        data-static-hover
-        className="block"
-        aria-label={`${certificate.title} — faylı aç`}
-      >
-        <div className="flex aspect-[4/3] items-center justify-center bg-[#f1f3ee]">
-          {certificate.file_type === "image" ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={certificate.file_url}
-              alt=""
-              loading="lazy"
-              className="h-full w-full object-contain p-2"
-            />
-          ) : (
-            <div className="flex flex-col items-center gap-2 text-[#2f7a3c]">
-              <DocumentIcon className="h-12 w-12" />
-              <span className="rounded-full bg-white px-2.5 py-0.5 text-xs font-semibold ring-1 ring-zinc-200">
-                PDF
-              </span>
-            </div>
-          )}
-        </div>
-      </a>
+      {/* Only an http(s) file opens; anything else stays a picture. */}
+      {href ? (
+        <a
+          href={href}
+          target="_blank"
+          rel="noreferrer"
+          data-static-hover
+          className="block"
+          aria-label={`${certificate.title} — faylı aç`}
+        >
+          {preview}
+        </a>
+      ) : (
+        preview
+      )}
       <div className="p-4">
         <h3 className="break-words text-[15px] font-semibold text-zinc-900">
           {certificate.title}

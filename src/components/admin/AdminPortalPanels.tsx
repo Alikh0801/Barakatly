@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useEffect, useState } from "react";
+import { safeHref } from "@/lib/url/safe-href";
 import {
   approveFarmer,
   approveFarmerProfileEdit,
@@ -369,14 +370,19 @@ function FarmerRow({ farmer }: { farmer: AdminFarmer }) {
                   <FarmerDetailRow
                     label="Xəritə linki"
                     value={
-                      <a
-                        href={farmer.location_map_url}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="font-medium text-emerald-700 hover:underline"
-                      >
-                        Xəritədə aç
-                      </a>
+                      safeHref(farmer.location_map_url) ? (
+                        <a
+                          href={safeHref(farmer.location_map_url) ?? undefined}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="font-medium text-emerald-700 hover:underline"
+                        >
+                          Xəritədə aç
+                        </a>
+                      ) : (
+                        // Not an http(s) link: shown as text, never followed.
+                        <span className="break-all text-zinc-500">{farmer.location_map_url}</span>
+                      )
                     }
                   />
                 ) : null}
@@ -642,14 +648,18 @@ function FarmerProfileEditCard({ farmer }: { farmer: AdminFarmer }) {
               )}
               <span className="text-zinc-400">→</span>
               {farmer.pending_cover_url ? (
-                <a href={farmer.pending_cover_url} target="_blank" rel="noreferrer">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={farmer.pending_cover_url}
-                    alt="Yeni arxa plan şəkli"
-                    className="h-12 w-28 rounded-lg object-cover ring-2 ring-emerald-300"
-                  />
-                </a>
+                safeHref(farmer.pending_cover_url) ? (
+                  <a href={safeHref(farmer.pending_cover_url) ?? undefined} target="_blank" rel="noreferrer">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={farmer.pending_cover_url}
+                      alt="Yeni arxa plan şəkli"
+                      className="h-12 w-28 rounded-lg object-cover ring-2 ring-emerald-300"
+                    />
+                  </a>
+                ) : (
+                  <span className="text-sm text-rose-600">Yararsız link</span>
+                )
               ) : (
                 <span className="text-sm text-zinc-400">Silinir</span>
               )}
