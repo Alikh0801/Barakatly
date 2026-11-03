@@ -1,5 +1,6 @@
 import { after, userAgent, type NextRequest } from "next/server";
 import { getSessionUser } from "@/lib/auth/session";
+import { sameOrigin } from "@/lib/http/same-origin";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 /**
@@ -20,7 +21,8 @@ const noContent = () => new Response(null, { status: 204 });
 
 function cleanPath(value: unknown): string | null {
   if (typeof value !== "string") return null;
-  const path = value.split(/[?#]/)[0];
+  // Control characters would only garble the Statistika table.
+  const path = value.split(/[?#]/)[0].replace(/[\x00-\x1F\x7F]/g, "");
   if (!path.startsWith("/") || path.startsWith("//") || path.length > 300) return null;
   // The admin's own browsing would only skew the numbers.
   if (path === "/admin" || path.startsWith("/admin/") || path.startsWith("/api/")) return null;
@@ -49,6 +51,13 @@ function header(request: NextRequest, name: string): string | null {
 }
 
 export async function POST(request: NextRequest) {
+  // Only this site's own pages report views; a script elsewhere posting
+  // here would just pad the numbers. sendBeacon sends Origin with its POST;
+  // Sec-Fetch-Site covers a browser that leaves it out.
+  if (!sameOrigin(request) && request.headers.get("sec-fetch-site") !== "same-origin") {
+    return noContent();
+  }
+
   const raw = await request.text();
   if (raw.length > MAX_BODY) return noContent();
 
