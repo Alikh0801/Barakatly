@@ -43,7 +43,8 @@ export async function approveFarmer(
   if (updateError) return { error: "Fermer təsdiqlənmədi." };
 
   // Promote the account to "farmer" only now, on approval. A cross-user
-  // profile update needs the service-role client (RLS).
+  // profile update needs the service-role client (RLS). Approval counts
+  // only once this is done too; pressing "Təsdiqlə" again finishes it.
   const admin = createAdminClient();
   const { error: roleError } = await admin
     .from("profiles")
@@ -52,6 +53,7 @@ export async function approveFarmer(
     .neq("role", "admin");
   if (roleError) {
     console.error("[admin.approveFarmer.role]", roleError.message);
+    return { error: "Hesabın rolu dəyişmədi. Yenidən təsdiqləyin." };
   }
   const { error: metaError } = await admin.auth.admin.updateUserById(
     farmer.profile_id,
@@ -59,6 +61,7 @@ export async function approveFarmer(
   );
   if (metaError) {
     console.error("[admin.approveFarmer.metadata]", metaError.message);
+    return { error: "Hesabın rolu dəyişmədi. Yenidən təsdiqləyin." };
   }
 
   await notifyUser({
@@ -303,28 +306,28 @@ export async function deleteFarmer(
 
   if (!farmer) return { error: "Fermer tapılmadı." };
 
+  const historyError =
+    "Fermer silinmədi, çünki sifariş tarixçəsi var. Sifariş tarixçəsini qorumaq üçün silmək əvəzinə \"Deaktiv et\" seçimindən istifadə edin.";
+
   const admin = createAdminClient();
 
-  // Hard delete farmer row (cascades products, images, blog). Blocked by FK
-  // if the farmer has any order_items — deleting them would destroy order
-  // history, so those farmers must be deactivated instead of deleted.
-  const { error: deleteError } = await admin
-    .from("farmers")
-    .delete()
-    .eq("id", farmerId);
+  // A farmer with order lines can't be deleted (the lines would go with
+  // them): deactivate instead. Checked first, so nothing below starts.
+  const { count: lineCount } = await admin
+    .from("order_items")
+    .select("id", { count: "exact", head: true })
+    .eq("farmer_id", farmerId);
+  if (lineCount) return { error: historyError };
 
-  if (deleteError) {
-    console.error("[admin.deleteFarmer]", deleteError.message);
-    return {
-      error:
-        "Fermer silinmədi, çünki sifariş tarixçəsi var. Sifariş tarixçəsini qorumaq üçün silmək əvəzinə \"Deaktiv et\" seçimindən istifadə edin.",
-    };
-  }
-
-  await logAdminAction(actor, "farmer.deleted", { type: "farmer", id: farmer.id }, { profile_id: farmer.profile_id, reason });
-
-  // Keep auth account; demote profile and clear farmer metadata so they can
-  // re-apply via /farmer/signup with the same login.
+  // The account goes back to "customer" and loses its farmer sign-up data
+  // first, so a failure leaves the farmer as they were and can be retried.
+  // The login stays: they can apply again via /farmer/signup.
+  const { data: account } = await admin
+    .from("profiles")
+    .select("role")
+    .eq("id", farmer.profile_id)
+    .maybeSingle();
+  const previousRole = account?.role ?? "customer";
   const { error: profileError } = await admin
     .from("profiles")
     .update({ role: "customer" })
@@ -333,6 +336,7 @@ export async function deleteFarmer(
 
   if (profileError) {
     console.error("[admin.deleteFarmer.profile]", profileError.message);
+    return { error: "Fermer silinmədi. Yenidən cəhd edin." };
   }
 
   const { error: metaError } = await admin.auth.admin.updateUserById(
@@ -348,9 +352,22 @@ export async function deleteFarmer(
     },
   );
 
-  if (metaError) {
-    console.error("[admin.deleteFarmer.metadata]", metaError.message);
+  // Hard delete farmer row (cascades products, images, blog). Last, and the
+  // deletion is what counts as success.
+  const { error: deleteError } = metaError
+    ? { error: metaError }
+    : await admin.from("farmers").delete().eq("id", farmerId);
+
+  if (deleteError) {
+    console.error("[admin.deleteFarmer]", deleteError.message);
+    // Put the role back: the farmer is still there.
+    if (previousRole !== "customer" && previousRole !== "admin") {
+      await admin.from("profiles").update({ role: previousRole }).eq("id", farmer.profile_id);
+    }
+    return { error: "code" in deleteError && deleteError.code === "23503" ? historyError : "Fermer silinmədi. Yenidən cəhd edin." };
   }
+
+  await logAdminAction(actor, "farmer.deleted", { type: "farmer", id: farmer.id }, { profile_id: farmer.profile_id, reason });
 
   await notifyUser({
     userId: farmer.profile_id,
@@ -683,21 +700,30 @@ export async function createCourier(
     });
 
     if (error || !data.user) {
-      return { error: error?.message ?? "Kuryer yaradıla bilmədi." };
+      console.error("[admin.createCourier.user]", error?.message);
+      const taken = error?.message.toLowerCase().includes("already");
+      return { error: taken ? "Bu email ilə hesab artıq var." : "Kuryer yaradıla bilmədi." };
     }
 
-    await adminClient
+    const { error: profileError } = await adminClient
       .from("profiles")
       .update({ role: "courier", full_name: fullName })
       .eq("id", data.user.id);
 
-    const { error: courierError } = await adminClient.from("couriers").insert({
-      profile_id: data.user.id,
-      is_active: true,
-    });
+    const { error: courierError } = profileError
+      ? { error: profileError }
+      : await adminClient.from("couriers").insert({
+          profile_id: data.user.id,
+          is_active: true,
+        });
 
     if (courierError) {
-      return { error: "Kuryer profili yaradıla bilmədi." };
+      // Half a courier is no courier: remove the login made above, so the
+      // same email can be tried again.
+      console.error("[admin.createCourier.profile]", courierError.message);
+      const { error: cleanupError } = await adminClient.auth.admin.deleteUser(data.user.id);
+      if (cleanupError) console.error("[admin.createCourier.cleanup]", cleanupError.message);
+      return { error: "Kuryer yaradıla bilmədi. Yenidən cəhd edin." };
     }
 
     await logAdminAction(actor, "courier.created", { type: "profile", id: data.user.id }, { email, full_name: fullName });
@@ -705,7 +731,7 @@ export async function createCourier(
     console.error("[admin.createCourier]", error);
     return {
       error:
-        "Kuryer yaradıla bilmədi. SUPABASE_SERVICE_ROLE_KEY yoxlanmalıdır.",
+        "Kuryer yaradıla bilmədi.",
     };
   }
 

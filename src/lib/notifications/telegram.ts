@@ -1,3 +1,5 @@
+import "server-only";
+
 import { IS_PRE } from "@/lib/env";
 import type { NotificationType } from "@/types";
 

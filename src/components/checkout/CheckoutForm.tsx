@@ -142,10 +142,11 @@ const STEPS: { id: Step; label: string }[] = [
   { id: 3, label: "Təsdiq" },
 ];
 
+// The phone number is left out: sessionStorage is readable by any script
+// on the page, and the number comes back from the profile anyway.
 type CheckoutDraft = {
   firstName?: string;
   lastName?: string;
-  phone?: string;
   address?: string;
   city?: string;
   district?: string;
@@ -408,10 +409,6 @@ export function CheckoutForm({
     if (draft) {
       if (draft.firstName) setFirstName(draft.firstName);
       if (draft.lastName) setLastName(draft.lastName);
-      if (draft.phone) {
-        setPhone(draft.phone);
-        setPhoneKey((key) => key + 1);
-      }
       if (draft.address) setAddress(draft.address);
       if (draft.city) setCity(draft.city);
       if (draft.district) setDistrict(draft.district);
@@ -428,7 +425,7 @@ export function CheckoutForm({
   useEffect(() => {
     if (!draftLoaded) return;
     try {
-      const draft: CheckoutDraft = { firstName, lastName, phone, address, city, district, note, bankId };
+      const draft: CheckoutDraft = { firstName, lastName, address, city, district, note, bankId };
       if (Object.values(draft).some(Boolean)) {
         sessionStorage.setItem(draftKey, JSON.stringify(draft));
       } else {
@@ -437,7 +434,7 @@ export function CheckoutForm({
     } catch {
       // Storage full or blocked — the draft is a convenience, not a must.
     }
-  }, [draftLoaded, draftKey, firstName, lastName, phone, address, city, district, note, bankId]);
+  }, [draftLoaded, draftKey, firstName, lastName, address, city, district, note, bankId]);
 
   useEffect(() => {
     if (!state.orderId) return;

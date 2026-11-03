@@ -307,14 +307,21 @@ export async function advanceOrderStatus(
     };
   }
 
-  const { error: updateError } = await supabase
+  // Only from the status it was read in, so two admins (or the admin and
+  // the courier) can't both move it on from the same step.
+  const { data: updated, error: updateError } = await supabase
     .from("orders")
     .update({ status: nextStatus })
-    .eq("id", orderId);
+    .eq("id", orderId)
+    .eq("status", order.status)
+    .select("id");
 
   if (updateError) {
     console.error("[admin.advanceOrderStatus]", updateError.message);
     return { error: "Status yenilənmədi." };
+  }
+  if (!updated?.length) {
+    return { error: "Status dəyişib, səhifəni yeniləyin." };
   }
 
   // Picked up or delivered on the admin's word: the lines follow, so the

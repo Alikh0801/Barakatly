@@ -1,4 +1,5 @@
 import { AdminPageShell } from "@/components/admin/AdminPageShell";
+import { requireAdmin } from "@/lib/admin/auth";
 import { PendingPaymentsPanel } from "@/components/admin/AdminPanels";
 import { getPendingPayments } from "@/lib/admin/queries";
 import { createClient } from "@/lib/supabase/server";
@@ -8,6 +9,7 @@ export const metadata = {
 };
 
 export default async function AdminPaymentsPage() {
+  await requireAdmin();
   const payments = await getPendingPayments();
   const supabase = await createClient();
 

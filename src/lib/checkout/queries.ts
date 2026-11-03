@@ -1,3 +1,4 @@
+import { getSessionUser } from "@/lib/auth/session";
 import { unstable_cache } from "next/cache";
 import { createPublicClient } from "@/lib/supabase/public";
 import { createClient } from "@/lib/supabase/server";
@@ -87,11 +88,7 @@ export type OrderListItem = Order & {
 
 export async function getCustomerOrders(): Promise<OrderListItem[]> {
   const supabase = await createClient();
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
-
-  const user = session?.user;
+  const user = await getSessionUser();
   if (!user) return [];
 
   const { data, error } = await supabase
@@ -139,11 +136,7 @@ export type OrderDetail = Order & {
 
 export async function getOrderById(id: string): Promise<OrderDetail | null> {
   const supabase = await createClient();
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
-
-  const user = session?.user;
+  const user = await getSessionUser();
   if (!user) return null;
 
   const { data, error } = await supabase

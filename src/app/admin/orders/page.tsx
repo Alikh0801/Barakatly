@@ -1,4 +1,5 @@
 import { AdminOrdersPanel } from "@/components/admin/AdminPanels";
+import { requireAdmin } from "@/lib/admin/auth";
 import { AdminPageShell } from "@/components/admin/AdminPageShell";
 import { getAdminOrders, getUnseenFarmerOrderUpdates } from "@/lib/admin/queries";
 import { firstPayment } from "@/lib/orders/payment";
@@ -9,6 +10,7 @@ export const metadata = {
 };
 
 export default async function AdminOrdersPage() {
+  await requireAdmin();
   const [orders, farmerUpdates] = await Promise.all([
     getAdminOrders(),
     getUnseenFarmerOrderUpdates(),

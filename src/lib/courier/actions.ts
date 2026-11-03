@@ -106,10 +106,12 @@ export async function advanceCourierOrder(
     // "Kuryer yola çıxdı" only once the admin sets it. The claim goes on
     // the order: RLS lets the update touch an unclaimed order or this
     // courier's own, so a second courier racing for it gets 0 rows.
+    // Only while the order is still in the status it was read in.
     const { data: claimed, error: claimError } = await supabase
       .from("orders")
       .update({ courier_id: courier.id })
       .eq("id", orderId)
+      .eq("status", order.status)
       .select("id");
 
     if (claimError) {
@@ -117,7 +119,11 @@ export async function advanceCourierOrder(
       return { error: "Status yenilənmədi." };
     }
     if (!claimed || claimed.length === 0) {
-      return { error: "Bu sifariş artıq başqa kuryer tərəfindən götürülüb." };
+      return {
+        error: order.courier_id && order.courier_id !== courier.id
+          ? "Bu sifariş artıq başqa kuryer tərəfindən götürülüb."
+          : "Status dəyişib, səhifəni yeniləyin.",
+      };
     }
 
     const { data: pickedLines, error: linesError } = await supabase
@@ -163,6 +169,7 @@ export async function advanceCourierOrder(
       .from("orders")
       .update({ status: nextStatus, courier_id: courier.id })
       .eq("id", orderId)
+      .eq("status", order.status)
       .select("id");
 
     if (updateError) {
@@ -170,8 +177,10 @@ export async function advanceCourierOrder(
       return { error: "Status yenilənmədi." };
     }
 
+    // RLS gives 0 rows for another courier's order; the status check gives
+    // 0 when the admin (or another tab) moved it meanwhile.
     if (!updatedOrders || updatedOrders.length === 0) {
-      return { error: "Bu sifariş artıq başqa kuryer tərəfindən götürülüb." };
+      return { error: "Status dəyişib, səhifəni yeniləyin." };
     }
 
     // A failed delivery is an order cancellation: orders_cancel_cascade

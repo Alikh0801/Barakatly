@@ -10,6 +10,8 @@ import {
   emailAlreadyRegistered,
   isDuplicateSignUpUser,
   isEmailNotConfirmed,
+  isAlreadyRegistered,
+  isCaptchaError,
   isEmailRateLimited,
   translateAuthError,
 } from "@/lib/auth/signup";
@@ -91,21 +93,20 @@ export async function signUp(
 
   const supabase = await createClient();
 
+  // The answer is the code step whether or not the address already has an
+  // account, so the form can't be used to find out who is registered. A
+  // still-unconfirmed account gets a new code; a confirmed one gets none,
+  // and the code step says to sign in instead.
   if (await emailAlreadyRegistered(email)) {
-    // Hesab var. Email hələ təsdiqlənməyibsə resend uğurlu olur (və ya limitə
-    // düşür — bu da kodun göndərildiyini bildirir): belə halda xəta əvəzinə
-    // istifadəçini OTP addımına apar. Təsdiqlənmiş hesabda resend xəta verir.
     const { error: resendError } = await supabase.auth.resend({
       type: "signup",
       email,
       options: captchaToken ? { captchaToken } : undefined,
     });
-
-    if (!resendError || isEmailRateLimited(resendError.message)) {
-      return { otpEmail: email };
+    if (resendError && isCaptchaError(resendError.message)) {
+      return { error: translateAuthError(resendError.message) };
     }
-
-    return { error: "Bu email artıq qeydiyyatdadır. Daxil olun." };
+    return { otpEmail: email };
   }
 
   const { data, error } = await supabase.auth.signUp({
@@ -122,11 +123,12 @@ export async function signUp(
 
   if (error) {
     console.error("[auth.signUp]", error.message);
+    if (isAlreadyRegistered(error.message)) return { otpEmail: email };
     return { error: translateAuthError(error.message) };
   }
 
   if (isDuplicateSignUpUser(data.user)) {
-    return { error: "Bu email artıq qeydiyyatdadır. Daxil olun." };
+    return { otpEmail: email };
   }
 
   if (data.user && !data.session) {
@@ -211,7 +213,11 @@ export async function resendSignupOtp(
 
   if (error) {
     await logAuthFailure("signup_otp_resend", email, error.message);
-    return { otpEmail: email, error: translateAuthError(error.message) };
+    // Only the captcha and the limit are worth saying: anything else would
+    // tell whether the address has an (already confirmed) account.
+    if (isCaptchaError(error.message) || isEmailRateLimited(error.message)) {
+      return { otpEmail: email, error: translateAuthError(error.message) };
+    }
   }
 
   return { otpEmail: email, success: "Yeni kod göndərildi." };

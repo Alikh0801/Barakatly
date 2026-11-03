@@ -35,6 +35,8 @@ import {
 import { AZ_REGIONS } from "@/lib/az/regions";
 import {
   emailAlreadyRegistered,
+  isAlreadyRegistered,
+  isCaptchaError,
   isDuplicateSignUpUser,
   translateAuthError,
 } from "@/lib/auth/signup";
@@ -358,11 +360,19 @@ export async function signUpFarmer(
     return { error: "Şifrələr uyğun gəlmir." };
   }
 
+  // The code step whether or not the address already has an account (see
+  // signUp in lib/auth/actions): it says what to do if one exists.
   if (await emailAlreadyRegistered(email)) {
-    return {
-      error:
-        "Bu email artıq qeydiyyatdadır. Daxil olun — sonra mövcud hesabla fermer ola bilərsiniz.",
-    };
+    const supabase = await createClient();
+    const { error: resendError } = await supabase.auth.resend({
+      type: "signup",
+      email,
+      options: captchaToken ? { captchaToken } : undefined,
+    });
+    if (resendError && isCaptchaError(resendError.message)) {
+      return { error: translateAuthError(resendError.message) };
+    }
+    return { otpEmail: email };
   }
 
   if (await isPhoneTakenByAnother(phone)) {
@@ -392,14 +402,12 @@ export async function signUpFarmer(
 
   if (error) {
     console.error("[farmer.signUpFarmer]", error.message);
+    if (isAlreadyRegistered(error.message)) return { otpEmail: email };
     return { error: translateAuthError(error.message) };
   }
 
   if (isDuplicateSignUpUser(data.user)) {
-    return {
-      error:
-        "Bu email artıq qeydiyyatdadır. Daxil olun — sonra mövcud hesabla fermer ola bilərsiniz.",
-    };
+    return { otpEmail: email };
   }
 
   const userId = data.user?.id;
@@ -878,13 +886,21 @@ export async function updateOrderItemStatus(
     return { error: "Bu status keçidinə icazə verilmir." };
   }
 
-  const { error: updateError } = await supabase
+  // Only from the status it was read in: two tabs, or the farmer and a
+  // courier at once, can't both move it on from the same step.
+  const { data: updated, error: updateError } = await supabase
     .from("order_items")
     .update({ status: nextStatus })
-    .eq("id", itemId);
+    .eq("id", itemId)
+    .eq("status", item.status)
+    .select("id");
 
   if (updateError) {
+    console.error("[farmer.updateOrderItemStatus]", updateError.message);
     return { error: "Status yenilənmədi." };
+  }
+  if (!updated?.length) {
+    return { error: "Status dəyişib, səhifəni yeniləyin." };
   }
 
   const statusLabel = getOrderItemStatusLabel(nextStatus);

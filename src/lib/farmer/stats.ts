@@ -1,3 +1,5 @@
+import "server-only";
+
 import { createAdminClient } from "@/lib/supabase/admin";
 
 /** Months shown on the revenue chart, the current one included. */

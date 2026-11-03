@@ -1,3 +1,5 @@
+import "server-only";
+
 import { timingSafeEqual } from "node:crypto";
 import type { NextRequest } from "next/server";
 import { IS_PRE } from "@/lib/env";

@@ -1,4 +1,5 @@
 import { AdminAuthImagePanel } from "@/components/admin/AdminAuthImagePanel";
+import { requireAdmin } from "@/lib/admin/auth";
 import { AdminHeroPanel } from "@/components/admin/AdminHeroPanel";
 import { AdminLogoPanel } from "@/components/admin/AdminLogoPanel";
 import { AdminOgImagePanel } from "@/components/admin/AdminOgImagePanel";
@@ -13,6 +14,7 @@ import {
 export const metadata = { title: "Hero - Admin" };
 
 export default async function AdminHeroPage() {
+  await requireAdmin();
   const [heroContent, authImageContent, logoUrl, ogImage] = await Promise.all([
     getAdminHeroContent(),
     getAdminAuthImageContent(),

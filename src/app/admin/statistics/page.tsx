@@ -1,4 +1,5 @@
 import { AdminPageShell } from "@/components/admin/AdminPageShell";
+import { requireAdmin } from "@/lib/admin/auth";
 import { AdminStatsPanels, StatsPeriodTabs } from "@/components/admin/AdminStatsPanels";
 import { getPageViewStats, parseStatsPeriod } from "@/lib/admin/stats";
 
@@ -9,6 +10,7 @@ export default async function AdminStatisticsPage({
 }: {
   searchParams: Promise<{ days?: string }>;
 }) {
+  await requireAdmin();
   const { days } = await searchParams;
   const period = parseStatsPeriod(days);
   const stats = await getPageViewStats(period);

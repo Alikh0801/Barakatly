@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useActionState, useRef, useState, useTransition } from "react";
 import {
   resendSignupOtp,
@@ -15,9 +16,16 @@ const TURNSTILE_SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
 export function VerifyOtpForm({
   email,
   next,
+  signup,
 }: {
   email: string;
   next?: string;
+  /**
+   * Set on the sign-up forms: they show this step for an address that
+   * already has an account too (so they can't be used to check who is
+   * registered), and no code comes then.
+   */
+  signup?: "customer" | "farmer";
 }) {
   const [state, formAction, pending] = useActionState(
     verifySignupOtp,
@@ -63,6 +71,20 @@ export function VerifyOtpForm({
         göndərilən 6 rəqəmli kodu daxil edin. Kod əlinizdə yoxdursa, aşağıdan
         yenidən göndərə bilərsiniz.
       </p>
+
+      {signup ? (
+        <p className="rounded-xl bg-zinc-50 px-3 py-2 text-sm text-zinc-600 ring-1 ring-zinc-200">
+          Bu email ilə artıq hesabınız varsa, kod gəlməyəcək:{" "}
+          <Link href="/signin" className="font-semibold text-emerald-700 hover:underline">
+            daxil olun
+          </Link>
+          {signup === "farmer" ? ", sonra mövcud hesabla fermer ola bilərsiniz" : null}. Şifrəni unutmusunuzsa,{" "}
+          <Link href="/forgot-password" className="font-semibold text-emerald-700 hover:underline">
+            bərpa edin
+          </Link>
+          .
+        </p>
+      ) : null}
 
       <form action={formAction} className="space-y-4">
         <input type="hidden" name="email" value={email} />

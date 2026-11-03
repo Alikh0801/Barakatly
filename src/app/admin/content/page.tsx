@@ -1,4 +1,5 @@
 import { AdminAboutPanel } from "@/components/admin/AdminAboutPanel";
+import { requireAdmin } from "@/lib/admin/auth";
 import { AdminContactPanel } from "@/components/admin/AdminContactPanel";
 import { AdminFaqPanel } from "@/components/admin/AdminFaqPanel";
 import { AdminPageShell } from "@/components/admin/AdminPageShell";
@@ -13,6 +14,7 @@ import {
 export const metadata = { title: "Məzmun - Admin" };
 
 export default async function AdminContentPage() {
+  await requireAdmin();
   const [whyContent, faqContent, aboutContent, contact] = await Promise.all([
     getAdminWhyBarakatlyContent(),
     getAdminFaqContent(),

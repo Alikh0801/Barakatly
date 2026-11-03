@@ -1,4 +1,5 @@
 import { AdminPageShell } from "@/components/admin/AdminPageShell";
+import { requireAdmin } from "@/lib/admin/auth";
 import {
   AdminApprovedProductsPanel,
   AdminProductsPanel,
@@ -12,6 +13,7 @@ import {
 export const metadata = { title: "Məhsullar - Admin" };
 
 export default async function AdminProductsPage() {
+  await requireAdmin();
   const [pending, approved, adminCategories] = await Promise.all([
     getAdminPendingProducts(),
     getAdminApprovedProducts(),

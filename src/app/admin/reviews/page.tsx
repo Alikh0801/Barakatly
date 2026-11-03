@@ -1,4 +1,5 @@
 import { AdminPageShell } from "@/components/admin/AdminPageShell";
+import { requireAdmin } from "@/lib/admin/auth";
 import { AdminProductReviewsPanel } from "@/components/admin/AdminProductReviewsPanel";
 import { getAdminProductReviews } from "@/lib/reviews/featured";
 import type { ReviewFilter } from "@/lib/reviews/featured-constants";
@@ -10,6 +11,7 @@ export default async function AdminReviewsPage({
 }: {
   searchParams: Promise<{ filter?: string }>;
 }) {
+  await requireAdmin();
   const { filter } = await searchParams;
   const active: ReviewFilter = filter === "featured" ? "featured" : "all";
   const reviews = await getAdminProductReviews();

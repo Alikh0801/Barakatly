@@ -136,7 +136,7 @@ export function FarmerSignUpForm() {
   }
 
   if (state.otpEmail) {
-    return <VerifyOtpForm email={state.otpEmail} />;
+    return <VerifyOtpForm email={state.otpEmail} signup="farmer" />;
   }
 
   return (

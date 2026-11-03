@@ -1,3 +1,5 @@
+import "server-only";
+
 import { headers } from "next/headers";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { Json } from "@/types/database";

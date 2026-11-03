@@ -38,7 +38,10 @@ function hasSupabaseEnv() {
 
 export function getSupabaseEnvError(): string | null {
   if (!hasSupabaseEnv()) {
-    return "Supabase konfiqurasiyası tapılmadı. Vercel environment variables yoxlanmalıdır.";
+    console.error("[auth] NEXT_PUBLIC_SUPABASE_URL / NEXT_PUBLIC_SUPABASE_ANON_KEY missing");
+    return process.env.NODE_ENV !== "production"
+      ? "Supabase konfiqurasiyası tapılmadı. Vercel environment variables yoxlanmalıdır."
+      : "Əməliyyat alınmadı. Bir az sonra yenidən cəhd edin.";
   }
   return null;
 }

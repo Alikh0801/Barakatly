@@ -40,7 +40,7 @@ export function SignUpForm() {
   }
 
   if (state.otpEmail) {
-    return <VerifyOtpForm email={state.otpEmail} />;
+    return <VerifyOtpForm email={state.otpEmail} signup="customer" />;
   }
 
   return (
