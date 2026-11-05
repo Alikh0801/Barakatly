@@ -2,19 +2,15 @@ import Link from "next/link";
 import { SiteLogo } from "@/components/SiteLogo";
 import { Suspense } from "react";
 import { getContactContent } from "@/lib/content/queries";
+import { getVisibleCategories } from "@/lib/shop/queries";
 
 type FooterLink = {
   href: string;
   label: string;
 };
 
-const SHOP_LINKS: FooterLink[] = [
-  { href: "/shop?category=vegetables", label: "Tərəvəzlər" },
-  { href: "/shop?category=fruits", label: "Meyvələr" },
-  { href: "/shop?category=dairy", label: "Süd məhsulları" },
-  { href: "/shop?category=honey", label: "Bal" },
-  { href: "/shop", label: "Bütün məhsullar" },
-];
+/** How many categories the "Mağaza" column lists, first by the admin's order. */
+const FOOTER_CATEGORY_COUNT = 4;
 
 const COMPANY_LINKS: FooterLink[] = [
   { href: "/about", label: "Haqqımızda" },
@@ -94,7 +90,15 @@ export function SiteFooter() {
 }
 
 async function SiteFooterContent() {
-  const contact = await getContactContent();
+  const [contact, categories] = await Promise.all([getContactContent(), getVisibleCategories()]);
+  // Only categories with products in them, as in the shop's own filter.
+  const shopLinks: FooterLink[] = [
+    ...categories.slice(0, FOOTER_CATEGORY_COUNT).map((category) => ({
+      href: `/shop?category=${category.slug}`,
+      label: category.name_az,
+    })),
+    { href: "/shop", label: "Bütün məhsullar" },
+  ];
   const hasContact = Boolean(contact.phone || contact.email);
 
   return (
@@ -118,7 +122,7 @@ async function SiteFooterContent() {
             </p>
           </div>
 
-          <FooterColumn title="Mağaza" links={SHOP_LINKS} />
+          <FooterColumn title="Mağaza" links={shopLinks} />
           <FooterColumn title="Şirkət" links={COMPANY_LINKS} />
           {hasContact ? <ContactColumn phone={contact.phone} email={contact.email} /> : null}
         </div>

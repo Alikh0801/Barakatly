@@ -1,6 +1,6 @@
 import { CategoryFilter } from "@/components/shop/CategoryFilter";
 import { ShopBrowser } from "@/components/shop/ShopBrowser";
-import { getCategories, getProducts } from "@/lib/shop/queries";
+import { getProducts, getVisibleCategories } from "@/lib/shop/queries";
 
 export async function ShopContent({
   categorySlug,
@@ -8,7 +8,7 @@ export async function ShopContent({
   categorySlug?: string;
 }) {
   const [categories, products] = await Promise.all([
-    getCategories(),
+    getVisibleCategories(),
     getProducts(categorySlug),
   ]);
 

@@ -3,7 +3,7 @@ import Link from "next/link";
 import { CategoryScroller } from "@/components/CategoryScroller";
 import { Pagination } from "@/components/shop/Pagination";
 import { ProductCard } from "@/components/shop/ProductCard";
-import { getCategories, getProducts } from "@/lib/shop/queries";
+import { getProducts, getVisibleCategories } from "@/lib/shop/queries";
 
 /** 4 columns × 5 rows on wide screens. */
 const PAGE_SIZE = 20;
@@ -16,7 +16,7 @@ export async function CategorySection({
   page?: string;
 }) {
   const [categories, products] = await Promise.all([
-    getCategories(),
+    getVisibleCategories(),
     getProducts(categorySlug),
   ]);
 

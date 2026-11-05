@@ -148,6 +148,19 @@ export const getCategories = unstable_cache(fetchCategories, ["shop-categories"]
   tags: ["categories"],
 });
 
+/**
+ * The categories a customer sees: only those with at least one product in
+ * the shop (a sold-out one counts, as it stays listed). An empty category
+ * is not deleted; it stays in the admin panel and shows up again with its
+ * first product. Built from the two cached lists, so approving or removing
+ * a product updates it at once.
+ */
+export async function getVisibleCategories(): Promise<CategoryItem[]> {
+  const [categories, products] = await Promise.all([getCategories(), getProducts()]);
+  const withProducts = new Set(products.map((product) => product.category?.slug));
+  return categories.filter((category) => withProducts.has(category.slug));
+}
+
 export function getProducts(categorySlug?: string) {
   return unstable_cache(
     async () => fetchProducts(categorySlug),
