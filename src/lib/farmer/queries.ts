@@ -82,7 +82,22 @@ export type FarmerOrderHeader = Pick<
   "id" | "order_code" | "status" | "created_at" | "customer_id" | "order_note"
 > & {
   customer: { full_name: string | null } | null;
+  /** The admin confirmed the payment at some point, or a payout exists. */
+  wasPaid: boolean;
 };
+
+/**
+ * Whether a farmer sees this order at all. Not before the admin confirms
+ * the payment; and an order cancelled before that (unpaid, or its payment
+ * rejected) never reached them, so it stays out of their list too. One
+ * cancelled after the payment was confirmed stays, marked "Ləğv edildi":
+ * they may already have started on it.
+ */
+export function farmerSeesOrder(order: Pick<FarmerOrderHeader, "status" | "wasPaid">): boolean {
+  if (order.status === "awaiting_confirmation") return false;
+  if (order.status === "cancelled") return order.wasPaid;
+  return true;
+}
 
 /**
  * Order headers for orders that contain this farmer's items, by order id.
@@ -111,7 +126,9 @@ export async function getFarmerOrderHeaders(
       customer_id,
       order_note,
       customer:profiles!orders_customer_id_fkey (full_name),
-      order_items!inner (farmer_id)
+      order_items!inner (farmer_id),
+      payments (status),
+      farmer_payouts (id)
     `
     )
     .in("id", orderIds)
@@ -124,6 +141,15 @@ export async function getFarmerOrderHeaders(
 
   for (const row of data ?? []) {
     const customer = Array.isArray(row.customer) ? row.customer[0] : row.customer;
+    // payments is one row per order (unique order_id); either shape is read.
+    const related = row as unknown as {
+      payments: { status: string } | { status: string }[] | null;
+      farmer_payouts: { id: string }[] | null;
+    };
+    const payments = Array.isArray(related.payments) ? related.payments : related.payments ? [related.payments] : [];
+    const wasPaid =
+      payments.some((payment) => payment.status === "confirmed") ||
+      (related.farmer_payouts ?? []).length > 0;
     headers.set(row.id, {
       id: row.id,
       order_code: row.order_code,
@@ -133,6 +159,7 @@ export async function getFarmerOrderHeaders(
       // Written for the farmer or the courier, so farmers see it too.
       order_note: row.order_note,
       customer: customer ? { full_name: customer.full_name } : null,
+      wasPaid,
     });
   }
   return headers;
@@ -164,9 +191,7 @@ export async function getFarmerOrderItems(
   return items
     .flatMap((item) => {
       const order = headers.get(item.order_id);
-      // Hide orders whose payment the admin hasn't confirmed yet — farmers
-      // should only see (and start preparing) orders that are actually paid.
-      if (!order || order.status === "awaiting_confirmation") return [];
+      if (!order || !farmerSeesOrder(order)) return [];
       return [
         {
           ...item,

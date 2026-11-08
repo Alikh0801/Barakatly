@@ -363,23 +363,6 @@ export async function advanceOrderStatus(
     notification,
   });
 
-  // A cancellation past "awaiting_confirmation" means farmers already saw
-  // this order (and may be actively preparing it) — tell them it's off.
-  if (nextStatus === "cancelled") {
-    const farmerProfileIds = await getOrderFarmerProfileIds(supabase, order.id);
-    await Promise.all(
-      farmerProfileIds.map((profileId) =>
-        notifyUser({
-          userId: profileId,
-          type: "general",
-          title: "Sifariş ləğv edildi",
-          body: `${order.order_code} sifarişi admin tərəfindən ləğv edildi. Səbəb: ${reason}`,
-          metadata: { order_id: order.id },
-        }),
-      ),
-    );
-  }
-
   revalidatePath("/admin", "layout");
   revalidatePath("/admin/orders");
   revalidatePath("/orders");
