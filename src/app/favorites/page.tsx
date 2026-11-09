@@ -1,7 +1,11 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { AppProductCard } from "@/components/app/AppShop";
+import { AppScreenHeader } from "@/components/app/AppScreenHeader";
+import { HeartIcon } from "@/components/app/icons";
 import { SolidPageShell } from "@/components/layout/SolidPageShell";
 import { ProductCard } from "@/components/shop/ProductCard";
+import { WishlistButton } from "@/components/shop/WishlistButton";
 import {
   FavoriteItem,
   FavoritesCount,
@@ -25,7 +29,8 @@ export default async function FavoritesPage() {
 
   return (
     <SolidPageShell>
-      <div className="mx-auto w-full max-w-6xl px-4 py-10 md:px-6 md:py-12">
+      <AppScreenHeader title="Sevimlilər" fallback="/account" />
+      <div className="mx-auto w-full max-w-6xl px-4 py-10 md:px-6 md:py-12 app:hidden">
         <h1 className="text-3xl font-semibold tracking-tight text-zinc-900">
           Sevimlilər
         </h1>
@@ -72,6 +77,46 @@ export default async function FavoritesPage() {
               </FavoriteItem>
             ))}
           </div>
+        </FavoritesSwitch>
+      </div>
+
+      {/* The installed app: the design's cards, two to a row. */}
+      <div className="hidden px-6 pt-2 pb-8 font-app text-app-ink app:block">
+        <FavoritesSwitch
+          productIds={productIds}
+          empty={
+            <div className="py-16 text-center">
+              <span className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-[#f3eee2] text-rose-400">
+                <HeartIcon className="h-9 w-9" />
+              </span>
+              <p className="mt-5 font-app-display text-xl font-bold">Hələ sevimli məhsulunuz yoxdur</p>
+              <p className="mx-auto mt-2 max-w-xs text-sm text-app-muted">
+                Məhsul kartındakı ürək işarəsinə basın, məhsul burada saxlanılacaq.
+              </p>
+              <Link
+                href="/shop"
+                className="mt-6 inline-flex h-12 items-center rounded-full bg-app-green px-7 text-sm font-bold text-white"
+              >
+                Mağazaya bax
+              </Link>
+            </div>
+          }
+        >
+          <ul className="grid grid-cols-2 gap-4">
+            {products.map((product) => (
+              <FavoriteItem key={product.id} productId={product.id}>
+                <li className="relative min-w-0">
+                  <AppProductCard product={product} />
+                  {/* Outside the card's link, so a tap never opens the product. */}
+                  <WishlistButton
+                    productId={product.id}
+                    productTitle={product.title}
+                    className="absolute top-2 right-2 h-8 w-8 shadow-none ring-0"
+                  />
+                </li>
+              </FavoriteItem>
+            ))}
+          </ul>
         </FavoritesSwitch>
       </div>
     </SolidPageShell>

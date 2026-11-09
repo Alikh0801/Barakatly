@@ -81,7 +81,7 @@ function CoverPlaceholder({ hint }: { hint?: React.ReactNode }) {
 
 function HeaderAvatar({ name, url }: { name: string; url: string | null }) {
   const frame =
-    "relative h-24 w-24 shrink-0 overflow-hidden rounded-[1.5rem] border-4 border-white bg-[#1f4d2c] shadow-[0_12px_32px_-12px_rgba(0,0,0,0.45)] sm:h-[8.25rem] sm:w-[8.25rem] sm:rounded-[1.75rem]";
+    "relative h-24 w-24 shrink-0 overflow-hidden rounded-[1.5rem] border-4 border-white bg-[#1f4d2c] shadow-[0_12px_32px_-12px_rgba(0,0,0,0.45)] sm:h-[8.25rem] sm:w-[8.25rem] sm:rounded-[1.75rem] app:h-24 app:w-24 app:rounded-full app:bg-app-green app:shadow-none";
   if (url) {
     return (
       <div className={frame}>
@@ -91,7 +91,7 @@ function HeaderAvatar({ name, url }: { name: string; url: string | null }) {
   }
   return (
     <div className={`${frame} flex items-center justify-center`}>
-      <span className="text-4xl font-bold text-[#dff3e4] sm:text-5xl">
+      <span className="text-4xl font-bold text-[#dff3e4] sm:text-5xl app:font-app-display app:text-4xl app:text-white">
         {name.slice(0, 1).toUpperCase()}
       </span>
     </div>
@@ -100,11 +100,11 @@ function HeaderAvatar({ name, url }: { name: string; url: string | null }) {
 
 function StatCard({ value, label }: { value: React.ReactNode; label: string }) {
   return (
-    <div className="rounded-2xl bg-white px-3 py-4 text-center ring-1 ring-zinc-200/70 sm:px-4 sm:py-5">
-      <div className="flex items-center justify-center gap-1.5 text-2xl font-bold tracking-tight text-zinc-900 sm:text-3xl">
+    <div className="rounded-2xl bg-white px-3 py-4 text-center ring-1 ring-zinc-200/70 sm:px-4 sm:py-5 app:px-1 app:py-3 app:ring-0">
+      <div className="flex items-center justify-center gap-1.5 text-2xl font-bold tracking-tight text-zinc-900 sm:text-3xl app:gap-1 app:font-app-display app:text-lg">
         {value}
       </div>
-      <div className="mt-1 text-xs text-zinc-500 sm:text-sm">{label}</div>
+      <div className="mt-1 text-xs text-zinc-500 sm:text-sm app:text-[11px] app:leading-tight">{label}</div>
     </div>
   );
 }
@@ -146,7 +146,7 @@ export function FarmerProfileHeader({
 
   return (
     <section>
-      <div className="relative h-44 overflow-hidden bg-[#23382b] sm:h-64">
+      <div className="relative h-44 overflow-hidden bg-[#23382b] sm:h-64 app:mx-6 app:h-36 app:rounded-[20px]">
         {coverUrl ? (
           <>
             <Image src={coverUrl} alt="" fill preload sizes="100vw" className="object-cover" />
@@ -172,35 +172,35 @@ export function FarmerProfileHeader({
         </div>
       </div>
 
-      <div className="mx-auto w-full max-w-6xl px-4 md:px-6">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:gap-7">
+      <div className="mx-auto w-full max-w-6xl px-4 md:px-6 app:px-6">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:gap-7 app:items-center app:gap-3 app:text-center">
           <div className="-mt-12 sm:-mt-20">
             <HeaderAvatar name={heading} url={avatarUrl} />
           </div>
 
           <div className="min-w-0 flex-1 sm:pt-3">
-            <div className="flex min-w-0 items-center gap-2 sm:hidden">
-              <h1 className="min-w-0 break-words text-2xl font-bold leading-tight tracking-tight text-zinc-900">
+            <div className="flex min-w-0 items-center gap-2 sm:hidden app:justify-center">
+              <h1 className="min-w-0 break-words text-2xl font-bold leading-tight tracking-tight text-zinc-900 app:font-app-display app:text-[22px]">
                 {heading}
               </h1>
               {verified ? (
-                <VerifiedBadge className="h-6 w-6 shrink-0 text-[#2f7a3c]" />
+                <VerifiedBadge className="h-6 w-6 shrink-0 text-[#2f7a3c] app:text-app-green" />
               ) : null}
             </div>
             {locationText ? (
-              <p className="mt-1 inline-flex items-center gap-1.5 text-sm text-zinc-600 sm:mt-0 sm:text-[15px]">
-                <PinIcon className="h-4 w-4 shrink-0 text-[#2f7a3c]" />
+              <p className="mt-1 inline-flex items-center gap-1.5 text-sm text-zinc-600 sm:mt-0 sm:text-[15px] app:text-app-muted">
+                <PinIcon className="h-4 w-4 shrink-0 text-[#2f7a3c] app:text-app-green" />
                 {locationText}
               </p>
             ) : null}
           </div>
 
           {actions ? (
-            <div className="flex flex-wrap items-start gap-2.5 sm:pt-3">{actions}</div>
+            <div className="flex flex-wrap items-start gap-2.5 sm:pt-3 app:justify-center">{actions}</div>
           ) : null}
         </div>
 
-        <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
+        <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4 app:mt-5 app:grid-cols-4 app:gap-2">
           <StatCard
             value={
               rating.average !== null ? (
@@ -237,7 +237,7 @@ export function FarmerProfileTabs({
   return (
     <nav
       aria-label="Profil bölmələri"
-      className="mt-8 flex gap-1 overflow-x-auto border-b border-zinc-200 [scrollbar-width:none]"
+      className="mt-8 flex gap-1 overflow-x-auto border-b border-zinc-200 [scrollbar-width:none] app:mt-6 app:gap-2 app:border-b-0"
     >
       {tabs.map((tab) => {
         const isActive = tab.id === active;
@@ -248,10 +248,10 @@ export function FarmerProfileTabs({
             data-static-hover
             aria-current={isActive ? "page" : undefined}
             onClick={() => onChange(tab.id)}
-            className={`-mb-px shrink-0 border-b-2 px-3 py-3 text-[15px] transition-colors sm:px-4 sm:text-base ${
+            className={`-mb-px shrink-0 border-b-2 px-3 py-3 text-[15px] transition-colors sm:px-4 sm:text-base app:mb-0 app:rounded-2xl app:border-b-0 app:px-3.5 app:py-2 app:text-[13px] ${
               isActive
-                ? "border-[#2f7a3c] font-semibold text-[#2f7a3c]"
-                : "border-transparent font-medium text-zinc-500 hover:text-zinc-800"
+                ? "border-[#2f7a3c] font-semibold text-[#2f7a3c] app:bg-app-green app:font-bold app:text-white"
+                : "border-transparent font-medium text-zinc-500 hover:text-zinc-800 app:bg-[#f3eee2] app:text-app-ink"
             }`}
           >
             {tab.label}

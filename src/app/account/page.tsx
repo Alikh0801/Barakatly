@@ -3,6 +3,7 @@ import { SiteLogo } from "@/components/SiteLogo";
 import { redirect } from "next/navigation";
 import { getProfile } from "@/lib/auth/session";
 import { AccountProfileForm } from "@/components/account/AccountProfileForm";
+import { AppAccountSummary, AppSignOut } from "@/components/app/AppAccountMenu";
 
 export const metadata = {
   title: "Hesabım",
@@ -45,7 +46,7 @@ export default async function AccountPage() {
 
   return (
     <div className="flex min-h-screen min-h-dvh flex-col bg-[#faf9f5]">
-      <header className="border-b border-zinc-200 bg-white">
+      <header className="border-b border-zinc-200 bg-white app:hidden">
         <div className="mx-auto flex w-full max-w-6xl items-center px-4 py-4 md:px-6">
           <Link
             href="/"
@@ -60,11 +61,13 @@ export default async function AccountPage() {
         </div>
       </header>
 
-      <main className="mx-auto w-full max-w-2xl px-4 py-10 md:px-6">
-        <h1 className="text-2xl font-semibold tracking-tight text-zinc-900">
+      <main className="mx-auto w-full max-w-2xl px-4 py-10 md:px-6 app:px-6 app:pt-4 app:pb-6">
+        {/* The installed app: who is signed in and the menu; the form below is shared. */}
+        <AppAccountSummary profile={profile} initials={initials} displayName={displayName} roleLabel={role} />
+        <h1 className="text-2xl font-semibold tracking-tight text-zinc-900 app:hidden">
           Hesabım
         </h1>
-        <div className="mt-1 flex items-end justify-between gap-4">
+        <div className="mt-1 flex items-end justify-between gap-4 app:hidden">
           <p className="min-w-0 text-sm text-zinc-500">
             Profil məlumatlarınızı görün və redaktə edin
           </p>
@@ -79,8 +82,8 @@ export default async function AccountPage() {
           </Link>
         </div>
 
-        <div className="mt-6 overflow-hidden rounded-3xl bg-white shadow-sm ring-1 ring-zinc-200">
-          <div className="flex items-center gap-4 border-b border-zinc-100 bg-[linear-gradient(180deg,#f2faf3_0%,#ffffff_100%)] px-6 py-5">
+        <div className="mt-6 overflow-hidden rounded-3xl bg-white shadow-sm ring-1 ring-zinc-200 app:mt-3 app:rounded-[20px] app:shadow-none app:ring-0">
+          <div className="flex items-center gap-4 border-b border-zinc-100 app:hidden bg-[linear-gradient(180deg,#f2faf3_0%,#ffffff_100%)] px-6 py-5">
             <span className="inline-flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-emerald-600 text-lg font-semibold text-white ring-4 ring-emerald-100">
               {initials}
             </span>
@@ -94,7 +97,7 @@ export default async function AccountPage() {
             </div>
           </div>
 
-          <div className="px-6 py-6">
+          <div className="px-6 py-6 app:px-4 app:py-4">
             <AccountProfileForm
               fullName={profile.full_name ?? ""}
               phone={profile.phone ?? ""}
@@ -103,6 +106,7 @@ export default async function AccountPage() {
             />
           </div>
         </div>
+        <AppSignOut />
       </main>
     </div>
   );

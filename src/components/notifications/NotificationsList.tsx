@@ -38,13 +38,13 @@ function NotificationRow({
   return (
     <article
       className={[
-        "rounded-2xl p-5 shadow-sm transition",
+        "rounded-2xl p-5 shadow-sm transition app:rounded-[20px] app:p-4 app:shadow-none",
         isDeleting ? "opacity-50" : "",
         needsAction
           ? "bg-rose-50/60 ring-2 ring-rose-400"
           : unread
             ? "bg-emerald-50/60 ring-1 ring-emerald-200"
-            : "bg-white ring-1 ring-zinc-200",
+            : "bg-white ring-1 ring-zinc-200 app:ring-0",
       ].join(" ")}
     >
       <div className="flex flex-wrap items-start justify-between gap-3">
@@ -52,7 +52,7 @@ function NotificationRow({
           <div className="text-xs font-medium uppercase tracking-wide text-zinc-500">
             {getNotificationTypeLabel(notification.type)}
           </div>
-          <h2 className="mt-1 font-semibold text-zinc-900">
+          <h2 className="mt-1 font-semibold text-zinc-900 app:font-app-display app:font-bold">
             {notification.title}
           </h2>
           <p className="mt-1 text-sm text-zinc-600">{notification.body}</p>
@@ -123,8 +123,8 @@ export function NotificationsList({
 
   if (notifications.length === 0) {
     return (
-      <div className="rounded-3xl bg-white p-10 text-center shadow-sm ring-1 ring-zinc-200">
-        <p className="text-lg font-medium text-zinc-900">Bildiriş yoxdur</p>
+      <div className="rounded-3xl bg-white p-10 text-center shadow-sm ring-1 ring-zinc-200 app:rounded-[20px] app:shadow-none app:ring-0">
+        <p className="text-lg font-medium text-zinc-900 app:font-app-display app:font-bold">Bildiriş yoxdur</p>
         <p className="mt-2 text-sm text-zinc-500">
           Sifariş və ödəniş yenilikləri burada görünəcək.
         </p>

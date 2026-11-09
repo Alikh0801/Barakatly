@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
+import { AppScreenHeader } from "@/components/app/AppScreenHeader";
 import {
   PublicFarmerProfile,
   type PublicFarmerProfileTab,
@@ -116,17 +117,20 @@ export default async function FarmerDetailPage({
   );
 
   return (
-    <PublicFarmerProfile
-      farmer={farmer}
-      initialTab={initialTab}
-      products={products}
-      posts={posts}
-      followerCount={followerCount}
-      isFollowing={isFollowing}
-      isAuthenticated={Boolean(profile)}
-      isOwner={isOwner}
-      rating={rating}
-      certificates={certificates}
-    />
+    <>
+      <AppScreenHeader title="Fermer" fallback="/farmers" />
+      <PublicFarmerProfile
+        farmer={farmer}
+        initialTab={initialTab}
+        products={products}
+        posts={posts}
+        followerCount={followerCount}
+        isFollowing={isFollowing}
+        isAuthenticated={Boolean(profile)}
+        isOwner={isOwner}
+        rating={rating}
+        certificates={certificates}
+      />
+    </>
   );
 }

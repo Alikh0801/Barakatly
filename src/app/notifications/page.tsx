@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { AppScreenHeader } from "@/components/app/AppScreenHeader";
 import { SolidPageShell } from "@/components/layout/SolidPageShell";
 import { NotificationsList } from "@/components/notifications/NotificationsList";
 import { getNotifications } from "@/lib/notifications/queries";
@@ -35,21 +36,22 @@ export default async function NotificationsPage() {
 
   return (
     <SolidPageShell>
-      <div className="mx-auto w-full max-w-3xl px-4 py-10 md:px-6 md:py-12">
-        <h1 className="text-3xl font-semibold tracking-tight text-zinc-900">
+      <AppScreenHeader title="Bildirişlər" fallback={back.href} />
+      <div className="mx-auto w-full max-w-3xl px-4 py-10 md:px-6 md:py-12 app:px-6 app:pt-2 app:pb-8 app:font-app">
+        <h1 className="text-3xl font-semibold tracking-tight text-zinc-900 app:hidden">
           Bildirişlər
         </h1>
-        <p className="mt-2 text-sm text-zinc-500">
+        <p className="mt-2 text-sm text-zinc-500 app:hidden">
           Sifariş və ödəniş yenilikləriniz
         </p>
-        <div className="mt-8">
+        <div className="mt-8 app:mt-0">
           <NotificationsList
             notifications={notifications}
             viewerRole={profile.role}
             pendingActionIds={[...pendingActionIds]}
           />
         </div>
-        <div className="mt-8">
+        <div className="mt-8 app:hidden">
           <Link
             href={back.href}
             prefetch

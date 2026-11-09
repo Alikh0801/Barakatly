@@ -42,6 +42,7 @@ import {
   type FarmerProductCounts,
 } from "@/components/farmer/FarmerStatsDashboard";
 import { ProductCard } from "@/components/shop/ProductCard";
+import { AppProductCard } from "@/components/app/AppShop";
 import type {
   FarmerBlogPost,
   FarmerOrderItem,
@@ -131,7 +132,7 @@ function ShareProfileButton({
     <button
       type="button"
       onClick={() => void shareProfile()}
-      className="inline-flex h-11 items-center gap-2 rounded-full bg-white px-5 text-[15px] font-semibold text-zinc-800 ring-1 ring-zinc-300 transition hover:bg-zinc-50"
+      className="inline-flex h-11 items-center gap-2 rounded-full bg-white px-5 text-[15px] font-semibold text-zinc-800 ring-1 ring-zinc-300 transition hover:bg-zinc-50 app:bg-[#f3eee2] app:font-bold app:ring-0"
     >
       {copied ? (
         "Link kopyalandı"
@@ -165,7 +166,7 @@ function FollowButton({
     return (
       <Link
         href="/signin"
-        className="inline-flex h-11 items-center gap-2 rounded-full bg-[#2f7a3c] px-6 text-[15px] font-semibold text-white shadow-[0_8px_20px_-10px_rgba(31,77,44,0.7)] transition hover:bg-[#276833]"
+        className="inline-flex h-11 items-center gap-2 rounded-full bg-[#2f7a3c] px-6 text-[15px] font-semibold text-white shadow-[0_8px_20px_-10px_rgba(31,77,44,0.7)] transition hover:bg-[#276833] app:bg-app-green app:font-bold app:shadow-none"
       >
         <PlusIcon className="h-4 w-4" />
         İzlə
@@ -182,8 +183,8 @@ function FollowButton({
           disabled={pending}
           className={
             state.following
-              ? "group inline-flex h-11 items-center gap-2 rounded-full bg-white px-6 text-[15px] font-semibold text-[#2f7a3c] ring-[1.5px] ring-[#2f7a3c] transition hover:bg-rose-50 hover:text-rose-700 hover:ring-rose-300 disabled:opacity-70"
-              : "inline-flex h-11 items-center gap-2 rounded-full bg-[#2f7a3c] px-6 text-[15px] font-semibold text-white shadow-[0_8px_20px_-10px_rgba(31,77,44,0.7)] transition hover:bg-[#276833] disabled:opacity-70"
+              ? "group inline-flex h-11 items-center gap-2 rounded-full bg-white px-6 text-[15px] font-semibold text-[#2f7a3c] ring-[1.5px] ring-[#2f7a3c] transition hover:bg-rose-50 hover:text-rose-700 hover:ring-rose-300 disabled:opacity-70 app:font-bold app:text-app-green app:ring-app-green"
+              : "inline-flex h-11 items-center gap-2 rounded-full bg-[#2f7a3c] px-6 text-[15px] font-semibold text-white shadow-[0_8px_20px_-10px_rgba(31,77,44,0.7)] transition hover:bg-[#276833] disabled:opacity-70 app:bg-app-green app:font-bold app:shadow-none"
           }
         >
           {pending ? (
@@ -977,7 +978,7 @@ export function PublicFarmerProfile({
   };
 
   return (
-    <div className="pb-16">
+    <div className="pb-16 app:pb-8 app:font-app app:text-app-ink">
       <FarmerProfileHeader
         ownerName={farmer.owner_name}
         avatarUrl={farmer.avatar_url}
@@ -990,7 +991,7 @@ export function PublicFarmerProfile({
             {isOwner ? (
               <Link
                 href="/farmer"
-                className="inline-flex h-11 items-center rounded-full bg-white px-5 text-[15px] font-semibold text-zinc-800 ring-1 ring-zinc-300 transition hover:bg-zinc-50"
+                className="inline-flex h-11 items-center rounded-full bg-white px-5 text-[15px] font-semibold text-zinc-800 ring-1 ring-zinc-300 transition hover:bg-zinc-50 app:bg-app-green app:font-bold app:text-white app:ring-0"
               >
                 Fermer paneli
               </Link>
@@ -1006,23 +1007,33 @@ export function PublicFarmerProfile({
         }
       />
 
-      <div className="mx-auto w-full max-w-6xl px-4 md:px-6">
+      <div className="mx-auto w-full max-w-6xl px-4 md:px-6 app:px-6">
         <FarmerProfileTabs
           tabs={tabs}
           active={tab}
           onChange={(id) => selectTab(id as PublicFarmerProfileTab)}
         />
 
-        <div className="mt-6">
+        <div className="mt-6 app:mt-4">
           <div className={tab === "products" ? "block" : "hidden"}>
             {products.length > 0 ? (
-              <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-4">
-                {products.map((product) => (
-                  <ProductCard key={product.id} product={product} />
-                ))}
-              </div>
+              <>
+                <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-4 app:hidden">
+                  {products.map((product) => (
+                    <ProductCard key={product.id} product={product} />
+                  ))}
+                </div>
+                {/* The installed app shows the design's cards. */}
+                <ul className="hidden grid-cols-2 gap-4 app:grid">
+                  {products.map((product) => (
+                    <li key={product.id} className="min-w-0">
+                      <AppProductCard product={product} />
+                    </li>
+                  ))}
+                </ul>
+              </>
             ) : (
-              <div className="rounded-2xl bg-white px-6 py-12 text-center ring-1 ring-zinc-200/70">
+              <div className="rounded-2xl bg-white px-6 py-12 text-center ring-1 ring-zinc-200/70 app:rounded-[20px] app:ring-0">
                 <p className="text-base font-semibold text-zinc-900">Satışda məhsul yoxdur</p>
                 <p className="mt-1 text-sm text-zinc-500">
                   Bu fermerin hazırda satışda məhsulu yoxdur.
@@ -1036,8 +1047,8 @@ export function PublicFarmerProfile({
           </div>
 
           <div className={tab === "about" ? "max-w-3xl" : "hidden"}>
-            <div className="rounded-2xl bg-white p-5 ring-1 ring-zinc-200/70 sm:p-7">
-              <h2 className="text-xl font-semibold text-zinc-900">Təsərrüfat haqqında</h2>
+            <div className="rounded-2xl bg-white p-5 ring-1 ring-zinc-200/70 sm:p-7 app:rounded-[20px] app:ring-0">
+              <h2 className="text-xl font-semibold text-zinc-900 app:font-app-display app:font-bold">Təsərrüfat haqqında</h2>
               {farmer.description ? (
                 <p className="mt-3 text-[15px] leading-7 text-zinc-700 sm:text-base">
                   {farmer.description}
