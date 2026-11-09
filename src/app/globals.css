@@ -63,6 +63,16 @@
   --background: #fbf7ef;
 }
 
+/* A page with an app screen of its own drops the website's header there. */
+@media (display-mode: standalone) {
+  body:has([data-app-screen]) [data-site-header] {
+    display: none;
+  }
+}
+[data-app-mode] body:has([data-app-screen]) [data-site-header] {
+  display: none;
+}
+
 [data-app-mode] body:has([data-app-tabbar]) {
   --fab-bottom: calc(82px + max(20px, env(safe-area-inset-bottom)));
 }

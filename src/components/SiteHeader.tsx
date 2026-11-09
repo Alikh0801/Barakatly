@@ -50,6 +50,9 @@ export function SiteHeader({
     : "bg-zinc-100 text-zinc-700 ring-1 ring-zinc-200 hover:bg-zinc-200";
 
   return (
+    // data-site-header: the installed app hides it on pages with an app
+    // screen of their own (globals.css).
+    <div data-site-header className="contents">
     <HeaderShell mode={isHero ? "scroll" : "static"}>
       <Suspense fallback={null}>
         <FarmerApplicationBanner />
@@ -122,5 +125,6 @@ export function SiteHeader({
         </div>
       </div>
     </HeaderShell>
+    </div>
   );
 }

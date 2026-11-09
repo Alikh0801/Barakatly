@@ -7,7 +7,7 @@ export function PublicShell({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex min-h-screen flex-col bg-[#faf9f5]">
+    <div className="flex min-h-screen flex-col bg-[#faf9f5] app:bg-app-bg">
       <SiteHeader variant="solid" />
       <main className="flex-1">{children}</main>
       <SiteFooter />

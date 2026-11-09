@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import { AppHome } from "@/components/app/AppHome";
 import { AreYouAFarmerSection } from "@/components/AreYouAFarmerSection";
 import { Hero } from "@/components/Hero";
 import { CategorySection } from "@/components/CategorySection";
@@ -21,7 +22,9 @@ export default async function Home({
   const hero = await getHeroContent();
 
   return (
-    <div className="flex min-h-full flex-col">
+    <>
+    {/* The website's home page; the installed app shows AppHome instead. */}
+    <div className="flex min-h-full flex-col app:hidden">
       <SiteHeader />
       <Hero
         title={hero.title}
@@ -57,5 +60,9 @@ export default async function Home({
       </Reveal>
       <SiteFooter />
     </div>
+    <Suspense fallback={null}>
+      <AppHome />
+    </Suspense>
+    </>
   );
 }

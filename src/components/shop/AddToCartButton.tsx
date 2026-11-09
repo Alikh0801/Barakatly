@@ -6,7 +6,8 @@ import { addToCart } from "@/lib/cart/actions";
 import type { ProductListItem } from "@/types/shop";
 import { Spinner } from "@/components/ui/Spinner";
 
-function useAddToCart() {
+/** Adds to the cart; sends a signed-out visitor to sign in first. */
+export function useAddToCart() {
   const router = useRouter();
   const pathname = usePathname();
   const [pending, startTransition] = useTransition();

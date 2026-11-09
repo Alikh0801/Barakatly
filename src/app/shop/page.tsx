@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import { AppShopSection } from "@/components/app/AppShopSection";
 import { ShopContent } from "@/components/shop/ShopContent";
 import { ProductGridSkeleton, ShopFiltersSkeleton } from "@/components/skeletons";
 import { Skeleton } from "@/components/ui/Skeleton";
@@ -30,12 +31,18 @@ export default async function ShopPage({
   const params = await searchParams;
 
   return (
-    <div className="mx-auto w-full max-w-6xl px-4 py-10 md:px-6 md:py-12">
-      <PageHeader title="Mağaza" description="Təzə və yerli fermer məhsullarını kəşf edin" />
+    <>
+      {/* The website's shop; the installed app shows AppShopSection. */}
+      <div className="mx-auto w-full max-w-6xl px-4 py-10 md:px-6 md:py-12 app:hidden">
+        <PageHeader title="Mağaza" description="Təzə və yerli fermer məhsullarını kəşf edin" />
 
-      <Suspense fallback={<ShopDataSkeleton />}>
-        <ShopContent categorySlug={params.category} />
+        <Suspense fallback={<ShopDataSkeleton />}>
+          <ShopContent categorySlug={params.category} />
+        </Suspense>
+      </div>
+      <Suspense fallback={null}>
+        <AppShopSection categorySlug={params.category} />
       </Suspense>
-    </div>
+    </>
   );
 }
