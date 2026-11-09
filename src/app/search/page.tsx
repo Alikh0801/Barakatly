@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { AppSearch } from "@/components/app/AppSearch";
 import { ProductCard } from "@/components/shop/ProductCard";
 import { VerifiedIcon } from "@/components/ui/VerifiedIcon";
 import { searchCatalog } from "@/lib/shop/search";
@@ -19,7 +20,9 @@ export default async function SearchPage({
   const results = q ? await searchCatalog(q) : null;
 
   return (
-      <div className="mx-auto w-full max-w-6xl px-4 py-10 md:px-6 md:py-12">
+    <>
+      {/* The website's search; the installed app shows AppSearch. */}
+      <div className="mx-auto w-full max-w-6xl px-4 py-10 md:px-6 md:py-12 app:hidden">
         <PageHeader title="Axtarış" description="Məhsul və ya ferma adı ilə axtarın" />
 
         <form action="/search" className="mt-6 flex gap-2">
@@ -105,5 +108,7 @@ export default async function SearchPage({
           </div>
         ) : null}
       </div>
+      <AppSearch q={q} results={results} />
+    </>
   );
 }

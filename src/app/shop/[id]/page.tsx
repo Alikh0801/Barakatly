@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
+import { AppProductDetail } from "@/components/app/AppProductDetail";
 import { ProductDetailImage } from "@/components/shop/ProductDetailImage";
 import { DeliveryBanner } from "@/components/shop/DeliveryBanner";
 import { ProductPurchasePanel } from "@/components/shop/ProductPurchasePanel";
@@ -115,7 +116,9 @@ export default async function ProductDetailPage({
     : "/shop";
 
   return (
-    <div className="mx-auto w-full max-w-6xl px-4 py-10 md:px-6 md:py-12">
+    <>
+    {/* The website's product page; the installed app shows AppProductDetail. */}
+    <div className="mx-auto w-full max-w-6xl px-4 py-10 md:px-6 md:py-12 app:hidden">
       <nav className="flex flex-wrap items-center gap-1.5 text-sm text-zinc-500">
         <Link href="/shop" prefetch className="hover:text-zinc-800">
           Mağaza
@@ -243,5 +246,7 @@ export default async function ProductDetailPage({
         viewAllHref={similarHref}
       />
     </div>
+    <AppProductDetail product={product} reviews={reviews} summary={ratingSummary} />
+    </>
   );
 }

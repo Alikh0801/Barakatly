@@ -78,7 +78,8 @@ function AddButton({ product, variantId }: { product: ProductListItem; variantId
   );
 }
 
-function ProductCard({ product }: { product: ProductListItem }) {
+/** The design's product card; the search screen uses it too. */
+export function AppProductCard({ product }: { product: ProductListItem }) {
   const { variant, price } = cardPrice(product);
   const inStock = productVariants(product).some(variantInStock);
   const image = getProductImageUrl(product.product_images);
@@ -192,7 +193,7 @@ export function AppShop({
         <ul className="grid grid-cols-2 gap-4 p-6">
           {sorted.map((product) => (
             <li key={product.id} className="min-w-0">
-              <ProductCard product={product} />
+              <AppProductCard product={product} />
             </li>
           ))}
         </ul>
