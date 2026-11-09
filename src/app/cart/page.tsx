@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { AppCart, AppCartEmpty } from "@/components/app/AppCart";
 import { CartView } from "@/components/cart/CartView";
 import { SolidPageShell } from "@/components/layout/SolidPageShell";
 import { getSessionUser } from "@/lib/auth/session";
@@ -18,7 +19,8 @@ export default async function CartPage() {
 
   return (
     <SolidPageShell>
-      <div className="mx-auto w-full max-w-6xl px-4 py-10 md:px-6 md:py-12">
+      {/* The website's cart; the installed app shows AppCart. */}
+      <div className="mx-auto w-full max-w-6xl px-4 py-10 md:px-6 md:py-12 app:hidden">
         <PageHeader title="Səbət" description="Seçdiyiniz məhsulları yoxlayın və sifarişə keçin" />
         <div className="mt-8">
           {user ? (
@@ -42,6 +44,7 @@ export default async function CartPage() {
           )}
         </div>
       </div>
+      {user && items.length > 0 ? <AppCart items={items} promo={promo} /> : <AppCartEmpty signedIn={Boolean(user)} />}
     </SolidPageShell>
   );
 }

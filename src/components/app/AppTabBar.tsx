@@ -55,7 +55,8 @@ function farmerTabs(pathname: string, tab: string | null): Tab[] {
   ];
 }
 
-const CUSTOMER_PAGES = ["/", "/shop", "/farmers", "/search", "/orders", "/account", "/favorites", "/notifications"];
+// The cart has the bar while empty; a full cart hides it (data-hide-tabbar).
+const CUSTOMER_PAGES = ["/", "/shop", "/farmers", "/search", "/cart", "/orders", "/account", "/favorites", "/notifications"];
 const FARMER_PAGES = ["/farmer", "/farmer/products", "/farmer/orders"];
 
 function tabsFor(pathname: string, tab: string | null): Tab[] | null {
@@ -76,7 +77,7 @@ export function AppTabBar() {
   return (
     <>
       {/* Keeps the page's last lines clear of the fixed bar. */}
-      <div aria-hidden="true" className="app-tabbar-height hidden shrink-0 app:block" />
+      <div aria-hidden="true" data-app-tabbar-spacer className="app-tabbar-height hidden shrink-0 app:block" />
       <nav
         aria-label="Əsas menyu"
         data-app-tabbar

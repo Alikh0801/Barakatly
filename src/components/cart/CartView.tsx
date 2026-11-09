@@ -18,7 +18,7 @@ import { QuantityInput } from "@/components/ui/QuantityInput";
 import { formatAmount } from "@/lib/shop/quantity";
 import { ImageWithSkeleton } from "@/components/ui/ImageWithSkeleton";
 
-function groupByFarmer(items: CartLineItem[]) {
+export function groupByFarmer(items: CartLineItem[]) {
   const groups = new Map<
     string,
     { farmerId: string; farmerName: string; farmerAvatarUrl: string | null; items: CartLineItem[] }
@@ -55,7 +55,7 @@ function FarmerAvatar({ name, url }: { name: string; url: string | null }) {
 }
 
 /** The promo code field in the order summary, or the code once applied. */
-function PromoCodeBox({ promo }: { promo: AppliedPromo | null }) {
+export function PromoCodeBox({ promo }: { promo: AppliedPromo | null }) {
   const [state, applyAction, applying] = useActionState(applyPromoCode, {});
   const [removing, startRemove] = useTransition();
 

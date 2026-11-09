@@ -63,6 +63,72 @@
   --background: #fbf7ef;
 }
 
+/*
+ * The app's palette and font for every screen, also those not redrawn yet:
+ * Tailwind colours are variables, so in the app its greens become the
+ * design's green and its greys the design's warm greys. Browsers never
+ * get this.
+ */
+@media (display-mode: standalone) {
+  :root {
+    --color-emerald-50: #eef5ea;
+    --color-emerald-100: #dcebd4;
+    --color-emerald-200: #bfdcb2;
+    --color-emerald-300: #9cc98a;
+    --color-emerald-400: #6fae5c;
+    --color-emerald-500: #5aa548;
+    --color-emerald-600: #4c9a3c;
+    --color-emerald-700: #3b7a2c;
+    --color-emerald-800: #2f6324;
+    --color-emerald-900: #264f1d;
+    --color-zinc-50: #f8f4ea;
+    --color-zinc-100: #f3eee2;
+    --color-zinc-200: #ece4d3;
+    --color-zinc-300: #cfc6b2;
+    --color-zinc-400: #a39a86;
+    --color-zinc-500: #7d7462;
+    --color-zinc-600: #6b6352;
+    --color-zinc-700: #534c3d;
+    --color-zinc-800: #3d382b;
+    --color-zinc-900: #2e2a20;
+    --font-sans: var(--font-dm-sans), var(--font-geist-sans), Arial, sans-serif;
+  }
+  body {
+    font-family: var(--font-dm-sans), var(--font-geist-sans), Arial, sans-serif;
+  }
+}
+[data-app-mode] {
+  --color-emerald-50: #eef5ea;
+  --color-emerald-100: #dcebd4;
+  --color-emerald-200: #bfdcb2;
+  --color-emerald-300: #9cc98a;
+  --color-emerald-400: #6fae5c;
+  --color-emerald-500: #5aa548;
+  --color-emerald-600: #4c9a3c;
+  --color-emerald-700: #3b7a2c;
+  --color-emerald-800: #2f6324;
+  --color-emerald-900: #264f1d;
+  --color-zinc-50: #f8f4ea;
+  --color-zinc-100: #f3eee2;
+  --color-zinc-200: #ece4d3;
+  --color-zinc-300: #cfc6b2;
+  --color-zinc-400: #a39a86;
+  --color-zinc-500: #7d7462;
+  --color-zinc-600: #6b6352;
+  --color-zinc-700: #534c3d;
+  --color-zinc-800: #3d382b;
+  --color-zinc-900: #2e2a20;
+  --font-sans: var(--font-dm-sans), var(--font-geist-sans), Arial, sans-serif;
+}
+[data-app-mode] body {
+  font-family: var(--font-dm-sans), var(--font-geist-sans), Arial, sans-serif;
+}
+
+/* A screen with its own bottom bar (a full cart) takes the tab bar's place. */
+body:has([data-hide-tabbar]) :is([data-app-tabbar], [data-app-tabbar-spacer]) {
+  display: none !important;
+}
+
 /* A page with an app screen of its own drops the website's header there. */
 @media (display-mode: standalone) {
   body:has([data-app-screen]) [data-site-header] {

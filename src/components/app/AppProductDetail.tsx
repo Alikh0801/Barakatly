@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
-import { ArrowLeftIcon, CheckIcon, PlusIcon } from "@/components/app/icons";
+import { ArrowLeftIcon, CheckIcon, MinusIcon, PlusIcon } from "@/components/app/icons";
 import { WishlistButton } from "@/components/shop/WishlistButton";
 import { Spinner } from "@/components/ui/Spinner";
 import { addToCart } from "@/lib/cart/actions";
@@ -42,14 +42,6 @@ function amountText(variant: ProductVariant, quantity: number): string {
   if (quantityHasUnit(variant.unit_type)) return amount;
   const word = isSoldByWeight(variant.unit_type, variant.unit_size) ? "kq" : unitLabel(variant.unit_type);
   return word ? `${amount} ${word}` : amount;
-}
-
-function MinusIcon({ className }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true" className={className}>
-      <path d="M5 12h14" />
-    </svg>
-  );
 }
 
 function Stars({ rating }: { rating: number }) {
