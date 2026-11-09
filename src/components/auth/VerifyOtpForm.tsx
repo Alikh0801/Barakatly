@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useActionState, useRef, useState, useTransition } from "react";
+import { APP_CODE_INPUT, APP_SUBMIT } from "@/components/auth/app-styles";
 import {
   resendSignupOtp,
   verifySignupOtp,
@@ -101,7 +102,7 @@ export function VerifyOtpForm({
             autoComplete="one-time-code"
             maxLength={6}
             required
-            className="mt-1 w-full rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-center text-lg font-semibold tracking-[0.5em] text-zinc-900 outline-none ring-emerald-500 focus:ring-2"
+            className={`mt-1 w-full rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-center text-lg font-semibold tracking-[0.5em] text-zinc-900 outline-none ring-emerald-500 focus:ring-2 ${APP_CODE_INPUT}`}
             placeholder="000000"
           />
         </div>
@@ -115,7 +116,7 @@ export function VerifyOtpForm({
         <button
           type="submit"
           disabled={pending}
-          className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-70"
+          className={`inline-flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-70 ${APP_SUBMIT}`}
         >
           {pending ? (
             <>

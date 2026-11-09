@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { APP_AUTH_CARD, APP_AUTH_TITLE } from "@/components/auth/app-styles";
 import { SetNewPasswordForm } from "@/components/auth/ForgotPasswordForm";
 import { getSessionUser } from "@/lib/auth/session";
 
@@ -11,13 +12,13 @@ export default async function ResetPasswordPage() {
   const user = await getSessionUser();
 
   return (
-    <div className="w-full max-w-md rounded-3xl bg-white p-5 shadow-xl shadow-zinc-200/60 ring-1 ring-zinc-200/70 sm:p-8">
+    <div className={`w-full max-w-md rounded-3xl bg-white p-5 shadow-xl shadow-zinc-200/60 ring-1 ring-zinc-200/70 sm:p-8 ${APP_AUTH_CARD}`}>
       <div className="text-center">
-        <h1 className="text-2xl font-semibold tracking-tight text-zinc-900">
+        <h1 className={`text-2xl font-semibold tracking-tight text-zinc-900 ${APP_AUTH_TITLE}`}>
           Yeni şifrə
         </h1>
         {user?.email ? (
-          <p className="mt-2 text-sm text-zinc-500">{user.email}</p>
+          <p className="mt-2 text-sm text-zinc-500 app:text-app-muted">{user.email}</p>
         ) : null}
       </div>
 

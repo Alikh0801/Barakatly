@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useId, useRef, useState } from "react";
+import { APP_SECONDARY } from "@/components/auth/app-styles";
 import { createClient } from "@/lib/supabase/client";
 import { Spinner } from "@/components/ui/Spinner";
 import { safeNext } from "@/lib/url/safe-next";
@@ -133,7 +134,7 @@ export function GoogleAuthButton({ next }: { next?: string }) {
           type="button"
           onClick={handleClick}
           disabled={pending}
-          className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-zinc-200 bg-white px-4 py-2.5 text-sm font-semibold text-zinc-700 transition hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-70"
+          className={`inline-flex w-full items-center justify-center gap-2 rounded-xl border border-zinc-200 bg-white px-4 py-2.5 text-sm font-semibold text-zinc-700 transition hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-70 ${APP_SECONDARY}`}
         >
           {pending ? <Spinner className="h-4 w-4" /> : <GoogleIcon />}
           Google ilə davam et

@@ -1,5 +1,6 @@
 import { getImageProps } from "next/image";
 import Link from "next/link";
+import { AppScreenHeader } from "@/components/app/AppScreenHeader";
 import { SiteLogo } from "@/components/SiteLogo";
 import type { Viewport } from "next";
 import { getAuthImageContent } from "@/lib/content/queries";
@@ -74,8 +75,8 @@ export default async function AuthLayout({
   const authImage = await getAuthImageContent();
 
   return (
-    <div className="grid min-h-dvh bg-white lg:grid-cols-2">
-      <div className="relative hidden lg:block">
+    <div className="grid min-h-dvh bg-white lg:grid-cols-2 app:block app:bg-app-bg">
+      <div className="relative hidden lg:block app:hidden">
         <AuthPanelImage src={authImage.items.imageUrl} />
         <div className="absolute inset-0 bg-gradient-to-t from-emerald-950/95 via-emerald-950/40 to-emerald-950/10" />
         <div className="absolute inset-0 bg-gradient-to-r from-transparent via-transparent to-black/20" />
@@ -109,13 +110,13 @@ export default async function AuthLayout({
         </div>
       </div>
 
-      <div className="relative flex min-h-dvh flex-col overflow-hidden bg-[#faf9f5]">
+      <div className="relative flex min-h-dvh flex-col overflow-hidden bg-[#faf9f5] app:bg-app-bg">
         <div
           aria-hidden="true"
-          className="pointer-events-none absolute left-1/2 top-[28%] hidden h-[440px] w-[440px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-emerald-100/70 blur-3xl md:block"
+          className="pointer-events-none absolute left-1/2 top-[28%] hidden h-[440px] w-[440px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-emerald-100/70 blur-3xl md:block app:hidden"
         />
 
-        <header className="relative z-10 shrink-0 border-b border-zinc-200 bg-white/80 backdrop-blur lg:border-b-0 lg:bg-transparent lg:backdrop-blur-none">
+        <header className="relative z-10 shrink-0 border-b border-zinc-200 bg-white/80 backdrop-blur lg:border-b-0 lg:bg-transparent lg:backdrop-blur-none app:hidden">
           <div className="flex w-full items-center justify-between px-4 py-3 lg:justify-end md:px-8 md:py-6">
             <Link
               href="/"
@@ -136,7 +137,13 @@ export default async function AuthLayout({
           </div>
         </header>
 
-        <main className="relative z-10 flex flex-1 items-start justify-center overflow-y-auto px-4 py-8 sm:items-center sm:py-10">
+        {/* The installed app: a back button and the site's logo instead. */}
+        <AppScreenHeader fallback="/" />
+        <Link href="/" aria-label="Ana səhifə" className="mx-auto hidden app:block">
+          <SiteLogo size={72} className="h-[72px] w-[72px] rounded-full object-cover" />
+        </Link>
+
+        <main className="relative z-10 flex flex-1 items-start justify-center overflow-y-auto px-4 py-8 sm:items-center sm:py-10 app:items-start app:px-6 app:pt-5 app:pb-10 app:sm:items-start">
           {children}
         </main>
       </div>

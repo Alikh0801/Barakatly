@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useActionState, useRef, useState, useTransition } from "react";
+import { APP_CODE_INPUT, APP_INPUT, APP_SUBMIT } from "@/components/auth/app-styles";
 import {
   requestPasswordReset,
   resetPasswordWithCode,
@@ -16,10 +17,8 @@ const initialState: PasswordResetState = {};
 const TURNSTILE_SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
 const CAPTCHA_ERROR = "Təhlükəsizlik yoxlaması tamamlanmadı. Yenidən cəhd edin.";
 
-const inputClass =
-  "mt-1 w-full rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-base text-zinc-900 outline-none ring-emerald-500 focus:ring-2 touch-manipulation";
-const submitClass =
-  "inline-flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-70";
+const inputClass = `mt-1 w-full rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-base text-zinc-900 outline-none ring-emerald-500 focus:ring-2 touch-manipulation ${APP_INPUT}`;
+const submitClass = `inline-flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-70 ${APP_SUBMIT}`;
 
 function ErrorNote({ children }: { children: React.ReactNode }) {
   return (
@@ -176,7 +175,7 @@ export function ForgotPasswordForm() {
             pattern="[0-9]{6}"
             maxLength={6}
             required
-            className="mt-1 w-full rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-center text-lg font-semibold tracking-[0.5em] text-zinc-900 outline-none ring-emerald-500 focus:ring-2"
+            className={`mt-1 w-full rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-center text-lg font-semibold tracking-[0.5em] text-zinc-900 outline-none ring-emerald-500 focus:ring-2 ${APP_CODE_INPUT}`}
             placeholder="000000"
           />
         </div>

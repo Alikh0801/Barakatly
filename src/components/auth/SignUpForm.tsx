@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useActionState, useRef, useState, useTransition } from "react";
+import { APP_INPUT, APP_SUBMIT } from "@/components/auth/app-styles";
 import { signUp, type AuthActionState } from "@/lib/auth/actions";
 import { GoogleAuthButton } from "@/components/auth/GoogleAuthButton";
 import { PasswordInput } from "@/components/auth/PasswordInput";
@@ -59,7 +60,7 @@ export function SignUpForm() {
             type="text"
             autoComplete="name"
             required
-            className="mt-1 w-full rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-base text-zinc-900 outline-none ring-emerald-500 focus:ring-2 touch-manipulation"
+            className={`mt-1 w-full rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-base text-zinc-900 outline-none ring-emerald-500 focus:ring-2 touch-manipulation ${APP_INPUT}`}
             placeholder="Adınız Soyadınız"
           />
         </div>
@@ -74,7 +75,7 @@ export function SignUpForm() {
             type="email"
             autoComplete="email"
             required
-            className="mt-1 w-full rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-base text-zinc-900 outline-none ring-emerald-500 focus:ring-2 touch-manipulation"
+            className={`mt-1 w-full rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-base text-zinc-900 outline-none ring-emerald-500 focus:ring-2 touch-manipulation ${APP_INPUT}`}
             placeholder="siz@email.com"
           />
         </div>
@@ -110,7 +111,7 @@ export function SignUpForm() {
         <button
           type="submit"
           disabled={busy}
-          className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-70"
+          className={`inline-flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-70 ${APP_SUBMIT}`}
         >
           {busy ? (
             <>

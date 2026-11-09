@@ -1,6 +1,7 @@
 "use client";
 
 import { useId, useState } from "react";
+import { APP_INPUT } from "@/components/auth/app-styles";
 
 type PasswordInputProps = {
   id?: string;
@@ -72,7 +73,7 @@ export function PasswordInput({
           autoComplete={autoComplete}
           required={required}
           minLength={minLength}
-          className="w-full rounded-xl border border-zinc-200 bg-white py-2.5 pl-3 pr-10 text-base text-zinc-900 outline-none ring-emerald-500 focus:ring-2 touch-manipulation"
+          className={`w-full rounded-xl border border-zinc-200 bg-white py-2.5 pl-3 pr-10 text-base text-zinc-900 outline-none ring-emerald-500 focus:ring-2 touch-manipulation ${APP_INPUT}`}
           placeholder={placeholder}
         />
         <button

@@ -14,7 +14,8 @@ export function AppScreenHeader({
   fallback = "/",
   right,
 }: {
-  title: string;
+  /** Left out on screens whose title sits in the page (sign-in). */
+  title?: string;
   /** Where "back" goes when the app was opened straight on this screen. */
   fallback?: string;
   right?: React.ReactNode;
@@ -37,7 +38,7 @@ export function AppScreenHeader({
       >
         <ArrowLeftIcon className="h-5 w-5" />
       </button>
-      <h1 className="min-w-0 truncate font-app-display text-xl font-bold">{title}</h1>
+      {title ? <h1 className="min-w-0 truncate font-app-display text-xl font-bold">{title}</h1> : null}
       <span className="flex h-10 w-10 shrink-0 items-center justify-center">{right}</span>
     </header>
   );
