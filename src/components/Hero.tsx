@@ -1,5 +1,6 @@
 import Image, { getImageProps } from "next/image";
 import Link from "next/link";
+import { InstallAppButton } from "@/components/app/InstallAppButton";
 import { HERO_STAT_FIELDS, type HeroStats } from "@/lib/content/defaults";
 
 // The image fills a full-viewport box with object-cover, so on any screen
@@ -240,6 +241,7 @@ export function Hero({
             >
               Fermer ol
             </Link>
+            <InstallAppButton variant="hero" />
           </div>
 
           <HeroStatsRow stats={stats} />

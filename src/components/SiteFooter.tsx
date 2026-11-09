@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { SiteLogo } from "@/components/SiteLogo";
+import { InstallAppButton } from "@/components/app/InstallAppButton";
 import { Suspense } from "react";
 import { getContactContent } from "@/lib/content/queries";
 import { getVisibleCategories } from "@/lib/shop/queries";
@@ -121,6 +122,7 @@ async function SiteFooterContent() {
               Yerli fermerləri şüurlu istehlakçılarla birləşdiririk — təzə,
               izlənəbilən və dayanıqlı qida üçün.
             </p>
+            <InstallAppButton variant="footer" className="mt-5" />
           </div>
 
           <FooterColumn title="Mağaza" links={shopLinks} />
