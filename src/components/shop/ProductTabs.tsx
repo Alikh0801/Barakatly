@@ -276,7 +276,7 @@ export function ProductTabs({
                       <StarRow rating={review.rating} />
                     </div>
                     {review.comment ? (
-                      <p className="mt-3 text-sm leading-6 text-zinc-600">
+                      <p className="mt-3 text-sm leading-6 text-zinc-600 [overflow-wrap:anywhere]">
                         {review.comment}
                       </p>
                     ) : null}

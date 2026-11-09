@@ -39,7 +39,7 @@ function ReviewCard({ review, index }: { review: FeaturedReview; index: number }
   return (
     <figure className="flex h-full flex-col rounded-2xl bg-[#f8f8f6] p-6 ring-1 ring-zinc-200/70">
       <Stars rating={review.rating} />
-      <blockquote className="mt-4 text-[15px] leading-7 text-zinc-700">
+      <blockquote className="mt-4 text-[15px] leading-7 text-zinc-700 [overflow-wrap:anywhere]">
         “{review.comment}”
       </blockquote>
       <figcaption className="mt-auto flex items-center gap-3 pt-5">
