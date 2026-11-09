@@ -11,9 +11,8 @@ import { getVisibleCategories } from "@/lib/shop/queries";
  * season banner and the categories. Rendered next to the website's home
  * page and shown only in the app (`app:`); the website hides itself there.
  *
- * The banner's text is the hero text the admin edits on /admin/hero. Its
- * picture and the header's logo are the site logo for now; the design's
- * own mascot pictures replace them once they can be fetched from Figma.
+ * Pictures and words are the site's own (CLAUDE.md): the banner shows the
+ * hero text the admin edits on /admin/hero, the logo is the site logo.
  */
 
 /** 3 × 3, as in the design; "Hamısına bax" leads to the rest. */
@@ -60,7 +59,7 @@ export async function AppHome() {
           className="relative flex h-40 flex-col justify-between overflow-hidden rounded-3xl bg-app-sun p-5"
         >
           <span className="self-start rounded-lg bg-app-green px-2.5 py-1 text-[11px] font-bold">
-            MÖVSÜMÜN SÖHFƏTİ
+            100% TƏZƏ MƏHSUL
           </span>
           <span className="relative z-10 flex w-[210px] max-w-[60%] flex-col gap-1">
             <span className="line-clamp-2 font-app-display text-xl font-bold leading-tight">
