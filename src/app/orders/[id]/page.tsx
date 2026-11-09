@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { AppScreenHeader } from "@/components/app/AppScreenHeader";
 import { SolidPageShell } from "@/components/layout/SolidPageShell";
 import { OrderStatusTracker } from "@/components/orders/OrderStatusTracker";
 import {
@@ -105,11 +106,13 @@ export default async function OrderDetailPage({
 
   return (
     <SolidPageShell>
-      <div className="mx-auto w-full max-w-6xl px-4 py-10 md:px-6 md:py-12">
+      {/* The installed app gets its own header; the page below is shared. */}
+      <AppScreenHeader title="Sifarişin izlənilməsi" fallback="/orders" />
+      <div className="mx-auto w-full max-w-6xl px-4 py-10 md:px-6 md:py-12 app:px-6 app:pt-2">
         <Link
           href="/orders"
           prefetch
-          className="text-sm font-medium text-emerald-700 hover:underline"
+          className="text-sm font-medium text-emerald-700 hover:underline app:hidden"
         >
           ← Sifarişlərim
         </Link>
@@ -123,7 +126,8 @@ export default async function OrderDetailPage({
 
         <div className="mt-6 flex flex-wrap items-start justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-semibold tracking-tight text-zinc-900">
+            <p className="hidden text-xs font-semibold tracking-wide text-app-muted uppercase app:block">Sifariş kodu</p>
+            <h1 className="text-3xl font-semibold tracking-tight text-zinc-900 app:font-app-display app:text-[22px] app:font-bold">
               {order.order_code}
             </h1>
             <p className="mt-2 text-sm text-zinc-500">
@@ -162,9 +166,9 @@ export default async function OrderDetailPage({
             />
             <OrderProductReviews products={reviewable} />
 
-            <section className="rounded-3xl bg-white p-5 shadow-sm ring-1 ring-zinc-200 sm:p-6">
+            <section className="rounded-3xl bg-white p-5 shadow-sm ring-1 ring-zinc-200 sm:p-6 app:rounded-[20px] app:shadow-none app:ring-0">
               <div className="flex flex-wrap items-end justify-between gap-2">
-                <h2 className="text-lg font-semibold text-zinc-900">
+                <h2 className="text-lg font-semibold text-zinc-900 app:font-app-display app:font-bold">
                   Məhsullar
                 </h2>
                 <p className="text-sm text-zinc-500">
@@ -248,8 +252,8 @@ export default async function OrderDetailPage({
               </div>
             </section>
 
-            <section className="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-zinc-200">
-              <h2 className="text-lg font-semibold text-zinc-900">
+            <section className="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-zinc-200 app:rounded-[20px] app:shadow-none app:ring-0">
+              <h2 className="text-lg font-semibold text-zinc-900 app:font-app-display app:font-bold">
                 Çatdırılma məlumatları
               </h2>
               <dl className="mt-4 space-y-3 text-sm">
@@ -286,8 +290,8 @@ export default async function OrderDetailPage({
           </div>
 
           <aside className="h-fit space-y-4">
-            <div className="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-zinc-200">
-              <h2 className="text-lg font-semibold text-zinc-900">Xülasə</h2>
+            <div className="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-zinc-200 app:rounded-[20px] app:shadow-none app:ring-0">
+              <h2 className="text-lg font-semibold text-zinc-900 app:font-app-display app:font-bold">Xülasə</h2>
               <div className="mt-4 space-y-2 text-sm">
                 <div className="flex justify-between text-zinc-700">
                   <span>Məhsullar</span>
@@ -322,8 +326,8 @@ export default async function OrderDetailPage({
             </div>
 
             {payment ? (
-              <div className="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-zinc-200">
-                <h2 className="text-lg font-semibold text-zinc-900">Ödəniş</h2>
+              <div className="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-zinc-200 app:rounded-[20px] app:shadow-none app:ring-0">
+                <h2 className="text-lg font-semibold text-zinc-900 app:font-app-display app:font-bold">Ödəniş</h2>
                 <dl className="mt-4 space-y-3 text-sm">
                   <div className="flex justify-between gap-4">
                     <dt className="text-zinc-500">Bank</dt>

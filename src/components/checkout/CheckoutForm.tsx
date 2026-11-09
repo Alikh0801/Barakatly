@@ -154,13 +154,16 @@ type CheckoutDraft = {
   bankId?: string;
 };
 
-const labelClass = "block text-[13px] font-medium text-[#8a4b2b]";
-const cardClass = "rounded-2xl bg-white p-5 shadow-sm ring-1 ring-zinc-200/80 sm:p-6";
-const cardTitleClass = "text-base font-semibold text-zinc-900 sm:text-[17px]";
+// The `app:` parts are the installed app's look (Figma checkout screens);
+// a browser never applies them.
+const labelClass = "block text-[13px] font-medium text-[#8a4b2b] app:text-sm app:font-semibold app:text-app-ink";
+const cardClass =
+  "rounded-2xl bg-white p-5 shadow-sm ring-1 ring-zinc-200/80 sm:p-6 app:rounded-[20px] app:shadow-none app:ring-0";
+const cardTitleClass = "text-base font-semibold text-zinc-900 sm:text-[17px] app:font-app-display app:text-lg app:font-bold";
 
 function inputClass(invalid: boolean) {
   return [
-    "mt-1.5 w-full rounded-xl border bg-white px-3.5 py-2.5 text-base text-zinc-900 outline-none transition placeholder:text-zinc-400 focus:ring-2 sm:text-[15px]",
+    "mt-1.5 w-full rounded-xl border bg-white px-3.5 py-2.5 text-base text-zinc-900 outline-none transition placeholder:text-zinc-400 focus:ring-2 sm:text-[15px] app:rounded-2xl app:py-3",
     invalid
       ? "border-rose-300 focus:ring-rose-200"
       : "border-zinc-200 focus:border-emerald-500 focus:ring-emerald-500/20",
@@ -210,11 +213,13 @@ function Stepper({ step, onSelect }: { step: Step; onSelect: (step: Step) => voi
               onClick={() => onSelect(item.id)}
               aria-current={active ? "step" : undefined}
               data-static-hover
-              className="flex shrink-0 items-center gap-2 disabled:cursor-default"
+              className={`flex shrink-0 items-center gap-2 disabled:cursor-default app:rounded-full app:px-3 app:py-1.5 ${
+                active ? "app:bg-app-green" : done ? "app:bg-[#e9f1e2]" : "app:bg-[#f3eee2]"
+              }`}
             >
               <span
                 className={[
-                  "flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold transition",
+                  "flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold transition app:hidden",
                   done
                     ? "bg-emerald-600 text-white"
                     : active
@@ -230,12 +235,18 @@ function Stepper({ step, onSelect }: { step: Step; onSelect: (step: Step) => voi
                   item.id
                 )}
               </span>
-              <span className={`text-sm font-medium ${active || done ? "text-emerald-700" : "text-zinc-400"}`}>
+              <span
+                className={`text-sm font-medium ${active || done ? "text-emerald-700" : "text-zinc-400"} app:text-[13px] app:font-bold ${
+                  active ? "app:text-white" : done ? "app:text-app-green" : "app:text-app-muted"
+                }`}
+              >
+                <span className="hidden app:inline">{item.id}. </span>
                 {item.label}
+                {done ? <span className="hidden app:inline"> ✓</span> : null}
               </span>
             </button>
             {index < STEPS.length - 1 ? (
-              <span className={`mx-3 h-px flex-1 ${done ? "bg-emerald-500" : "bg-zinc-200"}`} aria-hidden="true" />
+              <span className={`mx-3 h-px flex-1 app:mx-2 ${done ? "bg-emerald-500" : "bg-zinc-200"}`} aria-hidden="true" />
             ) : null}
           </li>
         );
@@ -477,9 +488,9 @@ export function CheckoutForm({
   }
 
   const primaryButton =
-    "inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#1f7a3a] px-5 text-[15px] font-semibold text-white shadow-sm transition hover:bg-[#19692f] disabled:cursor-not-allowed disabled:opacity-70";
+    "inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#1f7a3a] px-5 text-[15px] font-semibold text-white shadow-sm transition hover:bg-[#19692f] disabled:cursor-not-allowed disabled:opacity-70 app:h-14 app:rounded-full app:bg-app-green app:text-base app:font-bold app:shadow-none";
   const secondaryButton =
-    "inline-flex h-12 shrink-0 items-center justify-center gap-2 rounded-xl bg-white px-5 text-[15px] font-semibold text-zinc-700 ring-1 ring-zinc-200 transition hover:bg-zinc-50";
+    "inline-flex h-12 shrink-0 items-center justify-center gap-2 rounded-xl bg-white px-5 text-[15px] font-semibold text-zinc-700 ring-1 ring-zinc-200 transition hover:bg-zinc-50 app:h-14 app:rounded-full app:bg-[#f3eee2] app:ring-0";
 
   return (
     <form onSubmit={handleSubmit} noValidate>

@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import { redirect } from "next/navigation";
+import { AppOrders } from "@/components/app/AppOrders";
 import { SolidPageShell } from "@/components/layout/SolidPageShell";
 import { OrdersList } from "@/components/orders/OrdersList";
 import { OrderListSkeleton } from "@/components/skeletons";
@@ -19,7 +20,8 @@ export default async function OrdersPage() {
 
   return (
     <SolidPageShell>
-      <div className="mx-auto w-full max-w-6xl px-4 py-10 md:px-6 md:py-12">
+      {/* The website's list; the installed app shows AppOrders. */}
+      <div className="mx-auto w-full max-w-6xl px-4 py-10 md:px-6 md:py-12 app:hidden">
         <PageHeader title="Sifarişlərim" description="Keçmiş sifarişlərinizi və ödəniş statusunu izləyin" />
 
         <Suspense
@@ -32,6 +34,9 @@ export default async function OrdersPage() {
           <OrdersList />
         </Suspense>
       </div>
+      <Suspense fallback={null}>
+        <AppOrders />
+      </Suspense>
     </SolidPageShell>
   );
 }

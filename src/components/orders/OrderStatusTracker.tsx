@@ -48,16 +48,25 @@ export function OrderStatusTracker({
   const currentIndex = ORDER_STATUS_FLOW.indexOf(status);
 
   return (
-    <section className="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-zinc-200">
-      <h2 className="text-lg font-semibold text-zinc-900">Sifariş statusu</h2>
-      <ol className="mt-5 space-y-3">
+    <section className="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-zinc-200 app:rounded-[20px] app:shadow-none app:ring-0">
+      <h2 className="text-lg font-semibold text-zinc-900 app:font-app-display app:font-bold">Sifariş statusu</h2>
+      <ol className="mt-5 space-y-3 app:space-y-0">
         {ORDER_STATUS_FLOW.map((step, index) => {
           const done = index <= currentIndex;
           const current = index === currentIndex;
           const time = done ? times.get(step) : undefined;
 
           return (
-            <li key={step} className="flex items-center gap-3">
+            <li key={step} className="relative flex items-center gap-3 app:pb-5 app:last:pb-0">
+              {/* The installed app joins the steps with a line, as its design does. */}
+              {index < ORDER_STATUS_FLOW.length - 1 ? (
+                <span
+                  aria-hidden="true"
+                  className={`absolute top-7 bottom-0 left-[13px] hidden w-0.5 app:block ${
+                    index < currentIndex ? "bg-emerald-600" : "bg-zinc-200"
+                  }`}
+                />
+              ) : null}
               <span
                 className={[
                   "inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-semibold",

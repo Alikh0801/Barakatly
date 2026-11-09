@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { getSessionUser } from "@/lib/auth/session";
 import { unstable_cache } from "next/cache";
 import { createPublicClient } from "@/lib/supabase/public";
@@ -86,7 +87,7 @@ export type OrderListItem = Order & {
   order_items: OrderItemWithProduct[] | null;
 };
 
-export async function getCustomerOrders(): Promise<OrderListItem[]> {
+async function fetchCustomerOrders(): Promise<OrderListItem[]> {
   const supabase = await createClient();
   const user = await getSessionUser();
   if (!user) return [];
@@ -176,3 +177,9 @@ export async function getOrderById(id: string): Promise<OrderDetail | null> {
 
   return detail;
 }
+
+/**
+ * The customer's orders. Once per request: the website's list and the
+ * installed app's list on /orders read the same answer.
+ */
+export const getCustomerOrders = cache(fetchCustomerOrders);
