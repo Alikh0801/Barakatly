@@ -63,7 +63,8 @@ export function ScrollToTopButton() {
           ? "translate-y-0 scale-100 opacity-100"
           : "pointer-events-none translate-y-4 scale-75 opacity-0",
       ].join(" ")}
-      style={{ bottom: "max(1.25rem, calc(env(safe-area-inset-bottom) + 1rem))" }}
+      // Above the installed app's tab bar where there is one (globals.css).
+      style={{ bottom: "var(--fab-bottom)" }}
     >
       <button
         type="button"

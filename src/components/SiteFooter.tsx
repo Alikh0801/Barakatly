@@ -102,7 +102,8 @@ async function SiteFooterContent() {
   const hasContact = Boolean(contact.phone || contact.email);
 
   return (
-    <footer className="bg-zinc-950">
+    // The installed app has its tab bar instead.
+    <footer className="bg-zinc-950 app:hidden">
       <div className="mx-auto w-full max-w-6xl px-4 py-14 md:px-6">
         <div className={`grid gap-10 ${hasContact ? "sm:grid-cols-2 md:grid-cols-5" : "md:grid-cols-4"}`}>
           <div className={hasContact ? "sm:col-span-2" : "md:col-span-2"}>

@@ -11,6 +11,60 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+
+  /* The installed app's design (Figma "Barakatly — Full E2E Prototype"). */
+  --font-app: var(--font-dm-sans), var(--font-geist-sans), Arial, sans-serif;
+  --font-app-display: var(--font-bricolage), var(--font-dm-sans), Arial, sans-serif;
+  --color-app-bg: #fbf7ef;
+  --color-app-ink: #2e2a20;
+  --color-app-muted: #7d7462;
+  --color-app-green: #4c9a3c;
+  --color-app-sun: #f7d774;
+  --color-app-line: #ece4d3;
+}
+
+/*
+ * `app:` styles apply only in the installed app, i.e. when the site was
+ * opened from the home screen. In a browser tab, phone or computer, they
+ * never apply. [data-app-mode] on <html> does the same, for older iPhones
+ * (navigator.standalone) and for tests.
+ */
+@custom-variant app {
+  @media (display-mode: standalone) {
+    @slot;
+  }
+  &:where([data-app-mode], [data-app-mode] *) {
+    @slot;
+  }
+}
+
+/* The tab bar: 54px of tabs plus the bottom inset (home indicator). */
+.app-tabbar-height {
+  height: calc(66px + max(20px, env(safe-area-inset-bottom)));
+}
+
+/* Floating buttons sit above the tab bar where there is one. */
+:root {
+  --fab-bottom: max(1.25rem, calc(env(safe-area-inset-bottom) + 1rem));
+}
+@media (display-mode: standalone) {
+  body:has([data-app-tabbar]) {
+    --fab-bottom: calc(82px + max(20px, env(safe-area-inset-bottom)));
+  }
+}
+/* The app's cream page colour. `body` takes its background from
+   --background in an unlayered rule, which no utility class can beat. */
+@media (display-mode: standalone) {
+  :root {
+    --background: #fbf7ef;
+  }
+}
+[data-app-mode] {
+  --background: #fbf7ef;
+}
+
+[data-app-mode] body:has([data-app-tabbar]) {
+  --fab-bottom: calc(82px + max(20px, env(safe-area-inset-bottom)));
 }
 
 body {
@@ -19,6 +73,10 @@ body {
   font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
   min-height: 100vh;
   min-height: 100dvh;
+  /* viewport-fit=cover (for the app's tab bar) lets a phone in landscape
+     draw under the notch; these keep the page where it was before. */
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
 }
 
 /* Force readable form controls even if OS prefers dark mode */

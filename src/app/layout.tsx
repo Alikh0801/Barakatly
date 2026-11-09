@@ -1,6 +1,8 @@
-import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import type { Metadata, Viewport } from "next";
+import { Bricolage_Grotesque, DM_Sans, Geist, Geist_Mono } from "next/font/google";
 import { Suspense } from "react";
+import { AppRuntime } from "@/components/app/AppRuntime";
+import { AppTabBar } from "@/components/app/AppTabBar";
 import { NavigationProgress } from "@/components/navigation/NavigationProgress";
 import { PageViewTracker } from "@/components/navigation/PageViewTracker";
 import { RoutePrefetcher } from "@/components/navigation/RoutePrefetcher";
@@ -28,7 +30,32 @@ const geistMono = Geist_Mono({
   preload: false,
 });
 
+// The installed app's fonts (Figma design). Only the app's styles use them,
+// so they are not preloaded: a browser visit never downloads them.
+const dmSans = DM_Sans({
+  variable: "--font-dm-sans",
+  subsets: ["latin", "latin-ext"],
+  display: "swap",
+  preload: false,
+});
+
+const bricolage = Bricolage_Grotesque({
+  variable: "--font-bricolage",
+  subsets: ["latin", "latin-ext"],
+  display: "swap",
+  preload: false,
+});
+
 const appUrl = getAppUrl();
+
+// viewport-fit=cover gives the installed app's tab bar the iPhone's bottom
+// inset (env(safe-area-inset-bottom)); globals.css keeps landscape
+// browsing as before.
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+};
 
 export async function generateMetadata(): Promise<Metadata> {
   // The preview picture can be changed in the admin panel.
@@ -46,6 +73,12 @@ export async function generateMetadata(): Promise<Metadata> {
     description:
       "Fermerlərdən birbaşa təzə və organik kənd məhsulları. Yerli fermerləri şüurlu istehlakçılarla birləşdiririk.",
     applicationName: "Barakatly",
+    // Opened from the iPhone home screen: full screen, under this name.
+    appleWebApp: {
+      capable: true,
+      title: IS_PRE ? "Barakatly TEST" : "Barakatly",
+      statusBarStyle: "default",
+    },
     keywords: [
       "Barakatly",
       "organik",
@@ -89,7 +122,7 @@ export default function RootLayout({
   return (
     <html
       lang="az"
-      className={`${geistSans.variable} ${geistMono.variable} h-full min-h-screen antialiased`}
+      className={`${geistSans.variable} ${geistMono.variable} ${dmSans.variable} ${bricolage.variable} h-full min-h-screen antialiased`}
     >
       <body className="flex min-h-screen flex-col bg-white text-zinc-900">
         <Suspense fallback={null}>
@@ -98,12 +131,17 @@ export default function RootLayout({
         <RoutePrefetcher />
         <PageViewTracker />
         <WishlistLoader />
+        <AppRuntime />
         {children}
+        <Suspense fallback={null}>
+          <AppTabBar />
+        </Suspense>
         <ScrollToTopButton />
         {IS_PRE ? (
           <div
             role="note"
-            className="pointer-events-none fixed bottom-3 left-3 z-[90] rounded-full bg-amber-400 px-3 py-1.5 text-xs font-bold uppercase tracking-wide text-amber-950 shadow-lg ring-2 ring-white"
+            style={{ bottom: "max(0.75rem, calc(var(--fab-bottom) - 0.5rem))" }}
+            className="pointer-events-none fixed left-3 z-[90] rounded-full bg-amber-400 px-3 py-1.5 text-xs font-bold uppercase tracking-wide text-amber-950 shadow-lg ring-2 ring-white"
           >
             Test mühiti
           </div>

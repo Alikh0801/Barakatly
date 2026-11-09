@@ -16,8 +16,16 @@ function same(a: string, b: string) {
   return left.length === right.length && timingSafeEqual(left, right);
 }
 
+/**
+ * Files the browser fetches without the testers' login when the site is
+ * installed as an app. They hold nothing private (the app's name and
+ * icons, and a service worker that only registers itself).
+ */
+const OPEN_PATHS = new Set(["/manifest.webmanifest", "/sw.js"]);
+
 export function preAccessDenied(request: NextRequest): Response | null {
   if (!IS_PRE) return null;
+  if (OPEN_PATHS.has(request.nextUrl.pathname)) return null;
   const user = process.env.PRE_ACCESS_USER;
   const password = process.env.PRE_ACCESS_PASSWORD;
   if (!user || !password) return null;
