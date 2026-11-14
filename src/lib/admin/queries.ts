@@ -437,9 +437,9 @@ export type FarmerOrderUpdate = {
 };
 
 /**
- * Farmer status changes and cancellations this admin hasn't seen yet. They
- * are the admin notifications that carry an `item_status`; opening the
- * orders page marks them read.
+ * Farmer and courier updates this admin hasn't dealt with yet. They are the
+ * admin notifications that carry an `item_status`; they stay unread until
+ * an admin changes the order's status for the customer (clearOrderUpdates).
  */
 export async function getUnseenFarmerOrderUpdates(): Promise<FarmerOrderUpdate[]> {
   const user = await getSessionUser();

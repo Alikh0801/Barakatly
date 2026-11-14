@@ -5,6 +5,7 @@ import { requireCourier } from "@/lib/courier/auth";
 import { getOrderStatusLabel } from "@/lib/orders/labels";
 import { courierNextStatuses } from "@/lib/orders/courier-steps";
 import { insertEventAndNotify, notifyAdmins, notifyUser } from "@/lib/notifications/helpers";
+import { clearOrderUpdates } from "@/lib/admin/order-updates";
 import { getOrderFarmerProfileIds } from "@/lib/orders/farmers";
 import { createClient } from "@/lib/supabase/server";
 import type { NotificationType, OrderItemStatus, OrderStatus } from "@/types";
@@ -204,6 +205,11 @@ export async function advanceCourierOrder(
       changedBy: profile.id,
       notification: notificationForStatus(nextStatus, reason),
     });
+
+    // Delivered or given up: the order is closed and the customer has been
+    // told, so no admin step is left for its pending updates (such as the
+    // pick-up) to wait for.
+    await clearOrderUpdates([order.id]);
   }
 
   const farmerNotification = farmerNotificationForStatus(nextStatus, reason);
