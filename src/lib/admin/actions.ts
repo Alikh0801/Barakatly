@@ -8,6 +8,7 @@ import { adminCanSetStatus, statusOwner } from "@/lib/orders/admin-status";
 import { getOrderFarmerProfileIds } from "@/lib/orders/farmers";
 import { ITEM_CANCEL_ANNOUNCED } from "@/lib/orders/item-cancel";
 import { notifyUser } from "@/lib/notifications/helpers";
+import { clearOrderUpdates } from "@/lib/admin/order-updates";
 import { logAdminAction } from "@/lib/audit/log";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
@@ -363,6 +364,10 @@ export async function advanceOrderStatus(
     notification,
   });
 
+  // The admin has acted on this order for the customer: the farmers' and
+  // courier's updates on it are dealt with.
+  await clearOrderUpdates([order.id]);
+
   revalidatePath("/admin", "layout");
   revalidatePath("/admin/orders");
   revalidatePath("/orders");
@@ -408,6 +413,8 @@ export async function deleteOrders(
   }
 
   await logAdminAction(admin, "orders.deleted", { type: "order", id: null }, { order_ids: uniqueIds });
+  // Their updates would otherwise stay in the badge with no order to act on.
+  await clearOrderUpdates(uniqueIds);
 
   revalidatePath("/admin", "layout");
   revalidatePath("/admin/orders");
@@ -483,6 +490,11 @@ export async function announceItemCancellation(
     metadata: { order_id: item.order_id },
   });
 
+  // The customer now knows about this line; the rest of the order's updates
+  // wait for the admin's next status change.
+  await clearOrderUpdates([item.order_id], { orderItemId: itemId });
+
+  revalidatePath("/admin", "layout");
   revalidatePath("/admin/orders");
   revalidatePath(`/orders/${item.order_id}`);
   revalidatePath("/orders");

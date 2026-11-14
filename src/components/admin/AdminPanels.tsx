@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useDeferredValue, useEffect, useState } from "react";
+import { useActionState, useDeferredValue, useMemo, useState } from "react";
 import {
   advanceOrderStatus,
   announceItemCancellation,
@@ -8,7 +8,6 @@ import {
   deleteOrders,
   rejectPayment,
 } from "@/lib/admin/actions";
-import { markFarmerOrderUpdatesSeen } from "@/lib/admin/farmer-update-actions";
 import { Spinner } from "@/components/ui/Spinner";
 import { OrderStatusTimeline } from "@/components/orders/OrderStatusTimeline";
 import { formatPrice } from "@/lib/shop/format";
@@ -714,14 +713,12 @@ export function AdminOrdersPanel({
   orders: AdminOrderListItemWithReceipt[];
   farmerUpdates?: FarmerOrderUpdate[];
 }) {
-  // Kept from the first render: opening the page marks the updates seen,
-  // which clears the sidebar badge, but they stay red while the admin is here.
-  const [updates] = useState(
+  // Opening the page leaves them as they are: an order's updates, and the
+  // sidebar badge, clear once the admin changes its status for the customer.
+  const updates = useMemo(
     () => new Map(farmerUpdates.map((update) => [update.orderId, update.messages])),
+    [farmerUpdates],
   );
-  useEffect(() => {
-    if (updates.size > 0) void markFarmerOrderUpdatesSeen();
-  }, [updates]);
   const updatedOrders = orders.filter((order) => updates.has(order.id));
 
   const [statusState, statusAction, statusPending] = useActionState(
