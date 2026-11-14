@@ -9,7 +9,7 @@ export default function FarmerLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <PortalShell title="Fermer · Barakatly" links={[]} hideNav>
+    <PortalShell title="Fermer · Barakatly" links={[]} hideNav hideHeaderInApp>
       {children}
     </PortalShell>
   );

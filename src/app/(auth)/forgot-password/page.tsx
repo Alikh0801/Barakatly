@@ -1,5 +1,5 @@
 import { ForgotPasswordForm } from "@/components/auth/ForgotPasswordForm";
-import { APP_AUTH_CARD, APP_AUTH_TITLE } from "@/components/auth/app-styles";
+import { APP_AUTH_CARD, APP_AUTH_TITLE } from "@/components/app/form-styles";
 
 export const metadata = {
   title: "Şifrəni bərpa et",

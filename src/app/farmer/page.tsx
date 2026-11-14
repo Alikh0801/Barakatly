@@ -1,3 +1,4 @@
+import { AppFarmerGreeting } from "@/components/app/AppFarmerGreeting";
 import { FarmerPendingCard } from "@/components/farmer/FarmerPanels";
 import {
   FarmerProfileDashboard,
@@ -97,6 +98,7 @@ export default async function FarmerDashboardPage({
       sales={sales}
       productCounts={productCounts}
       payouts={payouts}
+      appGreeting={<AppFarmerGreeting fullName={profile.full_name} avatarUrl={farmer.avatar_url} />}
     />
   );
 }

@@ -1,8 +1,13 @@
 /**
- * The installed app's look for the sign-in screens (Figma "login",
- * "signup"): added after the website's own classes, so they only apply in
- * the app (`app:`). In a browser tab nothing changes.
+ * The installed app's look for forms and cards (Figma "login", "signup",
+ * the farmer screens): added after the website's own classes, so they only
+ * apply in the app (`app:`). In a browser tab nothing changes.
  */
+
+/** A white card without the website's shadow and border. */
+export const APP_CARD = "app:rounded-[20px] app:shadow-none app:ring-0";
+/** A page heading on a tab screen (Profil, Sifarişlər…). */
+export const APP_PAGE_TITLE = "app:font-app-display app:text-[22px] app:font-bold";
 
 /** The card is not a white box in the app: the form sits on the page. */
 export const APP_AUTH_CARD = "app:bg-transparent app:p-0 app:shadow-none app:ring-0 app:sm:p-0";

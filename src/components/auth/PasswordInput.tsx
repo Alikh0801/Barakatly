@@ -1,7 +1,7 @@
 "use client";
 
 import { useId, useState } from "react";
-import { APP_INPUT } from "@/components/auth/app-styles";
+import { APP_INPUT } from "@/components/app/form-styles";
 
 type PasswordInputProps = {
   id?: string;

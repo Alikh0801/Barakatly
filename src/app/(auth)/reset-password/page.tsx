@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { APP_AUTH_CARD, APP_AUTH_TITLE } from "@/components/auth/app-styles";
+import { APP_AUTH_CARD, APP_AUTH_TITLE } from "@/components/app/form-styles";
 import { SetNewPasswordForm } from "@/components/auth/ForgotPasswordForm";
 import { getSessionUser } from "@/lib/auth/session";
 

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { APP_AUTH_CARD, APP_AUTH_TITLE } from "@/components/auth/app-styles";
+import { APP_AUTH_CARD, APP_AUTH_TITLE } from "@/components/app/form-styles";
 import { SignInForm } from "@/components/auth/SignInForm";
 import { safeNext } from "@/lib/url/safe-next";
 

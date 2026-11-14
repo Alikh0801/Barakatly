@@ -101,7 +101,7 @@ export function AzPhoneInput({
       </label>
       <div
         className={[
-          "mt-1 flex overflow-hidden rounded-xl border bg-white focus-within:ring-2",
+          "mt-1 flex overflow-hidden rounded-xl border bg-white focus-within:ring-2 app:h-12 app:rounded-2xl",
           shownError
             ? "border-rose-300 focus-within:ring-rose-400"
             : "border-zinc-200 focus-within:ring-emerald-500",

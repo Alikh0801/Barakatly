@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { Syne } from "next/font/google";
 import {
   startTransition,
@@ -43,6 +44,10 @@ import {
 } from "@/components/farmer/FarmerStatsDashboard";
 import { ProductCard } from "@/components/shop/ProductCard";
 import { AppProductCard } from "@/components/app/AppShop";
+import { AppMenu, AppSignOut } from "@/components/app/AppAccountMenu";
+import { AppScreenHeader } from "@/components/app/AppScreenHeader";
+import { APP_SUBMIT } from "@/components/app/form-styles";
+import { AwardIcon, BellIcon, NewspaperIcon, WalletIcon } from "@/components/app/icons";
 import type {
   FarmerBlogPost,
   FarmerOrderItem,
@@ -289,9 +294,9 @@ function ProfileAboutForm({
   return (
     <form
       action={action}
-      className="space-y-5 rounded-[1.5rem] bg-white p-5 shadow-sm ring-1 ring-zinc-200 sm:p-6"
+      className="space-y-5 rounded-[1.5rem] bg-white p-5 shadow-sm ring-1 ring-zinc-200 sm:p-6 app:rounded-[20px] app:p-4 app:shadow-none app:ring-0"
     >
-      <h2 className={`${displayFont.className} text-xl font-bold text-zinc-900`}>
+      <h2 className={`${displayFont.className} text-xl font-bold text-zinc-900 app:font-app-display app:text-lg`}>
         Profili redaktə et
       </h2>
       {farmer.pending_submitted_at ? (
@@ -356,7 +361,7 @@ function ProfileAboutForm({
       <button
         type="submit"
         disabled={pending || coverBusy}
-        className="inline-flex items-center gap-2 rounded-full bg-[#2f7a3c] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[#276833] disabled:opacity-70"
+        className={`inline-flex items-center gap-2 rounded-full bg-[#2f7a3c] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[#276833] disabled:opacity-70 ${APP_SUBMIT} app:w-full app:justify-center`}
       >
         {pending ? <Spinner className="h-3.5 w-3.5" /> : null}
         Yadda saxla
@@ -791,11 +796,19 @@ function FarmerBlogFeed({
   );
 }
 
-function useTabInUrl<T extends string>(initialTab: T) {
-  const [tab, setTab] = useState<T>(initialTab);
+/**
+ * The open tab lives in the URL (?tab=), so a link to another tab of the
+ * same page, such as the app's tab bar, switches it too. Switching here
+ * replaces the URL without a server round trip; Next keeps
+ * useSearchParams in step with it.
+ */
+function useTabInUrl<T extends string>(initialTab: T, ids: readonly T[]) {
+  const searchParams = useSearchParams();
+  const raw = searchParams.get("tab");
+  const named = raw === "blog" ? "posts" : raw;
+  const tab = named && (ids as readonly string[]).includes(named) ? (named as T) : initialTab;
 
   function selectTab(next: T) {
-    setTab(next);
     const url = new URL(window.location.href);
     url.searchParams.set("tab", next);
     window.history.replaceState(null, "", url.pathname + "?" + url.searchParams.toString());
@@ -817,6 +830,7 @@ export function FarmerProfileDashboard({
   sales,
   productCounts,
   payouts,
+  appGreeting,
 }: {
   farmer: Farmer;
   profile: Profile;
@@ -830,9 +844,9 @@ export function FarmerProfileDashboard({
   sales: FarmerSalesStats;
   productCounts: FarmerProductCounts;
   payouts: FarmerPayout[];
+  /** The installed app's greeting on the "stats" tab (rendered on the server). */
+  appGreeting?: React.ReactNode;
 }) {
-  const [tab, selectTab] = useTabInUrl<FarmerProfileTab>(initialTab);
-
   const tabs: { id: FarmerProfileTab; label: string }[] = [
     { id: "stats", label: "Statistika" },
     { id: "posts", label: "Paylaşımlar" },
@@ -842,6 +856,13 @@ export function FarmerProfileDashboard({
     { id: "certificates", label: "Sertifikatlar" },
     { id: "about", label: "Redaktə" },
   ];
+  const [tab, selectTab] = useTabInUrl<FarmerProfileTab>(
+    initialTab,
+    tabs.map((item) => item.id),
+  );
+  // In the app the tab bar's "Panel" is the stats tab and "Profil" the
+  // about tab; every other tab opens as its own screen from the profile.
+  const appSection = tab === "stats" || tab === "about" ? null : tabs.find((item) => item.id === tab)?.label;
 
   const stats: FarmerProfileStats = {
     rating,
@@ -851,44 +872,74 @@ export function FarmerProfileDashboard({
   };
 
   return (
-    <div className="pb-16">
-      <FarmerProfileHeader
-        ownerName={profile.full_name}
-        avatarUrl={farmer.avatar_url}
-        coverUrl={farmer.cover_url}
-        locationText={farmer.location_text}
-        verified={Boolean(farmer.verified_at)}
-        stats={stats}
-        coverHint={
-          <button
-            type="button"
-            onClick={() => selectTab("about")}
-            className="mt-1 rounded-full bg-white/15 px-3.5 py-1.5 text-xs font-semibold text-white ring-1 ring-white/25 hover:bg-white/25"
-          >
-            Arxa plan şəkli əlavə et
-          </button>
-        }
-        actions={
-          <>
-            <Link
-              href={`/farmers/${farmer.id}`}
-              className="inline-flex h-11 items-center rounded-full bg-white px-5 text-[15px] font-semibold text-zinc-800 ring-1 ring-zinc-300 transition hover:bg-zinc-50"
-            >
-              Profilə bax
-            </Link>
-            <ShareProfileButton farmerId={farmer.id} name={farmerDisplayName(profile.full_name)} />
-          </>
-        }
-      />
-
-      <div className="mx-auto w-full max-w-6xl px-4 md:px-6">
-        <FarmerProfileTabs
-          tabs={tabs}
-          active={tab}
-          onChange={(id) => selectTab(id as FarmerProfileTab)}
+    <div className="pb-16 app:pb-8 app:font-app app:text-app-ink">
+      {tab === "stats" ? appGreeting : null}
+      {appSection ? (
+        <AppScreenHeader
+          title={appSection}
+          // Orders and products open from the panel, the rest from the profile.
+          onBack={() => selectTab(tab === "orders" || tab === "products" ? "stats" : "about")}
         />
+      ) : null}
+      {tab === "about" ? (
+        <h1 data-app-screen className="hidden px-6 pt-4 pb-4 font-app-display text-[22px] font-bold app:block">
+          Profil
+        </h1>
+      ) : null}
 
-        <div className="mt-6">
+      <div className={tab === "about" ? undefined : "app:hidden"}>
+        <FarmerProfileHeader
+          ownerName={profile.full_name}
+          avatarUrl={farmer.avatar_url}
+          coverUrl={farmer.cover_url}
+          locationText={farmer.location_text}
+          verified={Boolean(farmer.verified_at)}
+          stats={stats}
+          coverHint={
+            <button
+              type="button"
+              onClick={() => selectTab("about")}
+              className="mt-1 rounded-full bg-white/15 px-3.5 py-1.5 text-xs font-semibold text-white ring-1 ring-white/25 hover:bg-white/25 app:hidden"
+            >
+              Arxa plan şəkli əlavə et
+            </button>
+          }
+          actions={
+            <>
+              <Link
+                href={`/farmers/${farmer.id}`}
+                className="inline-flex h-11 items-center rounded-full bg-white px-5 text-[15px] font-semibold text-zinc-800 ring-1 ring-zinc-300 transition hover:bg-zinc-50 app:bg-[#f3eee2] app:font-bold app:ring-0"
+              >
+                Profilə bax
+              </Link>
+              <ShareProfileButton farmerId={farmer.id} name={farmerDisplayName(profile.full_name)} />
+            </>
+          }
+        />
+      </div>
+
+      <div className="mx-auto w-full max-w-6xl px-4 md:px-6 app:px-6">
+        <div className="app:hidden">
+          <FarmerProfileTabs
+            tabs={tabs}
+            active={tab}
+            onChange={(id) => selectTab(id as FarmerProfileTab)}
+          />
+        </div>
+
+        {tab === "about" ? (
+          <AppMenu
+            className="mt-5 hidden app:block"
+            rows={[
+              { label: "Paylaşımlar", Icon: NewspaperIcon, onClick: () => selectTab("posts") },
+              { label: "Sertifikatlar", Icon: AwardIcon, onClick: () => selectTab("certificates") },
+              { label: "Ödənişlərim", Icon: WalletIcon, onClick: () => selectTab("payouts") },
+              { label: "Bildirişlər", Icon: BellIcon, href: "/notifications" },
+            ]}
+          />
+        ) : null}
+
+        <div className="mt-6 app:mt-4">
           <div className={tab === "stats" ? "block" : "hidden"}>
             <FarmerStatsDashboard
               sales={sales}
@@ -908,7 +959,7 @@ export function FarmerProfileDashboard({
             <div className="flex justify-end">
               <Link
                 href="/farmer/products/new"
-                className="inline-flex rounded-full bg-[#2f7a3c] px-4 py-2 text-sm font-semibold text-white hover:bg-[#276833]"
+                className="inline-flex rounded-full bg-[#2f7a3c] px-4 py-2 text-sm font-semibold text-white hover:bg-[#276833] app:bg-app-green"
               >
                 Yeni məhsul
               </Link>
@@ -930,6 +981,7 @@ export function FarmerProfileDashboard({
 
           <div className={tab === "about" ? "max-w-3xl" : "hidden"}>
             <ProfileAboutForm farmer={farmer} profile={profile} />
+            <AppSignOut />
           </div>
         </div>
       </div>
@@ -961,14 +1013,16 @@ export function PublicFarmerProfile({
   rating: FarmerRatingSummary;
   certificates: FarmerCertificate[];
 }) {
-  const [tab, selectTab] = useTabInUrl<PublicFarmerProfileTab>(initialTab);
-
   const tabs: { id: PublicFarmerProfileTab; label: string }[] = [
     { id: "products", label: "Məhsullar" },
     { id: "posts", label: "Paylaşımlar" },
     { id: "about", label: "Haqqında" },
     { id: "certificates", label: "Sertifikatlar" },
   ];
+  const [tab, selectTab] = useTabInUrl<PublicFarmerProfileTab>(
+    initialTab,
+    tabs.map((item) => item.id),
+  );
 
   const stats: FarmerProfileStats = {
     rating,

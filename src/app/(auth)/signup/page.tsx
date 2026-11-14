@@ -1,5 +1,5 @@
 import { SignUpForm } from "@/components/auth/SignUpForm";
-import { APP_AUTH_CARD, APP_AUTH_TITLE } from "@/components/auth/app-styles";
+import { APP_AUTH_CARD, APP_AUTH_TITLE } from "@/components/app/form-styles";
 
 export const metadata = {
   title: "Qeydiyyat",

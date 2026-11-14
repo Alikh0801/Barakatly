@@ -11,6 +11,7 @@ import {
   type FormEvent,
 } from "react";
 import Link from "next/link";
+import { APP_CARD, APP_INPUT, APP_SUBMIT } from "@/components/app/form-styles";
 import { GoogleAuthButton } from "@/components/auth/GoogleAuthButton";
 import { PasswordInput } from "@/components/auth/PasswordInput";
 import { Turnstile, type TurnstileHandle } from "@/components/auth/Turnstile";
@@ -95,7 +96,7 @@ export function RegionSelect({
         name={name}
         required={required}
         defaultValue={defaultValue}
-        className="mt-1 w-full rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-base text-zinc-900 outline-none ring-emerald-500 focus:ring-2"
+        className={`mt-1 w-full rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-base text-zinc-900 outline-none ring-emerald-500 focus:ring-2 ${APP_INPUT}`}
       >
         <option value="">Bölgə seçin</option>
         {AZ_REGIONS.map((region) => (
@@ -150,7 +151,7 @@ export function FarmerSignUpForm() {
             id="full_name"
             name="full_name"
             required
-            className="mt-1 w-full rounded-xl border border-zinc-200 px-3 py-2.5 text-base text-zinc-900 outline-none ring-emerald-500 focus:ring-2"
+            className={`mt-1 w-full rounded-xl border border-zinc-200 px-3 py-2.5 text-base text-zinc-900 outline-none ring-emerald-500 focus:ring-2 ${APP_INPUT}`}
           />
         </div>
         <div>
@@ -162,7 +163,7 @@ export function FarmerSignUpForm() {
             name="email"
             type="email"
             required
-            className="mt-1 w-full rounded-xl border border-zinc-200 px-3 py-2.5 text-base text-zinc-900 outline-none ring-emerald-500 focus:ring-2"
+            className={`mt-1 w-full rounded-xl border border-zinc-200 px-3 py-2.5 text-base text-zinc-900 outline-none ring-emerald-500 focus:ring-2 ${APP_INPUT}`}
           />
         </div>
         <AzPhoneInput id="phone" name="phone" required />
@@ -193,7 +194,7 @@ export function FarmerSignUpForm() {
         <button
           type="submit"
           disabled={busy}
-          className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-emerald-500 disabled:opacity-70"
+          className={`inline-flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-emerald-500 disabled:opacity-70 ${APP_SUBMIT}`}
         >
           {busy ? <Spinner className="h-4 w-4" /> : null}
           Fermer kimi qeydiyyat
@@ -234,7 +235,7 @@ export function CompleteFarmerProfileForm({
           <label className="block text-sm font-medium text-zinc-700">
             Email (hesabınız)
           </label>
-          <div className="mt-1 w-full rounded-xl border border-zinc-200 bg-zinc-50 px-3 py-2.5 text-base text-zinc-700">
+          <div className={`mt-1 w-full rounded-xl border border-zinc-200 bg-zinc-50 px-3 py-2.5 text-base text-zinc-700 ${APP_INPUT}`}>
             {accountEmail}
           </div>
           <p className="mt-1 text-xs text-zinc-500">
@@ -259,7 +260,7 @@ export function CompleteFarmerProfileForm({
       <button
         type="submit"
         disabled={pending}
-        className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-emerald-500 disabled:opacity-70"
+        className={`inline-flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-emerald-500 disabled:opacity-70 ${APP_SUBMIT}`}
       >
         {pending ? <Spinner className="h-4 w-4" /> : null}
         Fermer panelinə keç
@@ -275,8 +276,8 @@ export function FarmerPendingCard({ farmer }: { farmer: Farmer }) {
     <div
       className={
         isSuspended
-          ? "rounded-3xl bg-orange-50 p-8 ring-1 ring-orange-200"
-          : "rounded-3xl bg-amber-50 p-8 ring-1 ring-amber-200"
+          ? "rounded-3xl bg-orange-50 p-8 ring-1 ring-orange-200 app:rounded-[20px] app:p-5 app:ring-0"
+          : "rounded-3xl bg-amber-50 p-8 ring-1 ring-amber-200 app:rounded-[20px] app:p-5 app:ring-0"
       }
     >
       <h2
@@ -363,8 +364,7 @@ function VariantRowsEditor({
   onChange: (rows: VariantDraft[]) => void;
   photoCount: number;
 }) {
-  const inputClass =
-    "mt-1 w-full rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-base text-zinc-900";
+  const inputClass = `mt-1 w-full rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-base text-zinc-900 ${APP_INPUT}`;
 
   function update(key: string, patch: Partial<VariantDraft>) {
     onChange(rows.map((row) => (row.key === key ? { ...row, ...patch } : row)));
@@ -379,7 +379,7 @@ function VariantRowsEditor({
           const sizes = UNIT_SIZES[unit] ?? [];
           const sizeRequired = SIZE_REQUIRED_UNITS.includes(unit);
           return (
-            <div key={row.key} className="rounded-2xl bg-zinc-50 p-4 ring-1 ring-zinc-200">
+            <div key={row.key} className="rounded-2xl bg-zinc-50 p-4 ring-1 ring-zinc-200 app:bg-app-bg app:ring-0">
               <div className="flex items-center justify-between gap-3">
                 <span className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
                   Ölçü {index + 1}
@@ -603,7 +603,7 @@ export function FarmerProductForm({
   return (
     <form
       onSubmit={handleSubmit}
-      className="space-y-4 rounded-3xl bg-white p-6 shadow-sm ring-1 ring-zinc-200"
+      className={`space-y-4 rounded-3xl bg-white p-6 shadow-sm ring-1 ring-zinc-200 ${APP_CARD} app:p-4`}
     >
       {product ? <input type="hidden" name="product_id" value={product.id} /> : null}
       <div>
@@ -615,7 +615,7 @@ export function FarmerProductForm({
           name="title"
           required
           defaultValue={product?.title}
-          className="mt-1 w-full rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-base text-zinc-900"
+          className={`mt-1 w-full rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-base text-zinc-900 ${APP_INPUT}`}
         />
       </div>
       <div>
@@ -628,7 +628,7 @@ export function FarmerProductForm({
           required
           rows={4}
           defaultValue={product?.description}
-          className="mt-1 w-full rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-base text-zinc-900"
+          className={`mt-1 w-full rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-base text-zinc-900 ${APP_INPUT}`}
         />
       </div>
       <div>
@@ -644,7 +644,7 @@ export function FarmerProductForm({
             setCategoryId(event.target.value);
             setSubcategoryId("");
           }}
-          className="mt-1 w-full rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-base text-zinc-900"
+          className={`mt-1 w-full rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-base text-zinc-900 ${APP_INPUT}`}
         >
           <option value="">Seçin</option>
           {categories.map((category) => (
@@ -669,7 +669,7 @@ export function FarmerProductForm({
             name="new_category_name"
             required
             placeholder="Məs: Süd məhsulları"
-            className="mt-1 w-full rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-base text-zinc-900"
+            className={`mt-1 w-full rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-base text-zinc-900 ${APP_INPUT}`}
           />
           <p className="mt-1 text-xs text-zinc-500">
             Admin təsdiqindən sonra mağazada görünəcək.
@@ -691,7 +691,7 @@ export function FarmerProductForm({
           value={subcategoryId}
           onChange={(event) => setSubcategoryId(event.target.value)}
           disabled={!categoryId}
-          className="mt-1 w-full rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-base text-zinc-900 disabled:bg-zinc-50 disabled:text-zinc-400"
+          className={`mt-1 w-full rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-base text-zinc-900 disabled:bg-zinc-50 disabled:text-zinc-400 ${APP_INPUT}`}
         >
           <option value="">
             {categoryId ? "Alt kateqoriyasız" : "Əvvəlcə kateqoriya seçin"}
@@ -720,7 +720,7 @@ export function FarmerProductForm({
             name="new_subcategory_name"
             required
             placeholder="Məs: Pendir"
-            className="mt-1 w-full rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-base text-zinc-900"
+            className={`mt-1 w-full rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-base text-zinc-900 ${APP_INPUT}`}
           />
           <p className="mt-1 text-xs text-zinc-500">
             Admin təsdiqindən sonra mağazada görünəcək.
@@ -759,7 +759,7 @@ export function FarmerProductForm({
               : ""
           }
           placeholder={String(minOrderField.step)}
-          className="mt-1 w-full rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-base text-zinc-900 sm:max-w-xs"
+          className={`mt-1 w-full rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-base text-zinc-900 sm:max-w-xs ${APP_INPUT}`}
         />
       </div>
       <div>
@@ -909,7 +909,7 @@ export function FarmerProductForm({
       <button
         type="submit"
         disabled={busy}
-        className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-emerald-500 disabled:opacity-70"
+        className={`inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-emerald-500 disabled:opacity-70 ${APP_SUBMIT} app:w-full app:justify-center`}
       >
         {busy ? <Spinner className="h-4 w-4" /> : null}
         {uploading
@@ -938,7 +938,7 @@ export function ProductArchiveToggle({ product }: { product: FarmerProduct }) {
   if (!archived && product.status !== "approved") return null;
 
   return (
-    <div className="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-zinc-200">
+    <div className={`rounded-3xl bg-white p-6 shadow-sm ring-1 ring-zinc-200 ${APP_CARD} app:p-4`}>
       <h2 className="text-base font-semibold text-zinc-900">
         {archived ? "Satışa qaytar" : "Satışdan çıxar"}
       </h2>
@@ -993,10 +993,18 @@ export function ProductArchiveToggle({ product }: { product: FarmerProduct }) {
   );
 }
 
+/** The installed app colours a product's status pill; the website keeps it grey. */
+function appProductStatusTone(status: FarmerProduct["status"]) {
+  if (status === "approved") return "app:bg-[#e9f1e2] app:text-[#3b7a2c] app:ring-0";
+  if (status === "pending") return "app:bg-amber-50 app:text-amber-800 app:ring-0";
+  if (status === "rejected") return "app:bg-rose-50 app:text-rose-700 app:ring-0";
+  return "app:ring-0";
+}
+
 export function FarmerProductsList({ products }: { products: FarmerProduct[] }) {
   if (products.length === 0) {
     return (
-      <div className="rounded-3xl bg-white p-8 text-center ring-1 ring-zinc-200">
+      <div className={`rounded-3xl bg-white p-8 text-center ring-1 ring-zinc-200 ${APP_CARD}`}>
         <p className="font-medium text-zinc-900">Hələ məhsul yoxdur</p>
         <Link
           href="/farmer/products/new"
@@ -1016,9 +1024,10 @@ export function FarmerProductsList({ products }: { products: FarmerProduct[] }) 
           <Link
             key={product.id}
             href={`/farmer/products/${product.id}`}
-            className="flex items-start gap-4 rounded-2xl bg-white p-5 shadow-sm ring-1 ring-zinc-200 hover:shadow-md"
+            data-static-hover
+            className={`flex items-start gap-4 rounded-2xl bg-white p-5 shadow-sm ring-1 ring-zinc-200 hover:shadow-md ${APP_CARD} app:gap-3 app:p-3`}
           >
-            <div className="h-16 w-16 shrink-0 overflow-hidden rounded-xl bg-zinc-100 ring-1 ring-zinc-200">
+            <div className="h-16 w-16 shrink-0 overflow-hidden rounded-xl bg-zinc-100 ring-1 ring-zinc-200 app:ring-0">
               {imageUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
@@ -1034,7 +1043,7 @@ export function FarmerProductsList({ products }: { products: FarmerProduct[] }) 
             </div>
             <div className="min-w-0 flex-1 flex flex-wrap items-start justify-between gap-3">
               <div className="min-w-0">
-                <div className="font-semibold text-zinc-900">{product.title}</div>
+                <div className="font-semibold text-zinc-900 app:font-app-display app:font-bold">{product.title}</div>
                 <p className="mt-1 text-sm text-zinc-500">
                   {product.categories?.name_az ?? "Kateqoriya"}
                 </p>
@@ -1053,7 +1062,7 @@ export function FarmerProductsList({ products }: { products: FarmerProduct[] }) 
                   </p>
                 ))}
               </div>
-              <span className="inline-flex shrink-0 rounded-full bg-zinc-100 px-2.5 py-0.5 text-xs font-medium text-zinc-700 ring-1 ring-zinc-200">
+              <span className={`inline-flex shrink-0 rounded-full bg-zinc-100 px-2.5 py-0.5 text-xs font-medium text-zinc-700 ring-1 ring-zinc-200 ${appProductStatusTone(product.status)}`}>
                 {getProductStatusLabel(product.status)}
               </span>
             </div>
@@ -1096,7 +1105,7 @@ function FarmerOrderItemCard({ item }: { item: FarmerOrderItem }) {
   const cancellable = FARMER_CANCELLABLE_ITEM_STATUSES.includes(item.status);
 
   return (
-    <article className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-zinc-200">
+    <article className={`rounded-2xl bg-white p-5 shadow-sm ring-1 ring-zinc-200 ${APP_CARD} app:p-4`}>
       {state.error ? (
         <p className="mb-3 rounded-xl bg-rose-50 px-3 py-2 text-sm text-rose-700">
           {state.error}
@@ -1110,7 +1119,7 @@ function FarmerOrderItemCard({ item }: { item: FarmerOrderItem }) {
 
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
-          <div className="font-semibold text-zinc-900">{item.product_title}</div>
+          <div className="font-semibold text-zinc-900 app:font-app-display app:font-bold">{item.product_title}</div>
           <p className="mt-1 text-sm text-zinc-500">
             {order?.order_code ?? "Sifariş"} ·{" "}
             {formatAmount(item.unit_type, item.quantity, item.unit_size)}
@@ -1152,7 +1161,7 @@ function FarmerOrderItemCard({ item }: { item: FarmerOrderItem }) {
               name="next_status"
               required
               defaultValue=""
-              className="mt-1 w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-900"
+              className={`mt-1 w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-900 ${APP_INPUT}`}
             >
               <option value="" disabled>
                 Seçin
@@ -1167,7 +1176,7 @@ function FarmerOrderItemCard({ item }: { item: FarmerOrderItem }) {
           <button
             type="submit"
             disabled={pending}
-            className="inline-flex items-center gap-2 rounded-full bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-70"
+            className="inline-flex items-center gap-2 rounded-full bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-70 app:h-12 app:bg-app-green app:px-5 app:font-bold"
           >
             {pending ? <Spinner className="h-3.5 w-3.5" /> : null}
             Yenilə
@@ -1177,7 +1186,7 @@ function FarmerOrderItemCard({ item }: { item: FarmerOrderItem }) {
               type="button"
               onClick={() => setCancelling(true)}
               disabled={pending}
-              className="rounded-full bg-white px-4 py-2.5 text-sm font-semibold text-rose-700 ring-1 ring-rose-200 hover:bg-rose-50 disabled:opacity-60"
+              className="rounded-full bg-white px-4 py-2.5 text-sm font-semibold text-rose-700 ring-1 ring-rose-200 hover:bg-rose-50 disabled:opacity-60 app:h-12 app:bg-[#f3eee2] app:px-5 app:font-bold app:ring-0"
             >
               Ləğv et
             </button>
@@ -1198,7 +1207,7 @@ function FarmerOrderItemCard({ item }: { item: FarmerOrderItem }) {
 export function FarmerOrdersList({ items }: { items: FarmerOrderItem[] }) {
   if (items.length === 0) {
     return (
-      <div className="rounded-3xl bg-white p-8 text-center ring-1 ring-zinc-200">
+      <div className={`rounded-3xl bg-white p-8 text-center ring-1 ring-zinc-200 ${APP_CARD}`}>
         <p className="font-medium text-zinc-900">Hazırda sifariş yoxdur</p>
       </div>
     );

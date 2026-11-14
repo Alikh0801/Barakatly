@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useId, useRef, useState } from "react";
-import { APP_SECONDARY } from "@/components/auth/app-styles";
+import { APP_SECONDARY } from "@/components/app/form-styles";
 import { createClient } from "@/lib/supabase/client";
 import { Spinner } from "@/components/ui/Spinner";
 import { safeNext } from "@/lib/url/safe-next";

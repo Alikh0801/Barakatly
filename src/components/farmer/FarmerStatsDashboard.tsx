@@ -97,14 +97,14 @@ function KpiCard({
   hint: string;
 }) {
   return (
-    <div className="min-w-0 rounded-2xl bg-white p-4 shadow-sm ring-1 ring-zinc-200 sm:p-5">
+    <div className="min-w-0 rounded-2xl bg-white p-4 shadow-sm ring-1 ring-zinc-200 sm:p-5 app:rounded-[20px] app:shadow-none app:ring-0">
       <div className="flex items-start justify-between gap-2">
         <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${tone}`}>
           {icon}
         </span>
         {badge}
       </div>
-      <p className="mt-4 truncate text-xl font-bold tracking-tight text-zinc-900 sm:text-2xl">{value}</p>
+      <p className="mt-4 truncate text-xl font-bold tracking-tight text-zinc-900 sm:text-2xl app:font-app-display">{value}</p>
       <p className="mt-0.5 text-sm font-medium text-zinc-600">{label}</p>
       <p className="mt-1 text-xs text-zinc-500">{hint}</p>
     </div>
@@ -368,10 +368,10 @@ function PendingOrders({
   const shown = items.slice(0, PENDING_LIMIT);
 
   return (
-    <section className="flex min-w-0 flex-col rounded-2xl bg-white p-4 shadow-sm ring-1 ring-zinc-200 sm:p-5">
+    <section className="flex min-w-0 flex-col rounded-2xl bg-white p-4 shadow-sm ring-1 ring-zinc-200 sm:p-5 app:rounded-[20px] app:shadow-none app:ring-0">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <h2 className="text-base font-semibold text-zinc-900">Gözləyən sifarişlər</h2>
+          <h2 className="text-base font-semibold text-zinc-900 app:font-app-display app:text-lg app:font-bold">Gözləyən sifarişlər</h2>
           <p className="mt-0.5 text-xs text-zinc-500">
             {items.length > 0 ? `${items.length} məhsul təsdiqinizi gözləyir` : "Qəbul olunmalı sifariş yoxdur"}
           </p>
@@ -495,10 +495,10 @@ export function FarmerStatsDashboard({
       </div>
 
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
-        <section className="flex min-w-0 flex-col rounded-2xl bg-white p-4 shadow-sm ring-1 ring-zinc-200 sm:p-5 lg:col-span-2">
+        <section className="flex min-w-0 flex-col rounded-2xl bg-white p-4 shadow-sm ring-1 ring-zinc-200 sm:p-5 lg:col-span-2 app:rounded-[20px] app:shadow-none app:ring-0">
           <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-1">
             <div className="min-w-0">
-              <h2 className="text-base font-semibold text-zinc-900">Gəlir icmalı</h2>
+              <h2 className="text-base font-semibold text-zinc-900 app:font-app-display app:text-lg app:font-bold">Gəlir icmalı</h2>
               <p className="mt-0.5 text-xs text-zinc-500">
                 {firstMonth && lastMonth
                   ? `${MONTH_NAMES[monthIndex(firstMonth.month)]} – ${MONTH_NAMES[monthIndex(lastMonth.month)]}, aylar üzrə`

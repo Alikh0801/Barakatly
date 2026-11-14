@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useActionState, useRef, useState, useTransition } from "react";
 import { signIn, type AuthActionState } from "@/lib/auth/actions";
-import { APP_INPUT, APP_SUBMIT } from "@/components/auth/app-styles";
+import { APP_INPUT, APP_SUBMIT } from "@/components/app/form-styles";
 import { GoogleAuthButton } from "@/components/auth/GoogleAuthButton";
 import { PasswordInput } from "@/components/auth/PasswordInput";
 import { Turnstile, type TurnstileHandle } from "@/components/auth/Turnstile";

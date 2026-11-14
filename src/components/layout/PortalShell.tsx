@@ -7,17 +7,20 @@ export async function PortalShell({
   children,
   links,
   hideNav = false,
+  hideHeaderInApp = false,
 }: {
   title: string;
   children: React.ReactNode;
   links: { href: string; label: string }[];
   hideNav?: boolean;
+  /** The installed app draws its own headers and tab bar on these screens. */
+  hideHeaderInApp?: boolean;
 }) {
   const profile = await getProfile();
 
   return (
-    <div className="flex min-h-screen flex-col bg-[#faf9f5]">
-      <header className="border-b border-zinc-200 bg-white">
+    <div className="flex min-h-screen flex-col bg-[#faf9f5] app:bg-app-bg">
+      <header className={`border-b border-zinc-200 bg-white ${hideHeaderInApp ? "app:hidden" : ""}`}>
         <div className="mx-auto flex w-full max-w-6xl flex-wrap items-center justify-between gap-3 px-4 py-4 md:px-6">
           <Link
             href="/"

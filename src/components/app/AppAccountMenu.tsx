@@ -17,7 +17,46 @@ import type { Profile } from "@/types";
  * styled for the app. App only.
  */
 
-type Row = { href: string; label: string; Icon: (props: { className?: string }) => React.ReactNode };
+type Row = { href: string; label: string; Icon: AppMenuRow["Icon"] };
+
+/** A row of an app menu: a link, or a button for a section shown in place. */
+export type AppMenuRow = {
+  label: string;
+  Icon: (props: { className?: string }) => React.ReactNode;
+} & ({ href: string; onClick?: never } | { onClick: () => void; href?: never });
+
+/** The design's menu list: white, rounded, a round icon and a chevron per row. */
+export function AppMenu({ rows, className = "" }: { rows: AppMenuRow[]; className?: string }) {
+  const rowClass = "flex w-full items-center gap-3 px-4 py-3.5 text-left text-[15px] font-semibold";
+  return (
+    <ul className={`divide-y divide-app-line overflow-hidden rounded-[20px] bg-white ${className}`}>
+      {rows.map((row) => {
+        const content = (
+          <>
+            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#f3eee2] text-app-green">
+              <row.Icon className="h-[18px] w-[18px]" />
+            </span>
+            <span className="flex-1">{row.label}</span>
+            <ChevronRightIcon className="h-4 w-4 text-app-muted" />
+          </>
+        );
+        return (
+          <li key={row.label}>
+            {row.href ? (
+              <Link href={row.href} data-static-hover className={rowClass}>
+                {content}
+              </Link>
+            ) : (
+              <button type="button" onClick={row.onClick} data-static-hover className={rowClass}>
+                {content}
+              </button>
+            )}
+          </li>
+        );
+      })}
+    </ul>
+  );
+}
 
 function rowsFor(role: Profile["role"]): Row[] {
   const rows: Row[] = [
@@ -56,19 +95,7 @@ export function AppAccountSummary({
           <span className="mt-1 inline-flex rounded-lg bg-[#e9f1e2] px-2 py-0.5 text-xs font-semibold text-[#3b7a2c]">{roleLabel}</span>
         </div>
       </div>
-      <ul className="mt-4 divide-y divide-app-line overflow-hidden rounded-[20px] bg-white">
-        {rowsFor(profile.role).map(({ href, label, Icon }) => (
-          <li key={href}>
-            <Link href={href} data-static-hover className="flex items-center gap-3 px-4 py-3.5 text-[15px] font-semibold">
-              <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#f3eee2] text-app-green">
-                <Icon className="h-[18px] w-[18px]" />
-              </span>
-              <span className="flex-1">{label}</span>
-              <ChevronRightIcon className="h-4 w-4 text-app-muted" />
-            </Link>
-          </li>
-        ))}
-      </ul>
+      <AppMenu rows={rowsFor(profile.role)} className="mt-4" />
       <h2 className="mt-6 font-app-display text-lg font-bold">Profil məlumatları</h2>
     </div>
   );

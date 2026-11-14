@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useActionState, useRef, useState, useTransition } from "react";
-import { APP_CODE_INPUT, APP_INPUT, APP_SUBMIT } from "@/components/auth/app-styles";
+import { APP_CODE_INPUT, APP_INPUT, APP_SUBMIT } from "@/components/app/form-styles";
 import {
   requestPasswordReset,
   resetPasswordWithCode,

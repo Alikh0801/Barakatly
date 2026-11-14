@@ -13,17 +13,21 @@ export function AppScreenHeader({
   title,
   fallback = "/",
   right,
+  onBack,
 }: {
   /** Left out on screens whose title sits in the page (sign-in). */
   title?: string;
   /** Where "back" goes when the app was opened straight on this screen. */
   fallback?: string;
   right?: React.ReactNode;
+  /** For a section shown in place (a panel tab): "back" closes it instead. */
+  onBack?: () => void;
 }) {
   const router = useRouter();
 
   function goBack() {
-    if (window.history.length > 1) router.back();
+    if (onBack) onBack();
+    else if (window.history.length > 1) router.back();
     else router.push(fallback);
   }
 
