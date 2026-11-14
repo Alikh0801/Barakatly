@@ -15,6 +15,7 @@ import type { CourierOrder } from "@/lib/courier/queries";
 import { deliveryAddress, recipientName } from "@/lib/orders/delivery";
 import type { OrderStatus } from "@/types";
 import { farmerDisplayName } from "@/lib/farmers/name";
+import { APP_CARD, APP_INPUT } from "@/components/app/form-styles";
 
 const initialState: CourierActionState = {};
 
@@ -30,7 +31,7 @@ function ReasonInput({ id }: { id: string }) {
         type="text"
         required
         placeholder="Çatdırıla bilmədiyi səbəbi qeyd edin..."
-        className="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-900"
+        className={`w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-900 ${APP_INPUT} app:text-base`}
       />
     </div>
   );
@@ -40,6 +41,14 @@ function getCourierStatusOptionLabel(status: OrderStatus): string {
   if (status === "picked_up") return "Götürdüm";
   if (status === "cancelled") return "Çatdırıla bilmədi";
   return getOrderStatusLabel(status);
+}
+
+/** The installed app shows the status as a coloured pill; the website as text. */
+function appStatusTone(order: CourierOrder): string {
+  const pill = "app:inline-block app:rounded-full app:px-2.5 app:py-1 app:text-xs app:font-semibold";
+  if (order.status === "delivered") return `${pill} app:bg-[#e9f1e2] app:text-[#3b7a2c]`;
+  if (order.status === "cancelled") return `${pill} app:bg-rose-50 app:text-rose-700`;
+  return `${pill} app:bg-amber-50 app:text-amber-800`;
 }
 
 /** When a closed order was delivered, or given up on. */
@@ -79,7 +88,7 @@ function CourierOrderCard({ order }: { order: CourierOrder }) {
   }
 
   return (
-    <article className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-zinc-200">
+    <article className={`rounded-2xl bg-white p-5 shadow-sm ring-1 ring-zinc-200 ${APP_CARD} app:p-4`}>
       {state.error ? (
         <p className="mb-3 rounded-xl bg-rose-50 px-3 py-2 text-sm text-rose-700">
           {state.error}
@@ -93,7 +102,7 @@ function CourierOrderCard({ order }: { order: CourierOrder }) {
 
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <div className="font-semibold text-zinc-900">{order.order_code}</div>
+          <div className="font-semibold text-zinc-900 app:font-app-display app:text-lg app:font-bold">{order.order_code}</div>
           <p className="mt-1 text-sm text-zinc-500">{formatDateTime(order.created_at)}</p>
           <DeliveryDate createdAt={order.created_at} status={order.status} className="mt-1.5" />
           {recipientName(order) ? (
@@ -118,11 +127,13 @@ function CourierOrderCard({ order }: { order: CourierOrder }) {
         </div>
         <div className="text-xs font-medium text-zinc-700 sm:text-right">
           {/* Picked up but not yet shown to the customer by the admin. */}
-          {order.picked_up_by_me && order.status === "awaiting_courier"
-            ? "Götürülüb"
-            : order.status === "cancelled"
-              ? "Çatdırıla bilmədi"
-              : getOrderStatusLabel(order.status)}
+          <span className={appStatusTone(order)}>
+            {order.picked_up_by_me && order.status === "awaiting_courier"
+              ? "Götürülüb"
+              : order.status === "cancelled"
+                ? "Çatdırıla bilmədi"
+                : getOrderStatusLabel(order.status)}
+          </span>
           {closedTime ? (
             <div className="mt-0.5 font-normal text-zinc-500">{formatDateTime(closedTime)}</div>
           ) : null}
@@ -133,7 +144,7 @@ function CourierOrderCard({ order }: { order: CourierOrder }) {
         {[...farmers.values()].map((farmer) => (
           <div
             key={`${farmer.name}-${farmer.location ?? ""}`}
-            className="rounded-xl bg-zinc-50 px-3 py-3 ring-1 ring-zinc-100"
+            className="rounded-xl bg-zinc-50 px-3 py-3 ring-1 ring-zinc-100 app:rounded-2xl app:bg-app-bg app:ring-0"
           >
             <div className="text-sm font-semibold text-zinc-900">{farmer.name}</div>
             {farmer.location ? (
@@ -148,7 +159,7 @@ function CourierOrderCard({ order }: { order: CourierOrder }) {
         ))}
       </div>
 
-      <details className="mt-4 rounded-xl bg-zinc-50 p-3 text-sm ring-1 ring-zinc-100">
+      <details className="mt-4 rounded-xl bg-zinc-50 p-3 text-sm ring-1 ring-zinc-100 app:rounded-2xl app:bg-app-bg app:ring-0">
         <summary className="cursor-pointer font-medium text-zinc-800">
           Sifariş tarixçəsi
           <span className="ml-1 font-normal text-zinc-500">({order.order_status_events.length})</span>
@@ -168,7 +179,7 @@ function CourierOrderCard({ order }: { order: CourierOrder }) {
             onChange={(event) =>
               setSelectedStatus(event.target.value as OrderStatus)
             }
-            className="rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-900"
+            className={`rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-900 ${APP_INPUT} app:min-w-0 app:flex-1 app:text-base`}
           >
             {nextStatuses.map((status) => (
               <option key={status} value={status}>
@@ -184,7 +195,7 @@ function CourierOrderCard({ order }: { order: CourierOrder }) {
           <button
             type="submit"
             disabled={pending}
-            className="inline-flex items-center gap-2 rounded-full bg-emerald-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-70"
+            className="inline-flex items-center gap-2 rounded-full bg-emerald-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-70 app:h-12 app:bg-app-green app:px-5 app:text-base app:font-bold"
           >
             {pending ? <Spinner className="h-3.5 w-3.5" /> : null}
             Yenilə
@@ -198,7 +209,7 @@ function CourierOrderCard({ order }: { order: CourierOrder }) {
 export function CourierQueue({ orders }: { orders: CourierOrder[] }) {
   if (orders.length === 0) {
     return (
-      <div className="rounded-3xl bg-white p-8 text-center ring-1 ring-zinc-200">
+      <div className={`rounded-3xl bg-white p-8 text-center ring-1 ring-zinc-200 ${APP_CARD}`}>
         <p className="font-medium text-zinc-900">Hazırda çatdırılacaq sifariş yoxdur</p>
       </div>
     );
@@ -217,7 +228,7 @@ export function CourierQueue({ orders }: { orders: CourierOrder[] }) {
 export function CourierHistory({ orders }: { orders: CourierOrder[] }) {
   if (orders.length === 0) {
     return (
-      <div className="rounded-3xl bg-white p-8 text-center ring-1 ring-zinc-200">
+      <div className={`rounded-3xl bg-white p-8 text-center ring-1 ring-zinc-200 ${APP_CARD}`}>
         <p className="font-medium text-zinc-900">Hələ bağlanmış sifariş yoxdur</p>
       </div>
     );

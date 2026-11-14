@@ -3,19 +3,24 @@ import Link from "next/link";
 import { SiteLogo } from "@/components/SiteLogo";
 
 /**
- * The top of the farmer's panel in the installed app (Figma
- * "farmer-dashboard"), as on the home screen: the site logo, "Xoş
- * gəldiniz" and the farmer's first name, their picture on the right.
+ * The top of a panel in the installed app (Figma "farmer-dashboard"), as
+ * on the home screen: the site logo, "Xoş gəldiniz" and the first name,
+ * the person's picture or initial on the right, leading to their profile.
  * App only.
  */
-export function AppFarmerGreeting({
+export function AppGreeting({
   fullName,
-  avatarUrl,
+  avatarUrl = null,
+  profileHref,
+  fallbackName,
 }: {
   fullName: string | null;
-  avatarUrl: string | null;
+  avatarUrl?: string | null;
+  profileHref: string;
+  /** Shown when the profile has no name ("Fermer", "Kuryer"). */
+  fallbackName: string;
 }) {
-  const name = fullName?.trim().split(/\s+/)[0] || "Fermer";
+  const name = fullName?.trim().split(/\s+/)[0] || fallbackName;
 
   return (
     <header data-app-screen className="hidden items-center gap-3 px-6 py-4 font-app text-app-ink app:flex">
@@ -27,7 +32,7 @@ export function AppFarmerGreeting({
         <p className="truncate font-app-display text-[22px] font-bold leading-tight">{name}</p>
       </div>
       <Link
-        href="/farmer?tab=about"
+        href={profileHref}
         aria-label="Profil"
         className="relative flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full bg-app-green text-base font-bold text-white"
       >
